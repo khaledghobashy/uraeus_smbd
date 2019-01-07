@@ -11,7 +11,7 @@ from source.symbolic_classes.spatial_joints import (revolute, universal,
                                                     spherical, rotational_actuator,
                                                     cylinderical)
 
-from source.mbs_creators.topology_classes_2 import (template_based_topology, 
+from source.mbs_creators.topology_classes import (template_based_topology, 
                                                   subsystem, assembly)
 
 dwb_template = template_based_topology('dwb')
@@ -35,7 +35,7 @@ dwb_template.add_joint(universal,'strut_chassis','rbs_upper_strut','vbs_ground')
 dwb_template.add_joint(universal,'strut_lca','rbs_lower_strut','rbs_lca')
 dwb_template.add_joint(universal,'tie_steering','rbs_tie_rod','vbs_ground')
 dwb_template.add_joint(cylinderical,'strut','rbs_upper_strut','rbs_lower_strut')
-dwb_template.add_absolute_actuator('zact','rbs_upright','z')
+dwb_template.add_absolute_actuator('zact','rbs_hub','z')
 dwb_template.add_joint_actuator(rotational_actuator,'rot_act','jcs_hub_bearing')
 
 

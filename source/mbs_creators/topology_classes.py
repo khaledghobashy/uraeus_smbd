@@ -114,7 +114,7 @@ class template_based_topology(topology):
         
     @property
     def virtual_bodies(self):
-        condition = lambda n: n.startswith('vbs_') or n.startswith('vbr_')
+        condition = lambda n: n.startswith('vbs_') or n.startswith('vbr_') or n.startswith('vbl_')
         virtuals  = filter(condition,self.selected_variant.nodes)
         return set(virtuals)
     
@@ -389,10 +389,10 @@ class assembly(subsystem):
                 
             row_ind += b.nve
         
-        self.pos_level_equations = equations
-        self.vel_level_equations = vel_rhs
-        self.acc_level_equations = acc_rhs
-        self.jacobian = jacobian
+        self.pos_equations = equations
+        self.vel_equations = vel_rhs
+        self.acc_equations = acc_rhs
+        self.jac_equations = jacobian
     
     
 

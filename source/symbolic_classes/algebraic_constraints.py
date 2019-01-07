@@ -357,7 +357,12 @@ class absolute_actuator(actuator):
         self.i = self.coordinates_map[self.coordinate]
         super().__init__(name,body_i)
     
-
+    def numerical_arguments(self):
+        sym_jac = sm.MatrixSymbol('J_%s'%self.name,1,3)
+        num_jac = sm.Matrix([[0,0,0]]) 
+        num_jac[0,self.i] = 1
+        eq = sm.Eq(sym_jac,num_jac)
+        return super().numerical_arguments() + [eq]
 
 
     
