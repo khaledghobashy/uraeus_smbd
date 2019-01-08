@@ -11,38 +11,30 @@ from source.solvers.python_solver import solver
 class inputs(object):
 
     def __init__(self):
-        self.pt_jcr_rocker_ch = np.array([[0], [90], [0]],dtype=np.float64)
+        self.pt_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
         self.ax_jcr_rocker_ch = np.array([[0], [0], [1]],dtype=np.float64)
-        
         self.F_jcr_rocker_ch = lambda t : 0
-        
-        self.pt_jcl_rocker_ch = np.array([[0], [-90], [0]],dtype=np.float64)
+        self.pt_jcl_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
         self.ax_jcl_rocker_ch = np.array([[0], [0], [1]],dtype=np.float64)
-        
-        self.pt_jcs_rc_sph = np.array([[90], [-90], [0]],dtype=np.float64)
+        self.pt_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
         self.ax_jcs_rc_sph = np.array([[0], [0], [1]],dtype=np.float64)
-        
-        self.pt_jcs_rc_uni = np.array([[90], [90], [0]],dtype=np.float64)
-        self.ax_jcs_rc_uni = np.array([[0], [1], [0]],dtype=np.float64)
-        self.ax2_jcs_rc_uni = np.array([[0], [-1], [0]],dtype=np.float64)
-        
+        self.pt_jcs_rc_uni = np.array([[0], [0], [0]],dtype=np.float64)
+        self.ax_jcs_rc_uni = np.array([[0], [0], [1]],dtype=np.float64)
+        self.ax2_jcs_rc_uni = np.array([[0], [0], [1]],dtype=np.float64)
         self.R_ground = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
         self.Rd_ground = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
         self.Pg_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
-        
-        self.R_ST_rbs_coupler = np.array([[90], [0], [0]],dtype=np.float64)
+        self.R_ST_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_ST_rbs_coupler = np.array([[1], [0], [0], [0]],dtype=np.float64)
         self.Rd_ST_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_ST_rbs_coupler = np.array([[1], [0], [0], [0]],dtype=np.float64)
-        
-        self.R_ST_rbr_rocker = np.array([[45], [90], [0]],dtype=np.float64)
+        self.R_ST_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_ST_rbr_rocker = np.array([[1], [0], [0], [0]],dtype=np.float64)
         self.Rd_ST_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_ST_rbr_rocker = np.array([[1], [0], [0], [0]],dtype=np.float64)
-        
-        self.R_ST_rbl_rocker = np.array([[45], [-90], [0]],dtype=np.float64)
+        self.R_ST_rbl_rocker = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_ST_rbl_rocker = np.array([[1], [0], [0], [0]],dtype=np.float64)
         self.Rd_ST_rbl_rocker = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_ST_rbl_rocker = np.array([[1], [0], [0], [0]],dtype=np.float64)
@@ -206,12 +198,12 @@ class numerical_assembly(object):
         a26 = B(a22,a20)
         a27 = config.Mbar_ground_jcl_rocker_ch[:,1:2]
         a28 = self.Pd_ST_rbs_coupler
-        a29 = config.Mbar_ST_rbs_coupler_jcs_rc_uni[:,0:1]
-        a30 = self.P_ST_rbs_coupler
-        a31 = config.Mbar_ST_rbl_rocker_jcs_rc_uni[:,0:1]
+        a29 = config.Mbar_ST_rbl_rocker_jcs_rc_uni[:,0:1]
+        a30 = config.Mbar_ST_rbs_coupler_jcs_rc_uni[:,0:1]
+        a31 = self.P_ST_rbs_coupler
         a32 = a28.T
 
-        self.acc_eq_blocks = [(multi_dot([B(a0,config.ubar_ground_jcr_rocker_ch),a0]) + -1.0*multi_dot([B(a1,config.ubar_ST_rbr_rocker_jcr_rocker_ch),a1])),(multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2.0*multi_dot([a10,B(a3,a2).T,a11,a1])),(multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2.0*multi_dot([a10,B(a3,a12).T,a11,a1])),(derivative(config.F_jcr_rocker_ch,t,0.1,2)*-1.0*np.eye(1,dtype=np.float64) + multi_dot([a14.T,a9,(a15*B(a0,a16) + a17*-1.0*B(a0,a18)),a0]) + multi_dot([(a15*multi_dot([a16.T,a4]) + a17*-1.0*multi_dot([a18.T,a4])),B(a1,a14),a1]) + 2.0*multi_dot([((a15*multi_dot([B(a3,a16),a0])).T + a17*-1.0*multi_dot([a10,B(a3,a18).T])),B(a8,a14),a1])),(multi_dot([B(a0,config.ubar_ground_jcl_rocker_ch),a0]) + -1.0*multi_dot([B(a19,config.ubar_ST_rbl_rocker_jcl_rocker_ch),a19])),(multi_dot([a21,a23,B(a0,a24),a0]) + multi_dot([a24.T,a4,a25,a19]) + 2.0*multi_dot([a10,B(a3,a24).T,a26,a19])),(multi_dot([a21,a23,B(a0,a27),a0]) + multi_dot([a27.T,a4,a25,a19]) + 2.0*multi_dot([a10,B(a3,a27).T,a26,a19])),(multi_dot([B(a28,config.ubar_ST_rbs_coupler_jcs_rc_sph),a28]) + -1.0*multi_dot([B(a1,config.ubar_ST_rbr_rocker_jcs_rc_sph),a1])),(multi_dot([B(a28,config.ubar_ST_rbs_coupler_jcs_rc_uni),a28]) + -1.0*multi_dot([B(a19,config.ubar_ST_rbl_rocker_jcs_rc_uni),a19])),(multi_dot([a29.T,A(a30).T,B(a19,a31),a19]) + multi_dot([a31.T,a23,B(a28,a29),a28]) + 2.0*multi_dot([a32,B(a30,a29).T,B(a22,a31),a19])),np.zeros((3,1),dtype=np.float64),np.zeros((4,1),dtype=np.float64),2.0*(multi_dot([a32,a28]))**(1.0/2.0),2.0*(multi_dot([a1.T,a1]))**(1.0/2.0),2.0*(multi_dot([a19.T,a19]))**(1.0/2.0)]
+        self.acc_eq_blocks = [(multi_dot([B(a0,config.ubar_ground_jcr_rocker_ch),a0]) + -1.0*multi_dot([B(a1,config.ubar_ST_rbr_rocker_jcr_rocker_ch),a1])),(multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2.0*multi_dot([a10,B(a3,a2).T,a11,a1])),(multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2.0*multi_dot([a10,B(a3,a12).T,a11,a1])),(derivative(a13,t,0.1,2)*-1.0*np.eye(1,dtype=np.float64) + multi_dot([a14.T,a9,(a15*B(a0,a16) + a17*-1.0*B(a0,a18)),a0]) + multi_dot([(a15*multi_dot([a16.T,a4]) + a17*-1.0*multi_dot([a18.T,a4])),B(a1,a14),a1]) + 2.0*multi_dot([((a15*multi_dot([B(a3,a16),a0])).T + 'transpose'(a17,)*-1.0*multi_dot([a10,B(a3,a18).T])),B(a8,a14),a1])),(multi_dot([B(a0,config.ubar_ground_jcl_rocker_ch),a0]) + -1.0*multi_dot([B(a19,config.ubar_ST_rbl_rocker_jcl_rocker_ch),a19])),(multi_dot([a21,a23,B(a0,a24),a0]) + multi_dot([a24.T,a4,a25,a19]) + 2.0*multi_dot([a10,B(a3,a24).T,a26,a19])),(multi_dot([a21,a23,B(a0,a27),a0]) + multi_dot([a27.T,a4,a25,a19]) + 2.0*multi_dot([a10,B(a3,a27).T,a26,a19])),(multi_dot([B(a28,config.ubar_ST_rbs_coupler_jcs_rc_sph),a28]) + -1.0*multi_dot([B(a1,config.ubar_ST_rbr_rocker_jcs_rc_sph),a1])),(multi_dot([B(a28,config.ubar_ST_rbs_coupler_jcs_rc_uni),a28]) + -1.0*multi_dot([B(a19,config.ubar_ST_rbl_rocker_jcs_rc_uni),a19])),(multi_dot([a29.T,a23,B(a28,a30),a28]) + multi_dot([a30.T,A(a31).T,B(a19,a29),a19]) + 2.0*multi_dot([a32,B(a31,a30).T,B(a22,a29),a19])),np.zeros((3,1),dtype=np.float64),np.zeros((4,1),dtype=np.float64),2.0*(multi_dot([a32,a28]))**(1.0/2.0),2.0*(multi_dot([a1.T,a1]))**(1.0/2.0),2.0*(multi_dot([a19.T,a19]))**(1.0/2.0)]
 
     
     def eval_jac_eq(self):

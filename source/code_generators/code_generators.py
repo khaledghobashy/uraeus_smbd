@@ -142,11 +142,7 @@ class python_code_generator(abstract_generator):
         
         cse_var_txt = getattr(self,'%s_eq_csev'%xstring)
         cse_exp_txt = getattr(self,'%s_eq_data'%xstring)
-        
-        num_args_pattern = '|'.join(self.num_args_sym)
-        cse_var_txt = re.sub(num_args_pattern,self._insert_config,cse_var_txt)
-        cse_exp_txt = re.sub(num_args_pattern,self._insert_config,cse_exp_txt)
-        
+                
         gen_coord_pattern = '|'.join(self.generalized_coordinates_lhs)
         cse_var_txt = re.sub(gen_coord_pattern,self._insert_self,cse_var_txt)
         cse_exp_txt = re.sub(gen_coord_pattern,self._insert_self,cse_exp_txt)
@@ -154,7 +150,11 @@ class python_code_generator(abstract_generator):
         gen_veloc_pattern = '|'.join(self.generalized_velocities_lhs)
         cse_var_txt = re.sub(gen_veloc_pattern,self._insert_self,cse_var_txt)
         cse_exp_txt = re.sub(gen_veloc_pattern,self._insert_self,cse_exp_txt)
-
+        
+        num_args_pattern = '|'.join(self.num_args_sym)
+        cse_var_txt = re.sub(num_args_pattern,self._insert_config,cse_var_txt)
+        cse_exp_txt = re.sub(num_args_pattern,self._insert_config,cse_exp_txt)
+        
         config_var_pattern = '|'.join(self.cfig_cons_sym)
         cse_var_txt = re.sub(config_var_pattern,self._insert_config,cse_var_txt)
         cse_exp_txt = re.sub(config_var_pattern,self._insert_config,cse_exp_txt)
@@ -206,16 +206,16 @@ class python_code_generator(abstract_generator):
                         self.Pg_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
                         
                         self.pos_rows = {pos_rows}
-                        self.pos_rows = {pos_cols}
+                        self.pos_cols = {pos_cols}
                         
                         self.vel_rows = {vel_rows}
-                        self.vel_rows = {vel_cols}
+                        self.vel_cols = {vel_cols}
                         
                         self.acc_rows = {acc_rows}
-                        self.acc_rows = {acc_cols}
+                        self.acc_cols = {acc_cols}
                         
                         self.jac_rows = {jac_rows}
-                        self.jac_rows = {jac_cols}
+                        self.jac_cols = {jac_cols}
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -245,12 +245,12 @@ class python_code_generator(abstract_generator):
                     
                     @property
                     def q_initial(self):
-                        q = np.concatenate({[q_initial]})
+                        q = np.concatenate([{q_initial}])
                         return q
                     
                     @property
                     def qd_initial(self):
-                        qd = np.concatenate({[qd_initial]})
+                        qd = np.concatenate([{qd_initial}])
                         return qd
                 '''
         

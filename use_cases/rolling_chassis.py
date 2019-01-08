@@ -59,14 +59,14 @@ steering_template.add_body('rocker',mirrored=True)
 steering_template.add_virtual_body('chassis')
 steering_template.add_joint(revolute,'rocker_ch','rbr_rocker','vbs_chassis',mirrored=True)
 steering_template.add_joint(spherical,'rc_sph','rbr_rocker','rbs_coupler')
-steering_template.add_joint(revolute,'rc_uni','rbl_rocker','rbs_coupler')
+steering_template.add_joint(universal,'rc_uni','rbl_rocker','rbs_coupler')
 steering_template.add_joint_actuator(rotational_actuator,'rot_act','jcr_rocker_ch')
 
 steering_subsystem = subsystem('ST',steering_template)
 steering_subsystem.assemble_model()
 
 
-rolling_chassis = assembly('assm2')
+rolling_chassis = assembly('assm3')
 #rolling_chassis.add_subsystem(front_axle)
 #rolling_chassis.add_subsystem(rear_axle)
 rolling_chassis.add_subsystem(steering_subsystem)

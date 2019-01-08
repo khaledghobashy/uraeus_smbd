@@ -11,14 +11,14 @@ from source.solvers.python_solver import solver
 class inputs(object):
 
     def __init__(self):
-        self.pt_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
+        self.pt_jcr_rocker_ch = np.array([[0], [90], [0]],dtype=np.float64)
         self.ax_jcr_rocker_ch = np.array([[0], [0], [1]],dtype=np.float64)
         self.F_jcr_rocker_ch = lambda t : 0
-        self.pt_jcl_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
+        self.pt_jcl_rocker_ch = np.array([[0], [-90], [0]],dtype=np.float64)
         self.ax_jcl_rocker_ch = np.array([[0], [0], [1]],dtype=np.float64)
-        self.pt_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
+        self.pt_jcs_rc_sph = np.array([[90], [90], [0]],dtype=np.float64)
         self.ax_jcs_rc_sph = np.array([[0], [0], [1]],dtype=np.float64)
-        self.pt_jcs_rc_uni = np.array([[0], [0], [0]],dtype=np.float64)
+        self.pt_jcs_rc_uni = np.array([[90], [-90], [0]],dtype=np.float64)
         self.ax_jcs_rc_uni = np.array([[0], [0], [1]],dtype=np.float64)
         self.R_ground = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
@@ -76,12 +76,12 @@ class inputs(object):
 
     @property
     def q_initial(self):
-        q = np.concatenate(self.R_ground,self.P_ground,self.R_ST_rbs_coupler,self.P_ST_rbs_coupler,self.R_ST_rbr_rocker,self.P_ST_rbr_rocker,self.R_ST_rbl_rocker,self.P_ST_rbl_rocker)
+        q = np.concatenate([self.R_ground,self.P_ground,self.R_ST_rbs_coupler,self.P_ST_rbs_coupler,self.R_ST_rbr_rocker,self.P_ST_rbr_rocker,self.R_ST_rbl_rocker,self.P_ST_rbl_rocker])
         return q
 
     @property
     def qd_initial(self):
-        qd = np.concatenate(self.Rd_ground,self.Pd_ground,self.Rd_ST_rbs_coupler,self.Pd_ST_rbs_coupler,self.Rd_ST_rbr_rocker,self.Pd_ST_rbr_rocker,self.Rd_ST_rbl_rocker,self.Pd_ST_rbl_rocker)
+        qd = np.concatenate([self.Rd_ground,self.Pd_ground,self.Rd_ST_rbs_coupler,self.Pd_ST_rbs_coupler,self.Rd_ST_rbr_rocker,self.Pd_ST_rbr_rocker,self.Rd_ST_rbl_rocker,self.Pd_ST_rbl_rocker])
         return qd
 
 class numerical_assembly(object):
@@ -92,16 +92,16 @@ class numerical_assembly(object):
         self.Pg_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
 
         self.pos_rows = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
-        self.pos_rows = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+        self.pos_cols = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 
         self.vel_rows = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
-        self.vel_rows = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+        self.vel_cols = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 
         self.acc_rows = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
-        self.acc_rows = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+        self.acc_cols = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 
         self.jac_rows = np.array([0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10,11,11,12,12,13,14,15])
-        self.jac_rows = np.array([0,1,4,5,0,1,4,5,0,1,4,5,0,1,4,5,0,1,6,7,0,1,6,7,0,1,6,7,2,3,4,5,2,3,6,7,2,3,6,7,2,3,6,7,0,1,0,1,3,5,7])
+        self.jac_cols = np.array([0,1,4,5,0,1,4,5,0,1,4,5,0,1,4,5,0,1,6,7,0,1,6,7,0,1,6,7,2,3,4,5,2,3,6,7,2,3,6,7,2,3,6,7,0,1,0,1,3,5,7])
 
     
     def set_q(self,q):
@@ -270,7 +270,7 @@ soln = solve_system(time_array)
 import pandas as pd
 import matplotlib.pyplot as plt
 
-pos_history = pd.DataFrame(np.concatenate(list(soln.pos_history.values()),1).T,index=soln.pos_history.keys(),columns=range(49))
+pos_history = pd.DataFrame(np.concatenate(list(soln.pos_history.values()),1).T,index=soln.pos_history.keys(),columns=range(28))
 shape = pos_history.shape
 time_array_mod = time_array[:shape[0]-1]
 

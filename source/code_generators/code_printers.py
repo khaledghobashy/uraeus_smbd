@@ -7,7 +7,6 @@ Created on Tue Jan  1 12:22:44 2019
 
 import sympy as sm
 import numpy as np
-#from sympy.printing.codeprinter import CodePrinter
 from sympy.printing.ccode import C99CodePrinter
 
 ccode_print = True
@@ -15,24 +14,13 @@ enclose = True
 
 class numerical_printer(C99CodePrinter):
 
-    
-    '''def _print_Symbol(self,expr):
-        return expr.name
-    '''
-    
+        
     def _print_ZeroMatrix(self,expr):
         return 'np.zeros(%s,dtype=np.float64)'%(expr.shape)
     
     def _print_zero_matrix(self,expr):
         return 'np.zeros(%s,dtype=np.float64)'%(expr.shape)
-    
-    '''def _print_base_vactor(self,expr):
-        global enclose
-        if enclose :
-            return '%r'%expr._raw_name
-        else:
-            return '%s'%expr._raw_name'''
-    
+        
     def _print_AbstractMatrix(self,expr):
         args = [self._print(i) for i in expr.args]
         name = expr.__class__.__name__
@@ -52,12 +40,7 @@ class numerical_printer(C99CodePrinter):
         except ValueError:
             p, u = (expr.args[0],'')
         return 'Triad(%s,%s)'%(self._print(p),self._print(u))
-    
-    '''
-    def _print_A(self,expr):
-        p = expr.args[0]
-        return 'A(%s)'%self._print(p)'''
-    
+        
     
     def _print_dcm(self,expr):
         global enclose

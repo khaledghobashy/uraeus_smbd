@@ -14,7 +14,7 @@ import pandas as pd
 def scipy_matrix_assembler(data,rows,cols):
     m = max(rows)
     n = max(cols)
-    mat = sc.empty((m,n),dtype=np.object)
+    mat = sc.empty((m+1,n+1),dtype=np.object)
     mat[rows,cols] = data
     return sc.sparse.bmat(mat)
 
@@ -22,6 +22,8 @@ class solver(object):
     
     def __init__(self,model):
         self.model = model
+        model.set_q(model.config.q_initial)
+        model.set_qd(model.config.qd_initial)
                 
         self.pos_history = {0:self.model.config.q_initial}
         self.vel_history = {}
@@ -33,25 +35,25 @@ class solver(object):
     
     def eval_pos_eq(self):
         self.model.eval_pos_eq()
-        data, rows, cols = self.model.pos_data,self.model.pos_rows,self.model.pos_rows
+        data, rows, cols = self.model.pos_eq_blocks,self.model.pos_rows,self.model.pos_cols
         mat = self._matrix_assembler(data,rows,cols)
         return mat
         
     def eval_vel_eq(self):
         self.model.eval_vel_eq()
-        data, rows, cols = self.model.vel_data,self.model.vel_rows,self.model.vel_rows
+        data, rows, cols = self.model.vel_eq_blocks,self.model.vel_rows,self.model.vel_cols
         mat = self._matrix_assembler(data,rows,cols)
         return mat
         
     def eval_acc_eq(self):
         self.model.eval_acc_eq()
-        data, rows, cols = self.model.acc_data,self.model.acc_rows,self.model.acc_rows
+        data, rows, cols = self.model.acc_eq_blocks,self.model.acc_rows,self.model.acc_cols
         mat = self._matrix_assembler(data,rows,cols)
         return mat
         
     def eval_jac_eq(self):
         self.model.eval_jac_eq()
-        data, rows, cols = self.model.jac_data,self.model.jac_rows,self.model.jac_rows
+        data, rows, cols = self.model.jac_eq_blocks,self.model.jac_rows,self.model.jac_cols
         mat = self._matrix_assembler(data,rows,cols)
         return mat
     
@@ -59,7 +61,7 @@ class solver(object):
     def newton_raphson(self,guess=None):
         
         guess = (self.model.config.q_initial if guess is None else guess)
-        self.model.set_coordinates(guess)
+        self.model.set_q(guess)
         
         A = self.eval_jac_eq().A
         b = self.eval_pos_eq().A
@@ -70,7 +72,7 @@ class solver(object):
             print(np.linalg.norm(delta_q))
             guess=guess+delta_q
             
-            self.model.set_coordinates(guess)
+            self.model.set_q(guess)
             b = self.eval_pos_eq().A
             delta_q = np.linalg.solve(A,-b)
             
@@ -91,7 +93,7 @@ class solver(object):
         
         vel_rhs = self.eval_vel_eq().A
         v0 = np.linalg.solve(A,-vel_rhs)
-        self.model.set_velocities(v0)
+        self.model.set_qd(v0)
         self.vel_history[0] = v0
         
         acc_rhs = self.eval_acc_eq().A
@@ -109,7 +111,7 @@ class solver(object):
             
             vel_rhs = self.eval_vel_eq().A
             vi = np.linalg.solve(A,-vel_rhs)
-            self.model.set_velocities(vi)
+            self.model.set_qd(vi)
             self.vel_history[i+1] = vi
 
             acc_rhs = self.eval_acc_eq().A
