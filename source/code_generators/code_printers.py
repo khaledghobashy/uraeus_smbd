@@ -46,6 +46,13 @@ class numerical_printer(C99CodePrinter):
         p, u = expr.args
         return 'B(%s,%s)'%(self._print(p),self._print(u))
     
+    def _print_Triad(self,expr):
+        try:
+             p, u = expr.args
+        except ValueError:
+            p, u = (expr.args[0],'')
+        return 'Triad(%s,%s)'%(self._print(p),self._print(u))
+    
     '''
     def _print_A(self,expr):
         p = expr.args[0]
@@ -136,7 +143,7 @@ class numerical_printer(C99CodePrinter):
     
     def _print_Equality(self,expr):
         args = expr.args
-        return str(args[0]) + ' = ' + self._print(args[1])
+        return self._print(args[0]) + ' = ' + self._print(args[1])
     
     def _print_MatAdd(self,expr):
         nested_operations = [self._print(i) for i in expr.args]
@@ -156,6 +163,7 @@ class numerical_printer(C99CodePrinter):
     
     def _print_MatrixSlice(self,expr):
         m, row_slice, col_slice = expr.args
+        m = self._print(m)
         return f'{m}[{row_slice[0]}:{row_slice[1]},{col_slice[0]}:{col_slice[1]}]'
     
     def _print_MutableDenseMatrix(self,expr):
@@ -180,12 +188,18 @@ class numerical_printer(C99CodePrinter):
         data_print = '[' + ','.join([self._print(i) for i in data]) + ']'
         code_block = '\n'.join([self._print(i) for i in [rows_print,cols_print,data_print]])
         return code_block
-
-    def _print_Derivative(self,expr):
-        return 'derivative(F,t,0.1,%s)'%expr.args[1][1]
+    
+    def _print_UndefinedFunction(self,expr):
+        return "'%r'"%expr
     
     def _print_Function(self,expr):
-        return str(expr)
+        func = expr.__class__
+        return "'%r'%s"%(func,expr.args)
+
+    def _print_Derivative(self,expr):
+        func = expr.args[0]
+        func = self._print(func).strip(str(func.args))
+        return 'derivative(%s,t,0.1,%s)'%(func,expr.args[1][1])
     
     def _print_Lambda(self, obj):
         args, expr = obj.args

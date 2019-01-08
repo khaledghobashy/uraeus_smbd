@@ -68,7 +68,7 @@ class abstract_generator(object):
         
     def setup_jac_equations(self):
         self._setup_x_equations('jac','j')
-    
+        
     def setup_equations(self):
         self.setup_pos_equations()
         self.setup_vel_equations()
@@ -93,10 +93,10 @@ class abstract_generator(object):
 class python_code_generator(abstract_generator):
     
     def _insert_self(self,x): 
-        return 'self.' + x.group(0)[1:-1]
+        return 'self.' + x.group(0).strip("'")
     
     def _insert_config(self,x): 
-        return 'config.' + x.group(0)[1:-1]
+        return 'config.' + x.group(0).strip("'")
     
     def _write_x_setter(self,xstring):
         text = '''
@@ -111,7 +111,9 @@ class python_code_generator(abstract_generator):
         indent = 4*' '
         
         coordinates = getattr(self.mbs,'%s_maped'%xstring)
-        maped_coordinates = '\n'.join(['self.' + p._print(i) for i in coordinates])
+        maped_coordinates = '\n'.join([p._print(i) for i in coordinates])
+        pattern = '|'.join(self.generalized_coordinates_lhs+self.generalized_velocities_lhs)
+        maped_coordinates = re.sub(pattern,self._insert_self,maped_coordinates)
         maped_coordinates = textwrap.indent(maped_coordinates,indent).lstrip()
         text = text.format(maped = maped_coordinates)
         text = textwrap.indent(text,indent)
@@ -126,6 +128,8 @@ class python_code_generator(abstract_generator):
     def _write_x_equations(self,xstring):
         text = '''
                 def eval_%s_eq(self):
+                    config = self.config
+                    t = self.t
 
                     {cse_var_txt}
 
@@ -138,6 +142,10 @@ class python_code_generator(abstract_generator):
         
         cse_var_txt = getattr(self,'%s_eq_csev'%xstring)
         cse_exp_txt = getattr(self,'%s_eq_data'%xstring)
+        
+        num_args_pattern = '|'.join(self.num_args_sym)
+        cse_var_txt = re.sub(num_args_pattern,self._insert_config,cse_var_txt)
+        cse_exp_txt = re.sub(num_args_pattern,self._insert_config,cse_exp_txt)
         
         gen_coord_pattern = '|'.join(self.generalized_coordinates_lhs)
         cse_var_txt = re.sub(gen_coord_pattern,self._insert_self,cse_var_txt)
@@ -192,7 +200,8 @@ class python_code_generator(abstract_generator):
         text = '''
                 class numerical_assembly(object):
 
-                    def __init__(self,config):                    
+                    def __init__(self,config):
+                        self.t = 0.0
                         self.config = config
                         self.Pg_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
                         
@@ -221,7 +230,46 @@ class python_code_generator(abstract_generator):
                            jac_cols = self.jac_eq_cols)
         return text
                 
-    
+    def write_config_class(self):
+        text = '''
+                class inputs(object):
+
+                    def __init__(self):
+                        {inputs}
+                        
+                    def eval_constants(self):
+                        
+                        {cse_var_txt}
+
+                        {cse_exp_txt}
+                '''
+        
+        p = self.printer
+        indent = 8*' '
+        
+        inputs = self.numerical_arguments
+        consts = self.configuration_constants
+        
+        pattern = '|'.join(self.num_args_sym+self.cfig_cons_sym)
+        
+        inputs = '\n'.join([p._print(exp) for exp in inputs])
+        inputs = re.sub(pattern,self._insert_self,inputs)
+        
+        cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
+        cse_var_txt = re.sub(pattern,self._insert_self,cse_var_txt)
+        cse_exp_txt = re.sub(pattern,self._insert_self,cse_exp_txt)
+
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        inputs = textwrap.indent(inputs,indent).lstrip()
+        cse_var_txt = textwrap.indent(cse_var_txt,indent).lstrip()
+        cse_exp_txt = textwrap.indent(cse_exp_txt,indent).lstrip()
+        text = text.format(inputs = inputs,
+                           cse_exp_txt = cse_exp_txt,
+                           cse_var_txt = cse_var_txt)
+        
+        return text
+
     def write_system_class(self):
         text = '''
                 {class_init}
@@ -254,41 +302,17 @@ class python_code_generator(abstract_generator):
                            veloc_setter = veloc_setter)
         return text
     
+    
     def write_code_file(self):
         self.setup_equations()
         imports = self.write_imports()
-        system_class  = self.write_system_class()
+        config_class = self.write_config_class()
+        system_class = self.write_system_class()
         
-        text = '\n'.join([imports,system_class])
+        text = '\n'.join([imports,config_class,system_class])
         with open('%s.py'%self.mbs.name,'w') as file:
             file.write(text)
-    
-#    def write_config_class(self):
-#        text = '''
-#                class inputs(object):
-#
-#                    def __init__(self,config_file):
-#                        {inputs}
-#                '''
-#        
-#        p = self.printer
-#        indent = 8*' '
-#        
-#        inputs = self.numerical_arguments
-#        consts = self.configuration_constants
-#        
-#        inputs_equalities = [p._print(exp) for exp in inputs]
-#        inputs_variables  = [p._print(exp.lhs) for exp in inputs]
-#        declared_inputs  = '\n'.join([typing_prefix + i for i in self.inputs_equalities])
-#        
-#        text = text.expandtabs()
-#        text = textwrap.dedent(text)
-#        declared_inputs = textwrap.indent(declared_inputs,indent).lstrip()
-#        text = text.format(declared_inputs = declared_inputs)
-#        
-#        return text
-    
-    
+
     
     
     

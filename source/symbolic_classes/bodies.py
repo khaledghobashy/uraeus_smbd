@@ -63,4 +63,6 @@ class ground(body):
         self.normalized_jacobian = sm.BlockMatrix([[sm.Identity(3),zero_matrix(3,4)],
                                                    [zero_matrix(4,3),sm.Identity(4)]])
     
-
+    def numerical_arguments(self):
+        eq = sm.Eq(self.P_ground,sm.Matrix([1,0,0,0]))
+        return super().numerical_arguments() + [eq]
