@@ -66,7 +66,7 @@ steering_subsystem = subsystem('ST',steering_template)
 steering_subsystem.assemble_model()
 
 
-rolling_chassis = assembly('assm')
+rolling_chassis = assembly('assm2')
 #rolling_chassis.add_subsystem(front_axle)
 #rolling_chassis.add_subsystem(rear_axle)
 rolling_chassis.add_subsystem(steering_subsystem)

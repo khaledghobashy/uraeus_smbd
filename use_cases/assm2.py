@@ -84,6 +84,8 @@ class inputs(object):
         qd = np.concatenate(self.Rd_ground,self.Pd_ground,self.Rd_ST_rbs_coupler,self.Pd_ST_rbs_coupler,self.Rd_ST_rbr_rocker,self.Pd_ST_rbr_rocker,self.Rd_ST_rbl_rocker,self.Pd_ST_rbl_rocker)
         return qd
 
+
+
 class numerical_assembly(object):
 
     def __init__(self,config):
@@ -170,16 +172,16 @@ class numerical_assembly(object):
 
         a0 = config.Pd_ground
         a1 = config.Pd_ST_rbr_rocker
-        a2 = config.Mbar_ST_rbr_rocker_jcr_rocker_ch[:,2:3]
-        a3 = a2.T
-        a4 = config.P_ST_rbr_rocker
-        a5 = A(a4).T
-        a6 = config.Mbar_ground_jcr_rocker_ch[:,0:1]
-        a7 = config.P_ground
-        a8 = A(a7).T
-        a9 = B(a1,a2)
+        a2 = config.Mbar_ground_jcr_rocker_ch[:,0:1]
+        a3 = config.P_ground
+        a4 = A(a3).T
+        a5 = config.Mbar_ST_rbr_rocker_jcr_rocker_ch[:,2:3]
+        a6 = B(a1,a5)
+        a7 = a5.T
+        a8 = config.P_ST_rbr_rocker
+        a9 = A(a8).T
         a10 = a0.T
-        a11 = B(a4,a2)
+        a11 = B(a8,a5)
         a12 = config.Mbar_ground_jcr_rocker_ch[:,1:2]
         a13 = config.F_jcr_rocker_ch(t,)
         a14 = config.Mbar_ST_rbr_rocker_jcr_rocker_ch[:,0:1]
@@ -188,13 +190,13 @@ class numerical_assembly(object):
         a17 = sin(a13)
         a18 = config.Mbar_ground_jcr_rocker_ch[:,0:1]
         a19 = config.Pd_ST_rbl_rocker
-        a20 = config.Mbar_ST_rbl_rocker_jcl_rocker_ch[:,2:3]
-        a21 = a20.T
-        a22 = config.P_ST_rbl_rocker
-        a23 = A(a22).T
-        a24 = config.Mbar_ground_jcl_rocker_ch[:,0:1]
-        a25 = B(a19,a20)
-        a26 = B(a22,a20)
+        a20 = config.Mbar_ground_jcl_rocker_ch[:,0:1]
+        a21 = config.Mbar_ST_rbl_rocker_jcl_rocker_ch[:,2:3]
+        a22 = B(a19,a21)
+        a23 = a21.T
+        a24 = config.P_ST_rbl_rocker
+        a25 = A(a24).T
+        a26 = B(a24,a21)
         a27 = config.Mbar_ground_jcl_rocker_ch[:,1:2]
         a28 = config.Pd_ST_rbs_coupler
         a29 = config.Mbar_ST_rbs_coupler_jcs_rc_uni[:,0:1]
@@ -204,10 +206,10 @@ class numerical_assembly(object):
         a33 = B(a19,a32)
         a34 = a32.T
         a35 = a28.T
-        a36 = B(a22,a32)
+        a36 = B(a24,a32)
         a37 = config.Mbar_ST_rbs_coupler_jcs_rc_uni[:,1:2]
 
-        self.acc_eq_blocks = [(multi_dot([B(a0,config.ubar_ground_jcr_rocker_ch),a0]) + -1.0*multi_dot([B(a1,config.ubar_ST_rbr_rocker_jcr_rocker_ch),a1])),(multi_dot([a3,a5,B(a0,a6),a0]) + multi_dot([a6.T,a8,a9,a1]) + 2.0*multi_dot([a10,B(a7,a6).T,a11,a1])),(multi_dot([a3,a5,B(a0,a12),a0]) + multi_dot([a12.T,a8,a9,a1]) + 2.0*multi_dot([a10,B(a7,a12).T,a11,a1])),(derivative(a13,t,0.1,2)*-1.0*np.eye(1,dtype=np.float64) + multi_dot([a14.T,a5,(a15*B(a0,a16) + a17*-1.0*B(a0,a18)),a0]) + multi_dot([(a15*multi_dot([a16.T,a8]) + a17*-1.0*multi_dot([a18.T,a8])),B(a1,a14),a1]) + 2.0*multi_dot([((a15*multi_dot([B(a7,a16),a0])).T + 'transpose'(a17,)*-1.0*multi_dot([a10,B(a7,a18).T])),B(a4,a14),a1])),(multi_dot([B(a0,config.ubar_ground_jcl_rocker_ch),a0]) + -1.0*multi_dot([B(a19,config.ubar_ST_rbl_rocker_jcl_rocker_ch),a19])),(multi_dot([a21,a23,B(a0,a24),a0]) + multi_dot([a24.T,a8,a25,a19]) + 2.0*multi_dot([a10,B(a7,a24).T,a26,a19])),(multi_dot([a21,a23,B(a0,a27),a0]) + multi_dot([a27.T,a8,a25,a19]) + 2.0*multi_dot([a10,B(a7,a27).T,a26,a19])),(multi_dot([B(a28,config.ubar_ST_rbs_coupler_jcs_rc_sph),a28]) + -1.0*multi_dot([B(a1,config.ubar_ST_rbr_rocker_jcs_rc_sph),a1])),(multi_dot([B(a28,config.ubar_ST_rbs_coupler_jcs_rc_uni),a28]) + -1.0*multi_dot([B(a19,config.ubar_ST_rbl_rocker_jcs_rc_uni),a19])),(multi_dot([a29.T,a31,a33,a19]) + multi_dot([a34,a23,B(a28,a29),a28]) + 2.0*multi_dot([a35,B(a30,a29).T,a36,a19])),(multi_dot([a37.T,a31,a33,a19]) + multi_dot([a34,a23,B(a28,a37),a28]) + 2.0*multi_dot([a35,B(a30,a37).T,a36,a19])),np.zeros((3,1),dtype=np.float64),np.zeros((4,1),dtype=np.float64),2.0*(multi_dot([a35,a28]))**(1.0/2.0),2.0*(multi_dot([a1.T,a1]))**(1.0/2.0),2.0*(multi_dot([a19.T,a19]))**(1.0/2.0)]
+        self.acc_eq_blocks = [(multi_dot([B(a0,config.ubar_ground_jcr_rocker_ch),a0]) + -1.0*multi_dot([B(a1,config.ubar_ST_rbr_rocker_jcr_rocker_ch),a1])),(multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2.0*multi_dot([a10,B(a3,a2).T,a11,a1])),(multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2.0*multi_dot([a10,B(a3,a12).T,a11,a1])),(derivative(a13,t,0.1,2)*-1.0*np.eye(1,dtype=np.float64) + multi_dot([a14.T,a9,(a15*B(a0,a16) + a17*-1.0*B(a0,a18)),a0]) + multi_dot([(a15*multi_dot([a16.T,a4]) + a17*-1.0*multi_dot([a18.T,a4])),B(a1,a14),a1]) + 2.0*multi_dot([((a15*multi_dot([B(a3,a16),a0])).T + 'transpose'(a17,)*-1.0*multi_dot([a10,B(a3,a18).T])),B(a8,a14),a1])),(multi_dot([B(a0,config.ubar_ground_jcl_rocker_ch),a0]) + -1.0*multi_dot([B(a19,config.ubar_ST_rbl_rocker_jcl_rocker_ch),a19])),(multi_dot([a20.T,a4,a22,a19]) + multi_dot([a23,a25,B(a0,a20),a0]) + 2.0*multi_dot([a10,B(a3,a20).T,a26,a19])),(multi_dot([a27.T,a4,a22,a19]) + multi_dot([a23,a25,B(a0,a27),a0]) + 2.0*multi_dot([a10,B(a3,a27).T,a26,a19])),(multi_dot([B(a28,config.ubar_ST_rbs_coupler_jcs_rc_sph),a28]) + -1.0*multi_dot([B(a1,config.ubar_ST_rbr_rocker_jcs_rc_sph),a1])),(multi_dot([B(a28,config.ubar_ST_rbs_coupler_jcs_rc_uni),a28]) + -1.0*multi_dot([B(a19,config.ubar_ST_rbl_rocker_jcs_rc_uni),a19])),(multi_dot([a29.T,a31,a33,a19]) + multi_dot([a34,a25,B(a28,a29),a28]) + 2.0*multi_dot([a35,B(a30,a29).T,a36,a19])),(multi_dot([a37.T,a31,a33,a19]) + multi_dot([a34,a25,B(a28,a37),a28]) + 2.0*multi_dot([a35,B(a30,a37).T,a36,a19])),np.zeros((3,1),dtype=np.float64),np.zeros((4,1),dtype=np.float64),2.0*(multi_dot([a35,a28]))**(1.0/2.0),2.0*(multi_dot([a1.T,a1]))**(1.0/2.0),2.0*(multi_dot([a19.T,a19]))**(1.0/2.0)]
 
     
     def eval_jac_eq(self):
@@ -247,49 +249,4 @@ class numerical_assembly(object):
         j30 = B(j19,j25)
 
         self.jac_eq_blocks = [j0,B(j1,config.ubar_ground_jcr_rocker_ch),j9,-1.0*B(j5,config.ubar_ST_rbr_rocker_jcr_rocker_ch),j2,multi_dot([j4,j6,B(j1,j7)]),j2,multi_dot([j7.T,j10,j11]),j2,multi_dot([j4,j6,B(j1,j8)]),j2,multi_dot([j8.T,j10,j11]),j2,multi_dot([j12.T,j6,(j14*B(j1,j15) + sin(j13)*-1.0*B(j1,j16))]),j2,multi_dot([(j14*multi_dot([j15.T,j10]) + sin(j13)*-1.0*multi_dot([j16.T,j10])),B(j5,j12)]),j0,B(j1,config.ubar_ground_jcl_rocker_ch),j9,-1.0*B(j19,config.ubar_ST_rbl_rocker_jcl_rocker_ch),j2,multi_dot([j18,j20,B(j1,j21)]),j2,multi_dot([j21.T,j10,j23]),j2,multi_dot([j18,j20,B(j1,j22)]),j2,multi_dot([j22.T,j10,j23]),j0,B(j24,config.ubar_ST_rbs_coupler_jcs_rc_sph),j9,-1.0*B(j5,config.ubar_ST_rbr_rocker_jcs_rc_sph),j0,B(j24,config.ubar_ST_rbs_coupler_jcs_rc_uni),j9,-1.0*B(j19,config.ubar_ST_rbl_rocker_jcs_rc_uni),j2,multi_dot([j26,j20,B(j24,j27)]),j2,multi_dot([j27.T,j29,j30]),j2,multi_dot([j26,j20,B(j24,j28)]),j2,multi_dot([j28.T,j29,j30]),j0,np.zeros((3,4),dtype=np.float64),np.zeros((4,3),dtype=np.float64),np.eye(4,dtype=np.float64),2.0*j24.T,2.0*j5.T,2.0*j19.T]
-
-
   
-def solve_system(time_array):
-    
-    try:
-        config = inputs()
-        config.F_jcr_rocker_ch = lambda t : np.deg2rad(120)*t
-        config.eval_constants()
-        assembled = numerical_assembly(config)
-#        assembled.set_initial_configuration()
-        soln = solver(assembled)
-        soln.solve_kds(time_array)
-        return soln
-    except np.linalg.LinAlgError:
-        return soln
-
-time_array = np.arange(0,2*np.pi,0.01)
-soln = solve_system(time_array)
-
-import pandas as pd
-import matplotlib.pyplot as plt
-
-pos_history = pd.DataFrame(np.concatenate(list(soln.pos_history.values()),1).T,index=soln.pos_history.keys(),columns=range(49))
-shape = pos_history.shape
-time_array_mod = time_array[:shape[0]-1]
-
-plt.figure(figsize=(8,3))
-plt.plot(pos_history[23][:-1],pos_history[22][:-1])
-#plt.plot(time_array_mod,pos_history[22][:-1])
-#plt.plot(time_array_mod,pos_history[23][:-1])
-plt.grid()
-plt.show()
-
-plt.figure(figsize=(10,6))
-plt.plot(time_array_mod,pos_history[14][:-1])
-plt.plot(time_array_mod,pos_history[15][:-1])
-plt.grid()
-plt.show()
-
-
-plt.figure(figsize=(10,6))
-plt.plot(time_array_mod,pos_history[21][:-1])
-plt.plot(time_array_mod,pos_history[22][:-1])
-plt.grid()
-plt.show()

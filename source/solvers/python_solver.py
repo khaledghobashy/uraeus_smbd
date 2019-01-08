@@ -23,7 +23,7 @@ class solver(object):
     def __init__(self,model):
         self.model = model
                 
-        self.pos_history = {0:self.model.q_initial}
+        self.pos_history = {0:self.model.config.q_initial}
         self.vel_history = {}
         self.acc_history = {}
     
@@ -58,7 +58,7 @@ class solver(object):
         
     def newton_raphson(self,guess=None):
         
-        guess = (self.model.q_initial if guess is None else guess)
+        guess = (self.model.config.q_initial if guess is None else guess)
         self.model.set_coordinates(guess)
         
         A = self.eval_jac_eq().A

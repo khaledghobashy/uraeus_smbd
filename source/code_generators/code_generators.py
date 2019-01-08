@@ -242,6 +242,16 @@ class python_code_generator(abstract_generator):
                         {cse_var_txt}
 
                         {cse_exp_txt}
+                    
+                    @property
+                    def q_initial(self):
+                        q = np.concatenate({[q_initial]})
+                        return q
+                    
+                    @property
+                    def qd_initial(self):
+                        qd = np.concatenate({[qd_initial]})
+                        return qd
                 '''
         
         p = self.printer
@@ -258,7 +268,13 @@ class python_code_generator(abstract_generator):
         cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
         cse_var_txt = re.sub(pattern,self._insert_self,cse_var_txt)
         cse_exp_txt = re.sub(pattern,self._insert_self,cse_exp_txt)
-
+        
+        q_text = ','.join(self.generalized_coordinates_lhs)
+        q_text = re.sub(pattern,self._insert_self,q_text)
+        
+        qd_text = ','.join(self.generalized_velocities_lhs)
+        qd_text = re.sub(pattern,self._insert_self,qd_text)
+        
         text = text.expandtabs()
         text = textwrap.dedent(text)
         inputs = textwrap.indent(inputs,indent).lstrip()
@@ -266,7 +282,9 @@ class python_code_generator(abstract_generator):
         cse_exp_txt = textwrap.indent(cse_exp_txt,indent).lstrip()
         text = text.format(inputs = inputs,
                            cse_exp_txt = cse_exp_txt,
-                           cse_var_txt = cse_var_txt)
+                           cse_var_txt = cse_var_txt,
+                           q_initial  = q_text,
+                           qd_initial = qd_text)
         
         return text
 
