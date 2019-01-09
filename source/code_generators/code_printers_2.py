@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jan  1 12:22:44 2019
+Created on Wed Jan  9 08:49:13 2019
 
-@author: khale
+@author: khaled.ghobashy
 """
 
 import sympy as sm

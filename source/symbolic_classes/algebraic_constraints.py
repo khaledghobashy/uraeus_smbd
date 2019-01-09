@@ -189,6 +189,9 @@ class dot_product_2(object):
     def construct(self,obj):
         v = self.v
         
+        k_bar = getattr(obj.mi_bar,'k')
+        k = k_bar.express()
+        
         v_bar = getattr(obj.mi_bar,v)
         v = v_bar.express()
         dij = obj.dij
@@ -198,12 +201,12 @@ class dot_product_2(object):
         Pdj = obj.Pdj
         dijd = Rdi + obj.Bui*Pdi - Rdj + obj.Buj*Pdj
         
-        pos_level_equation = v.T*dij
+        pos_level_equation = v.T*(dij+k)
         vel_level_equation = zero_matrix(1,1)
-        acc_level_equation =   v.T*(B(Pdj,obj.uj_bar)*Pdj - B(Pdi,obj.ui_bar)*Pdi) \
-                             + dij.T*B(Pdi,v_bar)*Pdi \
+        acc_level_equation =   v.T*( B(Pdi,obj.ui_bar)*Pdi - B(Pdj,obj.uj_bar)*Pdj ) \
+                             + (dij+k).T*B(Pdi,v_bar)*Pdi \
                              + 2*(B(obj.Pi,v_bar)*Pdi).T*dijd
-        jacobian = ([-v.T, dij.T*B(obj.Pi,v_bar) - v.T*obj.Bui], [ v.T, v.T*obj.Buj])
+        jacobian = ([v.T, (dij+k).T*B(obj.Pi,v_bar) + v.T*obj.Bui], [ -v.T, -v.T*obj.Buj])
         
         obj._pos_level_equations.append(pos_level_equation)
         obj._vel_level_equations.append(vel_level_equation)
