@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 
 config = inputs()
 #config.F_jcr_rocker_ch = lambda t : np.deg2rad(90)*np.sin(5*t)+np.deg2rad(45)
-config.F_jcr_rocker_ch = lambda t : np.deg2rad(15)*np.sin(2*t)
+config.F_jcr_rocker_ch = lambda t : np.deg2rad(30) + np.deg2rad(30)*np.sin(2*t)
 config.F_mcl_zact = lambda t : 130*np.sin(2*t)
 config.F_mcr_zact = lambda t : 130*np.sin(2*t)
 config.F_jcl_hub_bearing = config.F_jcr_hub_bearing = lambda t : 0
@@ -37,7 +37,7 @@ def solve_system(time_array):
     except np.linalg.LinAlgError:
         return soln
 
-time_array = np.arange(0,2,0.01)
+time_array = np.arange(0,3.14,0.1)
 soln = solve_system(time_array)
 
 pos_history = pd.DataFrame(np.concatenate(list(soln.pos_history.values()),1).T,index=soln.pos_history.keys(),columns=range(126))
