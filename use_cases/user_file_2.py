@@ -21,9 +21,9 @@ import matplotlib.pyplot as plt
 
 config = inputs()
 #config.F_jcr_rocker_ch = lambda t : np.deg2rad(90)*np.sin(5*t)+np.deg2rad(45)
-config.F_jcr_rocker_ch = lambda t : np.deg2rad(30) + np.deg2rad(30)*np.sin(2*t)
-config.F_mcl_zact = lambda t : 130*np.sin(2*t)
-config.F_mcr_zact = lambda t : 130*np.sin(2*t)
+config.F_jcr_rocker_ch = lambda t : 0#np.deg2rad(30) + np.deg2rad(30)*np.sin(2*t)
+config.F_mcl_zact = lambda t : 170*np.sin(2*t)
+config.F_mcr_zact = lambda t : 170*np.sin(2*t)
 config.F_jcl_hub_bearing = config.F_jcr_hub_bearing = lambda t : 0
 
 config.eval_constants()

@@ -9,7 +9,7 @@ import sympy as sm
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from source.symbolic_classes.bodies import body, ground
+from source.symbolic_classes.bodies import body, ground, virtual_body
 from source.symbolic_classes.spatial_joints import absolute_locator
 from source.symbolic_classes.algebraic_constraints import joint_actuator
 
@@ -24,6 +24,8 @@ class abstract_topology(object):
         # adding ground node
         attr_dict = self._attr_gen(ground)
         self.graph.add_node('ground',**attr_dict)
+        
+        self.input_args_graph = nx.MultiDiGraph(name=name)
     
     @property
     def selected_variant(self):
@@ -50,14 +52,163 @@ class abstract_topology(object):
         nve_edges = sum([edge[-1] for edge in self.edges(data='nve')])
         return nve_nodes + nve_edges
     
+    @property
+    def q(self):
+        return sm.MatrixSymbol('q',self.n,1)
+    @property
+    def qd(self):
+        return sm.MatrixSymbol('qd',self.n,1)
+    
     def _attr_gen(self,obj):
-        attr_dict ={'n':obj.n,'nc':obj.nc,'nve':obj.nve,'class':obj}
+        attr_dict ={'n':obj.n,'nc':obj.nc,'nve':obj.nve,
+                    'class':obj,'mirr':None,'align':'s'}
         return attr_dict
     
     def draw_topology(self):
         plt.figure(figsize=(6,6))
         nx.draw_spring(self.selected_variant,with_labels=True)
         plt.show()
+    
+    def _map_coordinates(self):
+        q = []
+        qd = []
+        i = 0
+        for n in self.nodes(data='obj'):
+            q.append(sm.Eq(n[-1].R,self.q[i:i+3,0]))
+            q.append(sm.Eq(n[-1].P,self.q[i+3:i+3+4,0]))
+            
+            qd.append(sm.Eq(n[-1].Rd,self.qd[i:i+3,0]))
+            qd.append(sm.Eq(n[-1].Pd,self.qd[i+3:i+3+4,0]))
+            
+            i+=7
+        self.q_maped = q
+        self.qd_maped = qd
+    
+    def _get_configuration_constants(self):
+        cons = []
+        for e in self.edges(data='obj'):
+            cons += e[-1].configuration_constants()
+        return cons
+
+    def _get_numerical_arguments(self):
+        args = []
+        for e in self.edges(data='obj'):
+            args += e[-1].numerical_arguments()
+        for n in self.nodes(data='obj'):
+            args += n[-1].numerical_arguments()
+        return args
+    
+    def _check_if_virtual(self,n):
+        body_type = self.nodes[n]['class']
+#        print('%s node is of class %s'%(n,body_type.__name__))
+#        if issubclass(body_type,virtual_body): print( '        bypassing node: %s'%n)
+        return issubclass(body_type,virtual_body)
+    
+    def _assemble_nodes(self):
+        for n in self.nodes:
+            if self._check_if_virtual(n):
+                continue
+            body_type = self.nodes[n]['class']
+            self.nodes[n]['obj']  = body_type(n)
+            self.nodes[n]['mirr'] = self.nodes[n]['mirr']
+            
+    def _assemble_edge(self,e):
+        edge_class = self.edges[e]['class']
+        b1, b2, name = e
+        if issubclass(edge_class,joint_actuator):
+            joint_name = self.edges[e]['joint_name']
+            joint_object = self.edges[(b1,b2,joint_name)]['obj']
+            self.edges[e]['obj'] = edge_class(name,joint_object)
+        elif issubclass(edge_class,absolute_locator):
+            coordinate = self.edges[e]['coordinate']
+            self.edges[e]['obj'] = edge_class(name,self.nodes[b1]['obj'],coordinate)
+        else:
+            self.edges[e]['obj'] = edge_class(name,self.nodes[b1]['obj'],self.nodes[b2]['obj'])
+    
+
+    def _assemble_edges(self):
+        for e in self.edges:
+            b1, b2, name = e
+            if self._check_if_virtual(b1) or self._check_if_virtual(b2):
+                pass
+            else:
+                self._assemble_edge(e)
+                
+    def initialize_input_args(self):
+        pass
+    
+    def _assemble_equations(self):
+        
+        edgelist = self.edges
+        nodelist = self.nodes
+        node_index = dict([(n,i) for i,n in enumerate(nodelist)])
+
+        n_nodes = len(nodelist)
+        cols = 2*n_nodes
+        
+        nve = self.nve  # number of constraint vector equations
+        
+        equations = sm.MutableSparseMatrix(nve,1,None)
+        vel_rhs   = sm.MutableSparseMatrix(nve,1,None)
+        acc_rhs   = sm.MutableSparseMatrix(nve,1,None)
+        jacobian  = sm.MutableSparseMatrix(nve,cols,None)
+        
+        row_ind = 0
+        for e in edgelist:
+            u,v = e[:2]
+            if self._check_if_virtual(u) or self._check_if_virtual(v):
+#                print('     bypassing edge: %s'%(e,))
+                continue
+            try:
+                eo  = self.edges[e]['obj'] # joint object
+            except KeyError:
+#                self._assemble_edge(e); print('     assembling: %s'%e)
+                eo  = self.edges[e]['obj'] # joint object
+            
+            # tracker of row index based on the current joint type and the history
+            # of the loop
+            eo_nve = eo.nve+row_ind 
+            
+            ui = node_index[u]
+            vi = node_index[v]
+            
+            # assigning the joint jacobians to the propper index in the system jacobian
+            # on the "constraint vector equations" level.
+            jacobian[row_ind:eo_nve,ui*2:ui*2+2] = eo.jacobian_i.blocks
+            jacobian[row_ind:eo_nve,vi*2:vi*2+2] = eo.jacobian_j.blocks
+            
+            equations[row_ind:eo_nve,0] = eo.pos_level_equations.blocks
+            vel_rhs[row_ind:eo_nve,0] = eo.vel_level_equations.blocks
+            acc_rhs[row_ind:eo_nve,0] = eo.acc_level_equations.blocks
+           
+            row_ind += eo.nve
+        
+        for i,n in enumerate(nodelist):
+            if self._check_if_virtual(n):
+                continue
+            b = self.nodes[n]['obj']
+            if isinstance(b,ground):
+                jacobian[row_ind:row_ind+2,i*2:i*2+2]    = b.normalized_jacobian.blocks
+                equations[row_ind:row_ind+2,0] = b.normalized_pos_equation.blocks
+                vel_rhs[row_ind:row_ind+2,0]   = b.normalized_vel_equation.blocks
+                acc_rhs[row_ind:row_ind+2,0]   = b.normalized_acc_equation.blocks
+            else:
+                jacobian[row_ind,i*2+1] = b.normalized_jacobian[1]
+                equations[row_ind,0] = b.normalized_pos_equation
+                vel_rhs[row_ind,0]   = b.normalized_vel_equation
+                acc_rhs[row_ind,0]   = b.normalized_acc_equation
+                
+            row_ind += b.nve
+        
+        self.pos_equations = equations
+        self.vel_equations = vel_rhs
+        self.acc_equations = acc_rhs
+        self.jac_equations = jacobian
+    
+    def assemble_model(self):
+        self._assemble_nodes()
+        self._assemble_edges()
+        self._assemble_equations()
 
 ###############################################################################
 ###############################################################################
@@ -114,7 +265,7 @@ class template_based_topology(topology):
         
     @property
     def virtual_bodies(self):
-        condition = lambda n: n.startswith('vbs_') or n.startswith('vbr_') or n.startswith('vbl_')
+        condition = self._check_if_virtual
         virtuals  = filter(condition,self.selected_variant.nodes)
         return set(virtuals)
     
@@ -133,18 +284,24 @@ class template_based_topology(topology):
             super().add_body(node1)
             variant.nodes[node1]['mirr'] = node2
     
+    def _add_virtual_body(self,name):
+        variant = self.selected_variant
+        if name not in variant.nodes():
+            attr_dict = self._attr_gen(virtual_body)
+            variant.add_node(name,**attr_dict)
+    
     def add_virtual_body(self,name,mirrored=False):
         variant = self.selected_variant
         if mirrored:
             node1 = 'vbr_%s'%name
             node2 = 'vbl_%s'%name
-            super().add_body(node1)
-            super().add_body(node2)
+            self._add_virtual_body(node1)
+            self._add_virtual_body(node2)
             variant.nodes[node1]['mirr'] = node2
             variant.nodes[node2]['mirr'] = node1 
         else:
             node1 = node2 = 'vbs_%s'%name
-            super().add_body(node1)
+            self._add_virtual_body(node1)
             variant.nodes[node1]['mirr'] = node2
     
     def add_joint(self,typ,name,body_i,body_j,mirrored=False):
@@ -198,52 +355,25 @@ class subsystem(abstract_topology):
     
     def __init__(self,name,topology):
         self.name = name+'_'
+        self.graph = topology.graph.copy()
         self.topology = topology
+        self._relable()
+        self._virtual_bodies = []
+    
+    def _relable(self):
         def label(x):
             name = (x if x=='ground' else self.name + x)
             return name
-        self.graph = nx.relabel_nodes(topology.graph,label)
-        self._virtual_bodies = []
+        self.graph = nx.relabel_nodes(self.graph,label)
+        maped = map(label,dict(self.nodes(data='mirr')).values())
+        maped = dict(zip(self.nodes,maped))
+        nx.set_node_attributes(self.graph,maped,'mirr')
     
     @property
     def virtual_bodies(self):
-        virtual_bodies = [self.name+i for i in self.topology.virtual_bodies]
-        return set(virtual_bodies)
-    
-    def _assemble_nodes(self):
-        for n in self.nodes:
-            if n.startswith(self.name+'vb'):
-                pass
-            else:
-                body_type = self.nodes[n]['class']
-                self.nodes[n]['obj'] = body_type(n)
-            self.nodes[n]['mirr']=self.name+self.nodes[n]['mirr']
-    
-    def _assemble_edge(self,e):
-        edge_class = self.edges[e]['class']
-        b1, b2, name = e
-        if issubclass(edge_class,joint_actuator):
-            joint_name = self.edges[e]['joint_name']
-            joint_object = self.edges[(b1,b2,joint_name)]['obj']
-            self.edges[e]['obj'] = edge_class(name,joint_object)
-        elif issubclass(edge_class,absolute_locator):
-            coordinate = self.edges[e]['coordinate']
-            self.edges[e]['obj'] = edge_class(name,self.nodes[b1]['obj'],coordinate)
-        else:
-            self.edges[e]['obj'] = edge_class(name,self.nodes[b1]['obj'],self.nodes[b2]['obj'])
-    
-
-    def _assemble_edges(self):
-        for e in self.edges:
-            b1, b2, name = e
-            if b1.startswith(self.name+'vb') or b2.startswith(self.name+'vb'):
-                pass
-            else:
-                self._assemble_edge(e)
-            
-    def assemble_model(self):
-        self._assemble_nodes()
-        self._assemble_edges()
+        condition = self._check_if_virtual
+        virtuals  = filter(condition,self.selected_variant.nodes)
+        return set(virtuals)
     
 ###############################################################################
 ###############################################################################
@@ -252,15 +382,13 @@ class assembly(subsystem):
     
     def __init__(self,name):
         self.name = name
-        self.ground = ground()
         self.graph = nx.MultiGraph(name=name)
-        self.graph.add_node('ground',obj=self.ground,mirr='ground')
+        attr_dict = self._attr_gen(ground)
+        self.graph.add_node('ground',**attr_dict)
         self.subsystems = {}
         self._virtual_bodies_map = {}
+        self.interface_graph = nx.MultiGraph(name=name)
     
-    @property
-    def nve(self):
-        return super().nve +2
     @property
     def virtual_bodies_map(self):
         return self._virtual_bodies_map
@@ -269,10 +397,7 @@ class assembly(subsystem):
         new_virtuals = subsystem.virtual_bodies
         new_virtuals = zip(new_virtuals,len(new_virtuals)*['ground'])
         self._virtual_bodies_map.update(new_virtuals)
-    
-    def _replace_nodes(self,v,u):
-        nx.relabel_nodes(self.graph,{v:u},copy=False)
-        
+            
     def add_subsystem(self,subsystem):
         self.subsystems[subsystem.name] = subsystem
         subsystem_graph = subsystem.selected_variant
@@ -288,50 +413,34 @@ class assembly(subsystem):
         self.virtual_bodies_map[virtual_node_1] = actual_node_1
         self.virtual_bodies_map[virtual_node_2] = actual_node_2
     
-    def assemble_model(self):
+    def _contracted_nodes(self,u,v):
+        from itertools import chain
+        H = self.graph
+        if H.is_directed():
+            in_edges = ((w, u, d) for w, x, d in H.in_edges(v, data=True))
+            out_edges = ((u, w, d) for x, w, d in H.out_edges(v, data=True))
+            new_edges = chain(in_edges, out_edges)
+        else:
+            new_edges = [(u,w,k,d) for x,w,k,d in H.edges(v,keys=True,data=True) if w!=u]
+        H.add_edges_from(new_edges)
+        self.interface_graph.add_edges_from(new_edges)
+        
+    
+    def _initialize_interface(self):
+        self.graph.add_edges_from(self.virtual_bodies_map.items())
         for v,u in self.virtual_bodies_map.items():
-            self._replace_nodes(v,u)
+#            print('replacing %s with %s'%(v,u))
+            self._contracted_nodes(u,v)
+        for v in self.virtual_bodies_map.keys():
+            self.graph.remove_node(v)
     
-    @property
-    def configuration_constants(self):
-        cons = []
-        for e in self.edges(data='obj'):
-            cons += e[-1].configuration_constants()
-        return cons
-    @property
-    def numerical_arguments(self):
-        args = []
-        for e in self.edges(data='obj'):
-            args += e[-1].numerical_arguments()
-        for n in self.nodes(data='obj'):
-            args += n[-1].numerical_arguments()
-        return args
-    @property
-    def q(self):
-        return sm.MatrixSymbol('q',self.n,1)
-    @property
-    def qd(self):
-        return sm.MatrixSymbol('qd',self.n,1)
-    def map_coordinates(self):
-        q = []
-        qd = []
-        i = 0
-        for n in self.nodes(data='obj'):
-            q.append(sm.Eq(n[-1].R,self.q[i:i+3,0]))
-            q.append(sm.Eq(n[-1].P,self.q[i+3:i+3+4,0]))
-            
-            qd.append(sm.Eq(n[-1].Rd,self.qd[i:i+3,0]))
-            qd.append(sm.Eq(n[-1].Pd,self.qd[i+3:i+3+4,0]))
-            
-            i+=7
-        self.q_maped = q
-        self.qd_maped = qd
-
+    def _assemble_edges(self):
+        for e in self.interface_graph.edges:
+            self._assemble_edge(e)
     
+    def _assemble_equations(self):
+        interface = self.interface_graph
         
-    def generate_equations(self):
-        
-        edgelist = self.edges
         nodelist = self.nodes
         node_index = dict([(n,i) for i,n in enumerate(nodelist)])
 
@@ -340,20 +449,15 @@ class assembly(subsystem):
         
         nve = self.nve  # number of constraint vector equations
         
-        jacobian = sm.MutableSparseMatrix(nve,cols,None)
-        
         equations = sm.MutableSparseMatrix(nve,1,None)
         vel_rhs   = sm.MutableSparseMatrix(nve,1,None)
         acc_rhs   = sm.MutableSparseMatrix(nve,1,None)
+        jacobian  = sm.MutableSparseMatrix(nve,cols,None)
         
         row_ind = 0
-        for e in edgelist:
+        for e in interface.edges:
             u,v = e[:2]
-            try:
-                eo  = self.edges[e]['obj'] # joint object
-            except KeyError:
-                self._assemble_edge(e)
-                eo  = self.edges[e]['obj'] # joint object
+            eo  = self.edges[e]['obj']
             
             # tracker of row index based on the current joint type and the history
             # of the loop
@@ -373,26 +477,22 @@ class assembly(subsystem):
            
             row_ind += eo.nve
         
-        
-        for i,n in enumerate(nodelist):
-            b = self.nodes[n]['obj']
-            if isinstance(b,ground):
-                jacobian[row_ind:row_ind+2,i*2:i*2+2]    = b.normalized_jacobian.blocks
-                equations[row_ind:row_ind+2,0] = b.normalized_pos_equation.blocks
-                vel_rhs[row_ind:row_ind+2,0]   = b.normalized_vel_equation.blocks
-                acc_rhs[row_ind:row_ind+2,0]   = b.normalized_acc_equation.blocks
-            else:
-                jacobian[row_ind,i*2+1] = b.normalized_jacobian[1]
-                equations[row_ind,0] = b.normalized_pos_equation
-                vel_rhs[row_ind,0]   = b.normalized_vel_equation
-                acc_rhs[row_ind,0]   = b.normalized_acc_equation
-                
-            row_ind += b.nve
-        
         self.pos_equations = equations
         self.vel_equations = vel_rhs
         self.acc_equations = acc_rhs
         self.jac_equations = jacobian
+    
+    def assemble_model(self):
+        self._initialize_interface()
+        self._assemble_edges()
+        self._assemble_equations()
+        
+    
+    def draw_interface_graph(self):
+        plt.figure(figsize=(10,6))
+        nx.draw_spring(self.interface_graph,with_labels=True)
+        plt.show()
+
     
     
 

@@ -66,3 +66,17 @@ class ground(body):
     def numerical_arguments(self):
         eq = sm.Eq(self.P_ground,sm.Matrix([1,0,0,0]))
         return super().numerical_arguments() + [eq]
+
+
+class virtual_body(body):
+    
+    n   = 7
+    nc  = 7
+    nve = 2
+    
+    def __init__(self,name):
+        self._key = 'vb_%s'%name
+    
+    def numerical_arguments(self):
+        return []
+

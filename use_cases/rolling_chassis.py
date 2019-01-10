@@ -14,11 +14,11 @@ from source.symbolic_classes.spatial_joints import (revolute, universal,
 from source.mbs_creators.topology_classes import (template_based_topology, 
                                                   subsystem, assembly)
 
-chassis_template = template_based_topology('chassis')
-chassis_template.add_body('chassis')
-
-chassis_subsystem = subsystem('CH',chassis_template)
-chassis_subsystem.assemble_model()
+#chassis_template = template_based_topology('chassis')
+#chassis_template.add_body('chassis')
+#
+#chassis_subsystem = subsystem('CH',chassis_template)
+#chassis_subsystem.assemble_model()
 
 
 dwb_template = template_based_topology('dwb')
@@ -50,7 +50,7 @@ front_axle = subsystem('SU1',dwb_template)
 front_axle.assemble_model()
 
 rear_axle = subsystem('SU2',dwb_template)
-rear_axle.assemble_model()
+#rear_axle.assemble_model()
 
 
 steering_template = template_based_topology('steering')
@@ -71,7 +71,7 @@ rolling_chassis.add_subsystem(front_axle)
 #rolling_chassis.add_subsystem(rear_axle)
 rolling_chassis.add_subsystem(steering_subsystem)
 #rolling_chassis.add_subsystem(chassis_subsystem)
-#rolling_chassis.assign_virtual_body('SU1_vbr_steer','ST_rbr_rocker')
+rolling_chassis.assign_virtual_body('SU1_vbr_steer','ST_rbr_rocker')
 #rolling_chassis.assign_virtual_body('SU2_vbr_steer','CH_rbs_chassis')
 #rolling_chassis.assign_virtual_body('SU1_vbs_chassis','CH_rbs_chassis')
 #rolling_chassis.assign_virtual_body('SU2_vbs_chassis','CH_rbs_chassis')
@@ -79,14 +79,15 @@ rolling_chassis.add_subsystem(steering_subsystem)
 
 
 rolling_chassis.assemble_model()
-rolling_chassis.generate_equations()
-rolling_chassis.map_coordinates()
+#rolling_chassis.generate_equations()
+#rolling_chassis.map_coordinates()
 
 rolling_chassis.draw_topology()
+rolling_chassis.draw_interface_graph()
 
-import source
-source.symbolic_classes.abstract_matrices.ccode_print = True
-source.symbolic_classes.abstract_matrices.enclose = True
-code_generator = python_code_generator(rolling_chassis)
-code = code_generator.write_code_file()
+#import source
+#source.symbolic_classes.abstract_matrices.ccode_print = True
+#source.symbolic_classes.abstract_matrices.enclose = True
+#code_generator = python_code_generator(rolling_chassis)
+#code = code_generator.write_code_file()
 
