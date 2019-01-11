@@ -305,6 +305,12 @@ class vector(sm.MatrixSymbol):
         else:
             return self.args[2]
     
+#    @name.setter
+#    def name(self,value):
+#        self._raw_name = value
+#        self._formated_name = value
+#        self._args = (value,self.frame,self._formated_name)
+    
 
 
 class quatrenion(sm.MatrixSymbol):
