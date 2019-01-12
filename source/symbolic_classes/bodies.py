@@ -42,6 +42,18 @@ class body(reference_frame,abstract_mbs):
     @property
     def name(self):
         return self._key
+    
+    def rename(self,name,prefix=''):
+        self._key = name
+        R_fromated_name  = '{%s}{R_{%s}}'%(prefix,name)
+        Rd_fromated_name = '{%s}{Rd_{%s}}'%(prefix,name)
+        self.R.rename(name,R_fromated_name)
+        self.Rd.rename(name,Rd_fromated_name)
+        P_fromated_name  = '{%s}{P_{%s}}'%(prefix,name)
+        Pd_fromated_name = '{%s}{Pd_{%s}}'%(prefix,name)
+        self.P.rename(name,P_fromated_name)
+        self.Pd.rename(name,Pd_fromated_name)
+
 
 class ground(body):
     

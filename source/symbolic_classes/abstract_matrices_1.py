@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jan  1 10:47:50 2019
+Created on Sat Jan 12 10:39:28 2019
 
 @author: khale
 """
@@ -172,9 +172,7 @@ class zero_matrix(sm.MatrixSymbol):
     def shape(self):
         return self._args
 
-
-
-class reference_frame(object):
+class global_frame(object):
     
     reference_tree = nx.DiGraph()
     
@@ -193,11 +191,22 @@ class reference_frame(object):
         nx.draw(cls.reference_tree,with_labels=True)
         plt.show()
     
+    def __init__(self,id_):
+        self.id = id_
     
-    def __new__(cls, name, parent=None,format_as=None):
-        if not cls._global_set:
-            cls._set_global_frame('grf')
-        return super(reference_frame,cls).__new__(cls)
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.id == other.id
+        return NotImplemented
+
+
+class reference_frame(object):
+
+    def set_global_reference(cls,ref):
+        pass
     
     
     def __init__(self, name, parent=None,format_as=None):

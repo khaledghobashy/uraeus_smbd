@@ -37,6 +37,17 @@ class algebraic_constraints(object):
     def construct(self):
         pass
     
+#    @property
+#    def ui_bar(self):
+#        print('called')
+#        name = 'ubar_%s_%s'%(self.body_i.name,self.name)
+#        formated_name = r'{\bar{u}^{%s}_{%s}}'%(self.body_i.name,self.name)
+#        v = vector(name,frame=self.body_i,format_as=formated_name)
+#        return v
+    @property
+    def ui(self):
+        return self.ui_bar.express(reference_frame._global_frame)
+    
     @property
     def body_i(self):
         return self._body_i
@@ -53,7 +64,7 @@ class algebraic_constraints(object):
         self.mi_bar = reference_frame('Mbar_%s_%s'%(body_i.name,self.name),parent=body_i,
                                       format_as=r'{\bar{M}^{%s}_{%s}}'%(body_i.name,self.name))
         self.Bui = B(self.Pi,self.ui_bar)
-        self.ui = self.ui_bar.express(reference_frame._global_frame)
+#        self.ui = self.ui_bar.express(reference_frame._global_frame)
         try:
             self.construct()
         except AttributeError:
