@@ -239,6 +239,12 @@ class reference_frame(object):
         else:
             return self._formated_name
     
+    def rename(self,name,format_as=None):
+        nx.relabel_nodes(self.reference_tree,{self._key:name},copy=False)
+        self._key = name
+        self._raw_name = name
+        self._formated_name = (format_as if format_as else name)
+        
     
     def express(self,other):
         
@@ -368,7 +374,6 @@ class abstract_mbs(object):
             marker = reference_frame('M_%s'%self.name,format_as=r'{{M}_{%s}}'%self.name)
             symbol = marker._A
             marker.orient_along(axis)
-            marker_eq = sm.Eq(symbol,marker.A)
 
             mi_bar      = marker.express(self.body_i)
             mi_bar_eq   = sm.Eq(self.mi_bar.A, mi_bar)

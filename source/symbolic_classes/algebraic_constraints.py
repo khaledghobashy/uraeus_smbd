@@ -37,16 +37,27 @@ class algebraic_constraints(object):
     def construct(self):
         pass
     
-#    @property
-#    def ui_bar(self):
-#        print('called')
-#        name = 'ubar_%s_%s'%(self.body_i.name,self.name)
-#        formated_name = r'{\bar{u}^{%s}_{%s}}'%(self.body_i.name,self.name)
-#        v = vector(name,frame=self.body_i,format_as=formated_name)
-#        return v
-    @property
-    def ui(self):
-        return self.ui_bar.express(reference_frame._global_frame)
+    def rename(self,name,prefix=''):
+        ui_old_name = self.ui_bar.name
+        ui_raw_name  = prefix + ui_old_name.replace(self.name,name)
+        ui_fromated_name  = prefix + ui_old_name.replace(self.name,name)
+        self.ui_bar.rename(ui_raw_name,ui_fromated_name)
+        
+        uj_old_name = self.uj_bar.name
+        uj_raw_name  = prefix + uj_old_name.replace(self.name,name)
+        uj_fromated_name  = prefix + uj_old_name.replace(self.name,name)
+        self.uj_bar.rename(uj_raw_name,uj_fromated_name)
+        
+        mi_old_name = self.mi_bar.name
+        mi_raw_name  = prefix + mi_old_name.replace(self.name,name)
+        mi_fromated_name  = prefix + mi_old_name.replace(self.name,name)
+        self.mi_bar.rename(mi_raw_name,mi_fromated_name)
+        
+        mj_old_name = self.mj_bar.name
+        mj_raw_name  = prefix + mj_old_name.replace(self.name,name)
+        mj_fromated_name  = prefix + mj_old_name.replace(self.name,name)
+        self.mj_bar.rename(mj_raw_name,mj_fromated_name)
+        
     
     @property
     def body_i(self):
@@ -64,7 +75,7 @@ class algebraic_constraints(object):
         self.mi_bar = reference_frame('Mbar_%s_%s'%(body_i.name,self.name),parent=body_i,
                                       format_as=r'{\bar{M}^{%s}_{%s}}'%(body_i.name,self.name))
         self.Bui = B(self.Pi,self.ui_bar)
-#        self.ui = self.ui_bar.express(reference_frame._global_frame)
+        self.ui = self.ui_bar.express(reference_frame._global_frame)
         try:
             self.construct()
         except AttributeError:

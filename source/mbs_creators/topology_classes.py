@@ -30,6 +30,7 @@ class abstract_topology(object):
     @property
     def selected_variant(self):
         return self.graph
+    
     @property
     def nodes(self):
         return self.selected_variant.nodes
@@ -271,7 +272,7 @@ class template_based_topology(topology):
             super().add_body(node1)
             super().add_body(node2)
             variant.nodes[node1]['mirr'] = node2
-            variant.nodes[node2]['mirr'] = node1 
+            variant.nodes[node2]['mirr'] = node1
         else:
             node1 = node2 = 'rbs_%s'%name
             super().add_body(node1)
@@ -432,9 +433,25 @@ class assembly(subsystem):
         for v in self.virtual_bodies_map.keys():
             self.graph.remove_node(v)
     
+    def _set_configuration_constants(self):
+        graph = self.graph.edge_subgraph(self.interface_graph.edges)
+        cons = nx.get_edge_attributes(graph,'config_const').values()
+        self.configuration_constants = sum(cons,[])
+
+    def _set_numerical_arguments(self):
+        graph = self.graph.edge_subgraph(self.interface_graph.edges)
+        edge_args = nx.get_edge_attributes(graph,'num_args').values()
+        self.numerical_arguments = sum(edge_args,[])
+    
+    def _initialize_toplogy_reqs(self):
+        self._set_configuration_constants()
+        self._set_numerical_arguments()
+    
+    
     def _assemble_edges(self):
         for e in self.interface_graph.edges:
             self._assemble_edge(e)
+
     
     def _assemble_equations(self):
         interface = self.interface_graph
@@ -483,7 +500,7 @@ class assembly(subsystem):
     def assemble_model(self,full=False):
         self._initialize_interface()
         self._assemble_edges()
-#        self._initialize_toplogy_reqs()
+        self._initialize_toplogy_reqs()
         if full:
             super()._assemble_equations()
         else:

@@ -44,7 +44,7 @@ class body(reference_frame,abstract_mbs):
         return self._key
     
     def rename(self,name,prefix=''):
-        self._key = name
+        super().rename(prefix+name)
         R_fromated_name  = '{%s}{R_{%s}}'%(prefix,name)
         Rd_fromated_name = '{%s}{Rd_{%s}}'%(prefix,name)
         self.R.rename(name,R_fromated_name)

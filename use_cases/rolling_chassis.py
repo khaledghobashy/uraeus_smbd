@@ -5,7 +5,7 @@ Created on Sun Jan  6 11:37:15 2019
 @author: khale
 """
 
-from source.code_generators.code_generators import python_code_generator
+from source.code_generators.code_generators import python_code_generator, assembly_generator
 
 from source.symbolic_classes.spatial_joints import (revolute, universal,
                                                     spherical, rotational_actuator,
@@ -84,9 +84,20 @@ rolling_chassis.assemble_model(full=False)
 rolling_chassis.draw_topology()
 rolling_chassis.draw_interface_graph()
 
-#import source
-#source.symbolic_classes.abstract_matrices.ccode_print = True
-#source.symbolic_classes.abstract_matrices.enclose = True
-#code_generator = python_code_generator(rolling_chassis)
-#code = code_generator.write_code_file()
+import source
+source.symbolic_classes.abstract_matrices.ccode_print = True
+source.symbolic_classes.abstract_matrices.enclose = True
+
+front_axle_code = python_code_generator(front_axle)
+front_axle_code.write_code_file()
+
+rear_axle_code = python_code_generator(rear_axle)
+rear_axle_code.write_code_file()
+
+steering_code = python_code_generator(steering_subsystem)
+steering_code.write_code_file()
+
+assembly_code = assembly_generator(rolling_chassis)
+#assembly_code.write_code_file()
+
 
