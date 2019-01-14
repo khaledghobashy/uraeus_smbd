@@ -251,7 +251,6 @@ class reference_frame(object):
         self._formated_name = (format_as if format_as else name)
         self.parent = (parent if parent else self.global_frame)
         self.A = dcm(self._raw_name,self._formated_name)
-        self.update_tree()
              
     def update_tree(self):
         self.global_frame.references_tree.add_edge(self.parent.name, self.name, mat=self.A.T)
