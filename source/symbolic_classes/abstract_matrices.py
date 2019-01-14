@@ -14,6 +14,54 @@ sm.init_printing(pretty_print=False,use_latex=True,forecolor='White')
 ccode_print = False
 enclose = True
 
+class mbs_string(object):
+        
+    def __init__(self,name,prefix='',id_=''):
+        self._name  = name
+        self._prefix = prefix
+        self._id_ = id_
+        
+    @property
+    def name(self):
+        return self._name
+    @name.setter
+    def name(self,value):
+        self._name = value
+        
+    @property
+    def prefix(self):
+        prefix = (self._prefix if self._prefix=='' else self._prefix+'.')
+        return prefix
+    @prefix.setter
+    def prefix(self,value):
+        self._prefix = value
+    
+    @property
+    def id_(self):
+        id_ = (self._id_ if self._id_=='' else self._id_+'_')
+        return id_
+    @id_.setter
+    def id_(self,value):
+        self._id_ = value
+    
+    def __str__(self):
+        return '%s%s%s'%(self.prefix,self.id_,self.name)
+    
+    def __repr__(self):
+        return '%s%s%s'%(self.prefix,self.id_,self.name)
+    
+    def __iter__(self):
+        return iter((self.prefix,self.id_,self.name))
+    
+    def __eq__(self,other):
+        return str(self)==str(other)
+    
+    def __hash__(self):
+        return hash(str(self))
+        
+###############################################################################
+###############################################################################
+
 class AbstractMatrix(sm.MatrixExpr):
     
     is_commutative = False
@@ -53,9 +101,8 @@ class Triad(AbstractMatrix):
     def __init__(self,v1,v2=None):
         super().__init__(v1)
 
-
-################################################################
-################################################################
+###############################################################################
+###############################################################################
 
 class base_vector(sm.MatrixSlice):
     
@@ -78,7 +125,7 @@ class base_vector(sm.MatrixSlice):
         if frame:
             frame = frame
         else:
-            frame = reference_frame._global_frame
+            frame = self.frame.global_frame
         A = self.frame.parent.express(frame)
         return A*self
     
@@ -97,18 +144,11 @@ class base_vector(sm.MatrixSlice):
     
     def _sympystr (self,expr):
         return '%s[:,%s]'%(self.frame.name,self.slice)
-    
-    '''def _pretty(self,expr):
-        return self._formated'''
-    
+        
     @property
     def name(self):
         return '{\hat{%s}_{%s}}'%(self._sym,self.frame.name)
-    
-    
-    '''def doit(self):
-        return self.frame[:,self.slices]'''
-    
+        
     @property
     def func(self):
         return base_vector
@@ -173,30 +213,47 @@ class zero_matrix(sm.MatrixSymbol):
         return self._args
 
 
+class global_frame(object):
+        
+    def __init__(self,name='global'):
+        self.name = name
+        self.references_tree = nx.DiGraph(name=name)
+        self.references_tree.add_node(self.name)
+    
+    @property
+    def nodes(self):
+        return self.references_tree.nodes
+    @property
+    def edges(self):
+        return self.references_tree.edges
+    
+    def merge_globals(self,globals_):
+        for g in globals_:
+            self.references_tree.add_nodes_from(g.nodes(data=True))
+            self.references_tree.add_edges_from(g.edges(data=True))
+    
+    def draw_tree(self):
+        plt.figure(figsize=(10,6))
+        nx.draw(self.references_tree,with_labels=True)
+        plt.show()
+
+
 
 class reference_frame(object):
     
-    reference_tree = nx.DiGraph()
-    
-    _global_set   = False
-    _global_frame = None
-    _is_global    = False
+    _is_global_set  = False
+    global_frame = None
     
     @classmethod
-    def _set_global_frame(cls,name):
-        cls._global_set = True
-        cls._global_frame  = reference_frame(name)
-        cls._global_frame._is_global = True
-        cls.reference_tree.add_node(cls._global_frame.name)
-    @classmethod
-    def show_tree(cls):
-        nx.draw(cls.reference_tree,with_labels=True)
-        plt.show()
-    
+    def set_global_frame(cls,global_instance):
+        cls._is_global_set = True
+        cls.global_frame = global_instance
     
     def __new__(cls, name, parent=None,format_as=None):
-        if not cls._global_set:
-            cls._set_global_frame('grf')
+        if not cls._is_global_set:
+            print('creating global')
+            global_instance = global_frame()
+            cls.set_global_frame(global_instance)
         return super(reference_frame,cls).__new__(cls)
     
     
@@ -206,7 +263,7 @@ class reference_frame(object):
         self._formated_name = (format_as if format_as else name)
         self._key = name
     
-        self.parent = (parent if parent else reference_frame._global_frame)
+        self.parent = (parent if parent else self.global_frame)
         
         self._A = dcm(self._raw_name,self._formated_name)
         self.i  = base_vector(self,'i')
@@ -216,9 +273,8 @@ class reference_frame(object):
         self.update_tree()
             
     def update_tree(self):
-        if self.parent :
-            reference_frame.reference_tree.add_edge(self.parent._key, self._key, mat=self.A.T)
-            reference_frame.reference_tree.add_edge(self._key, self.parent._key, mat=self.A)
+        self.global_frame.references_tree.add_edge(self.parent.name, self.name, mat=self.A.T)
+        self.global_frame.references_tree.add_edge(self.name, self.parent.name, mat=self.A)
     
     @property
     def A(self):
@@ -248,9 +304,9 @@ class reference_frame(object):
     
     def express(self,other):
         
-        child_name  = self._key
-        parent_name = other._key
-        graph = reference_frame.reference_tree
+        child_name  = self.name
+        parent_name = other.name
+        graph = self.global_frame.references_tree
         
         path_nodes  = nx.algorithms.shortest_path(graph, child_name, parent_name)
         path_matrices = []
@@ -287,15 +343,16 @@ class vector(sm.MatrixSymbol):
         if frame:
             self.frame = frame
         else:
-            self.frame = reference_frame._global_frame
+            self.frame = reference_frame.global_frame
         
         self._args = (name,self.frame,self._formated_name)
+        
     
     def express(self,frame=None):
         if frame:
             frame = frame
         else:
-            frame = reference_frame._global_frame
+            frame = reference_frame.global_frame
         A = self.frame.express(frame)
         return A*self
     
@@ -372,7 +429,6 @@ class abstract_mbs(object):
             uj_bar_eq = sm.Eq(self.uj_bar, loc.express(self.body_j) - self.Rj.express(self.body_j))
 
             marker = reference_frame('M_%s'%self.name,format_as=r'{{M}_{%s}}'%self.name)
-            symbol = marker._A
             marker.orient_along(axis)
 
             mi_bar      = marker.express(self.body_i)
@@ -401,3 +457,6 @@ class abstract_mbs(object):
             loc  = sm.Eq(loc,sm.MutableDenseMatrix([0,0,0]))
             axis = sm.Eq(axis,sm.MutableDenseMatrix([0,0,1]))
             return [loc,axis]
+
+
+

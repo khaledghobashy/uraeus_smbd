@@ -8,7 +8,7 @@ Created on Tue Jan  1 10:57:47 2019
 import sympy as sm
 
 from source.symbolic_classes.abstract_matrices import (reference_frame, abstract_mbs, 
-                               vector, quatrenion, zero_matrix, A)
+                               vector, quatrenion, zero_matrix, A, mbs_string)
 
 
 class body(reference_frame,abstract_mbs):
@@ -17,16 +17,19 @@ class body(reference_frame,abstract_mbs):
     nc  = 1
     nve = 1
     
-    def __init__(self,name):
-        super().__init__(name)
+    def __init__(self,sname):
+        super().__init__(sname)
         #print('Inside body()')
-        self._key = name
+        self._key = sname
         
-        self.R  = vector('R_%s'%name, format_as='{R_{%s}}'%name)
-        self.Rd = vector('Rd_%s'%name, format_as='{Rd_{%s}}'%name)
+        prefix, id_, name = sname
         
-        self.P  = quatrenion('P_%s'%name, format_as='{P_{%s}}'%name)
-        self.Pd = quatrenion('Pd_%s'%name, format_as='{Pd_{%s}}'%name)
+        format_ = (prefix,id_+name)
+        self.R  = vector('%sR_%s'%format_, format_as='{%sR_{%s}}'%format_)
+        self.Rd = vector('%sRd_%s'%format_, format_as='{%s\dot{R}_{%s}}'%format_)
+        
+        self.P  = quatrenion('%sP_%s'%format_, format_as='{%sP_{%s}}'%format_)
+        self.Pd = quatrenion('%sPd_%s'%format_, format_as='{%s\dot{P}_{%s}}'%format_)
         
         #print('Generating DCM')
         self.A = A(self.P)
@@ -41,18 +44,19 @@ class body(reference_frame,abstract_mbs):
     
     @property
     def name(self):
-        return self._key
+        return self._key.id_ + self._key.name
+        
     
-    def rename(self,name,prefix=''):
-        super().rename(prefix+name)
-        R_fromated_name  = '{%s}{R_{%s}}'%(prefix,name)
-        Rd_fromated_name = '{%s}{Rd_{%s}}'%(prefix,name)
-        self.R.rename(name,R_fromated_name)
-        self.Rd.rename(name,Rd_fromated_name)
-        P_fromated_name  = '{%s}{P_{%s}}'%(prefix,name)
-        Pd_fromated_name = '{%s}{Pd_{%s}}'%(prefix,name)
-        self.P.rename(name,P_fromated_name)
-        self.Pd.rename(name,Pd_fromated_name)
+#    def rename(self,name,prefix=''):
+#        super().rename(prefix+name)
+#        R_fromated_name  = '{%s}{R_{%s}}'%(prefix,name)
+#        Rd_fromated_name = '{%s}{Rd_{%s}}'%(prefix,name)
+#        self.R.rename(name,R_fromated_name)
+#        self.Rd.rename(name,Rd_fromated_name)
+#        P_fromated_name  = '{%s}{P_{%s}}'%(prefix,name)
+#        Pd_fromated_name = '{%s}{Pd_{%s}}'%(prefix,name)
+#        self.P.rename(name,P_fromated_name)
+#        self.Pd.rename(name,Pd_fromated_name)
 
 
 class ground(body):

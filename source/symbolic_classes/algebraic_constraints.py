@@ -7,7 +7,7 @@ Created on Tue Jan  1 11:06:05 2019
 
 import sympy as sm
 from source.symbolic_classes.abstract_matrices import (reference_frame, abstract_mbs, 
-                               vector, zero_matrix, B)
+                               vector, zero_matrix, B, mbs_string)
 from source.symbolic_classes.bodies import body
 from IPython.display import display
 
@@ -17,14 +17,19 @@ I = sm.Identity(3)
 class algebraic_constraints(object):
     
     def __init__(self,name,body_i=None,body_j=None):
-        self.name = name
+        full_name = mbs_string(name)        
+        
+        self.name = full_name
         self._create_equations_lists()
         
-        try:
-            self.body_i = body_i
-            self.body_j = body_j
-        except AttributeError:
-            pass        
+        self.body_i = body_i
+        self.body_j = body_j
+            
+#        try:
+#            self.body_i = body_i
+#            self.body_j = body_j
+#        except AttributeError:
+#            pass        
     
     def _create_equations_lists(self):
         self._pos_level_equations = []
@@ -36,27 +41,28 @@ class algebraic_constraints(object):
     
     def construct(self):
         pass
+#        self._create_equations_lists()
     
-    def rename(self,name,prefix=''):
-        ui_old_name = self.ui_bar.name
-        ui_raw_name  = prefix + ui_old_name.replace(self.name,name)
-        ui_fromated_name  = prefix + ui_old_name.replace(self.name,name)
-        self.ui_bar.rename(ui_raw_name,ui_fromated_name)
-        
-        uj_old_name = self.uj_bar.name
-        uj_raw_name  = prefix + uj_old_name.replace(self.name,name)
-        uj_fromated_name  = prefix + uj_old_name.replace(self.name,name)
-        self.uj_bar.rename(uj_raw_name,uj_fromated_name)
-        
-        mi_old_name = self.mi_bar.name
-        mi_raw_name  = prefix + mi_old_name.replace(self.name,name)
-        mi_fromated_name  = prefix + mi_old_name.replace(self.name,name)
-        self.mi_bar.rename(mi_raw_name,mi_fromated_name)
-        
-        mj_old_name = self.mj_bar.name
-        mj_raw_name  = prefix + mj_old_name.replace(self.name,name)
-        mj_fromated_name  = prefix + mj_old_name.replace(self.name,name)
-        self.mj_bar.rename(mj_raw_name,mj_fromated_name)
+#    def rename(self,name,prefix=''):
+#        ui_old_name = self.ui_bar.name
+#        ui_raw_name  = prefix + ui_old_name.replace(self.name,name)
+#        ui_fromated_name  = prefix + ui_old_name.replace(self.name,name)
+#        self.ui_bar.rename(ui_raw_name,ui_fromated_name)
+#        
+#        uj_old_name = self.uj_bar.name
+#        uj_raw_name  = prefix + uj_old_name.replace(self.name,name)
+#        uj_fromated_name  = prefix + uj_old_name.replace(self.name,name)
+#        self.uj_bar.rename(uj_raw_name,uj_fromated_name)
+#        
+#        mi_old_name = self.mi_bar.name
+#        mi_raw_name  = prefix + mi_old_name.replace(self.name,name)
+#        mi_fromated_name  = prefix + mi_old_name.replace(self.name,name)
+#        self.mi_bar.rename(mi_raw_name,mi_fromated_name)
+#        
+#        mj_old_name = self.mj_bar.name
+#        mj_raw_name  = prefix + mj_old_name.replace(self.name,name)
+#        mj_fromated_name  = prefix + mj_old_name.replace(self.name,name)
+#        self.mj_bar.rename(mj_raw_name,mj_fromated_name)
         
     
     @property
@@ -70,16 +76,18 @@ class algebraic_constraints(object):
         self.Pi  = body_i.P
         self.Pdi = body_i.Pd
         self.Ai  = body_i.A
-        self.ui_bar = vector('ubar_%s_%s'%(body_i.name,self.name),frame=body_i,
-                             format_as=r'{\bar{u}^{%s}_{%s}}'%(body_i.name,self.name))
-        self.mi_bar = reference_frame('Mbar_%s_%s'%(body_i.name,self.name),parent=body_i,
-                                      format_as=r'{\bar{M}^{%s}_{%s}}'%(body_i.name,self.name))
+        prefix, id_, name = self.name
+        fromate_ = (prefix,body_i.name,id_+name)
+        self.ui_bar = vector('%subar_%s_%s'%fromate_,frame=body_i,
+                             format_as=r'{%s\bar{u}^{%s}_{%s}}'%fromate_)
+        self.mi_bar = reference_frame('%sMbar_%s_%s'%fromate_,parent=body_i,
+                                      format_as=r'{%s\bar{M}^{%s}_{%s}}'%fromate_)
         self.Bui = B(self.Pi,self.ui_bar)
-        self.ui = self.ui_bar.express(reference_frame._global_frame)
-        try:
-            self.construct()
-        except AttributeError:
-            pass
+        self.ui = self.ui_bar.express()
+#        try:
+#            self.construct()
+#        except AttributeError:
+#            pass
     
     @property
     def body_j(self):
@@ -92,16 +100,19 @@ class algebraic_constraints(object):
         self.Pj  = body_j.P
         self.Pdj = body_j.Pd
         self.Aj  = body_j.A
-        self.uj_bar = vector('ubar_%s_%s'%(self.body_j.name,self.name),frame=body_j,
-                             format_as=r'{\bar{u}^{%s}_{%s}}'%(self.body_j.name,self.name))
-        self.mj_bar = reference_frame('Mbar_%s_%s'%(self.body_j.name,self.name),parent=body_j,
-                                      format_as=r'{\bar{M}^{%s}_{%s}}'%(self.body_j.name,self.name))
+        prefix, id_, name = self.name
+        fromate_ = (prefix,body_j.name,id_+name)
+        self.uj_bar = vector('%subar_%s_%s'%fromate_,frame=body_j,
+                             format_as=r'{%s\bar{u}^{%s}_{%s}}'%fromate_)
+        self.mj_bar = reference_frame('%sMbar_%s_%s'%fromate_,parent=body_j,
+                                      format_as=r'{%s\bar{M}^{%s}_{%s}}'%fromate_)
         self.Buj = B(self.Pj,self.uj_bar)
-        self.uj = self.uj_bar.express(reference_frame._global_frame)
-        try:
-            self.construct()
-        except AttributeError:
-            pass
+        self.uj = self.uj_bar.express()
+        self.construct()
+#        try:
+#            self.construct()
+#        except AttributeError:
+#            pass
     
     @property
     def dij(self):
