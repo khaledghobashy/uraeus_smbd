@@ -11,7 +11,6 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 sm.init_printing(pretty_print=False,use_latex=True,forecolor='White')
-ccode_print = False
 enclose = True
 
 class mbs_string(object):
@@ -117,15 +116,15 @@ class base_vector(sm.MatrixSlice):
         self.slice = slices[sym]
         self.frame = frame
         self._sym  = sym
-        self._name = '%s_%s'%(sym,frame.name)
-        self._formated = '{\hat{%s}_{%s}}'%(self._sym,self.frame.name)
         self._args = (frame,sym)
+        self._formated = '{\hat{%s}_{%s}}'%(self._sym,self.frame.name)
+    
+    @property
+    def name(self):
+        return self._formated
     
     def express(self,frame=None):
-        if frame:
-            frame = frame
-        else:
-            frame = self.frame.global_frame
+        frame = (frame if frame is not None else self.frame.global_frame)
         A = self.frame.parent.express(frame)
         return A*self
     
@@ -146,47 +145,37 @@ class base_vector(sm.MatrixSlice):
         return '%s[:,%s]'%(self.frame.name,self.slice)
         
     @property
-    def name(self):
-        return '{\hat{%s}_{%s}}'%(self._sym,self.frame.name)
-        
-    @property
     def func(self):
         return base_vector
 
-
+###############################################################################
 class dcm(sm.MatrixSymbol):
     shape = (3,3)
     
     is_commutative = False
     
     def __new__(cls,name, format_as=None):
-        
         if format_as:
             name = format_as
-        
         return super(dcm,cls).__new__(cls,name,3,3)
     
     def __init__(self,name, frame=None, format_as=None):
-        
+        self._args=(name,frame,format_as)
         self._raw_name = name
         self._formated_name = super().name
         
-        self._args=(self._raw_name,self._formated_name)
+    @property
+    def name(self):
+        return self._formated_name
     
     def doit(self):
         return self
     
     @property
-    def name(self):
-        if ccode_print:
-            return self.args[0]
-        else:
-            return self.args[1]
-    @property
     def func(self):
         return dcm
         
-
+###############################################################################
 class zero_matrix(sm.MatrixSymbol):
     
     def __new__(cls,m,n):
@@ -212,7 +201,7 @@ class zero_matrix(sm.MatrixSymbol):
     def shape(self):
         return self._args
 
-
+###############################################################################
 class global_frame(object):
         
     def __init__(self,name='global'):
@@ -237,8 +226,7 @@ class global_frame(object):
         nx.draw(self.references_tree,with_labels=True)
         plt.show()
 
-
-
+###############################################################################
 class reference_frame(object):
     
     _is_global_set  = False
@@ -261,17 +249,10 @@ class reference_frame(object):
         #print('Inside reference_frame()')
         self._raw_name = name
         self._formated_name = (format_as if format_as else name)
-        self._key = name
-    
         self.parent = (parent if parent else self.global_frame)
-        
-        self._A = dcm(self._raw_name,self._formated_name)
-        self.i  = base_vector(self,'i')
-        self.j  = base_vector(self,'j')
-        self.k  = base_vector(self,'k')
-
+        self.A = dcm(self._raw_name,self._formated_name)
         self.update_tree()
-            
+             
     def update_tree(self):
         self.global_frame.references_tree.add_edge(self.parent.name, self.name, mat=self.A.T)
         self.global_frame.references_tree.add_edge(self.name, self.parent.name, mat=self.A)
@@ -289,21 +270,18 @@ class reference_frame(object):
     
     @property
     def name(self):
-        global ccode_print
-        if ccode_print:
-            return self._raw_name
+        return self._formated_name
+    
+    def _ccode(self,expr,**kwargs):
+        return self._raw_name
+            
+    def orient_along(self,v1,v2=None):
+        if v2 is None:
+            self.A = Triad(v1)
         else:
-            return self._formated_name
-    
-    def rename(self,name,format_as=None):
-        nx.relabel_nodes(self.reference_tree,{self._key:name},copy=False)
-        self._key = name
-        self._raw_name = name
-        self._formated_name = (format_as if format_as else name)
-        
-    
+            self.A = Triad(v1,v2)
+            
     def express(self,other):
-        
         child_name  = self.name
         parent_name = other.name
         graph = self.global_frame.references_tree
@@ -312,16 +290,11 @@ class reference_frame(object):
         path_matrices = []
         for i in range(len(path_nodes)-1):
             path_matrices.append(graph.edges[path_nodes[-i-2],path_nodes[-i-1]]['mat'])
-        
         mat = sm.MatMul(*path_matrices)
         return mat
     
-    def orient_along(self,v1,v2=None):
-        if v2 is None:
-            self.A = Triad(v1)
-        else:
-            self.A = Triad(v1,v2)
-    
+###############################################################################
+###############################################################################
 
 class vector(sm.MatrixSymbol):
     shape = (3,1)
@@ -329,54 +302,37 @@ class vector(sm.MatrixSymbol):
     is_commutative = False
     
     def __new__(cls,name, frame=None, format_as=None):
-        
         if format_as:
             name = format_as
-        
         return super(vector,cls).__new__(cls,name,3,1)
     
     def __init__(self,name, frame=None, format_as=None):
-        
         self._raw_name = name
         self._formated_name = super().name
-        
-        if frame:
-            self.frame = frame
-        else:
-            self.frame = reference_frame.global_frame
-        
+        self.frame = (frame if frame is not None else reference_frame.global_frame)        
         self._args = (name,self.frame,self._formated_name)
         
-    
     def express(self,frame=None):
-        if frame:
-            frame = frame
-        else:
-            frame = reference_frame.global_frame
+        frame = (frame if frame is not None else reference_frame.global_frame)
         A = self.frame.express(frame)
         return A*self
     
+    @property
+    def name(self):
+        return self._formated_name
     
     def doit(self):
         return self
-    
-    @property
-    def name(self):
-        if ccode_print:
-            return self.args[0]
-        else:
-            return self.args[2]
     
     def rename(self,name,format_as=None):
         self._raw_name = name
         self._formated_name = (format_as if format_as else name)
         self._args = (name,self.frame,self._formated_name)
     
-
-
+###############################################################################
 class quatrenion(sm.MatrixSymbol):
-    shape = (4,1)
     
+    shape = (4,1)
     is_commutative = False
     
     def __new__(cls, name, format_as=None):
@@ -387,31 +343,26 @@ class quatrenion(sm.MatrixSymbol):
     def __init__(self,name, format_as=None):
         self._raw_name = name
         self._formated_name = super().name
-        
-        self._args = (name,self._formated_name)
+        self._args = (name,format_as)
     
+    @property
+    def name(self):
+        return self._formated_name 
+
     def doit(self):
         return self
     
     @property
     def func(self):
         return self.__class__
-        
-        
-    @property
-    def name(self):
-        if ccode_print:
-            return self.args[0]
-        else:
-            return self.args[1]
-    
+            
     def rename(self,name,format_as=None):
         self._raw_name = name
         self._formated_name = (format_as if format_as else name)
-        self._args = (name,self._formated_name)
-
+        self._args = (name,format_as)
     
-
+###############################################################################
+###############################################################################
 
 class abstract_mbs(object):
     

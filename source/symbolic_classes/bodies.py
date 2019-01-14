@@ -18,9 +18,9 @@ class body(reference_frame,abstract_mbs):
     nve = 1
     
     def __init__(self,sname):
+        self._name = sname
         super().__init__(sname)
         #print('Inside body()')
-        self._key = sname
         
         prefix, id_, name = sname
         
@@ -44,7 +44,7 @@ class body(reference_frame,abstract_mbs):
     
     @property
     def name(self):
-        return self._key.id_ + self._key.name
+        return self._name #super().name.id_ + super().name.name
         
     
 #    def rename(self,name,prefix=''):
