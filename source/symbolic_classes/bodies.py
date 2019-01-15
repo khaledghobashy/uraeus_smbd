@@ -23,11 +23,10 @@ class body(reference_frame,abstract_mbs):
         #print('Inside body()')
         
         prefix, id_, name = sname
-        
         format_ = (prefix,id_+name)
+        
         self.R  = vector('%sR_%s'%format_, format_as='{%sR_{%s}}'%format_)
         self.Rd = vector('%sRd_%s'%format_, format_as='{%s\dot{R}_{%s}}'%format_)
-        
         self.P  = quatrenion('%sP_%s'%format_, format_as='{%sP_{%s}}'%format_)
         self.Pd = quatrenion('%sPd_%s'%format_, format_as='{%s\dot{P}_{%s}}'%format_)
         
@@ -44,8 +43,11 @@ class body(reference_frame,abstract_mbs):
     
     @property
     def name(self):
-        return self._name #super().name.id_ + super().name.name
-        
+        return self._name
+    
+    @property
+    def id_name(self):
+        return self._name.id_name
     
 #    def rename(self,name,prefix=''):
 #        super().rename(prefix+name)
@@ -66,11 +68,11 @@ class ground(body):
     nve = 2
     
     def __new__(cls,*args):
-        name = 'ground'
+        name = mbs_string('ground')
         return super().__new__(cls,name)
     def __init__(self,*args):
-        super().__init__('ground')
-        self._key = 'ground'
+        name = mbs_string('ground')
+        super().__init__(name)
         self.P_ground = quatrenion('Pg_%s'%self.name,format_as='{Pg_{%s}}'%self.name)
         
         self.normalized_pos_equation = sm.BlockMatrix([[self.R], [self.P-self.P_ground]])

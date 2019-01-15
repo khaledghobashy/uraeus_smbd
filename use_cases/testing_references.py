@@ -16,10 +16,11 @@ reference_frame.set_global_frame(global_instance)
 
 a_str = mbs_string('a','s_0','rbl')
 b_str = mbs_string('b','s_0','rbl')
+J_str = mbs_string('J','s_0','jcl')
 
 a = body(a_str)
 b = body(b_str)
-j = revolute('J',a,b)
+j = revolute(J_str,a,b)
 
 reference_frame.global_frame.draw_tree()
 j.mi_bar.global_frame.draw_tree()

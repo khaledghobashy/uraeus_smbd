@@ -43,6 +43,10 @@ class mbs_string(object):
     def id_(self,value):
         self._id_ = value
     
+    @property
+    def id_name(self):
+        return self.id_ + self.name
+    
     def __str__(self):
         return '%s%s%s'%(self.prefix,self.id_,self.name)
     
@@ -53,10 +57,15 @@ class mbs_string(object):
         return iter((self.prefix,self.id_,self.name))
     
     def __eq__(self,other):
-        return str(self)==str(other)
+        return hash(self)==hash(other)
     
     def __hash__(self):
         return hash(str(self))
+    
+    def __copy__(self):
+        return mbs_string(self._name,self._prefix,self._id_)
+    def __deepcopy__(self,*args):
+        return mbs_string(self._name,self._prefix,self._id_)
         
 ###############################################################################
 ###############################################################################
@@ -117,7 +126,7 @@ class base_vector(sm.MatrixSlice):
         self.frame = frame
         self._sym  = sym
         self._args = (frame,sym)
-        self._formated = '{\hat{%s}_{%s}}'%(self._sym,self.frame.name)
+        self._formated = '{\hat{%s}_{%s}}'%(self._sym,self.frame.A)
     
     @property
     def name(self):
@@ -155,14 +164,14 @@ class dcm(sm.MatrixSymbol):
     is_commutative = False
     
     def __new__(cls,name, format_as=None):
-        if format_as:
+        if format_as is not None:
             name = format_as
         return super(dcm,cls).__new__(cls,name,3,3)
     
-    def __init__(self,name, frame=None, format_as=None):
-        self._args=(name,frame,format_as)
+    def __init__(self,name,format_as=None):
         self._raw_name = name
         self._formated_name = super().name
+        self._args=(name,format_as)
         
     @property
     def name(self):
@@ -225,6 +234,18 @@ class global_frame(object):
         plt.figure(figsize=(10,6))
         nx.draw(self.references_tree,with_labels=True)
         plt.show()
+    
+    def express(self,other):
+        child_name  = self.name
+        parent_name = other.name
+        graph = self.references_tree
+        
+        path_nodes  = nx.algorithms.shortest_path(graph, child_name, parent_name)
+        path_matrices = []
+        for i in range(len(path_nodes)-1):
+            path_matrices.append(graph.edges[path_nodes[-i-2],path_nodes[-i-1]]['mat'])
+        mat = sm.MatMul(*path_matrices)
+        return mat
 
 ###############################################################################
 class reference_frame(object):
@@ -248,9 +269,9 @@ class reference_frame(object):
     def __init__(self, name, parent=None,format_as=None):
         #print('Inside reference_frame()')
         self._raw_name = name
-        self._formated_name = (format_as if format_as else name)
+        self._formated_name = (format_as if format_as is not None else name)
         self.parent = (parent if parent else self.global_frame)
-        self.A = dcm(self._raw_name,self._formated_name)
+        self.A = dcm(str(name),format_as=format_as)
              
     def update_tree(self):
         self.global_frame.references_tree.add_edge(self.parent.name, self.name, mat=self.A.T)
@@ -269,7 +290,7 @@ class reference_frame(object):
     
     @property
     def name(self):
-        return self._formated_name
+        return self._raw_name
     
     def _ccode(self,expr,**kwargs):
         return self._raw_name
@@ -408,5 +429,7 @@ class abstract_mbs(object):
             axis = sm.Eq(axis,sm.MutableDenseMatrix([0,0,1]))
             return [loc,axis]
 
+###############################################################################
+###############################################################################
 
 

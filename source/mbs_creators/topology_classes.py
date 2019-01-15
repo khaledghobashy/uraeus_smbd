@@ -8,7 +8,9 @@ Created on Tue Jan  1 11:31:35 2019
 import sympy as sm
 import matplotlib.pyplot as plt
 import networkx as nx
+import copy
 
+from source.symbolic_classes.abstract_matrices import global_frame, reference_frame, mbs_string
 from source.symbolic_classes.bodies import body, ground, virtual_body
 from source.symbolic_classes.spatial_joints import absolute_locator
 from source.symbolic_classes.algebraic_constraints import joint_actuator
@@ -267,14 +269,14 @@ class template_based_topology(topology):
     def add_body(self,name,mirrored=False):
         variant = self.selected_variant
         if mirrored:
-            node1 = 'rbr_%s'%name
-            node2 = 'rbl_%s'%name
+            node1 = mbs_string(name,id_='rbr')
+            node2 = mbs_string(name,id_='rbl')
             super().add_body(node1)
             super().add_body(node2)
             variant.nodes[node1]['mirr'] = node2
             variant.nodes[node2]['mirr'] = node1
         else:
-            node1 = node2 = 'rbs_%s'%name
+            node1 = node2 =  mbs_string(name,id_='rbs')
             super().add_body(node1)
             variant.nodes[node1]['mirr'] = node2
     
@@ -287,14 +289,14 @@ class template_based_topology(topology):
     def add_virtual_body(self,name,mirrored=False):
         variant = self.selected_variant
         if mirrored:
-            node1 = 'vbr_%s'%name
-            node2 = 'vbl_%s'%name
+            node1 = mbs_string(name,id_='vbr')
+            node2 = mbs_string(name,id_='vbl')
             self._add_virtual_body(node1)
             self._add_virtual_body(node2)
             variant.nodes[node1]['mirr'] = node2
             variant.nodes[node2]['mirr'] = node1 
         else:
-            node1 = node2 = 'vbs_%s'%name
+            node1 = node2 = mbs_string(name,id_='vbs')
             self._add_virtual_body(node1)
             variant.nodes[node1]['mirr'] = node2
     
@@ -303,8 +305,8 @@ class template_based_topology(topology):
         if mirrored:
             body_i_mirr = variant.nodes[body_i]['mirr']
             body_j_mirr = variant.nodes[body_j]['mirr']
-            key1 = 'jcr_%s'%name
-            key2 = 'jcl_%s'%name
+            key1 = mbs_string(name,id_='jcr')
+            key2 = mbs_string(name,id_='jcl')
             super().add_joint(typ,key1,body_i,body_j)
             super().add_joint(typ,key2,body_i_mirr,body_j_mirr)
             joint_edge1 = self._edges_map[key1]
@@ -312,7 +314,7 @@ class template_based_topology(topology):
             variant.edges[joint_edge1]['mirr'] = key2
             variant.edges[joint_edge2]['mirr'] = key1
         else:
-            key = 'jcs_%s'%name
+            key = mbs_string(name,id_='jcs')
             super().add_joint(typ,key,body_i,body_j)
             joint_edge = self._edges_map[key]
             variant.edges[joint_edge]['mirr'] = key
@@ -322,24 +324,24 @@ class template_based_topology(topology):
         if mirrored:
             joint_edge1 = self._edges_map[joint_name]
             joint_name2 = variant.edges[joint_edge1]['mirr']
-            key1 = 'mcr_%s'%name
-            key2 = 'mcl_%s'%name
+            key1 = mbs_string(name,id_='mcr')
+            key2 = mbs_string(name,id_='mcl')
             super().add_joint_actuator(typ,key1,joint_name)
             super().add_joint_actuator(typ,key2,joint_name2)
         else:
-            key = 'mcs_%s'%name
+            key = mbs_string(name,id_='mcs')
             super().add_joint_actuator(typ,key,joint_name)
     
     def add_absolute_actuator(self,name,body_i,coordinate,mirrored=False):
         variant = self.selected_variant
         if mirrored:
             body_i_mirr = variant.nodes[body_i]['mirr']
-            key1 = 'mcr_%s'%name
-            key2 = 'mcl_%s'%name
+            key1 = mbs_string(name,id_='mcr')
+            key2 = mbs_string(name,id_='mcl')
             super().add_absolute_actuator(key1,body_i,coordinate)
             super().add_absolute_actuator(key2,body_i_mirr,coordinate)
         else:
-            key = 'mcs_%s'%name
+            key = mbs_string(name,id_='mcs')
             super().add_absolute_actuator(key,body_i,coordinate)
 
 ###############################################################################
@@ -348,17 +350,24 @@ class template_based_topology(topology):
 class subsystem(abstract_topology):
     
     def __init__(self,name,topology):
-        self.name = name+'_'
-        self.graph = topology.graph.copy()
+        self.global_instance = global_frame(name)
+        reference_frame.set_global_frame(self.global_instance)
+
+        self.name = name
         self.topology = topology
+        
+#        self.graph = copy.deepcopy(topology.graph)
+        self.graph = topology.graph.copy()
         self._relable()
         self._virtual_bodies = []
     
     def _relable(self):
         def label(x):
-            name = (x if x=='ground' else self.name + x)
-            return name
-        self.graph = nx.relabel_nodes(self.graph,label)
+            if x!='ground':
+                x = mbs_string(x.name,self.name,x._id_)
+            return x
+    
+        nx.relabel_nodes(self.graph,label,copy=False)
         maped = map(label,dict(self.nodes(data='mirr')).values())
         maped = dict(zip(self.nodes,maped))
         nx.set_node_attributes(self.graph,maped,'mirr')
