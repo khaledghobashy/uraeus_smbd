@@ -225,10 +225,9 @@ class global_frame(object):
     def edges(self):
         return self.references_tree.edges
     
-    def merge_globals(self,globals_):
-        for g in globals_:
-            self.references_tree.add_nodes_from(g.nodes(data=True))
-            self.references_tree.add_edges_from(g.edges(data=True))
+    def merge_global(self,g):
+        self.references_tree.add_nodes_from(g.nodes(data=True))
+        self.references_tree.add_edges_from(g.edges(data=True))
     
     def draw_tree(self):
         plt.figure(figsize=(10,6))

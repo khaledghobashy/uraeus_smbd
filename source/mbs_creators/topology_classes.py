@@ -65,7 +65,7 @@ class abstract_topology(object):
         attr_dict ={'obj':obj,'num_args':obj.numerical_arguments(),
                     'config_const':obj.configuration_constants()}
         return attr_dict
-
+    
     
     def draw_topology(self):
         plt.figure(figsize=(10,6))
@@ -384,6 +384,8 @@ class subsystem(abstract_topology):
 class assembly(subsystem):
     
     def __init__(self,name):
+        self.global_instance = global_frame(name)
+        reference_frame.set_global_frame(self.global_instance)
         self.name = name
         self.graph = nx.MultiGraph(name=name)
         attr_dict = self._typ_attr_dict(ground)
@@ -412,6 +414,7 @@ class assembly(subsystem):
         self.graph.add_nodes_from(subsystem_graph.nodes(data=True))
         self.graph.add_edges_from(subsystem_graph.edges(data=True,keys=True))
         self._update_virtual_bodies_map(subsystem)
+        self.global_instance.merge_global(subsystem.global_instance)
     
     def assign_virtual_body(self,virtual_node,actual_node):
         virtual_node_1 = virtual_node
