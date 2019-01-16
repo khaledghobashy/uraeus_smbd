@@ -13,7 +13,14 @@ import matplotlib.pyplot as plt
 sm.init_printing(pretty_print=False,use_latex=True,forecolor='White')
 enclose = True
 
-class mbs_string(object):
+class mbs_string(str):
+    
+    _instances = []
+    
+    def __new__(cls,name,prefix='',id_=''):
+        name = prefix+id_+name
+        return str.__new__(cls,name)
+        
         
     def __init__(self,name,prefix='',id_=''):
         self._name  = name
@@ -47,25 +54,25 @@ class mbs_string(object):
     def id_name(self):
         return self.id_ + self.name
     
-    def __str__(self):
-        return '%s%s%s'%(self.prefix,self.id_,self.name)
-    
+#    def __str__(self):
+#        return '%s%s%s'%(self.prefix,self.id_,self.name)
+#    
     def __repr__(self):
         return '%s%s%s'%(self.prefix,self.id_,self.name)
-    
-    def __iter__(self):
-        return iter((self.prefix,self.id_,self.name))
-    
-    def __eq__(self,other):
-        return hash(self)==hash(other)
-    
-    def __hash__(self):
-        return hash(str(self))
-    
-    def __copy__(self):
-        return mbs_string(self._name,self._prefix,self._id_)
-    def __deepcopy__(self,*args):
-        return mbs_string(self._name,self._prefix,self._id_)
+#    
+#    def __iter__(self):
+#        return iter((self.prefix,self.id_,self.name))
+#    
+#    def __eq__(self,other):
+#        return str(self)==str(other)
+#    
+#    def __hash__(self):
+#        return hash(str(self))
+#    
+#    def __copy__(self):
+#        return mbs_string(self._name,self._prefix,self._id_)
+#    def __deepcopy__(self,*args):
+#        return mbs_string(self._name,self._prefix,self._id_)
         
 ###############################################################################
 ###############################################################################
@@ -213,8 +220,8 @@ class zero_matrix(sm.MatrixSymbol):
 ###############################################################################
 class global_frame(object):
         
-    def __init__(self,name='global'):
-        self.name = name
+    def __init__(self,name=''):
+        self.name = name+'_grf'
         self.references_tree = nx.DiGraph(name=name)
         self.references_tree.add_node(self.name)
     
@@ -225,19 +232,23 @@ class global_frame(object):
     def edges(self):
         return self.references_tree.edges
     
-    def merge_global(self,g):
+    def merge_global(self,g,orient=False):
         self.references_tree.add_nodes_from(g.nodes(data=True))
         self.references_tree.add_edges_from(g.edges(data=True))
-    
+        if not orient:
+            self.references_tree.add_edge(self.name, g.name, mat=1)
+            self.references_tree.add_edge(g.name, self.name, mat=1)
+            
     def draw_tree(self):
         plt.figure(figsize=(10,6))
         nx.draw(self.references_tree,with_labels=True)
         plt.show()
     
-    def express(self,other):
-        child_name  = self.name
-        parent_name = other.name
-        graph = self.references_tree
+    @staticmethod
+    def express_func(frame1,frame2,tree):
+        child_name  = frame1.name
+        parent_name = frame2.name
+        graph = tree
         
         path_nodes  = nx.algorithms.shortest_path(graph, child_name, parent_name)
         path_matrices = []
@@ -245,6 +256,9 @@ class global_frame(object):
             path_matrices.append(graph.edges[path_nodes[-i-2],path_nodes[-i-1]]['mat'])
         mat = sm.MatMul(*path_matrices)
         return mat
+    
+    def express(self,other):
+        return self.express_func(self,other,self.references_tree)
 
 ###############################################################################
 class reference_frame(object):
@@ -301,16 +315,8 @@ class reference_frame(object):
             self.A = Triad(v1,v2)
             
     def express(self,other):
-        child_name  = self.name
-        parent_name = other.name
-        graph = self.global_frame.references_tree
-        
-        path_nodes  = nx.algorithms.shortest_path(graph, child_name, parent_name)
-        path_matrices = []
-        for i in range(len(path_nodes)-1):
-            path_matrices.append(graph.edges[path_nodes[-i-2],path_nodes[-i-1]]['mat'])
-        mat = sm.MatMul(*path_matrices)
-        return mat
+        tree = self.global_frame.references_tree
+        return self.global_frame.express_func(self,other,tree)
     
 ###############################################################################
 ###############################################################################

@@ -17,33 +17,30 @@ I = sm.Identity(3)
 class algebraic_constraints(object):
     
     def __init__(self,name,body_i=None,body_j=None):
-        self._name = name
-        self._create_equations_lists()
-                    
-        try:
+        splited_name = name.split('.')
+        self.id_name = ''.join(splited_name[-1])
+        self.prefix  = '.'.join(splited_name[:-1])
+        self._name   = name
+        
+        if body_i and body_j:
             self.body_i = body_i
             self.body_j = body_j
-        except AttributeError:
-            pass        
+            self.construct()
+
+    @property
+    def name(self):
+        return self._name
     
+    def _construct(self):
+        self._create_equations_lists()
+            
     def _create_equations_lists(self):
         self._pos_level_equations = []
         self._vel_level_equations = []
         self._acc_level_equations = []
         self._jacobian_i = []
         self._jacobian_j = []
-    
-    @property
-    def name(self):
-        return self._name
 
-    @property
-    def id_name(self):
-        return self._name.id_name
-
-    def construct(self):
-        self._create_equations_lists()
-            
     
     @property
     def body_i(self):
@@ -57,22 +54,16 @@ class algebraic_constraints(object):
         self.Pdi = body_i.Pd
         self.Ai  = body_i.A
         
-        prefix, id_, name = self.name
-        fromate_ = (prefix,body_i.id_name,self.id_name)
-        local_id = (body_i.id_name,self.id_name)
-        
-        vector_name = mbs_string('ubar_%s_%s'%local_id,prefix[:-1])
-        self.ui_bar = vector(vector_name,frame=body_i,format_as=r'{%s\bar{u}^{%s}_{%s}}'%fromate_)
-        
-        marker_name = mbs_string('Mbar_%s_%s'%local_id,prefix[:-1])
-        self.mi_bar = reference_frame(marker_name,parent=body_i,format_as=r'{%s\bar{M}^{%s}_{%s}}'%fromate_)
-        
+        fromate_ = (self.prefix,body_i.id_name,self.id_name)
+        v_raw_name = '%subar_%s_%s'%fromate_
+        v_frm_name = r'{%s\bar{u}^{%s}_{%s}}'%fromate_
+        m_raw_name = '%sMbar_%s_%s'%fromate_
+        m_frm_name = r'{%s\bar{M}^{%s}_{%s}}'%fromate_
+
+        self.ui_bar = vector(v_raw_name,body_i,v_frm_name)        
+        self.mi_bar = reference_frame(m_raw_name,body_i,m_frm_name)
         self.Bui = B(self.Pi,self.ui_bar)
         self.ui = self.ui_bar.express()
-#        try:
-#            self.construct()
-#        except AttributeError:
-#            pass
     
     @property
     def body_j(self):
@@ -86,23 +77,17 @@ class algebraic_constraints(object):
         self.Pdj = body_j.Pd
         self.Aj  = body_j.A
         
-        prefix, id_, name = self.name
-        fromate_ = (prefix,body_j.id_name,self.id_name)
-        local_id = (body_j.id_name,self.id_name)
-        
-        vector_name = mbs_string('ubar_%s_%s'%local_id,prefix[:-1])
-        self.uj_bar = vector(vector_name,frame=body_j,format_as=r'{%s\bar{u}^{%s}_{%s}}'%fromate_)
-        
-        marker_name = mbs_string('Mbar_%s_%s'%local_id,prefix[:-1])
-        self.mj_bar = reference_frame(marker_name,parent=body_j,format_as=r'{%s\bar{M}^{%s}_{%s}}'%fromate_)
+        fromate_ = (self.prefix,body_j.id_name,self.id_name)
+        v_raw_name = '%subar_%s_%s'%fromate_
+        v_frm_name = r'{%s\bar{u}^{%s}_{%s}}'%fromate_
+        m_raw_name = '%sMbar_%s_%s'%fromate_
+        m_frm_name = r'{%s\bar{M}^{%s}_{%s}}'%fromate_
+
+        self.uj_bar = vector(v_raw_name,body_j,v_frm_name)        
+        self.mj_bar = reference_frame(m_raw_name,body_j,m_frm_name)
         
         self.Buj = B(self.Pj,self.uj_bar)
         self.uj = self.uj_bar.express()
-        self.construct()
-#        try:
-#            self.construct()
-#        except AttributeError:
-#            pass
     
     @property
     def dij(self):
@@ -134,8 +119,7 @@ class algebraic_constraints(object):
                      j.acc_level_equations,
                      sm.BlockMatrix([[j.jacobian_i,j.jacobian_j]])]
         
-        for i in equations:
-            display(i)
+        for i in equations: display(i)
 
         
 ###############################################################################
@@ -318,6 +302,7 @@ class joint_constructor(type):
         nc  = sum([e.nc for e in vector_equations])
         
         def construct(self):
+            self._construct()
             for e in vector_equations:
                 e.construct(self)
             
@@ -338,15 +323,18 @@ class actuator(algebraic_constraints):
     
     def __init__(self,*args):
         super().__init__(*args)
-        self._construct_actuation_functions()
-    
+        
     def _construct_actuation_functions(self):
         self.t = t = sm.symbols('t')
         self.F = sm.Function('F_%s'%self.name)
         self._pos_function = self.F(t)
         self._vel_function = sm.diff(self._pos_function,t)
         self._acc_function = sm.diff(self._pos_function,t,t)
-
+    
+    def _construct(self):
+        super()._construct()
+        self._construct_actuation_functions()
+    
     @property
     def pos_level_equations(self):
         return sm.BlockMatrix([sm.Identity(1)*self._pos_level_equations[0] - sm.Identity(1)*self._pos_function])
@@ -371,7 +359,7 @@ class joint_actuator(actuator):
         body_j = joint.body_j
         super().__init__(joint.name,body_i,body_j)
         self._name = name
-        self.construct()
+
 
 class absolute_actuator(actuator):
     
@@ -380,7 +368,9 @@ class absolute_actuator(actuator):
     def __init__(self,name,body_i,coordinate):
         self.coordinate = coordinate
         self.i = self.coordinates_map[self.coordinate]
-        super().__init__(name,body_i)
+        super().__init__(name)
+        self.body_i = body_i
+        self.construct()
     
     def numerical_arguments(self):
         sym_jac = sm.MatrixSymbol('J_%s'%self.name,1,3)

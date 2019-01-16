@@ -17,13 +17,16 @@ class body(reference_frame,abstract_mbs):
     nc  = 1
     nve = 1
     
-    def __init__(self,sname):
-        self._name = sname
-        super().__init__(sname)
+    def __init__(self,name):
+        self._name = name
+        super().__init__(name)
         #print('Inside body()')
         
-        prefix, id_, name = sname
-        format_ = (prefix,id_+name)
+        splited_name = name.split('.')
+        self.id_name = ''.join(splited_name[-1])
+        self.prefix  = '.'.join(splited_name[:-1])
+        
+        format_ = (self.prefix+'.',self.id_name)
         
         self.R  = vector('%sR_%s'%format_, format_as='{%sR_{%s}}'%format_)
         self.Rd = vector('%sRd_%s'%format_, format_as='{%s\dot{R}_{%s}}'%format_)
@@ -44,21 +47,7 @@ class body(reference_frame,abstract_mbs):
     @property
     def name(self):
         return self._name
-    
-    @property
-    def id_name(self):
-        return self._name.id_name
-    
-#    def rename(self,name,prefix=''):
-#        super().rename(prefix+name)
-#        R_fromated_name  = '{%s}{R_{%s}}'%(prefix,name)
-#        Rd_fromated_name = '{%s}{Rd_{%s}}'%(prefix,name)
-#        self.R.rename(name,R_fromated_name)
-#        self.Rd.rename(name,Rd_fromated_name)
-#        P_fromated_name  = '{%s}{P_{%s}}'%(prefix,name)
-#        Pd_fromated_name = '{%s}{Pd_{%s}}'%(prefix,name)
-#        self.P.rename(name,P_fromated_name)
-#        self.Pd.rename(name,Pd_fromated_name)
+        
 
 
 class ground(body):
@@ -68,10 +57,10 @@ class ground(body):
     nve = 2
     
     def __new__(cls,*args):
-        name = mbs_string('ground')
+        name = cls.global_frame.name
         return super().__new__(cls,name)
     def __init__(self,*args):
-        name = mbs_string('ground')
+        name = self.global_frame.name
         super().__init__(name)
         self.P_ground = quatrenion('Pg_%s'%self.name,format_as='{Pg_{%s}}'%self.name)
         

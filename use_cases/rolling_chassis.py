@@ -43,7 +43,7 @@ dwb_template.add_joint(universal,'strut_chassis','rbr_upper_strut','vbs_chassis'
 dwb_template.add_joint(universal,'strut_lca','rbr_lower_strut','rbr_lca',mirrored=True)
 dwb_template.add_joint(universal,'tie_steering','rbr_tie_rod','vbr_steer',mirrored=True)
 dwb_template.add_joint(cylinderical,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
-#dwb_template.add_absolute_actuator('zact','rbr_hub','z',mirrored=True)
+dwb_template.add_absolute_actuator('zact','rbr_hub','z',mirrored=True)
 dwb_template.add_joint_actuator(rotational_actuator,'rot_act','jcr_hub_bearing',mirrored=True)
 
 front_axle = subsystem('SU1',dwb_template)
@@ -68,7 +68,7 @@ steering_subsystem.assemble_model()
 
 rolling_chassis = assembly('front_axle_2')
 rolling_chassis.add_subsystem(front_axle)
-rolling_chassis.add_subsystem(rear_axle)
+#rolling_chassis.add_subsystem(rear_axle)
 rolling_chassis.add_subsystem(steering_subsystem)
 #rolling_chassis.add_subsystem(chassis_subsystem)
 #rolling_chassis.assign_virtual_body('SU1_vbs_chassis','CH_rbs_chassis')
@@ -78,7 +78,7 @@ rolling_chassis.assign_virtual_body('SU1.vbr_steer','ST.rbr_rocker')
 #rolling_chassis.assign_virtual_body('SU2_vbs_chassis','CH_rbs_chassis')
 
 
-#rolling_chassis.assemble_model(full=False)
+rolling_chassis.assemble_model(full=False)
 
 rolling_chassis.draw_topology()
 rolling_chassis.draw_interface_graph()

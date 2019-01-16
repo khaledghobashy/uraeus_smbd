@@ -22,12 +22,19 @@ class abstract_topology(object):
         self.graph = nx.MultiGraph(name=name)
         self.name = name
         self._edges_map = {}
+        self._set_global_frame()
+        self._insert_ground()
+        self.grf = self.global_instance.name
         
-        # adding ground node
-        attr_dict = self._typ_attr_dict(ground)
-        self.graph.add_node('ground',**attr_dict)
+    def _set_global_frame(self):
+        self.global_instance = global_frame()
+        reference_frame.set_global_frame(self.global_instance)        
         
-        self.input_args_graph = nx.MultiDiGraph(name=name)
+    def _insert_ground(self):
+        self.ground = ground()
+        typ_dict = self._typ_attr_dict(ground)
+        obj_dict = self._obj_attr_dict(self.ground)
+        self.graph.add_node(self.grf,**typ_dict,**obj_dict)
     
     @property
     def selected_variant(self):
@@ -166,7 +173,7 @@ class abstract_topology(object):
             
             ui = node_index[u]
             vi = node_index[v]
-            
+
             # assigning the joint jacobians to the propper index in the system jacobian
             # on the "constraint vector equations" level.
             jacobian[row_ind:eo_nve,ui*2:ui*2+2] = eo.jacobian_i.blocks
@@ -205,6 +212,12 @@ class abstract_topology(object):
         self._assemble_edges()
         self._assemble_equations()
         self._initialize_toplogy_reqs()
+    
+    def __getattr__(self,name):
+        try:
+            super().__getattr__(name)
+        except AttributeError:
+            return self.nodes[name]
 
 ###############################################################################
 ###############################################################################
@@ -237,7 +250,7 @@ class topology(abstract_topology):
     
     def add_absolute_actuator(self,name,body,coordinate):
         variant = self.selected_variant
-        edge  = (body,'ground',name)
+        edge  = (body,self.grf,name)
         if edge not in variant.edges:
             attr_dict = self._typ_attr_dict(absolute_locator)
             variant.add_edge(*edge,**attr_dict,coordinate=coordinate)
@@ -257,8 +270,11 @@ class template_based_topology(topology):
     
     def __init__(self,name):
         super().__init__(name)
-        self.selected_variant.nodes['ground']['mirr']='ground'
-        
+        self.grf = 'vbs_ground'
+    
+    def _insert_ground(self):
+        self.add_virtual_body('ground')
+
     @property
     def virtual_bodies(self):
         condition = self._check_if_virtual
@@ -269,14 +285,14 @@ class template_based_topology(topology):
     def add_body(self,name,mirrored=False):
         variant = self.selected_variant
         if mirrored:
-            node1 = mbs_string(name,id_='rbr')
-            node2 = mbs_string(name,id_='rbl')
+            node1 = 'rbr_%s'%name
+            node2 = 'rbl_%s'%name
             super().add_body(node1)
             super().add_body(node2)
             variant.nodes[node1]['mirr'] = node2
             variant.nodes[node2]['mirr'] = node1
         else:
-            node1 = node2 =  mbs_string(name,id_='rbs')
+            node1 = node2 = 'rbs_%s'%name
             super().add_body(node1)
             variant.nodes[node1]['mirr'] = node2
     
@@ -289,14 +305,14 @@ class template_based_topology(topology):
     def add_virtual_body(self,name,mirrored=False):
         variant = self.selected_variant
         if mirrored:
-            node1 = mbs_string(name,id_='vbr')
-            node2 = mbs_string(name,id_='vbl')
+            node1 = 'vbr_%s'%name
+            node2 = 'vbl_%s'%name
             self._add_virtual_body(node1)
             self._add_virtual_body(node2)
             variant.nodes[node1]['mirr'] = node2
             variant.nodes[node2]['mirr'] = node1 
         else:
-            node1 = node2 = mbs_string(name,id_='vbs')
+            node1 = node2 = 'vbs_%s'%name
             self._add_virtual_body(node1)
             variant.nodes[node1]['mirr'] = node2
     
@@ -305,8 +321,8 @@ class template_based_topology(topology):
         if mirrored:
             body_i_mirr = variant.nodes[body_i]['mirr']
             body_j_mirr = variant.nodes[body_j]['mirr']
-            key1 = mbs_string(name,id_='jcr')
-            key2 = mbs_string(name,id_='jcl')
+            key1 = 'jcr_%s'%name
+            key2 = 'jcl_%s'%name
             super().add_joint(typ,key1,body_i,body_j)
             super().add_joint(typ,key2,body_i_mirr,body_j_mirr)
             joint_edge1 = self._edges_map[key1]
@@ -314,7 +330,7 @@ class template_based_topology(topology):
             variant.edges[joint_edge1]['mirr'] = key2
             variant.edges[joint_edge2]['mirr'] = key1
         else:
-            key = mbs_string(name,id_='jcs')
+            key = 'jcs_%s'%name
             super().add_joint(typ,key,body_i,body_j)
             joint_edge = self._edges_map[key]
             variant.edges[joint_edge]['mirr'] = key
@@ -324,24 +340,24 @@ class template_based_topology(topology):
         if mirrored:
             joint_edge1 = self._edges_map[joint_name]
             joint_name2 = variant.edges[joint_edge1]['mirr']
-            key1 = mbs_string(name,id_='mcr')
-            key2 = mbs_string(name,id_='mcl')
+            key1 = 'mcr_%s'%name
+            key2 = 'mcl_%s'%name
             super().add_joint_actuator(typ,key1,joint_name)
             super().add_joint_actuator(typ,key2,joint_name2)
         else:
-            key = mbs_string(name,id_='mcs')
+            key = 'mcs_%s'%name
             super().add_joint_actuator(typ,key,joint_name)
     
     def add_absolute_actuator(self,name,body_i,coordinate,mirrored=False):
         variant = self.selected_variant
         if mirrored:
             body_i_mirr = variant.nodes[body_i]['mirr']
-            key1 = mbs_string(name,id_='mcr')
-            key2 = mbs_string(name,id_='mcl')
+            key1 = 'mcr_%s'%name
+            key2 = 'mcl_%s'%name
             super().add_absolute_actuator(key1,body_i,coordinate)
             super().add_absolute_actuator(key2,body_i_mirr,coordinate)
         else:
-            key = mbs_string(name,id_='mcs')
+            key = 'mcs_%s'%name
             super().add_absolute_actuator(key,body_i,coordinate)
 
 ###############################################################################
@@ -364,7 +380,7 @@ class subsystem(abstract_topology):
     def _relable(self):
         def label(x):
             if x!='ground':
-                x = mbs_string(x.name,self.name,x._id_)
+                x = self.name+'.'+ x
             return x
     
         nx.relabel_nodes(self.graph,label,copy=False)
@@ -389,7 +405,7 @@ class assembly(subsystem):
         self.name = name
         self.graph = nx.MultiGraph(name=name)
         attr_dict = self._typ_attr_dict(ground)
-        self.graph.add_node('ground',**attr_dict)
+        self.graph.add_node(self.global_instance.name,**attr_dict,**self._obj_attr_dict(ground()))
         self.subsystems = {}
         self._virtual_bodies_map = {}
         self.interface_graph = nx.MultiGraph(name=name)
@@ -405,7 +421,7 @@ class assembly(subsystem):
     
     def _update_virtual_bodies_map(self,subsystem):
         new_virtuals = subsystem.virtual_bodies
-        new_virtuals = zip(new_virtuals,len(new_virtuals)*['ground'])
+        new_virtuals = zip(new_virtuals,len(new_virtuals)*[self.global_instance.name])
         self._virtual_bodies_map.update(new_virtuals)
             
     def add_subsystem(self,subsystem):
@@ -491,7 +507,7 @@ class assembly(subsystem):
             
             ui = node_index[u]
             vi = node_index[v]
-            
+
             # assigning the joint jacobians to the propper index in the system jacobian
             # on the "constraint vector equations" level.
             jacobian[row_ind:eo_nve,ui*2:ui*2+2] = eo.jacobian_i.blocks
