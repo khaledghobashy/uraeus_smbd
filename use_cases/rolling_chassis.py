@@ -68,7 +68,7 @@ steering_subsystem.assemble_model()
 
 rolling_chassis = assembly('front_axle_2')
 rolling_chassis.add_subsystem(front_axle)
-#rolling_chassis.add_subsystem(rear_axle)
+rolling_chassis.add_subsystem(rear_axle)
 rolling_chassis.add_subsystem(steering_subsystem)
 #rolling_chassis.add_subsystem(chassis_subsystem)
 #rolling_chassis.assign_virtual_body('SU1_vbs_chassis','CH_rbs_chassis')
@@ -82,7 +82,7 @@ rolling_chassis.assemble_model(full=False)
 
 rolling_chassis.draw_topology()
 rolling_chassis.draw_interface_graph()
-#
+
 #import source
 #source.symbolic_classes.abstract_matrices.ccode_print = True
 #source.symbolic_classes.abstract_matrices.enclose = True

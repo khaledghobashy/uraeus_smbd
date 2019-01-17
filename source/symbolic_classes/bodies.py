@@ -7,11 +7,11 @@ Created on Tue Jan  1 10:57:47 2019
 
 import sympy as sm
 
-from source.symbolic_classes.abstract_matrices import (reference_frame, abstract_mbs, 
-                               vector, quatrenion, zero_matrix, A, mbs_string)
+from source.symbolic_classes.abstract_matrices import (reference_frame, vector, 
+                                                       quatrenion, zero_matrix, A)
 
 
-class body(reference_frame,abstract_mbs):
+class body(reference_frame):
     
     n   = 7
     nc  = 1
@@ -25,8 +25,9 @@ class body(reference_frame,abstract_mbs):
         splited_name = name.split('.')
         self.id_name = ''.join(splited_name[-1])
         self.prefix  = '.'.join(splited_name[:-1])
+        self.prefix  = (self.prefix+'.' if self.prefix!='' else self.prefix)
         
-        format_ = (self.prefix+'.',self.id_name)
+        format_ = (self.prefix,self.id_name)
         
         self.R  = vector('%sR_%s'%format_, format_as='{%sR_{%s}}'%format_)
         self.Rd = vector('%sRd_%s'%format_, format_as='{%s\dot{R}_{%s}}'%format_)
@@ -47,6 +48,17 @@ class body(reference_frame,abstract_mbs):
     @property
     def name(self):
         return self._name
+    
+    @property
+    def arguments(self):
+        R  = sm.Eq(self.R,sm.MutableDenseMatrix([0,0,0]))
+        P  = sm.Eq(self.P,sm.MutableDenseMatrix([1,0,0,0]))
+        Rd = sm.Eq(self.Rd,sm.MutableDenseMatrix([0,0,0]))
+        Pd = sm.Eq(self.Pd,sm.MutableDenseMatrix([0,0,0,0]))
+        return [R,P,Rd,Pd]
+    @property
+    def constants(self):
+        return []
         
 
 
@@ -57,10 +69,10 @@ class ground(body):
     nve = 2
     
     def __new__(cls,*args):
-        name = cls.global_frame.name
+        name = 'ground'
         return super().__new__(cls,name)
     def __init__(self,*args):
-        name = self.global_frame.name
+        name = 'ground'
         super().__init__(name)
         self.P_ground = quatrenion('Pg_%s'%self.name,format_as='{Pg_{%s}}'%self.name)
         
@@ -70,9 +82,10 @@ class ground(body):
         self.normalized_jacobian = sm.BlockMatrix([[sm.Identity(3),zero_matrix(3,4)],
                                                    [zero_matrix(4,3),sm.Identity(4)]])
     
-    def numerical_arguments(self):
+    @property
+    def arguments(self):
         eq = sm.Eq(self.P_ground,sm.Matrix([1,0,0,0]))
-        return super().numerical_arguments() + [eq]
+        return super().arguments + [eq]
 
 
 class virtual_body(body):
@@ -84,6 +97,7 @@ class virtual_body(body):
     def __init__(self,name):
         self._key = 'vb_%s'%name
     
-    def numerical_arguments(self):
+    @property
+    def arguments(self):
         return []
 

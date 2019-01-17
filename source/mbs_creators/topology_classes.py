@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import copy
 
-from source.symbolic_classes.abstract_matrices import global_frame, reference_frame, mbs_string
+from source.symbolic_classes.abstract_matrices import global_frame, reference_frame
 from source.symbolic_classes.bodies import body, ground, virtual_body
 from source.symbolic_classes.spatial_joints import absolute_locator
 from source.symbolic_classes.algebraic_constraints import joint_actuator
@@ -64,13 +64,12 @@ class abstract_topology(object):
     
     @staticmethod
     def _typ_attr_dict(typ):
-        attr_dict ={'n':typ.n,'nc':typ.nc,'nve':typ.nve,
-                    'class':typ,'mirr':None,'align':'s'}
+        attr_dict ={'n':typ.n,'nc':typ.nc,'nve':typ.nve,'class':typ,'mirr':None,
+                    'align':'s'}
         return attr_dict
     @staticmethod
     def _obj_attr_dict(obj):
-        attr_dict ={'obj':obj,'num_args':obj.numerical_arguments(),
-                    'config_const':obj.configuration_constants()}
+        attr_dict ={'obj':obj,'arguments':obj.arguments,'constants':obj.constants}
         return attr_dict
     
     
@@ -96,19 +95,19 @@ class abstract_topology(object):
         self.q_maped = q
         self.qd_maped = qd
     
-    def _set_configuration_constants(self):
-        cons = nx.get_edge_attributes(self.graph,'config_const').values()
-        self.configuration_constants = sum(cons,[])
+    def _set_constants(self):
+        cons = nx.get_edge_attributes(self.graph,'constants').values()
+        self.constants = sum(cons,[])
 
-    def _set_numerical_arguments(self):
-        edge_args = nx.get_edge_attributes(self.graph,'num_args').values()
-        node_args = nx.get_node_attributes(self.graph,'num_args').values()
-        self.numerical_arguments = sum(edge_args,[])+sum(node_args,[])
+    def _set_arguments(self):
+        edge_args = nx.get_edge_attributes(self.graph,'arguments').values()
+        node_args = nx.get_node_attributes(self.graph,'arguments').values()
+        self.arguments = sum(edge_args,[])+sum(node_args,[])
     
     def _initialize_toplogy_reqs(self):
         self._map_coordinates()
-        self._set_configuration_constants()
-        self._set_numerical_arguments()
+        self._set_constants()
+        self._set_arguments()
 
     def _check_if_virtual(self,n):
         body_type = self.nodes[n]['class']
@@ -400,15 +399,21 @@ class subsystem(abstract_topology):
 class assembly(subsystem):
     
     def __init__(self,name):
+        self.name = name
+        self.grf = 'ground'
         self.global_instance = global_frame(name)
         reference_frame.set_global_frame(self.global_instance)
-        self.name = name
+        
         self.graph = nx.MultiGraph(name=name)
-        attr_dict = self._typ_attr_dict(ground)
-        self.graph.add_node(self.global_instance.name,**attr_dict,**self._obj_attr_dict(ground()))
+        self.interface_graph = nx.MultiGraph(name=name)
+        
+        typ_attr_dict = self._typ_attr_dict(ground)
+        obj_attr_dict = self._obj_attr_dict(ground())
+        self.graph.add_node(self.grf,**typ_attr_dict,**obj_attr_dict)
+        
         self.subsystems = {}
         self._virtual_bodies_map = {}
-        self.interface_graph = nx.MultiGraph(name=name)
+        
     
     @property
     def virtual_bodies_map(self):
@@ -421,7 +426,7 @@ class assembly(subsystem):
     
     def _update_virtual_bodies_map(self,subsystem):
         new_virtuals = subsystem.virtual_bodies
-        new_virtuals = zip(new_virtuals,len(new_virtuals)*[self.global_instance.name])
+        new_virtuals = zip(new_virtuals,len(new_virtuals)*[self.grf])
         self._virtual_bodies_map.update(new_virtuals)
             
     def add_subsystem(self,subsystem):
@@ -461,26 +466,24 @@ class assembly(subsystem):
         for v in self.virtual_bodies_map.keys():
             self.graph.remove_node(v)
     
-    def _set_configuration_constants(self):
+    def _set_constants(self):
         graph = self.graph.edge_subgraph(self.interface_graph.edges)
-        cons = nx.get_edge_attributes(graph,'config_const').values()
-        self.configuration_constants = sum(cons,[])
+        cons = nx.get_edge_attributes(graph,'constants').values()
+        self.constants = sum(cons,[])
 
-    def _set_numerical_arguments(self):
+    def _set_arguments(self):
         graph = self.graph.edge_subgraph(self.interface_graph.edges)
-        edge_args = nx.get_edge_attributes(graph,'num_args').values()
-        self.numerical_arguments = sum(edge_args,[])
+        edge_args = nx.get_edge_attributes(graph,'arguments').values()
+        self.arguments = sum(edge_args,[])
     
     def _initialize_toplogy_reqs(self):
-        self._set_configuration_constants()
-        self._set_numerical_arguments()
-    
+        self._set_constants()
+        self._set_arguments()
     
     def _assemble_edges(self):
         for e in self.interface_graph.edges:
             self._assemble_edge(e)
 
-    
     def _assemble_equations(self):
         interface = self.interface_graph
         node_index = dict([(n,i) for i,n in enumerate(self.nodes)])

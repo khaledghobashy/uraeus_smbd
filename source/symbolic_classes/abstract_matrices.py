@@ -389,52 +389,5 @@ class quatrenion(sm.MatrixSymbol):
 ###############################################################################
 ###############################################################################
 
-class abstract_mbs(object):
-    
-    
-    def configuration_constants(self):
-        from source.symbolic_classes.bodies import body
-        from source.symbolic_classes.algebraic_constraints import algebraic_constraints as algebraic_constraints
-        if isinstance(self,body):
-            return []
-        elif isinstance(self,algebraic_constraints):
-            loc  = vector('pt_%s'%self.name)
-            axis = vector('ax_%s'%self.name)
-
-            ui_bar_eq = sm.Eq(self.ui_bar, loc.express(self.body_i) - self.Ri.express(self.body_i))
-            uj_bar_eq = sm.Eq(self.uj_bar, loc.express(self.body_j) - self.Rj.express(self.body_j))
-
-            marker = reference_frame('M_%s'%self.name,format_as=r'{{M}_{%s}}'%self.name)
-            marker.orient_along(axis)
-
-            mi_bar      = marker.express(self.body_i)
-            mi_bar_eq   = sm.Eq(self.mi_bar.A, mi_bar)
-
-            mj_bar      = marker.express(self.body_j)
-            mj_bar_eq   = sm.Eq(self.mj_bar.A, mj_bar)
-
-            assignments = [ui_bar_eq,uj_bar_eq,mi_bar_eq,mj_bar_eq]
-            return assignments
-    
-    def numerical_arguments(self):
-        from source.symbolic_classes.bodies import body
-        from source.symbolic_classes.algebraic_constraints import algebraic_constraints as algebraic_constraints
-        if isinstance(self,body):
-            R = sm.Eq(self.R,sm.MutableDenseMatrix([0,0,0]))
-            P = sm.Eq(self.P,sm.MutableDenseMatrix([1,0,0,0]))
-            Rd = sm.Eq(self.Rd,sm.MutableDenseMatrix([0,0,0]))
-            Pd = sm.Eq(self.Pd,sm.MutableDenseMatrix([1,0,0,0]))
-            return [R,P,Rd,Pd]
-        
-        elif isinstance(self,algebraic_constraints):
-            loc  = vector('pt_%s'%self.name)
-            axis = vector('ax_%s'%self.name)
-            
-            loc  = sm.Eq(loc,sm.MutableDenseMatrix([0,0,0]))
-            axis = sm.Eq(axis,sm.MutableDenseMatrix([0,0,1]))
-            return [loc,axis]
-
-###############################################################################
-###############################################################################
 
 

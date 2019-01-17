@@ -6,8 +6,8 @@ Created on Tue Jan  1 11:06:05 2019
 """
 
 import sympy as sm
-from source.symbolic_classes.abstract_matrices import (reference_frame, abstract_mbs, 
-                               vector, zero_matrix, B, mbs_string)
+from source.symbolic_classes.abstract_matrices import (reference_frame,vector,
+                                                       zero_matrix, B)
 from source.symbolic_classes.bodies import body
 from IPython.display import display
 
@@ -16,12 +16,23 @@ I = sm.Identity(3)
 
 class algebraic_constraints(object):
     
+    def_axis = 1
+    def_locs = 1
+    
     def __init__(self,name,body_i=None,body_j=None):
         splited_name = name.split('.')
         self.id_name = ''.join(splited_name[-1])
         self.prefix  = '.'.join(splited_name[:-1])
+        self.prefix  = (self.prefix+'.' if self.prefix!='' else self.prefix)
         self._name   = name
+                
+        for i in range(self.def_axis):
+            self._create_joint_def_axis(i+1)
+        for i in range(self.def_locs):
+            self._create_joint_def_loc(i+1)
         
+        self._create_joint_arguments()
+                
         if body_i and body_j:
             self.body_i = body_i
             self.body_j = body_j
@@ -33,6 +44,7 @@ class algebraic_constraints(object):
     
     def _construct(self):
         self._create_equations_lists()
+        self._create_bodies_locals()
             
     def _create_equations_lists(self):
         self._pos_level_equations = []
@@ -41,6 +53,66 @@ class algebraic_constraints(object):
         self._jacobian_i = []
         self._jacobian_j = []
 
+    
+    def _create_joint_def_axis(self,i):
+        format_ = (self.prefix,i,self.id_name)
+        v = vector('%sv%s_%s'%format_)
+        m = reference_frame('%sM%s_%s'%format_,format_as=r'{%s{M%s}_{%s}}'%format_)
+        setattr(self,'axis_%s'%i,v)
+        setattr(self,'marker_%s'%i,m)
+    
+    def _create_joint_def_loc(self,i):
+        format_ = (self.prefix,i,self.id_name)
+        u = vector('%su%s_%s'%format_)
+        setattr(self,'loc_%s'%i,u)
+    
+    def _create_joint_arguments(self):
+        l = []
+        for i in range(self.def_axis):
+            n = i+1
+            v = getattr(self,'axis_%s'%n)
+            eq = sm.Eq(v,sm.MutableDenseMatrix([0,0,1]))
+            l.append(eq)
+        for i in range(self.def_locs):
+            n = i+1
+            u = getattr(self,'loc_%s'%n)
+            eq = sm.Eq(u,sm.MutableDenseMatrix([0,0,0]))
+            l.append(eq)
+        self._arguments = l
+
+    def _create_bodies_locals(self):
+        if self.def_axis == 1:
+            axis   = self.axis_1
+            marker = self.marker_1
+            marker.orient_along(axis)
+            mi_bar    = marker.express(self.body_i)
+            mi_bar_eq = sm.Eq(self.mi_bar.A, mi_bar)
+            mj_bar    = marker.express(self.body_j)
+            mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
+        
+        elif self.def_axis == 2:
+            axis1  = self.axis_1
+            axis2  = self.axis_2
+            marker1 = self.marker_1
+            marker2 = self.marker_2
+            
+            marker1.orient_along(axis1)
+            mi_bar    = marker1.express(self.body_i)
+            mi_bar_eq = sm.Eq(self.mi_bar.A, mi_bar)
+            
+            marker2.orient_along(axis1,axis2)
+            mj_bar    = marker2.express(self.body_j)
+            mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
+        
+        else: raise NotImplementedError
+                
+        if self.def_locs == 1:
+            loc  = self.loc_1
+            ui_bar_eq = sm.Eq(self.ui_bar, loc.express(self.body_i) - self.Ri.express(self.body_i))
+            uj_bar_eq = sm.Eq(self.uj_bar, loc.express(self.body_j) - self.Rj.express(self.body_j))
+        else: raise NotImplementedError
+        self._constants = [ui_bar_eq,uj_bar_eq,mi_bar_eq,mj_bar_eq]
+    
     
     @property
     def body_i(self):
@@ -107,6 +179,13 @@ class algebraic_constraints(object):
     @property
     def jacobian_j(self):
         return sm.BlockMatrix(self._jacobian_j)
+    
+    @property
+    def arguments(self):
+        return self._arguments
+    @property
+    def constants(self):
+        return self._constants
     
     @classmethod
     def represent_equations(cls):
@@ -305,14 +384,14 @@ class joint_constructor(type):
             self._construct()
             for e in vector_equations:
                 e.construct(self)
+                    
             
         attrs['construct'] = construct
         attrs['nve'] = nve
         attrs['nc']  = nc
         attrs['n']  = 0
         
-        bases = list(bases) + [abstract_mbs,]
-        
+#        bases = list(bases) + [abstract_mbs,]
         return super(joint_constructor, mcls).__new__(mcls, name, tuple(bases), attrs)
 
 
@@ -326,7 +405,7 @@ class actuator(algebraic_constraints):
         
     def _construct_actuation_functions(self):
         self.t = t = sm.symbols('t')
-        self.F = sm.Function('F_%s'%self.name)
+        self.F = sm.Function('%sF_%s'%(self.prefix,self.id_name))
         self._pos_function = self.F(t)
         self._vel_function = sm.diff(self._pos_function,t)
         self._acc_function = sm.diff(self._pos_function,t,t)
@@ -345,39 +424,59 @@ class actuator(algebraic_constraints):
     def acc_level_equations(self):
         return sm.BlockMatrix([sm.Identity(1)*self._acc_level_equations[0] - sm.Identity(1)*self._acc_function])
     
-    def numerical_arguments(self):
+    @property
+    def arguments(self):
         function  = sm.Eq(self.F,sm.Lambda(self.t,0))
         return [function]
-    def configuration_constants(self):
+    @property
+    def constants(self):
         return []
     
 
 class joint_actuator(actuator):
     
-    def __init__(self,name,joint):
-        body_i = joint.body_i
-        body_j = joint.body_j
-        super().__init__(joint.name,body_i,body_j)
-        self._name = name
+    def __init__(self,name,joint=None):
+        if joint is not None:
+            body_i = joint.body_i
+            body_j = joint.body_j
+            super().__init__(joint.name,body_i,body_j)
+            self._name = name
+        else:
+            super().__init__(name)
+            self._construct_actuation_functions()
 
 
 class absolute_actuator(actuator):
     
     coordinates_map = {'x':0,'y':1,'z':2}
     
-    def __init__(self,name,body_i,coordinate):
+    def __init__(self,name,body_i=None,coordinate='z'):
         self.coordinate = coordinate
         self.i = self.coordinates_map[self.coordinate]
         super().__init__(name)
-        self.body_i = body_i
+        self._construct_actuation_functions()
+        if body_i is not None:
+            self.body = body_i
+    
+    @property
+    def body(self):
+        return self._body_i
+    
+    @body.setter
+    def body(self,value):
+        self.body_i = value
         self.construct()
     
-    def numerical_arguments(self):
-        sym_jac = sm.MatrixSymbol('J_%s'%self.name,1,3)
+    def _construct(self):
+        self._create_equations_lists()
+    
+    @property
+    def arguments(self):
+        sym_jac = sm.MatrixSymbol('%sJ_%s'%(self.prefix,self.id_name),1,3)
         num_jac = sm.Matrix([[0,0,0]]) 
         num_jac[0,self.i] = 1
         eq = sm.Eq(sym_jac,num_jac)
-        return super().numerical_arguments() + [eq]
+        return super().arguments + [eq]
 
 
     
