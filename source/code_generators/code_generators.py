@@ -22,8 +22,8 @@ class abstract_generator(object):
         self.mbs = multibody_system
         self.printer = printer
         
-        self.numerical_arguments = num_args_sym = self.mbs.numerical_arguments.copy()
-        self.configuration_constants = cfig_cons_sym = self.mbs.configuration_constants.copy()
+        self.arguments = num_args_sym = self.mbs.arguments.copy()
+        self.constants = cfig_cons_sym = self.mbs.constants.copy()
         
         self.num_args_sym = [printer._print(e.lhs) for e in num_args_sym]
         self.cfig_cons_sym = [printer._print(e.lhs) for e in cfig_cons_sym]
@@ -260,8 +260,8 @@ class python_code_generator(abstract_generator):
         p = self.printer
         indent = 8*' '
         
-        inputs = self.numerical_arguments
-        consts = self.configuration_constants
+        inputs = self.arguments
+        consts = self.constants
         
         pattern = '|'.join(self.num_args_sym+self.cfig_cons_sym)
         
@@ -346,8 +346,8 @@ class assembly_generator(python_code_generator):
         self.subsystems = multibody_system.subsystems
         self.printer = printer
         
-        self.numerical_arguments = num_args_sym = self.mbs.numerical_arguments.copy()
-        self.configuration_constants = cfig_cons_sym = self.mbs.configuration_constants.copy()
+        self.arguments = num_args_sym = self.mbs.arguments.copy()
+        self.constants = cfig_cons_sym = self.mbs.constants.copy()
         
         self.num_args_sym = [printer._print(e.lhs) for e in num_args_sym]
         self.cfig_cons_sym = [printer._print(e.lhs) for e in cfig_cons_sym]
@@ -493,8 +493,8 @@ class assembly_generator(python_code_generator):
         p = self.printer
         indent = 8*' '
         
-        inputs = self.numerical_arguments
-        consts = self.configuration_constants
+        inputs = self.arguments
+        consts = self.constants
         
         pattern = '|'.join(self.num_args_sym+self.cfig_cons_sym)
         

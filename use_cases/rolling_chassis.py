@@ -83,18 +83,18 @@ rolling_chassis.assemble_model(full=False)
 rolling_chassis.draw_topology()
 rolling_chassis.draw_interface_graph()
 
-#import source
-#source.symbolic_classes.abstract_matrices.ccode_print = True
-#source.symbolic_classes.abstract_matrices.enclose = True
-#
-#front_axle_code = python_code_generator(front_axle)
-#front_axle_code.write_code_file()
+import source
+source.symbolic_classes.abstract_matrices.ccode_print = True
+source.symbolic_classes.abstract_matrices.enclose = True
+
+front_axle_code = python_code_generator(front_axle)
+front_axle_code.write_code_file()
 #
 #rear_axle_code = python_code_generator(rear_axle)
 #rear_axle_code.write_code_file()
 #
-#steering_code = python_code_generator(steering_subsystem)
-#steering_code.write_code_file()
+steering_code = python_code_generator(steering_subsystem)
+steering_code.write_code_file()
 #
 #assembly_code = assembly_generator(rolling_chassis)
 ##assembly_code.write_code_file()

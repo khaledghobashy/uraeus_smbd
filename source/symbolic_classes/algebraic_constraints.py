@@ -56,14 +56,14 @@ class algebraic_constraints(object):
     
     def _create_joint_def_axis(self,i):
         format_ = (self.prefix,i,self.id_name)
-        v = vector('%sv%s_%s'%format_)
+        v = vector('%sax%s_%s'%format_)
         m = reference_frame('%sM%s_%s'%format_,format_as=r'{%s{M%s}_{%s}}'%format_)
         setattr(self,'axis_%s'%i,v)
         setattr(self,'marker_%s'%i,m)
     
     def _create_joint_def_loc(self,i):
         format_ = (self.prefix,i,self.id_name)
-        u = vector('%su%s_%s'%format_)
+        u = vector('%spt%s_%s'%format_)
         setattr(self,'loc_%s'%i,u)
     
     def _create_joint_arguments(self):
