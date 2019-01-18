@@ -46,6 +46,10 @@ dwb_template.add_joint(cylinderical,'strut','rbr_upper_strut','rbr_lower_strut',
 dwb_template.add_absolute_actuator('zact','rbr_hub','z',mirrored=True)
 dwb_template.add_joint_actuator(rotational_actuator,'rot_act','jcr_hub_bearing',mirrored=True)
 
+dwb_template.assemble_model()
+dwb_code = python_code_generator(dwb_template)
+dwb_code.write_code_file()
+
 front_axle = subsystem('SU1',dwb_template)
 front_axle.assemble_model()
 
@@ -61,6 +65,11 @@ steering_template.add_joint(revolute,'rocker_ch','rbr_rocker','vbs_chassis',mirr
 steering_template.add_joint(spherical,'rc_sph','rbr_rocker','rbs_coupler')
 steering_template.add_joint(cylinderical,'rc_cyl','rbl_rocker','rbs_coupler')
 #steering_template.add_joint_actuator(rotational_actuator,'rot_act','jcr_rocker_ch')
+
+steering_template.assemble_model()
+steering_code = python_code_generator(steering_template)
+steering_code.write_code_file()
+
 
 steering_subsystem = subsystem('ST',steering_template)
 steering_subsystem.assemble_model()
@@ -83,19 +92,15 @@ rolling_chassis.assemble_model(full=False)
 rolling_chassis.draw_topology()
 rolling_chassis.draw_interface_graph()
 
-import source
-source.symbolic_classes.abstract_matrices.ccode_print = True
-source.symbolic_classes.abstract_matrices.enclose = True
-
 front_axle_code = python_code_generator(front_axle)
 front_axle_code.write_code_file()
-#
+
 #rear_axle_code = python_code_generator(rear_axle)
 #rear_axle_code.write_code_file()
 #
 steering_code = python_code_generator(steering_subsystem)
 steering_code.write_code_file()
-#
+
 #assembly_code = assembly_generator(rolling_chassis)
 ##assembly_code.write_code_file()
 #

@@ -22,19 +22,16 @@ class abstract_topology(object):
         self.graph = nx.MultiGraph(name=name)
         self.name = name
         self._edges_map = {}
-        self._set_global_frame()
         self._insert_ground()
-        self.grf = self.global_instance.name
+        self.grf = 'ground'
         
     def _set_global_frame(self):
-        self.global_instance = global_frame()
+        self.global_instance = global_frame(self.name)
         reference_frame.set_global_frame(self.global_instance)        
         
     def _insert_ground(self):
-        self.ground = ground()
         typ_dict = self._typ_attr_dict(ground)
-        obj_dict = self._obj_attr_dict(self.ground)
-        self.graph.add_node(self.grf,**typ_dict,**obj_dict)
+        self.graph.add_node(self.grf,**typ_dict)
     
     @property
     def selected_variant(self):
@@ -207,16 +204,12 @@ class abstract_topology(object):
         self.jac_equations = jacobian
     
     def assemble_model(self):
+        self._set_global_frame()
         self._assemble_nodes()
         self._assemble_edges()
         self._assemble_equations()
         self._initialize_toplogy_reqs()
     
-    def __getattr__(self,name):
-        try:
-            super().__getattr__(name)
-        except AttributeError:
-            return self.nodes[name]
 
 ###############################################################################
 ###############################################################################
@@ -367,11 +360,8 @@ class subsystem(abstract_topology):
     def __init__(self,name,topology):
         self.global_instance = global_frame(name)
         reference_frame.set_global_frame(self.global_instance)
-
         self.name = name
         self.topology = topology
-        
-#        self.graph = copy.deepcopy(topology.graph)
         self.graph = topology.graph.copy()
         self._relable()
         self._virtual_bodies = []

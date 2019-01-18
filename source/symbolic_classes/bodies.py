@@ -90,9 +90,9 @@ class ground(body):
 
 class virtual_body(body):
     
-    n   = 7
-    nc  = 7
-    nve = 2
+    n   = 0
+    nc  = 0
+    nve = 0
     
     def __init__(self,name):
         self._key = 'vb_%s'%name
