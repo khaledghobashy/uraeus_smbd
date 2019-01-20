@@ -43,7 +43,17 @@ class abstract_topology(object):
     @property
     def edges(self):
         return self.selected_variant.edges
-        
+    
+    @property
+    def nodes_indicies(self):
+        node_index = dict([(n,i) for i,n in enumerate(self.nodes)])
+        return node_index
+    
+    @property
+    def edges_indicies(self):
+        edges_index = dict([(n,i) for i,n in enumerate(self.edges)])
+        return edges_index
+    
     @property
     def n(self):
         n = sum([node[-1] for node in self.nodes(data='n')])
@@ -144,7 +154,9 @@ class abstract_topology(object):
         
         edgelist = self.edges
         nodelist = self.nodes
-        node_index = dict([(n,i) for i,n in enumerate(nodelist)])
+        node_index = self.nodes_indicies
+        self.cols = []
+        self.bodies = []
 
         n_nodes = len(nodelist)
         cols = 2*n_nodes
@@ -159,10 +171,12 @@ class abstract_topology(object):
         row_ind = 0
         for e in edgelist:
             u,v = e[:2]
+            
 #            if self._check_if_virtual(u) or self._check_if_virtual(v):
 ##                print('     bypassing edge: %s'%(e,))
 #                continue
             eo  = self.edges[e]['obj']
+            self.cols += [[u,v] for i in range(eo.nve)]
             # tracker of row index based on the current joint type and the history
             # of the loop
             eo_nve = eo.nve+row_ind 
@@ -195,7 +209,8 @@ class abstract_topology(object):
                 equations[row_ind,0] = b.normalized_pos_equation
                 vel_rhs[row_ind,0]   = b.normalized_vel_equation
                 acc_rhs[row_ind,0]   = b.normalized_acc_equation
-                
+            
+            self.bodies += [[n] for i in range(b.nve)]
             row_ind += b.nve
         
         self.pos_equations = equations

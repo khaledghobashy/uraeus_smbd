@@ -23,6 +23,9 @@ class abstract_generator(object):
         self.mbs = multibody_system
         self.printer = printer
         
+        self.bodies = sum([list(e) for e in self.mbs.bodies],[])
+        self.jac_cols = sum([e for e in self.mbs.cols],[])
+        
         self.arguments = num_args_sym = self.mbs.arguments.copy()
         self.constants = cfig_cons_sym = self.mbs.constants.copy()
         
@@ -71,6 +74,10 @@ class abstract_generator(object):
         
     def setup_jac_equations(self):
         self._setup_x_equations('jac','j')
+        scols = ','.join(['self.%s*2,self.%s*2+1'%(i,i) for i in self.jac_cols])
+        scols += ','+','.join(['self.%s*2+1'%i for i in self.bodies])
+        self.jac_eq_cols = 'np.array([%s])'%scols
+
         
     def setup_equations(self):
         self.setup_pos_equations()
@@ -119,6 +126,24 @@ class python_code_generator(abstract_generator):
         maped_coordinates = re.sub(pattern,self._insert_self,maped_coordinates)
         maped_coordinates = textwrap.indent(maped_coordinates,indent).lstrip()
         text = text.format(maped = maped_coordinates)
+        text = textwrap.indent(text,indent)
+        return text
+    
+    def write_cols_indexer(self):
+        text = '''
+                def set_mapping(self,mapping):
+                    p = self.prefix
+                    {maped}
+                    self.jac_cols = {jac_cols}
+               '''
+        
+        indent = 4*' '
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        nodes = '\n'.join(['%s = mapping[p+%r]'%('self.%s'%i,i) for i in self.mbs.nodes])
+        nodes = textwrap.indent(nodes,indent).lstrip()
+        text = text.format(maped = nodes,
+                           jac_cols = self.jac_eq_cols)
         text = textwrap.indent(text,indent)
         return text
     
@@ -202,38 +227,27 @@ class python_code_generator(abstract_generator):
         text = '''
                 class numerical_assembly(object):
 
-                    def __init__(self,config):
+                    def __init__(self,config,prefix=''):
                         self.t = 0.0
                         self.config = config
+                        self.prefix = prefix
+                        
                         self.Pg_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
                         
-                        self.pos_rows = {pos_rows}
-                        self.pos_cols = {pos_cols}
+                        self.nrows = {nve}
+                        self.ncols = 2*{nodes}
+                        self.rows = np.arange(self.nrows)
                         
-                        self.vel_rows = {vel_rows}
-                        self.vel_cols = {vel_cols}
-                        
-                        self.acc_rows = {acc_rows}
-                        self.acc_cols = {acc_cols}
-                        
-                        self.jac_rows = {jac_rows}
-                        self.jac_cols = {jac_cols}
-                        
-                        self.nrows = max(self.pos_rows)
-                        self.ncols = max(self.jac_cols)
+                        self.jac_rows = {jac_rows}                        
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
-                                        
-        text = text.format(nve = self.mbs.nve,
-                           pos_rows = self.pos_eq_rows,
-                           pos_cols = self.pos_eq_cols,
-                           vel_rows = self.vel_eq_rows,
-                           vel_cols = self.vel_eq_cols,
-                           acc_rows = self.acc_eq_rows,
-                           acc_cols = self.acc_eq_cols,
+        
+        text = text.format(rows = self.pos_eq_rows,
                            jac_rows = self.jac_eq_rows,
-                           jac_cols = self.jac_eq_cols)
+                           jac_cols = self.jac_eq_cols,
+                           nve = self.mbs.nve,
+                           nodes = len(self.mbs.nodes))
         return text
                 
     def write_config_class(self):
@@ -297,6 +311,7 @@ class python_code_generator(abstract_generator):
     def write_system_class(self):
         text = '''
                 {class_init}
+                    {jac_mappings}
                     {coord_setter}
                     {veloc_setter}
                     {eval_pos}
@@ -308,7 +323,7 @@ class python_code_generator(abstract_generator):
         text = textwrap.dedent(text)
         
         class_init = self.write_class_init()
-        
+        jac_mappings = self.write_cols_indexer()
         coord_setter = self.write_coordinates_setter()
         veloc_setter = self.write_velocities_setter()
         
@@ -318,6 +333,7 @@ class python_code_generator(abstract_generator):
         eval_jac = self.write_jac_equations()
         
         text = text.format(class_init = class_init,
+                           jac_mappings = jac_mappings,
                            eval_pos = eval_pos,
                            eval_vel = eval_vel,
                            eval_acc = eval_acc,
