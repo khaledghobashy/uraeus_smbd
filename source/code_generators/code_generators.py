@@ -9,6 +9,7 @@ import textwrap
 import re
 import pandas as pd
 import numpy as np
+import networkx as nx
 from source.code_generators.code_printers import numerical_printer
 
 class abstract_generator(object):
@@ -33,6 +34,8 @@ class abstract_generator(object):
         
         self.generalized_coordinates_lhs = [printer._print(exp.lhs) for exp in self.generalized_coordinates_equalities]
         self.generalized_velocities_lhs = [printer._print(exp.lhs) for exp in self.generalized_velocities_equalities]
+    
+        self.virtual_bodies = nx.get_node_attributes(self.mbs.graph.subgraph(self.mbs.virtual_bodies),'obj')
     
     def create_config_dataframe(self):
         indecies = [i[1:-1] for i in self.num_args_sym]

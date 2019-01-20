@@ -14,6 +14,10 @@ class inputs(object):
         self.pt1_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
         self.ax1_jcs_rc_cyl = np.array([[0], [0], [1]],dtype=np.float64)
         self.pt1_jcs_rc_cyl = np.array([[0], [0], [0]],dtype=np.float64)
+        self.ax1_jcr_rocker_ch = np.array([[0], [0], [1]],dtype=np.float64)
+        self.pt1_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
+        self.ax1_jcl_rocker_ch = np.array([[0], [0], [1]],dtype=np.float64)
+        self.pt1_jcl_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
         self.R_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_rbs_coupler = np.array([[1], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
@@ -33,19 +37,35 @@ class inputs(object):
         c1 = self.pt1_jcs_rc_sph
         c2 = -1.0*multi_dot([c0,self.R_rbs_coupler])
         c3 = A(self.P_rbr_rocker).T
-        c4 = Triad(self.ax1_jcs_rc_sph,)
-        c5 = self.pt1_jcs_rc_cyl
-        c6 = A(self.P_rbl_rocker).T
-        c7 = Triad(self.ax1_jcs_rc_cyl,)
+        c4 = -1.0*multi_dot([c3,self.R_rbr_rocker])
+        c5 = Triad(self.ax1_jcs_rc_sph,)
+        c6 = self.pt1_jcs_rc_cyl
+        c7 = A(self.P_rbl_rocker).T
+        c8 = -1.0*multi_dot([c7,self.R_rbl_rocker])
+        c9 = Triad(self.ax1_jcs_rc_cyl,)
+        c10 = self.pt1_jcr_rocker_ch
+        c11 = A('P_vbs_chassis').T
+        c12 = -1.0*multi_dot([c11,'R_vbs_chassis'])
+        c13 = Triad(self.ax1_jcr_rocker_ch,)
+        c14 = self.pt1_jcl_rocker_ch
+        c15 = Triad(self.ax1_jcl_rocker_ch,)
 
         self.ubar_rbs_coupler_jcs_rc_sph = (multi_dot([c0,c1]) + c2)
-        self.ubar_rbr_rocker_jcs_rc_sph = (multi_dot([c3,c1]) + -1.0*multi_dot([c3,self.R_rbr_rocker]))
-        self.Mbar_rbs_coupler_jcs_rc_sph = multi_dot([c0,c4])
-        self.Mbar_rbr_rocker_jcs_rc_sph = multi_dot([c3,c4])
-        self.ubar_rbs_coupler_jcs_rc_cyl = (multi_dot([c0,c5]) + c2)
-        self.ubar_rbl_rocker_jcs_rc_cyl = (multi_dot([c6,c5]) + -1.0*multi_dot([c6,self.R_rbl_rocker]))
-        self.Mbar_rbs_coupler_jcs_rc_cyl = multi_dot([c0,c7])
-        self.Mbar_rbl_rocker_jcs_rc_cyl = multi_dot([c6,c7])
+        self.ubar_rbr_rocker_jcs_rc_sph = (multi_dot([c3,c1]) + c4)
+        self.Mbar_rbs_coupler_jcs_rc_sph = multi_dot([c0,c5])
+        self.Mbar_rbr_rocker_jcs_rc_sph = multi_dot([c3,c5])
+        self.ubar_rbs_coupler_jcs_rc_cyl = (multi_dot([c0,c6]) + c2)
+        self.ubar_rbl_rocker_jcs_rc_cyl = (multi_dot([c7,c6]) + c8)
+        self.Mbar_rbs_coupler_jcs_rc_cyl = multi_dot([c0,c9])
+        self.Mbar_rbl_rocker_jcs_rc_cyl = multi_dot([c7,c9])
+        self.ubar_rbr_rocker_jcr_rocker_ch = (multi_dot([c3,c10]) + c4)
+        self.ubar_vbs_chassis_jcr_rocker_ch = (multi_dot([c11,c10]) + c12)
+        self.Mbar_rbr_rocker_jcr_rocker_ch = multi_dot([c3,c13])
+        self.Mbar_vbs_chassis_jcr_rocker_ch = multi_dot([c11,c13])
+        self.ubar_rbl_rocker_jcl_rocker_ch = (multi_dot([c7,c14]) + c8)
+        self.ubar_vbs_chassis_jcl_rocker_ch = (multi_dot([c11,c14]) + c12)
+        self.Mbar_rbl_rocker_jcl_rocker_ch = multi_dot([c7,c15])
+        self.Mbar_vbs_chassis_jcl_rocker_ch = multi_dot([c11,c15])
 
     @property
     def q_initial(self):
@@ -66,17 +86,17 @@ class numerical_assembly(object):
         self.config = config
         self.Pg_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
 
-        self.pos_rows = np.array([0,1,2,3,4,5,6,7])
-        self.pos_cols = np.array([0,0,0,0,0,0,0,0])
+        self.pos_rows = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13])
+        self.pos_cols = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 
-        self.vel_rows = np.array([0,1,2,3,4,5,6,7])
-        self.vel_cols = np.array([0,0,0,0,0,0,0,0])
+        self.vel_rows = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13])
+        self.vel_cols = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 
-        self.acc_rows = np.array([0,1,2,3,4,5,6,7])
-        self.acc_cols = np.array([0,0,0,0,0,0,0,0])
+        self.acc_rows = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13])
+        self.acc_cols = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 
-        self.jac_rows = np.array([0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,6,7])
-        self.jac_cols = np.array([2,3,4,5,2,3,6,7,2,3,6,7,2,3,6,7,2,3,6,7,3,5,7])
+        self.jac_rows = np.array([0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10,11,12,13])
+        self.jac_cols = np.array([2,3,4,5,2,3,6,7,2,3,6,7,2,3,6,7,2,3,6,7,4,5,8,9,4,5,8,9,4,5,8,9,6,7,8,9,6,7,8,9,6,7,8,9,3,5,7])
 
         self.nrows = max(self.pos_rows)
         self.ncols = max(self.jac_cols)
@@ -105,28 +125,38 @@ class numerical_assembly(object):
         t = self.t
 
         x0 = self.R_rbs_coupler
-        x1 = self.P_rbs_coupler
-        x2 = A(x1)
-        x3 = self.P_rbr_rocker
-        x4 = config.Mbar_rbs_coupler_jcs_rc_cyl[:,0:1].T
-        x5 = x2.T
-        x6 = self.P_rbl_rocker
-        x7 = A(x6)
-        x8 = config.Mbar_rbl_rocker_jcs_rc_cyl[:,2:3]
-        x9 = config.Mbar_rbs_coupler_jcs_rc_cyl[:,1:2].T
-        x10 = (x0 + -1.0*self.R_rbl_rocker + multi_dot([x2,config.Mbar_rbs_coupler_jcs_rc_cyl[:,2:3]]) + multi_dot([x2,config.ubar_rbs_coupler_jcs_rc_cyl]) + -1.0*multi_dot([x7,config.ubar_rbl_rocker_jcs_rc_cyl]))
-        x11 = -1.0*np.eye(1,dtype=np.float64)
+        x1 = self.R_rbr_rocker
+        x2 = self.P_rbs_coupler
+        x3 = A(x2)
+        x4 = self.P_rbr_rocker
+        x5 = A(x4)
+        x6 = config.Mbar_rbs_coupler_jcs_rc_cyl[:,0:1].T
+        x7 = x3.T
+        x8 = self.P_rbl_rocker
+        x9 = A(x8)
+        x10 = config.Mbar_rbl_rocker_jcs_rc_cyl[:,2:3]
+        x11 = config.Mbar_rbs_coupler_jcs_rc_cyl[:,1:2].T
+        x12 = self.R_rbl_rocker
+        x13 = (x0 + -1.0*x12 + multi_dot([x3,config.ubar_rbs_coupler_jcs_rc_cyl]) + -1.0*multi_dot([x9,config.ubar_rbl_rocker_jcs_rc_cyl]))
+        x14 = -1.0*'R_vbs_chassis'
+        x15 = A('P_vbs_chassis')
+        x16 = x5.T
+        x17 = config.Mbar_vbs_chassis_jcr_rocker_ch[:,2:3]
+        x18 = x9.T
+        x19 = config.Mbar_vbs_chassis_jcl_rocker_ch[:,2:3]
+        x20 = -1.0*np.eye(1,dtype=np.float64)
 
-        self.pos_eq_blocks = [(x0 + -1.0*self.R_rbr_rocker + multi_dot([x2,config.ubar_rbs_coupler_jcs_rc_sph]) + -1.0*multi_dot([A(x3),config.ubar_rbr_rocker_jcs_rc_sph])),multi_dot([x4,x5,x7,x8]),multi_dot([x9,x5,x7,x8]),multi_dot([x4,x5,x10]),multi_dot([x9,x5,x10]),(x11 + (multi_dot([x1.T,x1]))**(1.0/2.0)),(x11 + (multi_dot([x3.T,x3]))**(1.0/2.0)),(x11 + (multi_dot([x6.T,x6]))**(1.0/2.0))]
+        self.pos_eq_blocks = [(x0 + -1.0*x1 + multi_dot([x3,config.ubar_rbs_coupler_jcs_rc_sph]) + -1.0*multi_dot([x5,config.ubar_rbr_rocker_jcs_rc_sph])),multi_dot([x6,x7,x9,x10]),multi_dot([x11,x7,x9,x10]),multi_dot([x6,x7,x13]),multi_dot([x11,x7,x13]),(x1 + x14 + multi_dot([x5,config.ubar_rbr_rocker_jcr_rocker_ch]) + -1.0*multi_dot([x15,config.ubar_vbs_chassis_jcr_rocker_ch])),multi_dot([config.Mbar_rbr_rocker_jcr_rocker_ch[:,0:1].T,x16,x15,x17]),multi_dot([config.Mbar_rbr_rocker_jcr_rocker_ch[:,1:2].T,x16,x15,x17]),(x12 + x14 + multi_dot([x9,config.ubar_rbl_rocker_jcl_rocker_ch]) + -1.0*multi_dot([x15,config.ubar_vbs_chassis_jcl_rocker_ch])),multi_dot([config.Mbar_rbl_rocker_jcl_rocker_ch[:,0:1].T,x18,x15,x19]),multi_dot([config.Mbar_rbl_rocker_jcl_rocker_ch[:,1:2].T,x18,x15,x19]),(x20 + (multi_dot([x2.T,x2]))**(1.0/2.0)),(x20 + (multi_dot([x4.T,x4]))**(1.0/2.0)),(x20 + (multi_dot([x8.T,x8]))**(1.0/2.0))]
 
     
     def eval_vel_eq(self):
         config = self.config
         t = self.t
 
-        v0 = np.zeros((1,1),dtype=np.float64)
+        v0 = np.zeros((3,1),dtype=np.float64)
+        v1 = np.zeros((1,1),dtype=np.float64)
 
-        self.vel_eq_blocks = [np.zeros((3,1),dtype=np.float64),v0,v0,v0,v0,v0,v0,v0]
+        self.vel_eq_blocks = [v0,v1,v1,v1,v1,v0,v1,v1,v0,v1,v1,v1,v1,v1]
 
     
     def eval_acc_eq(self):
@@ -157,9 +187,28 @@ class numerical_assembly(object):
         a21 = config.ubar_rbl_rocker_jcs_rc_cyl
         a22 = (multi_dot([B(a0,a20),a0]) + -1.0*multi_dot([B(a6,a21),a6]))
         a23 = (self.Rd_rbs_coupler + -1.0*self.Rd_rbl_rocker + multi_dot([B(a10,a21),a6]) + multi_dot([B(a4,a20),a0]))
-        a24 = (self.R_rbs_coupler.T + -1.0*self.R_rbl_rocker.T + multi_dot([config.Mbar_rbs_coupler_jcs_rc_cyl[:,2:3].T,a5]) + multi_dot([a20.T,a5]) + -1.0*multi_dot([a21.T,a11]))
+        a24 = (self.R_rbs_coupler.T + -1.0*self.R_rbl_rocker.T + multi_dot([a20.T,a5]) + -1.0*multi_dot([a21.T,a11]))
+        a25 = 'Pd_vbs_chassis'
+        a26 = config.Mbar_rbr_rocker_jcr_rocker_ch[:,0:1]
+        a27 = self.P_rbr_rocker
+        a28 = A(a27).T
+        a29 = config.Mbar_vbs_chassis_jcr_rocker_ch[:,2:3]
+        a30 = B(a25,a29)
+        a31 = a29.T
+        a32 = 'P_vbs_chassis'
+        a33 = A(a32).T
+        a34 = a1.T
+        a35 = B(a32,a29)
+        a36 = config.Mbar_rbr_rocker_jcr_rocker_ch[:,1:2]
+        a37 = config.Mbar_vbs_chassis_jcl_rocker_ch[:,2:3]
+        a38 = a37.T
+        a39 = config.Mbar_rbl_rocker_jcl_rocker_ch[:,0:1]
+        a40 = B(a25,a37)
+        a41 = a6.T
+        a42 = B(a32,a37)
+        a43 = config.Mbar_rbl_rocker_jcl_rocker_ch[:,1:2]
 
-        self.acc_eq_blocks = [(multi_dot([B(a0,config.ubar_rbs_coupler_jcs_rc_sph),a0]) + -1.0*multi_dot([B(a1,config.ubar_rbr_rocker_jcs_rc_sph),a1])),(multi_dot([a3,a5,a8,a6]) + multi_dot([a9,a11,a12,a0]) + 2.0*multi_dot([a13,a14,a15,a6])),(multi_dot([a17,a5,a8,a6]) + multi_dot([a9,a11,a18,a0]) + 2.0*multi_dot([a13,a19,a15,a6])),(multi_dot([a3,a5,a22]) + 2.0*multi_dot([a13,a14,a23]) + multi_dot([a24,a12,a0])),(multi_dot([a17,a5,a22]) + 2.0*multi_dot([a13,a19,a23]) + multi_dot([a24,a18,a0])),2.0*(multi_dot([a13,a0]))**(1.0/2.0),2.0*(multi_dot([a1.T,a1]))**(1.0/2.0),2.0*(multi_dot([a6.T,a6]))**(1.0/2.0)]
+        self.acc_eq_blocks = [(multi_dot([B(a0,config.ubar_rbs_coupler_jcs_rc_sph),a0]) + -1.0*multi_dot([B(a1,config.ubar_rbr_rocker_jcs_rc_sph),a1])),(multi_dot([a3,a5,a8,a6]) + multi_dot([a9,a11,a12,a0]) + 2.0*multi_dot([a13,a14,a15,a6])),(multi_dot([a17,a5,a8,a6]) + multi_dot([a9,a11,a18,a0]) + 2.0*multi_dot([a13,a19,a15,a6])),(multi_dot([a3,a5,a22]) + 2.0*multi_dot([a13,a14,a23]) + multi_dot([a24,a12,a0])),(multi_dot([a17,a5,a22]) + 2.0*multi_dot([a13,a19,a23]) + multi_dot([a24,a18,a0])),(multi_dot([B(a1,config.ubar_rbr_rocker_jcr_rocker_ch),a1]) + -1.0*multi_dot([B(a25,config.ubar_vbs_chassis_jcr_rocker_ch),a25])),(multi_dot([a26.T,a28,a30,a25]) + multi_dot([a31,a33,B(a1,a26),a1]) + 2.0*multi_dot([a34,B(a27,a26).T,a35,a25])),(multi_dot([a36.T,a28,a30,a25]) + multi_dot([a31,a33,B(a1,a36),a1]) + 2.0*multi_dot([a34,B(a27,a36).T,a35,a25])),(multi_dot([B(a6,config.ubar_rbl_rocker_jcl_rocker_ch),a6]) + -1.0*multi_dot([B(a25,config.ubar_vbs_chassis_jcl_rocker_ch),a25])),(multi_dot([a38,a33,B(a6,a39),a6]) + multi_dot([a39.T,a11,a40,a25]) + 2.0*multi_dot([a41,B(a10,a39).T,a42,a25])),(multi_dot([a38,a33,B(a6,a43),a6]) + multi_dot([a43.T,a11,a40,a25]) + 2.0*multi_dot([a41,B(a10,a43).T,a42,a25])),2.0*(multi_dot([a13,a0]))**(1.0/2.0),2.0*(multi_dot([a34,a1]))**(1.0/2.0),2.0*(multi_dot([a41,a6]))**(1.0/2.0)]
 
     
     def eval_jac_eq(self):
@@ -168,27 +217,41 @@ class numerical_assembly(object):
 
         j0 = np.eye(3,dtype=np.float64)
         j1 = self.P_rbs_coupler
-        j2 = self.P_rbr_rocker
-        j3 = np.zeros((1,3),dtype=np.float64)
-        j4 = config.Mbar_rbl_rocker_jcs_rc_cyl[:,2:3]
-        j5 = j4.T
-        j6 = self.P_rbl_rocker
-        j7 = A(j6).T
-        j8 = config.Mbar_rbs_coupler_jcs_rc_cyl[:,0:1]
-        j9 = B(j1,j8)
-        j10 = config.Mbar_rbs_coupler_jcs_rc_cyl[:,1:2]
-        j11 = B(j1,j10)
-        j12 = j8.T
-        j13 = A(j1).T
-        j14 = multi_dot([j12,j13])
-        j15 = config.ubar_rbs_coupler_jcs_rc_cyl
-        j16 = B(j1,j15)
-        j17 = config.ubar_rbl_rocker_jcs_rc_cyl
-        j18 = (self.R_rbs_coupler.T + -1.0*self.R_rbl_rocker.T + multi_dot([config.Mbar_rbs_coupler_jcs_rc_cyl[:,2:3].T,j13]) + multi_dot([j15.T,j13]) + -1.0*multi_dot([j17.T,j7]))
-        j19 = j10.T
-        j20 = multi_dot([j19,j13])
-        j21 = B(j6,j4)
-        j22 = B(j6,j17)
+        j2 = -1.0*j0
+        j3 = self.P_rbr_rocker
+        j4 = np.zeros((1,3),dtype=np.float64)
+        j5 = config.Mbar_rbl_rocker_jcs_rc_cyl[:,2:3]
+        j6 = j5.T
+        j7 = self.P_rbl_rocker
+        j8 = A(j7).T
+        j9 = config.Mbar_rbs_coupler_jcs_rc_cyl[:,0:1]
+        j10 = B(j1,j9)
+        j11 = config.Mbar_rbs_coupler_jcs_rc_cyl[:,1:2]
+        j12 = B(j1,j11)
+        j13 = j9.T
+        j14 = A(j1).T
+        j15 = multi_dot([j13,j14])
+        j16 = config.ubar_rbs_coupler_jcs_rc_cyl
+        j17 = B(j1,j16)
+        j18 = config.ubar_rbl_rocker_jcs_rc_cyl
+        j19 = (self.R_rbs_coupler.T + -1.0*self.R_rbl_rocker.T + multi_dot([j16.T,j14]) + -1.0*multi_dot([j18.T,j8]))
+        j20 = j11.T
+        j21 = multi_dot([j20,j14])
+        j22 = B(j7,j5)
+        j23 = B(j7,j18)
+        j24 = config.Mbar_vbs_chassis_jcr_rocker_ch[:,2:3]
+        j25 = j24.T
+        j26 = 'P_vbs_chassis'
+        j27 = A(j26).T
+        j28 = config.Mbar_rbr_rocker_jcr_rocker_ch[:,0:1]
+        j29 = config.Mbar_rbr_rocker_jcr_rocker_ch[:,1:2]
+        j30 = A(j3).T
+        j31 = B(j26,j24)
+        j32 = config.Mbar_vbs_chassis_jcl_rocker_ch[:,2:3]
+        j33 = j32.T
+        j34 = config.Mbar_rbl_rocker_jcl_rocker_ch[:,0:1]
+        j35 = config.Mbar_rbl_rocker_jcl_rocker_ch[:,1:2]
+        j36 = B(j26,j32)
 
-        self.jac_eq_blocks = [j0,B(j1,config.ubar_rbs_coupler_jcs_rc_sph),-1.0*j0,-1.0*B(j2,config.ubar_rbr_rocker_jcs_rc_sph),j3,multi_dot([j5,j7,j9]),j3,multi_dot([j12,j13,j21]),j3,multi_dot([j5,j7,j11]),j3,multi_dot([j19,j13,j21]),j14,(multi_dot([j12,j13,j16]) + multi_dot([j18,j9])),-1.0*j14,-1.0*multi_dot([j12,j13,j22]),j20,(multi_dot([j19,j13,j16]) + multi_dot([j18,j11])),-1.0*j20,-1.0*multi_dot([j19,j13,j22]),2.0*j1.T,2.0*j2.T,2.0*j6.T]
+        self.jac_eq_blocks = [j0,B(j1,config.ubar_rbs_coupler_jcs_rc_sph),j2,-1.0*B(j3,config.ubar_rbr_rocker_jcs_rc_sph),j4,multi_dot([j6,j8,j10]),j4,multi_dot([j13,j14,j22]),j4,multi_dot([j6,j8,j12]),j4,multi_dot([j20,j14,j22]),j15,(multi_dot([j13,j14,j17]) + multi_dot([j19,j10])),-1.0*j15,-1.0*multi_dot([j13,j14,j23]),j21,(multi_dot([j20,j14,j17]) + multi_dot([j19,j12])),-1.0*j21,-1.0*multi_dot([j20,j14,j23]),j0,B(j3,config.ubar_rbr_rocker_jcr_rocker_ch),j2,-1.0*B(j26,config.ubar_vbs_chassis_jcr_rocker_ch),j4,multi_dot([j25,j27,B(j3,j28)]),j4,multi_dot([j28.T,j30,j31]),j4,multi_dot([j25,j27,B(j3,j29)]),j4,multi_dot([j29.T,j30,j31]),j0,B(j7,config.ubar_rbl_rocker_jcl_rocker_ch),j2,-1.0*B(j26,config.ubar_vbs_chassis_jcl_rocker_ch),j4,multi_dot([j33,j27,B(j7,j34)]),j4,multi_dot([j34.T,j8,j36]),j4,multi_dot([j33,j27,B(j7,j35)]),j4,multi_dot([j35.T,j8,j36]),2.0*j1.T,2.0*j3.T,2.0*j7.T]
   

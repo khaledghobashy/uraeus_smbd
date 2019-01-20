@@ -29,10 +29,10 @@ class body(reference_frame):
         
         format_ = (self.prefix,self.id_name)
         
-        self.R  = vector('%sR_%s'%format_, format_as='{%sR_{%s}}'%format_)
-        self.Rd = vector('%sRd_%s'%format_, format_as='{%s\dot{R}_{%s}}'%format_)
-        self.P  = quatrenion('%sP_%s'%format_, format_as='{%sP_{%s}}'%format_)
-        self.Pd = quatrenion('%sPd_%s'%format_, format_as='{%s\dot{P}_{%s}}'%format_)
+        self.R  = vector('%sR_%s'%format_, format_as=r'{%sR_{%s}}'%format_)
+        self.Rd = vector('%sRd_%s'%format_, format_as='r{%s\dot{R}_{%s}}'%format_)
+        self.P  = quatrenion('%sP_%s'%format_, format_as=r'{%sP_{%s}}'%format_)
+        self.Pd = quatrenion('%sPd_%s'%format_, format_as=r'{%s\dot{P}_{%s}}'%format_)
         
         #print('Generating DCM')
         self.A = A(self.P)
@@ -74,7 +74,7 @@ class ground(body):
     def __init__(self,*args):
         name = 'ground'
         super().__init__(name)
-        self.P_ground = quatrenion('Pg_%s'%self.name,format_as='{Pg_{%s}}'%self.name)
+        self.P_ground = quatrenion('Pg_%s'%self.name,format_as=r'{Pg_{%s}}'%self.name)
         
         self.normalized_pos_equation = sm.BlockMatrix([[self.R], [self.P-self.P_ground]])
         self.normalized_vel_equation = sm.BlockMatrix([[zero_matrix(3,1)],[zero_matrix(4,1)]])
@@ -93,9 +93,6 @@ class virtual_body(body):
     n   = 0
     nc  = 0
     nve = 0
-    
-    def __init__(self,name):
-        self._key = 'vb_%s'%name
     
     @property
     def arguments(self):

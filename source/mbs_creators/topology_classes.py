@@ -112,8 +112,8 @@ class abstract_topology(object):
     
     def _assemble_nodes(self):
         for n in self.nodes:
-            if self._check_if_virtual(n):
-                continue
+#            if self._check_if_virtual(n):
+#                continue
             body_type = self.nodes[n]['class']
             body_instance = body_type(n)
             self.nodes[n].update(self._obj_attr_dict(body_instance))
@@ -135,8 +135,8 @@ class abstract_topology(object):
     def _assemble_edges(self):
         for e in self.edges:
             b1, b2, name = e
-            if self._check_if_virtual(b1) or self._check_if_virtual(b2):
-                continue
+#            if self._check_if_virtual(b1) or self._check_if_virtual(b2):
+#                continue
             self._assemble_edge(e)
     
     
@@ -159,9 +159,9 @@ class abstract_topology(object):
         row_ind = 0
         for e in edgelist:
             u,v = e[:2]
-            if self._check_if_virtual(u) or self._check_if_virtual(v):
-#                print('     bypassing edge: %s'%(e,))
-                continue
+#            if self._check_if_virtual(u) or self._check_if_virtual(v):
+##                print('     bypassing edge: %s'%(e,))
+#                continue
             eo  = self.edges[e]['obj']
             # tracker of row index based on the current joint type and the history
             # of the loop
@@ -520,12 +520,12 @@ class assembly(subsystem):
     
     def assemble_model(self,full=False):
         self._initialize_interface()
-        self._assemble_edges()
-        self._initialize_toplogy_reqs()
-        if full:
-            super()._assemble_equations()
-        else:
-            self._assemble_equations()
+#        self._assemble_edges()
+#        self._initialize_toplogy_reqs()
+#        if full:
+#            super()._assemble_equations()
+#        else:
+#            self._assemble_equations()
         
     def draw_interface_graph(self):
         plt.figure(figsize=(10,6))

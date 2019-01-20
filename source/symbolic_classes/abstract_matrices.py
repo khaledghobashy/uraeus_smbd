@@ -92,7 +92,7 @@ class AbstractMatrix(sm.MatrixExpr):
 class A(AbstractMatrix):
     
     def _latex(self,expr):
-        return '{A(%s)}'%self.args[0]
+        return r'{A(%s)}'%self.args[0]
 
 
 class G(AbstractMatrix):
@@ -109,7 +109,7 @@ class B(AbstractMatrix):
     
     def _latex(self,expr):
         p,u = self.args
-        return '{B(%s,%s)}'%(p,u.name)
+        return r'{B(%s,%s)}'%(p,u.name)
     
 
 class Triad(AbstractMatrix):
@@ -133,7 +133,7 @@ class base_vector(sm.MatrixSlice):
         self.frame = frame
         self._sym  = sym
         self._args = (frame,sym)
-        self._formated = '{\hat{%s}_{%s}}'%(self._sym,self.frame.A)
+        self._formated = r'{\hat{%s}_{%s}}'%(self._sym,self.frame.A)
     
     @property
     def name(self):
@@ -195,7 +195,7 @@ class dcm(sm.MatrixSymbol):
 class zero_matrix(sm.MatrixSymbol):
     
     def __new__(cls,m,n):
-        sym = '{Z_{%sx%s}}'%(m,n)
+        sym = r'{Z_{%sx%s}}'%(m,n)
         return super().__new__(cls,sym,m,n)
     def __init__(self,m,n):
         self.sym = super().name
