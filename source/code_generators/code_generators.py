@@ -38,7 +38,7 @@ class abstract_generator(object):
         self.generalized_coordinates_lhs = [printer._print(exp.lhs) for exp in self.generalized_coordinates_equalities]
         self.generalized_velocities_lhs = [printer._print(exp.lhs) for exp in self.generalized_velocities_equalities]
     
-        self.virtual_bodies = nx.get_node_attributes(self.mbs.graph.subgraph(self.mbs.virtual_bodies),'obj')
+        self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.q_virtuals]
     
     def create_config_dataframe(self):
         indecies = [i[1:-1] for i in self.num_args_sym]
@@ -129,20 +129,33 @@ class python_code_generator(abstract_generator):
         text = textwrap.indent(text,indent)
         return text
     
-    def write_cols_indexer(self):
+    def write_template_assembler(self):
         text = '''
-                def set_mapping(self,mapping):
+                def _set_mapping(self,indicies_map,interface_map):
                     p = self.prefix
                     {maped}
+                    {virtuals}
+                
+                def assemble_template(self,indicies_map,interface_map,rows_offset):
+                    self.rows_offset = rows_offset
+                    self._set_mapping(indicies_map,interface_map)
+                    self.rows += self.rows_offset
+                    self.jac_cols += self.rows_offset
                     self.jac_cols = {jac_cols}
                '''
         
         indent = 4*' '
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        nodes = '\n'.join(['%s = mapping[p+%r]'%('self.%s'%i,i) for i in self.mbs.nodes])
+        
+        nodes = '\n'.join(['%s = indicies_map[p+%r]'%('self.%s'%i,i) for i in self.bodies])
         nodes = textwrap.indent(nodes,indent).lstrip()
+        
+        virtuals = '\n'.join(['%s = indicies_map[interface_map[p+%r]]'%('self.%s'%i,i) for i in self.mbs.virtual_bodies])
+        virtuals = textwrap.indent(virtuals,indent).lstrip()
+        
         text = text.format(maped = nodes,
+                           virtuals = virtuals,
                            jac_cols = self.jac_eq_cols)
         text = textwrap.indent(text,indent)
         return text
@@ -170,7 +183,12 @@ class python_code_generator(abstract_generator):
         
         cse_var_txt = getattr(self,'%s_eq_csev'%xstring)
         cse_exp_txt = getattr(self,'%s_eq_data'%xstring)
-                
+        
+        vir_coord_pattern = '|'.join(self.virtual_coordinates)
+        cse_var_txt = re.sub(vir_coord_pattern,self._insert_self,cse_var_txt)
+        cse_exp_txt = re.sub(vir_coord_pattern,self._insert_self,cse_exp_txt)
+        
+        
         gen_coord_pattern = '|'.join(self.generalized_coordinates_lhs)
         cse_var_txt = re.sub(gen_coord_pattern,self._insert_self,cse_var_txt)
         cse_exp_txt = re.sub(gen_coord_pattern,self._insert_self,cse_exp_txt)
@@ -280,7 +298,7 @@ class python_code_generator(abstract_generator):
         inputs = self.arguments
         consts = self.constants
         
-        pattern = '|'.join(self.num_args_sym+self.cfig_cons_sym)
+        pattern = '|'.join(self.num_args_sym+self.cfig_cons_sym+self.virtual_coordinates)
         
         inputs = '\n'.join([p._print(exp) for exp in inputs])
         inputs = re.sub(pattern,self._insert_self,inputs)
@@ -323,7 +341,7 @@ class python_code_generator(abstract_generator):
         text = textwrap.dedent(text)
         
         class_init = self.write_class_init()
-        jac_mappings = self.write_cols_indexer()
+        jac_mappings = self.write_template_assembler()
         coord_setter = self.write_coordinates_setter()
         veloc_setter = self.write_velocities_setter()
         

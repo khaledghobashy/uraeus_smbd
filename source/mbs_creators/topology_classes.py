@@ -24,6 +24,7 @@ class abstract_topology(object):
         self._edges_map = {}
         self._insert_ground()
         self.grf = 'ground'
+        self.inputs_graph = nx.DiGraph(name=name)
         
     def _set_global_frame(self):
         self.global_instance = global_frame(self.name)
@@ -68,7 +69,7 @@ class abstract_topology(object):
         nve_nodes = sum([node[-1] for node in self.nodes(data='nve')])
         nve_edges = sum([edge[-1] for edge in self.edges(data='nve')])
         return nve_nodes + nve_edges
-    
+        
     @staticmethod
     def _typ_attr_dict(typ):
         attr_dict ={'n':typ.n,'nc':typ.nc,'nve':typ.nve,'class':typ,'mirr':None,
@@ -86,6 +87,7 @@ class abstract_topology(object):
         plt.show()
     
     def _map_coordinates(self):
+        q_virtuals = []
         q = []
         q_sym = sm.MatrixSymbol('q',self.n,1)
         qd = []
@@ -93,6 +95,7 @@ class abstract_topology(object):
         i = 0
         for n in self.nodes(data='obj'):
             if self._check_if_virtual(n[0]):
+                q_virtuals += [n[-1].R,n[-1].P,n[-1].Rd,n[-1].Pd]
                 continue
             q.append(sm.Eq(n[-1].R,q_sym[i:i+3,0]))
             q.append(sm.Eq(n[-1].P,q_sym[i+3:i+3+4,0]))
@@ -101,6 +104,7 @@ class abstract_topology(object):
             i+=7
         self.q_maped = q
         self.qd_maped = qd
+        self.q_virtuals = q_virtuals
     
     def _set_constants(self):
         cons = nx.get_edge_attributes(self.graph,'constants').values()
@@ -218,6 +222,23 @@ class abstract_topology(object):
         self.acc_equations = acc_rhs
         self.jac_equations = jacobian
     
+    def _assemble_inputs_graph(self):
+        for n in self.nodes:
+            if self.nodes[n]['align'] in 'sr':
+                mirr = self.nodes[n]['mirr']
+                if mirr != n:
+                    self.inputs_graph.add_edge('R_%s'%n,'R_%s'%mirr)
+                    self.inputs_graph.nodes['R_%s'%n]['func'] = 'user_input'
+                    self.inputs_graph.nodes['R_%s'%mirr]['func'] = 'mirror'
+                else:
+                    self.inputs_graph.add_node('R_%s'%n)
+                    self.inputs_graph.nodes['R_%s'%n]['func'] = 'user_input'
+                
+    def draw_inputs_graph(self):
+        plt.figure(figsize=(10,6))
+        nx.draw_spring(self.inputs_graph,with_labels=True)
+        plt.show()        
+    
     def assemble_model(self):
         self._set_global_frame()
         self._assemble_nodes()
@@ -225,7 +246,17 @@ class abstract_topology(object):
         self._assemble_equations()
         self._initialize_toplogy_reqs()
     
-
+#    def add_node(self,node,dicts):
+#        variant = self.selected_variant
+#        if node not in variant.nodes():
+#            variant.add_node(node,**dicts)
+#    
+#    def add_edge(self,edge,dicts):
+#        variant = self.selected_variant
+#        if edge not in variant.edges:
+#            variant.add_edge(*edge,**dicts)
+#            self._edges_map[edge[-1]] = edge
+        
 ###############################################################################
 ###############################################################################
 
@@ -298,6 +329,8 @@ class template_based_topology(topology):
             super().add_body(node2)
             variant.nodes[node1]['mirr'] = node2
             variant.nodes[node2]['mirr'] = node1
+            variant.nodes[node1]['align'] = 'r'
+            variant.nodes[node2]['align'] = 'l'
         else:
             node1 = node2 = 'rbs_%s'%name
             super().add_body(node1)
@@ -317,7 +350,9 @@ class template_based_topology(topology):
             self._add_virtual_body(node1)
             self._add_virtual_body(node2)
             variant.nodes[node1]['mirr'] = node2
-            variant.nodes[node2]['mirr'] = node1 
+            variant.nodes[node2]['mirr'] = node1
+            variant.nodes[node1]['align'] = 'r'
+            variant.nodes[node2]['align'] = 'l'
         else:
             node1 = node2 = 'vbs_%s'%name
             self._add_virtual_body(node1)

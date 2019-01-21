@@ -30,7 +30,7 @@ class body(reference_frame):
         format_ = (self.prefix,self.id_name)
         
         self.R  = vector('%sR_%s'%format_, format_as=r'{%sR_{%s}}'%format_)
-        self.Rd = vector('%sRd_%s'%format_, format_as='r{%s\dot{R}_{%s}}'%format_)
+        self.Rd = vector('%sRd_%s'%format_, format_as=r'{%s\dot{R}_{%s}}'%format_)
         self.P  = quatrenion('%sP_%s'%format_, format_as=r'{%sP_{%s}}'%format_)
         self.Pd = quatrenion('%sPd_%s'%format_, format_as=r'{%s\dot{P}_{%s}}'%format_)
         
