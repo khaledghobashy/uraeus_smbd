@@ -349,10 +349,8 @@ class vector(sm.MatrixSymbol):
     def doit(self):
         return self
     
-    def rename(self,name,format_as=None):
-        self._raw_name = name
-        self._formated_name = (format_as if format_as else name)
-        self._args = (name,self.frame,self._formated_name)
+    def __str__(self):
+        return self._raw_name
     
 ###############################################################################
 class quatrenion(sm.MatrixSymbol):
@@ -381,10 +379,8 @@ class quatrenion(sm.MatrixSymbol):
     def func(self):
         return self.__class__
             
-    def rename(self,name,format_as=None):
-        self._raw_name = name
-        self._formated_name = (format_as if format_as else name)
-        self._args = (name,format_as)
+    def __str__(self):
+        return self._raw_name
     
 ###############################################################################
 ###############################################################################

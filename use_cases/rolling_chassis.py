@@ -72,7 +72,7 @@ steering_code.write_code_file()
 
 
 steering_subsystem = subsystem('ST',steering_template)
-steering_subsystem.assemble_model()
+#steering_subsystem.assemble_model()
 
 
 rolling_chassis = assembly('rolling_chassis')

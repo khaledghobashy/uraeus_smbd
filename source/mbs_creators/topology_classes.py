@@ -222,8 +222,11 @@ class abstract_topology(object):
         self.acc_equations = acc_rhs
         self.jac_equations = jacobian
     
-    def _assemble_inputs_graph(self):
+    def _assemble_inputs_base_layer(self):
+        mirror = sm.Function('mirror')
         for n in self.nodes:
+            if self._check_if_virtual(n):
+                continue
             if self.nodes[n]['align'] in 'sr':
                 mirr = self.nodes[n]['mirr']
                 if mirr != n:
@@ -233,7 +236,21 @@ class abstract_topology(object):
                 else:
                     self.inputs_graph.add_node('R_%s'%n)
                     self.inputs_graph.nodes['R_%s'%n]['func'] = 'user_input'
-                
+        for e in self.edges:
+            if self.edges[e]['align'] in 'sr':
+                mirr = self.edges[e]['mirr']
+                args_r = [i.lhs for i in self.edges[e]['obj'].arguments]
+                if mirr != e[-1]:
+                    e2 = self._edges_map[mirr]
+                    args_l = [i.lhs for i in self.edges[e2]['obj'].arguments]
+                    args_z = zip(args_r,args_l)
+                    self.inputs_graph.add_edges_from(args_z)
+                    [self.inputs_graph.nodes[i].update({'func': i}) for i in args_r]
+                    [self.inputs_graph.nodes[i].update({'func': mirror(i)}) for i in args_l]
+                else:
+                    self.inputs_graph.add_nodes_from(args_r)
+                    [self.inputs_graph.nodes[i].update({'func': i}) for i in args_r]                
+    
     def draw_inputs_graph(self):
         plt.figure(figsize=(10,6))
         nx.draw_spring(self.inputs_graph,with_labels=True)
@@ -245,6 +262,7 @@ class abstract_topology(object):
         self._assemble_edges()
         self._assemble_equations()
         self._initialize_toplogy_reqs()
+        self._assemble_inputs_base_layer()
     
 #    def add_node(self,node,dicts):
 #        variant = self.selected_variant
@@ -327,10 +345,8 @@ class template_based_topology(topology):
             node2 = 'rbl_%s'%name
             super().add_body(node1)
             super().add_body(node2)
-            variant.nodes[node1]['mirr'] = node2
-            variant.nodes[node2]['mirr'] = node1
-            variant.nodes[node1]['align'] = 'r'
-            variant.nodes[node2]['align'] = 'l'
+            variant.nodes[node1].update({'mirr':node2,'align':'r'})
+            variant.nodes[node2].update({'mirr':node1,'align':'l'})
         else:
             node1 = node2 = 'rbs_%s'%name
             super().add_body(node1)
@@ -349,10 +365,8 @@ class template_based_topology(topology):
             node2 = 'vbl_%s'%name
             self._add_virtual_body(node1)
             self._add_virtual_body(node2)
-            variant.nodes[node1]['mirr'] = node2
-            variant.nodes[node2]['mirr'] = node1
-            variant.nodes[node1]['align'] = 'r'
-            variant.nodes[node2]['align'] = 'l'
+            variant.nodes[node1].update({'mirr':node2,'align':'r'})
+            variant.nodes[node2].update({'mirr':node1,'align':'l'})
         else:
             node1 = node2 = 'vbs_%s'%name
             self._add_virtual_body(node1)
@@ -369,13 +383,13 @@ class template_based_topology(topology):
             super().add_joint(typ,key2,body_i_mirr,body_j_mirr)
             joint_edge1 = self._edges_map[key1]
             joint_edge2 = self._edges_map[key2]
-            variant.edges[joint_edge1]['mirr'] = key2
-            variant.edges[joint_edge2]['mirr'] = key1
+            variant.edges[joint_edge1].update({'mirr':key2,'align':'r'})
+            variant.edges[joint_edge2].update({'mirr':key1,'align':'l'})
         else:
             key = 'jcs_%s'%name
             super().add_joint(typ,key,body_i,body_j)
             joint_edge = self._edges_map[key]
-            variant.edges[joint_edge]['mirr'] = key
+            variant.edges[joint_edge].update({'mirr':key})
     
     def add_joint_actuator(self,typ,name,joint_name,mirrored=False):
         variant = self.selected_variant
