@@ -8,7 +8,6 @@ Created on Tue Jan  1 11:31:35 2019
 import sympy as sm
 import matplotlib.pyplot as plt
 import networkx as nx
-import copy
 
 from source.symbolic_classes.abstract_matrices import global_frame, reference_frame
 from source.symbolic_classes.bodies import body, ground, virtual_body
@@ -86,6 +85,10 @@ class abstract_topology(object):
         nx.draw_spring(self.selected_variant,with_labels=True)
         plt.show()
     
+    def _check_if_virtual(self,n):
+        body_type = self.nodes[n]['class']
+        return issubclass(body_type,virtual_body)
+
     def _map_coordinates(self):
         q_virtuals = []
         q = []
@@ -119,10 +122,6 @@ class abstract_topology(object):
         self._map_coordinates()
         self._set_constants()
         self._set_arguments()
-
-    def _check_if_virtual(self,n):
-        body_type = self.nodes[n]['class']
-        return issubclass(body_type,virtual_body)
     
     def _assemble_nodes(self):
         for n in self.nodes:
