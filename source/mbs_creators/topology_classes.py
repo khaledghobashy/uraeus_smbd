@@ -239,13 +239,13 @@ class abstract_topology(object):
             n = e[-1]
             if self.edges[e]['align'] in 'sr':
                 m = self.edges[e]['mirr']
-                args_n = self.edges[e]['obj'].arguments
+                args_n = self.edges[e]['arguments']
                 nodes_args_n = [(str(i.lhs),{'func':i}) for i in args_n]
                 if m == n:
                     graph.add_nodes_from(nodes_args_n)
                 else:
                     e2 = self._edges_map[m]
-                    args_m = self.edges[e2]['obj'].arguments
+                    args_m = self.edges[e2]['arguments']
                     args_c = zip(args_n,args_m)
                     nodes_args_m = [(str(m.lhs),{'func':mirror(n.lhs)}) for n,m in args_c]
                     graph.add_nodes_from(nodes_args_n+nodes_args_m)
