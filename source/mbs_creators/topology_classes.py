@@ -219,32 +219,38 @@ class abstract_topology(object):
     
     def _assemble_inputs_base_layer(self):
         mirror = sm.Function('mirror')
+        graph = self.inputs_graph
         for n in self.nodes:
             if self._check_if_virtual(n):
                 continue
             if self.nodes[n]['align'] in 'sr':
-                mirr = self.nodes[n]['mirr']
-                if mirr != n:
-                    self.inputs_graph.add_edge('R_%s'%n,'R_%s'%mirr)
-                    self.inputs_graph.nodes['R_%s'%n]['func'] = 'user_input'
-                    self.inputs_graph.nodes['R_%s'%mirr]['func'] = 'mirror'
+                m = self.nodes[n]['mirr']
+                args_n = self.nodes[n]['arguments'][0]
+                if m == n:
+                    graph.add_node(str(args_n.lhs))
+                    graph.nodes[str(args_n.lhs)].update({'func': args_n})
                 else:
-                    self.inputs_graph.add_node('R_%s'%n)
-                    self.inputs_graph.nodes['R_%s'%n]['func'] = 'user_input'
+                    args_m = self.nodes[m]['arguments'][0]
+                    graph.add_edge(str(args_n.lhs),str(args_m.lhs))
+                    graph.nodes[str(args_n.lhs)].update({'func': args_n})
+                    graph.nodes[str(args_m.lhs)].update({'func': mirror(args_n.lhs)})
+                
         for e in self.edges:
+            n = e[-1]
             if self.edges[e]['align'] in 'sr':
-                mirr = self.edges[e]['mirr']
-                args_r = [i.lhs for i in self.edges[e]['obj'].arguments]
-                if mirr != e[-1]:
-                    e2 = self._edges_map[mirr]
-                    args_l = [i.lhs for i in self.edges[e2]['obj'].arguments]
-                    args_z = zip(args_r,args_l)
-                    self.inputs_graph.add_edges_from(args_z)
-                    [self.inputs_graph.nodes[i].update({'func': i}) for i in args_r]
-                    [self.inputs_graph.nodes[i].update({'func': mirror(i)}) for i in args_l]
+                m = self.edges[e]['mirr']
+                args_n = self.edges[e]['obj'].arguments
+                nodes_args_n = [(str(i.lhs),{'func':i}) for i in args_n]
+                if m == n:
+                    graph.add_nodes_from(nodes_args_n)
                 else:
-                    self.inputs_graph.add_nodes_from(args_r)
-                    [self.inputs_graph.nodes[i].update({'func': i}) for i in args_r]                
+                    e2 = self._edges_map[m]
+                    args_m = self.edges[e2]['obj'].arguments
+                    args_c = zip(args_n,args_m)
+                    nodes_args_m = [(str(m.lhs),{'func':mirror(n.lhs)}) for n,m in args_c]
+                    graph.add_nodes_from(nodes_args_n+nodes_args_m)
+                    edges = [(str(n.lhs),str(m.lhs)) for n,m in zip(args_n,args_m)]
+                    graph.add_edges_from(edges)
     
     def draw_inputs_graph(self):
         plt.figure(figsize=(10,6))
