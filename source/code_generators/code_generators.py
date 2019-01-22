@@ -20,25 +20,27 @@ class abstract_generator(object):
 
     def __init__(self,multibody_system,printer=numerical_printer()):
         
-        self.mbs = multibody_system
+        self.mbs     = multibody_system
+        self.config  = self.mbs.param_config
         self.printer = printer
+        
+        self.generalized_coordinates_equalities = self.mbs.q_maped
+        self.generalized_velocities_equalities  = self.mbs.qd_maped
+        
+        self.generalized_coordinates_lhs = [printer._print(exp.lhs) for exp in self.generalized_coordinates_equalities]
+        self.generalized_velocities_lhs = [printer._print(exp.lhs) for exp in self.generalized_velocities_equalities]
+
+        self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.q_virtuals]
         
         self.bodies = sum([list(e) for e in self.mbs.bodies],[])
         self.jac_cols = sum([e for e in self.mbs.cols],[])
         
-        self.arguments = num_args_sym = self.mbs.arguments.copy()
-        self.constants = cfig_cons_sym = self.mbs.constants.copy()
+        self.arguments_symbols = self.config.arguments_symbols
+        self.constants_symbols = self.mbs.constants.copy()
         
-        self.num_args_sym = [printer._print(e.lhs) for e in num_args_sym]
+        self.arguments_sym = [printer._print(e.lhs) for e in num_args_sym]
         self.cfig_cons_sym = [printer._print(e.lhs) for e in cfig_cons_sym]
-        
-        self.generalized_coordinates_equalities = self.mbs.q_maped.copy()
-        self.generalized_velocities_equalities = self.mbs.qd_maped.copy()
-        
-        self.generalized_coordinates_lhs = [printer._print(exp.lhs) for exp in self.generalized_coordinates_equalities]
-        self.generalized_velocities_lhs = [printer._print(exp.lhs) for exp in self.generalized_velocities_equalities]
-    
-        self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.q_virtuals]
+            
     
     def create_config_dataframe(self):
         indecies = [i[1:-1] for i in self.num_args_sym]
@@ -187,7 +189,6 @@ class python_code_generator(abstract_generator):
         vir_coord_pattern = '|'.join(self.virtual_coordinates)
         cse_var_txt = re.sub(vir_coord_pattern,self._insert_self,cse_var_txt)
         cse_exp_txt = re.sub(vir_coord_pattern,self._insert_self,cse_exp_txt)
-        
         
         gen_coord_pattern = '|'.join(self.generalized_coordinates_lhs)
         cse_var_txt = re.sub(gen_coord_pattern,self._insert_self,cse_var_txt)

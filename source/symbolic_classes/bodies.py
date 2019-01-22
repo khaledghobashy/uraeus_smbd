@@ -51,11 +51,11 @@ class body(reference_frame):
     
     @property
     def arguments(self):
-        R  = sm.Eq(self.R,sm.MutableDenseMatrix([0,0,0]))
-        P  = sm.Eq(self.P,sm.MutableDenseMatrix([1,0,0,0]))
-        Rd = sm.Eq(self.Rd,sm.MutableDenseMatrix([0,0,0]))
-        Pd = sm.Eq(self.Pd,sm.MutableDenseMatrix([0,0,0,0]))
-        return [R,P,Rd,Pd]
+#        R  = sm.Eq(self.R,sm.MutableDenseMatrix([0,0,0]))
+#        P  = sm.Eq(self.P,sm.MutableDenseMatrix([1,0,0,0]))
+#        Rd = sm.Eq(self.Rd,sm.MutableDenseMatrix([0,0,0]))
+#        Pd = sm.Eq(self.Pd,sm.MutableDenseMatrix([0,0,0,0]))
+        return [self.R,self.P,self.Rd,self.Pd]
     @property
     def constants(self):
         return []
@@ -84,8 +84,8 @@ class ground(body):
     
     @property
     def arguments(self):
-        eq = sm.Eq(self.P_ground,sm.Matrix([1,0,0,0]))
-        return super().arguments + [eq]
+#        eq = sm.Eq(self.P_ground,sm.Matrix([1,0,0,0]))
+        return super().arguments + [self.P_ground]
 
 
 class virtual_body(body):

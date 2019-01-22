@@ -72,12 +72,12 @@ class algebraic_constraints(object):
             n = i+1
             v = getattr(self,'axis_%s'%n)
             eq = sm.Eq(v,sm.MutableDenseMatrix([0,0,1]))
-            l.append(eq)
+            l.append(v)
         for i in range(self.def_locs):
             n = i+1
             u = getattr(self,'loc_%s'%n)
             eq = sm.Eq(u,sm.MutableDenseMatrix([0,0,0]))
-            l.append(eq)
+            l.append(u)
         self._arguments = l
 
     def _create_bodies_locals(self):

@@ -9,11 +9,95 @@ import sympy as sm
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from source.symbolic_classes.abstract_matrices import global_frame, reference_frame
+from source.symbolic_classes.abstract_matrices import (global_frame, 
+                                                       reference_frame, Mirror)
 from source.symbolic_classes.bodies import body, ground, virtual_body
 from source.symbolic_classes.spatial_joints import absolute_locator
 from source.symbolic_classes.algebraic_constraints import joint_actuator
 
+
+class parametric_configuration(object):
+    
+    def __init__(self,mbs_instance):
+        self.topology = mbs_instance
+        self.name = self.topology.name
+        self.inputs_graph = nx.DiGraph(name=self.name)
+        self._arguments_sym = []
+    
+    @property
+    def arguments_symbols(self):
+        return set(self._arguments_sym)
+    
+    def _get_nodes_arguments(self):
+        Eq = lambda n,m : sm.Eq(m,Mirror(n))
+        graph   = self.inputs_graph
+        t_nodes = self.topology.nodes
+        
+        def filter_cond(n):
+            cond = (n not in self.topology.virtual_bodies 
+                    and t_nodes[n]['align'] in 'sr')
+            return cond
+        filtered_nodes = filter(filter_cond,t_nodes)
+
+        for n in filtered_nodes:
+            m      = t_nodes[n]['mirr']
+            args_n = t_nodes[n]['arguments'][0]
+            self._arguments_sym+=[args_n]
+            if m == n:
+                graph.add_node(str(args_n))
+                graph.nodes[str(args_n)].update({'func': args_n})
+            else:
+                args_m = t_nodes[m]['arguments'][0]
+                graph.add_edge(str(args_n),str(args_m))
+                graph.nodes[str(args_n)].update({'func': args_n})
+                graph.nodes[str(args_m)].update({'func': Eq(args_m,args_n)})
+                self._arguments_sym+=[args_m]
+
+    def _get_edges_arguments(self):
+        Eq = lambda n,m : sm.Eq(m,Mirror(n))
+        graph   = self.inputs_graph
+        t_edges = self.topology.edges
+        for e in t_edges:
+            n = e[-1]
+            if t_edges[e]['align'] in 'sr':
+                m = t_edges[e]['mirr']
+                args_n = t_edges[e]['arguments']
+                nodes_args_n = [(str(i),{'func':i}) for i in args_n]
+                self._arguments_sym+=[i for i in args_n]
+                if m == n:
+                    graph.add_nodes_from(nodes_args_n)
+                else:
+                    e2 = self.topology._edges_map[m]
+                    args_m = t_edges[e2]['arguments']
+                    args_c = zip(args_n,args_m)
+                    nodes_args_m = [(str(m),{'func':Eq(n,m)}) for n,m in args_c]
+                    graph.add_nodes_from(nodes_args_n+nodes_args_m)
+                    edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
+                    graph.add_edges_from(edges)    
+                    self._arguments_sym+=[i for i in args_m]
+    
+    def assemble_base_layer(self):
+        self._get_nodes_arguments()
+        self._get_edges_arguments()
+    
+    def inputs_layer(self):
+        nodes = self.inputs_graph.nodes
+        inputs = [nodes[i]['func'] for i,d in self.inputs_graph.in_degree() if d == 0]
+        return inputs
+    
+    def outputs_layer(self):
+        g = self.inputs_graph
+        condition = lambda i,d : d==0 and g.in_degree(i)!=0
+        inputs = [g.nodes[i]['func'] for i,d in g.out_degree() if condition(i,d)]
+        return inputs
+    
+    def draw_inputs_graph(self):
+        plt.figure(figsize=(10,6))
+        nx.draw_spring(self.inputs_graph,with_labels=True)
+        plt.show()        
+
+###############################################################################
+###############################################################################
 
 class abstract_topology(object):
     
@@ -23,7 +107,7 @@ class abstract_topology(object):
         self._edges_map = {}
         self._insert_ground()
         self.grf = 'ground'
-        self.inputs_graph = nx.DiGraph(name=name)
+        self._param_config = parametric_configuration(self)
         
     def _set_global_frame(self):
         self.global_instance = global_frame(self.name)
@@ -34,9 +118,12 @@ class abstract_topology(object):
         self.graph.add_node(self.grf,**typ_dict)
     
     @property
+    def param_config(self):
+        return self._param_config
+        
+    @property
     def selected_variant(self):
         return self.graph
-    
     @property
     def nodes(self):
         return self.selected_variant.nodes
@@ -44,15 +131,32 @@ class abstract_topology(object):
     def edges(self):
         return self.selected_variant.edges
     
+    def _check_if_virtual(self,n):
+        body_type = self.nodes[n]['class']
+        return issubclass(body_type,virtual_body)
+    @property
+    def virtual_bodies(self):
+        condition = self._check_if_virtual
+        virtuals  = filter(condition,self.nodes)
+        return set(virtuals)
+    
     @property
     def nodes_indicies(self):
         node_index = dict([(n,i) for i,n in enumerate(self.nodes)])
         return node_index
-    
     @property
     def edges_indicies(self):
         edges_index = dict([(n,i) for i,n in enumerate(self.edges)])
         return edges_index
+
+    @property
+    def nodes_arguments(self):
+        args = nx.get_node_attributes(self.graph,'arguments').values()
+        return sum(args,[])
+    @property
+    def edges_arguments(self):
+        args = nx.get_edge_attributes(self.graph,'arguments').values()
+        return sum(args,[])
     
     @property
     def n(self):
@@ -85,10 +189,6 @@ class abstract_topology(object):
         nx.draw_spring(self.selected_variant,with_labels=True)
         plt.show()
     
-    def _check_if_virtual(self,n):
-        body_type = self.nodes[n]['class']
-        return issubclass(body_type,virtual_body)
-
     def _map_coordinates(self):
         q_virtuals = []
         q = []
@@ -112,23 +212,17 @@ class abstract_topology(object):
     def _set_constants(self):
         cons = nx.get_edge_attributes(self.graph,'constants').values()
         self.constants = sum(cons,[])
-
-    def _set_arguments(self):
-        edge_args = nx.get_edge_attributes(self.graph,'arguments').values()
-        node_args = nx.get_node_attributes(self.graph,'arguments').values()
-        self.arguments = sum(edge_args,[])+sum(node_args,[])
-    
     def _initialize_toplogy_reqs(self):
+        self.param_config.assemble_base_layer()
         self._map_coordinates()
         self._set_constants()
-        self._set_arguments()
+    
     
     def _assemble_nodes(self):
         for n in self.nodes:
             body_type = self.nodes[n]['class']
             body_instance = body_type(n)
             self.nodes[n].update(self._obj_attr_dict(body_instance))
-            
     def _assemble_edge(self,e):
         edge_class = self.edges[e]['class']
         b1, b2, name = e
@@ -151,16 +245,14 @@ class abstract_topology(object):
     
     def _assemble_equations(self):
         
-        edgelist = self.edges
-        nodelist = self.nodes
-        node_index = self.nodes_indicies
-        self.cols = []
+        edgelist    = self.edges
+        nodelist    = self.nodes
+        node_index  = self.nodes_indicies
+        self.cols   = []
         self.bodies = []
 
-        n_nodes = len(nodelist)
-        cols = 2*n_nodes
-        
-        nve = self.nve  # number of constraint vector equations
+        cols = 2*len(nodelist)
+        nve  = self.nve  # number of constraint vector equations
         
         equations = sm.MutableSparseMatrix(nve,1,None)
         vel_rhs   = sm.MutableSparseMatrix(nve,1,None)
@@ -171,9 +263,6 @@ class abstract_topology(object):
         for e in edgelist:
             u,v = e[:2]
             
-#            if self._check_if_virtual(u) or self._check_if_virtual(v):
-##                print('     bypassing edge: %s'%(e,))
-#                continue
             eo  = self.edges[e]['obj']
             self.cols += [[u,v] for i in range(eo.nve)]
             # tracker of row index based on the current joint type and the history
@@ -216,46 +305,7 @@ class abstract_topology(object):
         self.vel_equations = vel_rhs
         self.acc_equations = acc_rhs
         self.jac_equations = jacobian
-    
-    def _assemble_inputs_base_layer(self):
-        mirror = sm.Function('mirror')
-        graph = self.inputs_graph
-        for n in self.nodes:
-            if self._check_if_virtual(n):
-                continue
-            if self.nodes[n]['align'] in 'sr':
-                m = self.nodes[n]['mirr']
-                args_n = self.nodes[n]['arguments'][0]
-                if m == n:
-                    graph.add_node(str(args_n.lhs))
-                    graph.nodes[str(args_n.lhs)].update({'func': args_n})
-                else:
-                    args_m = self.nodes[m]['arguments'][0]
-                    graph.add_edge(str(args_n.lhs),str(args_m.lhs))
-                    graph.nodes[str(args_n.lhs)].update({'func': args_n})
-                    graph.nodes[str(args_m.lhs)].update({'func': mirror(args_n.lhs)})
-                
-        for e in self.edges:
-            n = e[-1]
-            if self.edges[e]['align'] in 'sr':
-                m = self.edges[e]['mirr']
-                args_n = self.edges[e]['arguments']
-                nodes_args_n = [(str(i.lhs),{'func':i}) for i in args_n]
-                if m == n:
-                    graph.add_nodes_from(nodes_args_n)
-                else:
-                    e2 = self._edges_map[m]
-                    args_m = self.edges[e2]['arguments']
-                    args_c = zip(args_n,args_m)
-                    nodes_args_m = [(str(m.lhs),{'func':mirror(n.lhs)}) for n,m in args_c]
-                    graph.add_nodes_from(nodes_args_n+nodes_args_m)
-                    edges = [(str(n.lhs),str(m.lhs)) for n,m in zip(args_n,args_m)]
-                    graph.add_edges_from(edges)
-    
-    def draw_inputs_graph(self):
-        plt.figure(figsize=(10,6))
-        nx.draw_spring(self.inputs_graph,with_labels=True)
-        plt.show()        
+
     
     def assemble_model(self):
         self._set_global_frame()
@@ -263,7 +313,6 @@ class abstract_topology(object):
         self._assemble_edges()
         self._assemble_equations()
         self._initialize_toplogy_reqs()
-        self._assemble_inputs_base_layer()
     
 #    def add_node(self,node,dicts):
 #        variant = self.selected_variant
@@ -330,14 +379,7 @@ class template_based_topology(topology):
         self.grf = 'vbs_ground'
     
     def _insert_ground(self):
-        self.add_virtual_body('ground')
-
-    @property
-    def virtual_bodies(self):
-        condition = self._check_if_virtual
-        virtuals  = filter(condition,self.selected_variant.nodes)
-        return set(virtuals)
-    
+        self.add_virtual_body('ground')    
     
     def add_body(self,name,mirrored=False):
         variant = self.selected_variant

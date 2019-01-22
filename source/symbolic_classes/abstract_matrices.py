@@ -111,11 +111,17 @@ class B(AbstractMatrix):
         p,u = self.args
         return r'{B(%s,%s)}'%(p,u.name)
     
-
 class Triad(AbstractMatrix):
     def __init__(self,v1,v2=None):
         super().__init__(v1)
-
+    
+class Mirror(AbstractMatrix):
+    def __init__(self,v1):
+        super().__init__(v1)
+        self.shape = v1.shape
+    
+    def _latex(self,expr):
+        return r'{Mir(%s)}'%self.args[0]
 ###############################################################################
 ###############################################################################
 
