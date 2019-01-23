@@ -89,7 +89,7 @@ class abstract_generator(object):
 ###############################################################################
 ###############################################################################
 
-class python_code_generator(abstract_generator):
+class template_code_generator(abstract_generator):
     
     def _insert_self(self,x): 
         return 'self.' + x.group(0).strip("'")
@@ -285,6 +285,7 @@ class python_code_generator(abstract_generator):
                         
                         self.Pg_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
                         
+                        self.n = {n}
                         self.nrows = {nve}
                         self.ncols = 2*{nodes}
                         self.rows = np.arange(self.nrows)
@@ -298,6 +299,7 @@ class python_code_generator(abstract_generator):
                            jac_rows = self.jac_eq_rows,
                            jac_cols = self.jac_eq_cols,
                            nve = self.mbs.nve,
+                           n = self.mbs.n,
                            nodes = len(self.mbs.nodes))
         return text
                 
@@ -347,7 +349,152 @@ class python_code_generator(abstract_generator):
         with open('%s.py'%self.mbs.name,'w') as file:
             file.write(text)
 
+###############################################################################
+###############################################################################
+
+class assembly_code_generator(template_code_generator):
     
-###############################################################################
-###############################################################################
+    def __init__(self,multibody_system,printer=numerical_printer()):
+        self.mbs  = multibody_system
+        self.name = self.mbs.name
+    
+    def _write_x_setter(self,func_name,var='q'):
+        text = f'''
+                def set_{func_name}(self,{var}):
+                    offset = 0
+                    for sub in self.subsystems:
+                        qs = {var}[offset:sub.n]
+                        sub.set_{func_name}(qs)
+                        offset += sub.n
+               '''
+        indent = 4*' '
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = textwrap.indent(text,indent).lstrip()
+        return text
+    
+    def _write_x_equations(self,func_name):
+        text = f'''
+                def eval_{func_name}_eq(self):
+                    for sub in self.subsystems:
+                        sub.eval_{func_name}_eq()
+                '''
+        indent = 4*' '
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = textwrap.indent(text,indent)
+        return text
+    
+    def write_imports(self):
+        text = '''
+                
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        return text
+    
+    def write_class_init(self):
+        text = '''
+                class numerical_assembly(object):
+
+                    def __init__(self):
+                        self.set_time(0.0)
+                        self.Pg_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
+                        self.subsystems = [{subsystems}]
+                '''
+        subsystems = ','.join(self.mbs.subsystems.keys())
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = text.format(subsystems = subsystems)
+        return text
+
+    def write_class_helpers(self):
+        text = '''
+                def set_time(self,t):
+                    for sub in self.subsystems:
+                        sub.t = t
+                '''
+        indent = 4*' '
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = textwrap.indent(text,indent).lstrip()
+        text = text.format(subsystems = self.mbs.subsystems)
+        return text
+    
+    def write_assembler(self):
+        text = '''
+                def assemble_system(self):
+                    offset = 0
+                    for sub in self.subsystems:
+                        sub.assemble_template(self.indicies_map,self.interface_map,offset)
+                        offset += sub.n
+               '''
+        indent = 4*' '
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = textwrap.indent(text,indent).lstrip()
+        return text
+        
+    def write_coordinates_setter(self):
+        return self._write_x_setter('gen_coordinates','q')
+    
+    def write_velocities_setter(self):
+        return self._write_x_setter('gen_velocities','qd')
+        
+    def write_pos_equations(self):
+        return self._write_x_equations('pos')
+    
+    def write_vel_equations(self):
+        return self._write_x_equations('vel')
+    
+    def write_acc_equations(self):
+        return self._write_x_equations('acc')
+    
+    def write_jac_equations(self):
+        return self._write_x_equations('jac')
+    
+    def write_system_class(self):
+        text = '''
+                {class_init}
+                    {class_helpers}
+                    {assembler}
+                    {coord_setter}
+                    {veloc_setter}
+                    {eval_pos}
+                    {eval_vel}
+                    {eval_acc}
+                    {eval_jac}  
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        class_init = self.write_class_init()
+        class_helpers = self.write_class_helpers()
+        assembler = self.write_assembler()
+        coord_setter = self.write_coordinates_setter()
+        veloc_setter = self.write_velocities_setter()
+        
+        eval_pos = self.write_pos_equations()
+        eval_vel = self.write_vel_equations()
+        eval_acc = self.write_acc_equations()
+        eval_jac = self.write_jac_equations()
+        
+        text = text.format(class_init = class_init,
+                           class_helpers = class_helpers,
+                           assembler = assembler,
+                           eval_pos = eval_pos,
+                           eval_vel = eval_vel,
+                           eval_acc = eval_acc,
+                           eval_jac = eval_jac,
+                           coord_setter = coord_setter,
+                           veloc_setter = veloc_setter)
+        return text
+    
+    def write_code_file(self):
+        imports = self.write_imports()
+        system_class = self.write_system_class()
+        
+        text = '\n'.join([imports,system_class])
+        with open('%s.py'%self.mbs.name,'w') as file:
+            file.write(text)
 

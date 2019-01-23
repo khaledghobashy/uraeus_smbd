@@ -5,7 +5,7 @@ Created on Sun Jan  6 11:37:15 2019
 @author: khale
 """
 
-from source.code_generators.code_generators import python_code_generator
+from source.code_generators.code_generators import template_code_generator, assembly_code_generator
 
 from source.symbolic_classes.spatial_joints import (revolute, universal,
                                                     spherical, rotational_actuator,
@@ -47,7 +47,7 @@ dwb_template.add_joint(cylinderical,'strut','rbr_upper_strut','rbr_lower_strut',
 #dwb_template.add_absolute_actuator('zact','rbr_hub','z',mirrored=True)
 
 dwb_template.assemble_model()
-#dwb_code = python_code_generator(dwb_template)
+#dwb_code = template_code_generator(dwb_template)
 #dwb_code.write_code_file()
 
 front_axle = subsystem('SU1',dwb_template)
@@ -67,7 +67,7 @@ steering_template.add_joint(cylinderical,'rc_cyl','rbl_rocker','rbs_coupler')
 #steering_template.add_joint_actuator(rotational_actuator,'rot_act','jcr_rocker_ch')
 
 steering_template.assemble_model()
-steering_code = python_code_generator(steering_template)
+steering_code = template_code_generator(steering_template)
 steering_code.write_code_file()
 
 
@@ -75,7 +75,7 @@ steering_subsystem = subsystem('ST',steering_template)
 #steering_subsystem.assemble_model()
 
 
-rolling_chassis = assembly('rolling_chassis')
+rolling_chassis = assembly('rolling_chassis_assm')
 rolling_chassis.add_subsystem(front_axle)
 rolling_chassis.add_subsystem(rear_axle)
 rolling_chassis.add_subsystem(steering_subsystem)
@@ -90,4 +90,7 @@ rolling_chassis.assign_virtual_body('SU1.vbr_steer','ST.rbr_rocker')
 rolling_chassis.assemble_model(full=False)
 rolling_chassis.draw_topology()
 rolling_chassis.draw_interface_graph()
+
+rolling_code = assembly_code_generator(rolling_chassis)
+rolling_code.write_code_file()
 
