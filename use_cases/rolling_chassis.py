@@ -47,8 +47,8 @@ dwb_template.add_joint(cylinderical,'strut','rbr_upper_strut','rbr_lower_strut',
 #dwb_template.add_absolute_actuator('zact','rbr_hub','z',mirrored=True)
 
 dwb_template.assemble_model()
-#dwb_code = template_code_generator(dwb_template)
-#dwb_code.write_code_file()
+dwb_code = template_code_generator(dwb_template)
+dwb_code.write_code_file()
 
 front_axle = subsystem('SU1',dwb_template)
 #front_axle.assemble_model()
