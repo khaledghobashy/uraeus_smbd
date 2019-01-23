@@ -50,7 +50,7 @@ class parametric_configuration(object):
                 args_m = t_nodes[m]['arguments'][0]
                 graph.add_edge(str(args_n),str(args_m))
                 graph.nodes[str(args_n)].update({'func': args_n})
-                graph.nodes[str(args_m)].update({'func': Eq(args_m,args_n)})
+                graph.nodes[str(args_m)].update({'func': Eq(args_n,args_m)})
                 self._arguments_sym+=[args_m]
 
     def _get_edges_arguments(self):
@@ -175,12 +175,12 @@ class abstract_topology(object):
         
     @staticmethod
     def _typ_attr_dict(typ):
-        attr_dict ={'n':typ.n,'nc':typ.nc,'nve':typ.nve,'class':typ,'mirr':None,
+        attr_dict = {'n':typ.n,'nc':typ.nc,'nve':typ.nve,'class':typ,'mirr':None,
                     'align':'s'}
         return attr_dict
     @staticmethod
     def _obj_attr_dict(obj):
-        attr_dict ={'obj':obj,'arguments':obj.arguments,'constants':obj.constants}
+        attr_dict = {'obj':obj,'arguments':obj.arguments,'constants':obj.constants}
         return attr_dict
     
     
@@ -189,33 +189,40 @@ class abstract_topology(object):
         nx.draw_spring(self.selected_variant,with_labels=True)
         plt.show()
     
-    def _map_coordinates(self):
-        q_virtuals = []
-        q = []
-        q_sym = sm.MatrixSymbol('q',self.n,1)
-        qd = []
-        qd_sym = sm.MatrixSymbol('qd',self.n,1)
+    def _coordinates_mapper(self,sym):
+        q  = []
+        q_sym  = sm.MatrixSymbol(sym,self.n,1)
+        bodies = list(set(self.nodes)-(self.virtual_bodies))
         i = 0
-        for n in self.nodes(data='obj'):
-            if self._check_if_virtual(n[0]):
-                q_virtuals += [n[-1].R,n[-1].P,n[-1].Rd,n[-1].Pd]
-                continue
-            q.append(sm.Eq(n[-1].R,q_sym[i:i+3,0]))
-            q.append(sm.Eq(n[-1].P,q_sym[i+3:i+3+4,0]))
-            qd.append(sm.Eq(n[-1].Rd,qd_sym[i:i+3,0]))
-            qd.append(sm.Eq(n[-1].Pd,qd_sym[i+3:i+3+4,0]))
-            i+=7
-        self.q_maped = q
-        self.qd_maped = qd
-        self.q_virtuals = q_virtuals
+        for b in bodies:
+            q_block = getattr(self.nodes[b]['obj'],sym)
+            for qi in q_block.blocks:
+                s = qi.shape[0]
+                q.append(sm.Eq(qi,q_sym[i:i+s,0]))
+                i+=s
+        return q
     
-    def _set_constants(self):
+    @property
+    def mapped_gen_coordinates(self):
+        return self._coordinates_mapper('q')
+    @property
+    def mapped_gen_velocities(self):
+        return self._coordinates_mapper('qd')
+    @property
+    def virtual_coordinates(self):
+        q_virtuals = []
+        for n in self.virtual_bodies:
+            obj = self.nodes[n]['obj']
+            q_virtuals += [obj.R,obj.P,obj.Rd,obj.Pd]
+        return q_virtuals
+    
+    @property    
+    def constants(self):
         cons = nx.get_edge_attributes(self.graph,'constants').values()
-        self.constants = sum(cons,[])
+        return sum(cons,[])
+    
     def _initialize_toplogy_reqs(self):
         self.param_config.assemble_base_layer()
-        self._map_coordinates()
-        self._set_constants()
     
     
     def _assemble_nodes(self):
@@ -223,6 +230,7 @@ class abstract_topology(object):
             body_type = self.nodes[n]['class']
             body_instance = body_type(n)
             self.nodes[n].update(self._obj_attr_dict(body_instance))
+    
     def _assemble_edge(self,e):
         edge_class = self.edges[e]['class']
         b1, b2, name = e
@@ -236,11 +244,8 @@ class abstract_topology(object):
         else:
             edge_instance = edge_class(name,self.nodes[b1]['obj'],self.nodes[b2]['obj'])
         self.edges[e].update(self._obj_attr_dict(edge_instance))
-
     def _assemble_edges(self):
-        for e in self.edges:
-            b1, b2, name = e
-            self._assemble_edge(e)
+        [self._assemble_edge(e) for e in self.edges]
     
     
     def _assemble_equations(self):

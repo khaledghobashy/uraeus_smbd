@@ -50,6 +50,13 @@ class body(reference_frame):
         return self._name
     
     @property
+    def q(self):
+        return sm.BlockMatrix([[self.R],[self.P]])
+    @property
+    def qd(self):
+        return sm.BlockMatrix([[self.Rd],[self.Pd]])
+    
+    @property
     def arguments(self):
 #        R  = sm.Eq(self.R,sm.MutableDenseMatrix([0,0,0]))
 #        P  = sm.Eq(self.P,sm.MutableDenseMatrix([1,0,0,0]))

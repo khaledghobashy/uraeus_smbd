@@ -5,7 +5,7 @@ Created on Sun Jan  6 11:37:15 2019
 @author: khale
 """
 
-from source.code_generators.code_generators import python_code_generator, assembly_generator
+from source.code_generators.code_generators import python_code_generator
 
 from source.symbolic_classes.spatial_joints import (revolute, universal,
                                                     spherical, rotational_actuator,
@@ -67,8 +67,8 @@ steering_template.add_joint(cylinderical,'rc_cyl','rbl_rocker','rbs_coupler')
 #steering_template.add_joint_actuator(rotational_actuator,'rot_act','jcr_rocker_ch')
 
 steering_template.assemble_model()
-#steering_code = python_code_generator(steering_template)
-#steering_code.write_code_file()
+steering_code = python_code_generator(steering_template)
+steering_code.write_code_file()
 
 
 steering_subsystem = subsystem('ST',steering_template)
