@@ -357,6 +357,13 @@ class assembly_code_generator(template_code_generator):
     def __init__(self,multibody_system,printer=numerical_printer()):
         self.mbs  = multibody_system
         self.name = self.mbs.name
+        self.templates = []
+        self.subsystems_templates = {}
+        for name,obj in self.mbs.subsystems.items():
+            topology_name = obj.topology.name
+            self.subsystems_templates[name] = topology_name
+            if topology_name not in self.templates:
+                self.templates.append(topology_name)
     
     def _write_x_setter(self,func_name,var='q'):
         text = f'''
@@ -387,10 +394,18 @@ class assembly_code_generator(template_code_generator):
     
     def write_imports(self):
         text = '''
+                import numpy as np
                 
+                {templates_imports}
+                
+                {subsystems}
                 '''
+        templates_imports = '\n'.join(['import %s'%i for i in self.templates])
+        subsystems = '\n'.join(['%s = %s.numerical_assembly()'%d for d in self.subsystems_templates.items()])
         text = text.expandtabs()
         text = textwrap.dedent(text)
+        text = text.format(templates_imports = templates_imports,
+                           subsystems = subsystems)
         return text
     
     def write_class_init(self):

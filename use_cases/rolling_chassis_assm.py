@@ -1,5 +1,12 @@
 
+import numpy as np
 
+import dwb
+import steering
+
+SU1 = dwb.numerical_assembly()
+SU2 = dwb.numerical_assembly()
+ST = steering.numerical_assembly()
 
 
 
