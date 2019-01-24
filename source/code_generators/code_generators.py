@@ -167,9 +167,13 @@ class template_code_generator(abstract_generator):
                 import numpy as np
                 import scipy as sc
                 from numpy.linalg import multi_dot
-                from source.cython_definitions.matrix_funcs import A, B, triad as Triad, Mirror
+                from source.cython_definitions.matrix_funcs import A, B, triad as Triad
                 from scipy.misc import derivative
                 from numpy import cos, sin
+                
+                def Mirror(v):
+                    m = np.array([[1,0,0],[0,-1,0],[0,0,1]],dtype=np.float64)
+                    return m.dot(v)
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -177,7 +181,7 @@ class template_code_generator(abstract_generator):
     
     def write_config_class(self):
         text = '''
-                class inputs(object):
+                class configuration(object):
 
                     def __init__(self):
                         {inputs}
@@ -236,7 +240,7 @@ class template_code_generator(abstract_generator):
                     self.rows_offset = rows_offset
                     self._set_mapping(indicies_map,interface_map)
                     self.rows += self.rows_offset
-                    self.jac_cols += self.rows_offset
+                    self.jac_rows += self.rows_offset
                     self.jac_cols = {jac_cols}
                '''
         
@@ -276,12 +280,12 @@ class template_code_generator(abstract_generator):
         
     def write_class_init(self):
         text = '''
-                class numerical_assembly(object):
+                class topology(object):
 
                     def __init__(self,config,prefix=''):
                         self.t = 0.0
                         self.config = config
-                        self.prefix = prefix
+                        self.prefix = (prefix if prefix=='' else prefix+'.')
                         
                         self.Pg_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
                         
@@ -397,11 +401,21 @@ class assembly_code_generator(template_code_generator):
                 import numpy as np
                 
                 {templates_imports}
-                
                 {subsystems}
                 '''
         templates_imports = '\n'.join(['import %s'%i for i in self.templates])
-        subsystems = '\n'.join(['%s = %s.numerical_assembly()'%d for d in self.subsystems_templates.items()])
+        
+        subsystems = []
+        for d in self.subsystems_templates.items():
+            sub_config, template = d
+            assignment = f'''
+            {sub_config}_config = {template}.configuration()
+            {sub_config} = {template}.topology({sub_config}_config,'{sub_config}')
+            '''
+            subsystems.append(assignment)
+            
+        subsystems = ''.join(subsystems)
+        subsystems = textwrap.dedent(subsystems)
         text = text.expandtabs()
         text = textwrap.dedent(text)
         text = text.format(templates_imports = templates_imports,
@@ -413,14 +427,20 @@ class assembly_code_generator(template_code_generator):
                 class numerical_assembly(object):
 
                     def __init__(self):
-                        self.set_time(0.0)
                         self.Pg_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
                         self.subsystems = [{subsystems}]
+                        
+                        self.interface_map = {interface_map}
+                        self.indicies_map  = {indicies_map}
                 '''
         subsystems = ','.join(self.mbs.subsystems.keys())
+        interface_map = self.mbs.interface_map
+        indicies_map  = self.mbs.nodes_indicies
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(subsystems = subsystems)
+        text = text.format(subsystems = subsystems,
+                           interface_map = interface_map,
+                           indicies_map  = indicies_map)
         return text
 
     def write_class_helpers(self):
@@ -442,7 +462,7 @@ class assembly_code_generator(template_code_generator):
                     offset = 0
                     for sub in self.subsystems:
                         sub.assemble_template(self.indicies_map,self.interface_map,offset)
-                        offset += sub.n
+                        offset += sub.nrows
                '''
         indent = 4*' '
         text = text.expandtabs()
@@ -509,7 +529,7 @@ class assembly_code_generator(template_code_generator):
         imports = self.write_imports()
         system_class = self.write_system_class()
         
-        text = '\n'.join([imports,system_class])
+        text = ''.join([imports,system_class])
         with open('%s.py'%self.mbs.name,'w') as file:
             file.write(text)
 

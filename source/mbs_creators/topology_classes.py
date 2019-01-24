@@ -514,29 +514,29 @@ class assembly(subsystem):
         self.graph.add_node(self.grf,**typ_attr_dict,**obj_attr_dict)
         
         self.subsystems = {}
-        self._virtual_bodies_map = {}
+        self._interface_map = {}
         
     
     @property
-    def virtual_bodies_map(self):
-        return self._virtual_bodies_map
+    def interface_map(self):
+        return self._interface_map
     @property
     def nve_iterface(self):
         interface_graph = self.interface_graph
         nve_edges = sum([edge[-1] for edge in interface_graph.edges(data='nve')])
         return nve_edges
     
-    def _update_virtual_bodies_map(self,subsystem):
+    def _update_interface_map(self,subsystem):
         new_virtuals = subsystem.virtual_bodies
         new_virtuals = zip(new_virtuals,len(new_virtuals)*[self.grf])
-        self._virtual_bodies_map.update(new_virtuals)
+        self._interface_map.update(new_virtuals)
             
     def add_subsystem(self,subsystem):
         self.subsystems[subsystem.name] = subsystem
         subsystem_graph = subsystem.selected_variant
         self.graph.add_nodes_from(subsystem_graph.nodes(data=True))
         self.graph.add_edges_from(subsystem_graph.edges(data=True,keys=True))
-        self._update_virtual_bodies_map(subsystem)
+        self._update_interface_map(subsystem)
         self.global_instance.merge_global(subsystem.global_instance)
     
     def assign_virtual_body(self,virtual_node,actual_node):
@@ -544,8 +544,8 @@ class assembly(subsystem):
         virtual_node_2 = self.nodes[virtual_node]['mirr']
         actual_node_1 = actual_node
         actual_node_2 = self.nodes[actual_node]['mirr']
-        self.virtual_bodies_map[virtual_node_1] = actual_node_1
-        self.virtual_bodies_map[virtual_node_2] = actual_node_2
+        self.interface_map[virtual_node_1] = actual_node_1
+        self.interface_map[virtual_node_2] = actual_node_2
     
     def _contracted_nodes(self,u,v):
         from itertools import chain
@@ -561,11 +561,11 @@ class assembly(subsystem):
         
     
     def _initialize_interface(self):
-        self.graph.add_edges_from(self.virtual_bodies_map.items())
-        for v,u in self.virtual_bodies_map.items():
+        self.graph.add_edges_from(self.interface_map.items())
+        for v,u in self.interface_map.items():
 #            print('replacing %s with %s'%(v,u))
             self._contracted_nodes(u,v)
-        for v in self.virtual_bodies_map.keys():
+        for v in self.interface_map.keys():
             self.graph.remove_node(v)
     
     def _set_constants(self):

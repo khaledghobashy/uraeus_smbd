@@ -1,23 +1,28 @@
 
-import numpy as np
+                import numpy as np
 
-import dwb
+                import dwb
 import steering
 
-SU1_config = dwb.configuration()
-SU1 = dwb.topology(SU1_config,'SU1')
 
-SU2_config = dwb.configuration()
-SU2 = dwb.topology(SU2_config,'SU2')
+            SU1_config = dwb.configuration()
+            SU1 = dwb.topology(SU1_config,'SU1')
 
-ST_config = steering.configuration()
-ST = steering.topology(ST_config,'ST')
+
+            SU2_config = dwb.configuration()
+            SU2 = dwb.topology(SU2_config,'SU2')
+
+
+            ST_config = steering.configuration()
+            ST = steering.topology(ST_config,'ST')
+
 
 
 
 class numerical_assembly(object):
 
     def __init__(self):
+        self.set_time(0.0)
         self.Pg_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
         self.subsystems = [SU1,SU2,ST]
 
@@ -32,7 +37,7 @@ class numerical_assembly(object):
         offset = 0
         for sub in self.subsystems:
             sub.assemble_template(self.indicies_map,self.interface_map,offset)
-            offset += sub.nrows
+            offset += sub.n
 
     def set_gen_coordinates(self,q):
         offset = 0
