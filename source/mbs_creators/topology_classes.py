@@ -21,16 +21,29 @@ class parametric_configuration(object):
     def __init__(self,mbs_instance):
         self.topology = mbs_instance
         self.name = self.topology.name
-        self.inputs_graph = nx.DiGraph(name=self.name)
+        self.graph = nx.DiGraph(name=self.name)
         self._arguments_sym = []
+    
+    def _set_equality(self,sym1,sym2=None):
+        t = sm.symbols('t')
+        if sym1 and sym2:
+            if isinstance(sym1,sm.MatrixSymbol):
+                return sm.Eq(sym2,Mirror(sym1))
+            elif issubclass(sym1,sm.Function):
+                return sm.Eq(sym2,sym1)
+        else:
+            if isinstance(sym1,sm.MatrixSymbol):
+                return sm.Eq(sym1,sm.zeros(*sym1.shape))
+            elif issubclass(sym1,sm.Function):
+                return sm.Eq(sym1,sm.Lambda(t,0))
     
     @property
     def arguments_symbols(self):
         return set(self._arguments_sym)
     
     def _get_nodes_arguments(self):
-        Eq = lambda n,m : sm.Eq(m,Mirror(n))
-        graph   = self.inputs_graph
+        Eq = self._set_equality
+        graph   = self.graph
         t_nodes = self.topology.nodes
         
         def filter_cond(n):
@@ -45,24 +58,24 @@ class parametric_configuration(object):
             self._arguments_sym+=[args_n]
             if m == n:
                 graph.add_node(str(args_n))
-                graph.nodes[str(args_n)].update({'func': args_n})
+                graph.nodes[str(args_n)].update({'func': Eq(args_n)})
             else:
                 args_m = t_nodes[m]['arguments'][0]
                 graph.add_edge(str(args_n),str(args_m))
-                graph.nodes[str(args_n)].update({'func': args_n})
+                graph.nodes[str(args_n)].update({'func': Eq(args_n)})
                 graph.nodes[str(args_m)].update({'func': Eq(args_n,args_m)})
                 self._arguments_sym+=[args_m]
 
     def _get_edges_arguments(self):
-        Eq = lambda n,m : sm.Eq(m,Mirror(n))
-        graph   = self.inputs_graph
+        Eq = self._set_equality
+        graph   = self.graph
         t_edges = self.topology.edges
         for e in t_edges:
             n = e[-1]
             if t_edges[e]['align'] in 'sr':
                 m = t_edges[e]['mirr']
                 args_n = t_edges[e]['arguments']
-                nodes_args_n = [(str(i),{'func':i}) for i in args_n]
+                nodes_args_n = [(str(i),{'func':Eq(i)}) for i in args_n]
                 self._arguments_sym+=[i for i in args_n]
                 if m == n:
                     graph.add_nodes_from(nodes_args_n)
@@ -81,19 +94,19 @@ class parametric_configuration(object):
         self._get_edges_arguments()
     
     def inputs_layer(self):
-        nodes = self.inputs_graph.nodes
-        inputs = [nodes[i]['func'] for i,d in self.inputs_graph.in_degree() if d == 0]
+        g = self.graph
+        inputs = [g.nodes[i]['func'] for i,d in g.in_degree() if d == 0]
         return inputs
     
     def outputs_layer(self):
-        g = self.inputs_graph
+        g = self.graph
         condition = lambda i,d : d==0 and g.in_degree(i)!=0
         inputs = [g.nodes[i]['func'] for i,d in g.out_degree() if condition(i,d)]
         return inputs
     
     def draw_inputs_graph(self):
         plt.figure(figsize=(10,6))
-        nx.draw_spring(self.inputs_graph,with_labels=True)
+        nx.draw_spring(self.graph,with_labels=True)
         plt.show()        
 
 ###############################################################################
@@ -102,11 +115,11 @@ class parametric_configuration(object):
 class abstract_topology(object):
     
     def __init__(self,name):
-        self.graph = nx.MultiGraph(name=name)
         self.name = name
+        self.graph = nx.MultiGraph(name=name)
         self._edges_map = {}
+        self._edges_keys_map = {}
         self._insert_ground()
-        self.grf = 'ground'
         self._param_config = parametric_configuration(self)
         
     def _set_global_frame(self):
@@ -115,6 +128,7 @@ class abstract_topology(object):
         
     def _insert_ground(self):
         typ_dict = self._typ_attr_dict(ground)
+        self.grf = 'ground'
         self.graph.add_node(self.grf,**typ_dict)
     
     @property
@@ -233,17 +247,21 @@ class abstract_topology(object):
     
     def _assemble_edge(self,e):
         edge_class = self.edges[e]['class']
-        b1, b2, name = e
+        name = self.edges[e]['name']
+        b1, b2, key = e
+        b1_obj = self.nodes[b1]['obj'] 
+        b2_obj = self.nodes[b2]['obj'] 
         if issubclass(edge_class,joint_actuator):
-            joint_name = self.edges[e]['joint_name']
-            joint_object = self.edges[(b1,b2,joint_name)]['obj']
+            joint_key     = self._edges_keys_map[self.edges[e]['joint_name']]
+            joint_object  = self.edges[(b1,b2,joint_key)]['obj']
             edge_instance = edge_class(name,joint_object)
         elif issubclass(edge_class,absolute_locator):
-            coordinate = self.edges[e]['coordinate']
-            edge_instance = edge_class(name,self.nodes[b1]['obj'],coordinate)
+            coordinate    = self.edges[e]['coordinate']
+            edge_instance = edge_class(name,b2_obj,coordinate)
         else:
-            edge_instance = edge_class(name,self.nodes[b1]['obj'],self.nodes[b2]['obj'])
+            edge_instance = edge_class(name,b1_obj,b2_obj)
         self.edges[e].update(self._obj_attr_dict(edge_instance))
+    
     def _assemble_edges(self):
         [self._assemble_edge(e) for e in self.edges]
     
@@ -340,39 +358,40 @@ class topology(abstract_topology):
         if name not in variant.nodes():
             attr_dict = self._typ_attr_dict(body)
             variant.add_node(name,**attr_dict)
-        
     
     def add_joint(self,typ,name,body_i,body_j):
+        assert body_i and body_j in self.nodes , 'bodies do not exist!'
         variant = self.selected_variant
-        edge  = (body_i,body_j,name)
+        edge  = (body_i,body_j)
         if edge not in variant.edges:
             attr_dict = self._typ_attr_dict(typ)
-            variant.add_edge(*edge,**attr_dict)
-            self._edges_map[name] = edge
+            attr_dict.update({'name':name})
+            key = variant.add_edge(*edge,**attr_dict)
+            self._edges_map[name] = (*edge,key)
+            self._edges_keys_map[name] = key
             
     def add_joint_actuator(self,typ,name,joint_name):
+        assert joint_name in self._edges_map, 'joint does not exist!'
         variant = self.selected_variant
         joint_edge = self._edges_map[joint_name]
-        act_edge = (*joint_edge[:2],name)
-        if act_edge not in variant.edges:
+        act_edge   = joint_edge[:2]
+        if name not in self._edges_map:
             attr_dict = self._typ_attr_dict(typ)
-            variant.add_edge(*act_edge,**attr_dict,joint_name=joint_name)
-            self._edges_map[name] = act_edge
+            attr_dict.update({'joint_name':joint_name,'name':name})
+            key = variant.add_edge(*act_edge,**attr_dict)
+            self._edges_map[name] = (*act_edge,key)
+            self._edges_keys_map[name] = key
     
     def add_absolute_actuator(self,name,body,coordinate):
+        assert body in self.nodes , 'body does not exist!'
         variant = self.selected_variant
-        edge  = (body,self.grf,name)
+        edge  = (body,self.grf)
         if edge not in variant.edges:
             attr_dict = self._typ_attr_dict(absolute_locator)
-            variant.add_edge(*edge,**attr_dict,coordinate=coordinate)
-            self._edges_map[name] = edge
+            key = variant.add_edge(*edge,**attr_dict,coordinate=coordinate,name=name)
+            self._edges_map[name] = (*edge,key)
+            self._edges_keys_map[name] = key
     
-    def remove_body(self,name):
-        self.selected_variant.remove_node(name)
-    
-    def remove_joint(self,name):
-        edge = self._edges_map[name]
-        self.selected_variant.remove_edge(*edge)
     
 ###############################################################################
 ###############################################################################
@@ -425,44 +444,56 @@ class template_based_topology(topology):
         if mirrored:
             body_i_mirr = variant.nodes[body_i]['mirr']
             body_j_mirr = variant.nodes[body_j]['mirr']
-            key1 = 'jcr_%s'%name
-            key2 = 'jcl_%s'%name
-            super().add_joint(typ,key1,body_i,body_j)
-            super().add_joint(typ,key2,body_i_mirr,body_j_mirr)
-            joint_edge1 = self._edges_map[key1]
-            joint_edge2 = self._edges_map[key2]
-            variant.edges[joint_edge1].update({'mirr':key2,'align':'r'})
-            variant.edges[joint_edge2].update({'mirr':key1,'align':'l'})
+            name1 = 'jcr_%s'%name
+            name2 = 'jcl_%s'%name
+            super().add_joint(typ,name1,body_i,body_j)
+            super().add_joint(typ,name2,body_i_mirr,body_j_mirr)
+            joint_edge1 = self._edges_map[name1]
+            joint_edge2 = self._edges_map[name2]
+            variant.edges[joint_edge1].update({'mirr':name2,'align':'r'})
+            variant.edges[joint_edge2].update({'mirr':name1,'align':'l'})
         else:
-            key = 'jcs_%s'%name
-            super().add_joint(typ,key,body_i,body_j)
-            joint_edge = self._edges_map[key]
-            variant.edges[joint_edge].update({'mirr':key})
+            name = 'jcs_%s'%name
+            super().add_joint(typ,name,body_i,body_j)
+            joint_edge = self._edges_map[name]
+            variant.edges[joint_edge].update({'mirr':name})
     
     def add_joint_actuator(self,typ,name,joint_name,mirrored=False):
         variant = self.selected_variant
         if mirrored:
             joint_edge1 = self._edges_map[joint_name]
             joint_name2 = variant.edges[joint_edge1]['mirr']
-            key1 = 'mcr_%s'%name
-            key2 = 'mcl_%s'%name
-            super().add_joint_actuator(typ,key1,joint_name)
-            super().add_joint_actuator(typ,key2,joint_name2)
+            name1 = 'mcr_%s'%name
+            name2 = 'mcl_%s'%name
+            super().add_joint_actuator(typ,name1,joint_name)
+            super().add_joint_actuator(typ,name2,joint_name2)
+            act_edge1 = self._edges_map[name1]
+            act_edge2 = self._edges_map[name2]
+            variant.edges[act_edge1].update({'mirr':name2,'align':'r'})
+            variant.edges[act_edge2].update({'mirr':name1,'align':'l'})
         else:
-            key = 'mcs_%s'%name
-            super().add_joint_actuator(typ,key,joint_name)
+            name = 'mcs_%s'%name
+            super().add_joint_actuator(typ,name,joint_name)
+            act_edge = self._edges_map[name]
+            variant.edges[act_edge].update({'mirr':name})
     
     def add_absolute_actuator(self,name,body_i,coordinate,mirrored=False):
         variant = self.selected_variant
         if mirrored:
             body_i_mirr = variant.nodes[body_i]['mirr']
-            key1 = 'mcr_%s'%name
-            key2 = 'mcl_%s'%name
-            super().add_absolute_actuator(key1,body_i,coordinate)
-            super().add_absolute_actuator(key2,body_i_mirr,coordinate)
+            name1 = 'mcr_%s'%name
+            name2 = 'mcl_%s'%name
+            super().add_absolute_actuator(name1,body_i,coordinate)
+            super().add_absolute_actuator(name2,body_i_mirr,coordinate)
+            act_edge1 = self._edges_map[name1]
+            act_edge2 = self._edges_map[name2]
+            variant.edges[act_edge1].update({'mirr':name2,'align':'r'})
+            variant.edges[act_edge2].update({'mirr':name1,'align':'l'})
         else:
-            key = 'mcs_%s'%name
-            super().add_absolute_actuator(key,body_i,coordinate)
+            name = 'mcs_%s'%name
+            super().add_absolute_actuator(name,body_i,coordinate)
+            act_edge = self._edges_map[name]
+            variant.edges[act_edge].update({'mirr':name})
 
 ###############################################################################
 ###############################################################################
@@ -548,14 +579,8 @@ class assembly(subsystem):
         self.interface_map[virtual_node_2] = actual_node_2
     
     def _contracted_nodes(self,u,v):
-        from itertools import chain
         H = self.graph
-        if H.is_directed():
-            in_edges = ((w, u, d) for w, x, d in H.in_edges(v, data=True))
-            out_edges = ((u, w, d) for x, w, d in H.out_edges(v, data=True))
-            new_edges = chain(in_edges, out_edges)
-        else:
-            new_edges = [(u,w,k,d) for x,w,k,d in H.edges(v,keys=True,data=True) if w!=u]
+        new_edges = [(u,w,k,d) for x,w,k,d in H.edges(v,keys=True,data=True) if w!=u]
         H.add_edges_from(new_edges)
         self.interface_graph.add_edges_from(new_edges)
         
@@ -563,7 +588,6 @@ class assembly(subsystem):
     def _initialize_interface(self):
         self.graph.add_edges_from(self.interface_map.items())
         for v,u in self.interface_map.items():
-#            print('replacing %s with %s'%(v,u))
             self._contracted_nodes(u,v)
         for v in self.interface_map.keys():
             self.graph.remove_node(v)

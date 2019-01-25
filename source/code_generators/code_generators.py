@@ -200,7 +200,7 @@ class template_code_generator(abstract_generator):
         p = self.printer
         indent = 8*' '
         
-        inputs  = [sm.Eq(i,sm.MutableDenseMatrix([0,0,0])) for i in self.input_args]
+        inputs  = self.input_args
         outputs = self.output_args
         consts = self.edges_constants_exp
         

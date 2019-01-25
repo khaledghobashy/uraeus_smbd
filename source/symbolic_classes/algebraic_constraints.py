@@ -71,12 +71,10 @@ class algebraic_constraints(object):
         for i in range(self.def_axis):
             n = i+1
             v = getattr(self,'axis_%s'%n)
-            eq = sm.Eq(v,sm.MutableDenseMatrix([0,0,1]))
             l.append(v)
         for i in range(self.def_locs):
             n = i+1
             u = getattr(self,'loc_%s'%n)
-            eq = sm.Eq(u,sm.MutableDenseMatrix([0,0,0]))
             l.append(u)
         self._arguments = l
 
@@ -423,8 +421,7 @@ class actuator(algebraic_constraints):
     
     @property
     def arguments(self):
-        function  = sm.Eq(self.F,sm.Lambda(self.t,0))
-        return [function]
+        return [self.F]
     @property
     def constants(self):
         return []
@@ -470,11 +467,12 @@ class absolute_actuator(actuator):
     @property
     def arguments(self):
         sym_jac = sm.MatrixSymbol('%sJ_%s'%(self.prefix,self.id_name),1,3)
-        num_jac = sm.Matrix([[0,0,0]]) 
-        num_jac[0,self.i] = 1
-        eq = sm.Eq(sym_jac,num_jac)
-        return super().arguments + [eq]
+        return super().arguments + [sym_jac]
 
+#    @property
+#    def constants(self):
+#        sym_jac = sm.MatrixSymbol('%sJ_%s'%(self.prefix,self.id_name),1,3)
+#        return [sm.Eq(sym_jac,sm.zeros(1,3))]
 
     
     

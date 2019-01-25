@@ -43,18 +43,15 @@ dwb_template.add_joint(universal,'strut_chassis','rbr_upper_strut','vbs_chassis'
 dwb_template.add_joint(universal,'strut_lca','rbr_lower_strut','rbr_lca',mirrored=True)
 dwb_template.add_joint(universal,'tie_steering','rbr_tie_rod','vbr_steer',mirrored=True)
 dwb_template.add_joint(cylinderical,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
-#dwb_template.add_joint_actuator(rotational_actuator,'rot_act','jcr_hub_bearing',mirrored=True)
-#dwb_template.add_absolute_actuator('zact','rbr_hub','z',mirrored=True)
+dwb_template.add_joint_actuator(rotational_actuator,'rot_act','jcr_hub_bearing',mirrored=True)
+dwb_template.add_absolute_actuator('zact','rbr_hub','z',mirrored=True)
 
 dwb_template.assemble_model()
 dwb_code = template_code_generator(dwb_template)
 dwb_code.write_code_file()
 
 front_axle = subsystem('SU1',dwb_template)
-#front_axle.assemble_model()
-
 rear_axle = subsystem('SU2',dwb_template)
-#rear_axle.assemble_model()
 
 
 steering_template = template_based_topology('steering')
@@ -70,9 +67,7 @@ steering_template.assemble_model()
 steering_code = template_code_generator(steering_template)
 steering_code.write_code_file()
 
-
 steering_subsystem = subsystem('ST',steering_template)
-#steering_subsystem.assemble_model()
 
 
 rolling_chassis = assembly('rolling_chassis_assm')
