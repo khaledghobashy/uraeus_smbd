@@ -9,6 +9,7 @@ import textwrap
 import re
 import pandas as pd
 import numpy as np
+import itertools
 from source.code_generators.code_printers import numerical_printer
 
 class abstract_generator(object):
@@ -360,6 +361,7 @@ class assembly_code_generator(template_code_generator):
     
     def __init__(self,multibody_system,printer=numerical_printer()):
         self.mbs  = multibody_system
+        self.printer = printer
         self.name = self.mbs.name
         self.templates = []
         self.subsystems_templates = {}
@@ -370,18 +372,43 @@ class assembly_code_generator(template_code_generator):
                 self.templates.append(topology_name)
     
     def _write_x_setter(self,func_name,var='q'):
-        text = f'''
-                def set_{func_name}(self,{var}):
-                    offset = 0
+        text = '''
+                def set_gen_{func_name}(self,{var}):
+                    {ground_map}
+                    offset = 7
                     for sub in self.subsystems:
                         qs = {var}[offset:sub.n]
-                        sub.set_{func_name}(qs)
+                        sub.set_gen_{func_name}(qs)
                         offset += sub.n
+                        
+                    {virtuals_map}
                '''
         indent = 4*' '
+        p = self.printer
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = textwrap.indent(text,indent).lstrip()
+        
+        ground_map = getattr(self.mbs,'mapped_gen_%s'%func_name)[0:2]
+        pattern = '|'.join([p._print(i.lhs) for i in ground_map])
+        ground_map = '\n'.join([p._print(i) for i in ground_map])
+        ground_map = re.sub(pattern,self._insert_self,ground_map)
+        ground_map = textwrap.indent(ground_map,indent).lstrip()
+        
+        virtuals_map = getattr(self.mbs,'mapped_vir_%s'%func_name)
+        pattern1 = '|'.join([p._print(i.lhs) for i in virtuals_map])
+        pattern2 = '|'.join([p._print(i.rhs) for i in virtuals_map])
+        sub = lambda s : s.group()[1:-1]
+        virtuals_map = '\n'.join([str(p._print(i)) for i in virtuals_map])
+        virtuals_map = re.sub(pattern,self._insert_self,virtuals_map)
+        virtuals_map = re.sub(pattern1,sub,virtuals_map)
+        virtuals_map = re.sub(pattern2,sub,virtuals_map)
+        virtuals_map = textwrap.indent(virtuals_map,indent).lstrip()
+                
+        text = text.format(func_name = func_name,
+                           var = var,
+                           ground_map = ground_map,
+                           virtuals_map = virtuals_map)
+        text = textwrap.indent(text,indent)
         return text
     
     def _write_x_equations(self,func_name):
@@ -389,6 +416,7 @@ class assembly_code_generator(template_code_generator):
                 def eval_{func_name}_eq(self):
                     for sub in self.subsystems:
                         sub.eval_{func_name}_eq()
+                    self.{func_name}_blocks = sum([s.{func_name}_blocks for s in self.subsystems],[])
                 '''
         indent = 4*' '
         text = text.expandtabs()
@@ -463,6 +491,9 @@ class assembly_code_generator(template_code_generator):
                     for sub in self.subsystems:
                         sub.assemble_template(self.indicies_map,self.interface_map,offset)
                         offset += sub.nrows
+                    self.rows = np.concatenate([s.rows for s in self.subsystems])
+                    self.jac_rows = np.concatenate([s.jac_rows for s in self.subsystems])
+                    self.jac_cols = np.concatenate([s.jac_cols for s in self.subsystems])
                '''
         indent = 4*' '
         text = text.expandtabs()
@@ -471,10 +502,10 @@ class assembly_code_generator(template_code_generator):
         return text
         
     def write_coordinates_setter(self):
-        return self._write_x_setter('gen_coordinates','q')
+        return self._write_x_setter('coordinates','q')
     
     def write_velocities_setter(self):
-        return self._write_x_setter('gen_velocities','qd')
+        return self._write_x_setter('velocities','qd')
         
     def write_pos_equations(self):
         return self._write_x_equations('pos')

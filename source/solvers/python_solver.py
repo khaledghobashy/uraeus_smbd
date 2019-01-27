@@ -11,9 +11,7 @@ from scipy.sparse.linalg import spsolve
 import pandas as pd
 
 
-def scipy_matrix_assembler(data,rows,cols):
-    m = max(rows)
-    n = max(cols)
+def scipy_matrix_assembler(data,rows,cols,n,m):
     mat = sc.empty((m+1,n+1),dtype=np.object)
     mat[rows,cols] = data
     return sc.sparse.bmat(mat)

@@ -8,6 +8,7 @@ Created on Tue Jan  1 11:31:35 2019
 import sympy as sm
 import matplotlib.pyplot as plt
 import networkx as nx
+import itertools
 
 from source.symbolic_classes.abstract_matrices import (global_frame, 
                                                        reference_frame, Mirror)
@@ -206,9 +207,8 @@ class abstract_topology(object):
     def _coordinates_mapper(self,sym):
         q  = []
         q_sym  = sm.MatrixSymbol(sym,self.n,1)
-        bodies = list(set(self.nodes)-(self.virtual_bodies))
         i = 0
-        for b in bodies:
+        for b in itertools.filterfalse(self._check_if_virtual,self.nodes):
             q_block = getattr(self.nodes[b]['obj'],sym)
             for qi in q_block.blocks:
                 s = qi.shape[0]
@@ -239,11 +239,13 @@ class abstract_topology(object):
         self.param_config.assemble_base_layer()
     
     
+    def _assemble_node(self,n):
+        body_type = self.nodes[n]['class']
+        body_instance = body_type(n)
+        self.nodes[n].update(self._obj_attr_dict(body_instance))
+    
     def _assemble_nodes(self):
-        for n in self.nodes:
-            body_type = self.nodes[n]['class']
-            body_instance = body_type(n)
-            self.nodes[n].update(self._obj_attr_dict(body_instance))
+        [self._assemble_node(n) for n in self.nodes]
     
     def _assemble_edge(self,e):
         edge_class = self.edges[e]['class']
@@ -501,24 +503,19 @@ class template_based_topology(topology):
 class subsystem(abstract_topology):
     
     def __init__(self,name,topology):
-        self.global_instance = global_frame(name)
-        reference_frame.set_global_frame(self.global_instance)
         self.name = name
+        self._set_global_frame()
         self.topology = topology
         self.graph = topology.graph.copy()
         self._relable()
         self._virtual_bodies = []
     
     def _relable(self):
-        def label(x):
-            if x!='ground':
-                x = self.name+'.'+ x
-            return x
-    
-        nx.relabel_nodes(self.graph,label,copy=False)
-        maped = map(label,dict(self.nodes(data='mirr')).values())
-        maped = dict(zip(self.nodes,maped))
-        nx.set_node_attributes(self.graph,maped,'mirr')
+        def label(x): return self.name+'.'+ x
+        labels_map = {i:label(i) for i in self.topology.nodes}
+        self.graph = nx.relabel_nodes(self.graph,labels_map)
+        mirr_maped = {k:label(v) for k,v in self.nodes(data='mirr')}
+        nx.set_node_attributes(self.graph,mirr_maped,'mirr')
     
     @property
     def virtual_bodies(self):
@@ -534,8 +531,7 @@ class assembly(subsystem):
     def __init__(self,name):
         self.name = name
         self.grf = 'ground'
-        self.global_instance = global_frame(name)
-        reference_frame.set_global_frame(self.global_instance)
+        self._set_global_frame()
         
         self.graph = nx.MultiGraph(name=name)
         self.interface_graph = nx.MultiGraph(name=name)
@@ -557,9 +553,28 @@ class assembly(subsystem):
         nve_edges = sum([edge[-1] for edge in interface_graph.edges(data='nve')])
         return nve_edges
     
+    def _set_virtual_equalities(self):
+        self.mapped_vir_coordinates = []
+        for v,a in self.interface_map.items():
+            self._assemble_node(v)
+            if a!= self.grf : self._assemble_node(a)
+            virtual_coordinates = self.nodes[v]['obj'].q
+            actual_coordinates  = self.nodes[a]['obj'].q
+            equality = list(map(sm.Eq,virtual_coordinates.blocks,actual_coordinates.blocks))
+            self.mapped_vir_coordinates += equality
+        
+        self.mapped_vir_velocities = []
+        for v,a in self.interface_map.items():
+            self._assemble_node(v)
+            if a!= self.grf : self._assemble_node(a)
+            virtual_coordinates = self.nodes[v]['obj'].qd
+            actual_coordinates  = self.nodes[a]['obj'].qd
+            equality = list(map(sm.Eq,virtual_coordinates.blocks,actual_coordinates.blocks))
+            self.mapped_vir_velocities += equality
+    
     def _update_interface_map(self,subsystem):
         new_virtuals = subsystem.virtual_bodies
-        new_virtuals = zip(new_virtuals,len(new_virtuals)*[self.grf])
+        new_virtuals = {i: self.grf for i in new_virtuals}
         self._interface_map.update(new_virtuals)
             
     def add_subsystem(self,subsystem):
@@ -577,6 +592,7 @@ class assembly(subsystem):
         actual_node_2 = self.nodes[actual_node]['mirr']
         self.interface_map[virtual_node_1] = actual_node_1
         self.interface_map[virtual_node_2] = actual_node_2
+        
     
     def _contracted_nodes(self,u,v):
         H = self.graph
@@ -586,6 +602,7 @@ class assembly(subsystem):
         
     
     def _initialize_interface(self):
+        self._set_virtual_equalities()
         self.graph.add_edges_from(self.interface_map.items())
         for v,u in self.interface_map.items():
             self._contracted_nodes(u,v)
