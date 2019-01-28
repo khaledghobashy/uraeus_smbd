@@ -577,13 +577,14 @@ class assembly(subsystem):
         new_virtuals = {i: self.grf for i in new_virtuals}
         self._interface_map.update(new_virtuals)
             
-    def add_subsystem(self,subsystem):
-        self.subsystems[subsystem.name] = subsystem
-        subsystem_graph = subsystem.selected_variant
+    def add_subsystem(self,sub):
+        assert isinstance(sub,subsystem), 'value should be instance of subsystem'
+        self.subsystems[sub.name] = sub
+        subsystem_graph = sub.selected_variant
         self.graph.add_nodes_from(subsystem_graph.nodes(data=True))
         self.graph.add_edges_from(subsystem_graph.edges(data=True,keys=True))
-        self._update_interface_map(subsystem)
-        self.global_instance.merge_global(subsystem.global_instance)
+        self._update_interface_map(sub)
+        self.global_instance.merge_global(sub.global_instance)
     
     def assign_virtual_body(self,virtual_node,actual_node):
         virtual_node_1 = virtual_node

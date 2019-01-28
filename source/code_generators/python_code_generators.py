@@ -92,12 +92,11 @@ class abstract_generator(object):
 
 class template_code_generator(abstract_generator):
     
-    def _insert_self(self,x): 
-        return 'self.' + x.group(0).strip("'")
-    
-    def _insert_config(self,x): 
-        return 'config.' + x.group(0).strip("'")
-    
+    @staticmethod
+    def _insert_string(string):
+        def inserter(x): return string + x.group(0).strip("'")
+        return inserter
+        
     def _write_x_setter(self,func_name,var='q'):
         text = '''
                 def set_%s(self,%s):
@@ -112,9 +111,10 @@ class template_code_generator(abstract_generator):
         
         symbolic_equality  = getattr(self,'%s_exp'%func_name)
         pattern = '|'.join(getattr(self,'%s_sym'%func_name))
+        self_inserter = self._insert_string('self.')
         
         numerical_equality = '\n'.join([p._print(i) for i in symbolic_equality])
-        numerical_equality = re.sub(pattern,self._insert_self,numerical_equality)
+        numerical_equality = re.sub(pattern,self_inserter,numerical_equality)
         numerical_equality = textwrap.indent(numerical_equality,indent).lstrip()
         
         text = text.format(equalities = numerical_equality)
@@ -142,13 +142,15 @@ class template_code_generator(abstract_generator):
         self_pattern = sum([self.virtual_coordinates,self.gen_coordinates_sym,
                             self.gen_velocities_sym],[])
         self_pattern = '|'.join(self_pattern)
-        cse_var_txt = re.sub(self_pattern,self._insert_self,cse_var_txt)
-        cse_exp_txt = re.sub(self_pattern,self._insert_self,cse_exp_txt)
+        self_inserter = self._insert_string('self.')
+        cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)
+        cse_exp_txt = re.sub(self_pattern,self_inserter,cse_exp_txt)
         
         config_pattern = sum([self.edges_arguments_sym,self.edges_constants_sym],[])
         config_pattern = '|'.join(config_pattern)
-        cse_var_txt = re.sub(config_pattern,self._insert_config,cse_var_txt)
-        cse_exp_txt = re.sub(config_pattern,self._insert_config,cse_exp_txt)
+        config_inserter = self._insert_string('config.')
+        cse_var_txt = re.sub(config_pattern,config_inserter,cse_var_txt)
+        cse_exp_txt = re.sub(config_pattern,config_inserter,cse_exp_txt)
         
         cse_var_txt = textwrap.indent(cse_var_txt,indent).lstrip() 
         cse_exp_txt = textwrap.indent(cse_exp_txt,indent).lstrip()
@@ -186,12 +188,13 @@ class template_code_generator(abstract_generator):
 
                     def __init__(self):
                         {inputs}
-                    
+                        
+                        self._set_arguments()
+                        
                     def _set_arguments(self):
                         {outputs}
                         
                     def eval_constants(self):
-                        self._set_arguments()
                         
                         {cse_var_txt}
 
@@ -207,18 +210,19 @@ class template_code_generator(abstract_generator):
         
         pattern = '|'.join( self.edges_arguments_sym + self.edges_constants_sym
                            +self.virtual_coordinates + self.gen_coordinates_sym)
+        self_inserter = self._insert_string('self.')
         
         inputs = '\n'.join([p._print(exp) for exp in inputs])
-        inputs = re.sub(pattern,self._insert_self,inputs)
+        inputs = re.sub(pattern,self_inserter,inputs)
         inputs = textwrap.indent(inputs,indent).lstrip()
         
         outputs = '\n'.join([p._print(exp) for exp in outputs])
-        outputs = re.sub(pattern,self._insert_self,outputs)
+        outputs = re.sub(pattern,self_inserter,outputs)
         outputs = textwrap.indent(outputs,indent).lstrip()
         
         cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
-        cse_var_txt = re.sub(pattern,self._insert_self,cse_var_txt)
-        cse_exp_txt = re.sub(pattern,self._insert_self,cse_exp_txt)
+        cse_var_txt = re.sub(pattern,self_inserter,cse_var_txt)
+        cse_exp_txt = re.sub(pattern,self_inserter,cse_exp_txt)
         cse_var_txt = textwrap.indent(cse_var_txt,indent).lstrip()
         cse_exp_txt = textwrap.indent(cse_exp_txt,indent).lstrip()
                 
@@ -388,18 +392,20 @@ class assembly_code_generator(template_code_generator):
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
+        self_inserter = self._insert_string('self.')
+        
         ground_map = getattr(self.mbs,'mapped_gen_%s'%func_name)[0:2]
         pattern = '|'.join([p._print(i.lhs) for i in ground_map])
         ground_map = '\n'.join([p._print(i) for i in ground_map])
-        ground_map = re.sub(pattern,self._insert_self,ground_map)
+        ground_map = re.sub(pattern,self_inserter,ground_map)
         ground_map = textwrap.indent(ground_map,indent).lstrip()
         
         virtuals_map = getattr(self.mbs,'mapped_vir_%s'%func_name)
         pattern1 = '|'.join([p._print(i.lhs) for i in virtuals_map])
         pattern2 = '|'.join([p._print(i.rhs) for i in virtuals_map])
-        sub = lambda s : s.group()[1:-1]
+        sub = self._insert_string('')
         virtuals_map = '\n'.join([str(p._print(i)) for i in virtuals_map])
-        virtuals_map = re.sub(pattern,self._insert_self,virtuals_map)
+        virtuals_map = re.sub(pattern,self_inserter,virtuals_map)
         virtuals_map = re.sub(pattern1,sub,virtuals_map)
         virtuals_map = re.sub(pattern2,sub,virtuals_map)
         virtuals_map = textwrap.indent(virtuals_map,indent).lstrip()
@@ -501,6 +507,42 @@ class assembly_code_generator(template_code_generator):
         text = textwrap.indent(text,indent).lstrip()
         return text
         
+    def write_constants_evaluator(self):
+        text = '''
+                def eval_constants(self):
+                    {virtuals_map}
+                    
+                    for sub in self.subsystems:
+                        sub.config.eval_constants()
+                '''
+        indent = 4*' '
+        p = self.printer
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        ground_map = self.mbs.mapped_gen_coordinates[0:2]
+        pattern = '|'.join([p._print(i.lhs) for i in ground_map])
+
+        virtuals_map = self.mbs.mapped_vir_coordinates
+        pattern1 = '|'.join([p._print(i.lhs) for i in virtuals_map])
+        pattern2 = '|'.join([p._print(i.rhs) for i in virtuals_map])
+        
+        def sub(x):
+            l = x.group(0).split('.')
+            s = '%s.config.%s'%(*l,)
+            return s.strip("'")
+        self_inserter = self._insert_string('self.')
+        
+        virtuals_map = '\n'.join([str(p._print(i)) for i in virtuals_map])
+        virtuals_map = re.sub(pattern,self_inserter,virtuals_map)
+        virtuals_map = re.sub(pattern1,sub,virtuals_map)
+        virtuals_map = re.sub(pattern2,sub,virtuals_map)
+        virtuals_map = textwrap.indent(virtuals_map,indent).lstrip()
+        
+        text = text.format(virtuals_map = virtuals_map)
+        text = textwrap.indent(text,indent)
+        return text
+    
     def write_coordinates_setter(self):
         return self._write_x_setter('coordinates','q')
     
@@ -524,6 +566,7 @@ class assembly_code_generator(template_code_generator):
                 {class_init}
                     {class_helpers}
                     {assembler}
+                    {constants}
                     {coord_setter}
                     {veloc_setter}
                     {eval_pos}
@@ -537,6 +580,7 @@ class assembly_code_generator(template_code_generator):
         class_init = self.write_class_init()
         class_helpers = self.write_class_helpers()
         assembler = self.write_assembler()
+        constants = self.write_constants_evaluator()
         coord_setter = self.write_coordinates_setter()
         veloc_setter = self.write_velocities_setter()
         
@@ -548,6 +592,7 @@ class assembly_code_generator(template_code_generator):
         text = text.format(class_init = class_init,
                            class_helpers = class_helpers,
                            assembler = assembler,
+                           constants = constants,
                            eval_pos = eval_pos,
                            eval_vel = eval_vel,
                            eval_acc = eval_acc,
