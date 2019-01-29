@@ -428,7 +428,6 @@ class assembly_code_generator(template_code_generator):
     def _write_x_equations(self,func_name):
         text = '''
                 def eval_{func_name}_eq(self):
-                    t = self.t
 
                     {equations}
                     
@@ -441,7 +440,7 @@ class assembly_code_generator(template_code_generator):
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
-        equations = p._print(getattr(self.mbs,'%s_equations'%func_name)).split(',')
+        equations = p._print(getattr(self.mbs,'%s_equations'%func_name)).split('\n')
         equations = equations[-1]
         
         ground_map = self.mbs.mapped_gen_coordinates[0:2] + self.mbs.mapped_gen_velocities[0:2]
