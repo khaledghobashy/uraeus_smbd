@@ -1,0 +1,27 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan 29 10:08:34 2019
+
+@author: khaled.ghobashy
+"""
+
+from source.symbolic_classes.spatial_joints import (revolute,rotational_actuator)
+
+from source.code_generators.python_code_generators import template_code_generator
+from source.mbs_creators.topology_classes import template_based_topology
+
+
+template = template_based_topology('test_rig')
+
+template.add_virtual_body('hub',mirrored=True)
+template.add_virtual_body('upright',mirrored=True)
+
+template.add_joint(revolute,'rev','vbr_hub','vbr_upright',mirrored=True,virtual=True)
+template.add_joint_actuator(rotational_actuator,'act','jcr_rev',True)
+template.add_absolute_actuator('ver_act','vbr_hub','z',True)
+
+template.assemble_model()
+
+numerical_code = template_code_generator(template)
+numerical_code.write_code_file()
+

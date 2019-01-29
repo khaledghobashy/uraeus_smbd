@@ -264,25 +264,7 @@ class template_code_generator(abstract_generator):
                            jac_cols = self.jac_eq_cols)
         text = textwrap.indent(text,indent)
         return text
-    
-    def write_coordinates_setter(self):
-        return self._write_x_setter('gen_coordinates','q')
-    
-    def write_velocities_setter(self):
-        return self._write_x_setter('gen_velocities','qd')
-        
-    def write_pos_equations(self):
-        return self._write_x_equations('pos')
-    
-    def write_vel_equations(self):
-        return self._write_x_equations('vel')
-    
-    def write_acc_equations(self):
-        return self._write_x_equations('acc')
-    
-    def write_jac_equations(self):
-        return self._write_x_equations('jac')
-        
+            
     def write_class_init(self):
         text = '''
                 class topology(object):
@@ -291,9 +273,7 @@ class template_code_generator(abstract_generator):
                         self.t = 0.0
                         self.config = config
                         self.prefix = (prefix if prefix=='' else prefix+'.')
-                        
-                        self.Pg_ground = np.array([[1], [0], [0], [0]],dtype=np.float64)
-                        
+                                                
                         self.n = {n}
                         self.nrows = {nve}
                         self.ncols = 2*{nodes}
@@ -312,6 +292,23 @@ class template_code_generator(abstract_generator):
                            nodes = len(self.mbs.nodes))
         return text
                 
+    def write_coordinates_setter(self):
+        return self._write_x_setter('gen_coordinates','q')
+    
+    def write_velocities_setter(self):
+        return self._write_x_setter('gen_velocities','qd')
+        
+    def write_pos_equations(self):
+        return self._write_x_equations('pos')
+    
+    def write_vel_equations(self):
+        return self._write_x_equations('vel')
+    
+    def write_acc_equations(self):
+        return self._write_x_equations('acc')
+    
+    def write_jac_equations(self):
+        return self._write_x_equations('jac')
 
     def write_system_class(self):
         text = '''
@@ -349,6 +346,10 @@ class template_code_generator(abstract_generator):
     
     
     def write_code_file(self):
+        import os
+        os.chdir('..')
+        path = os.getcwd() + '\\generated_templates'
+        os.chdir(path)
         self.setup_equations()
         imports = self.write_imports()
         config_class = self.write_config_class()
