@@ -426,15 +426,34 @@ class assembly_code_generator(template_code_generator):
         return text
     
     def _write_x_equations(self,func_name):
-        text = f'''
+        text = '''
                 def eval_{func_name}_eq(self):
+                    t = self.t
+
+                    {equations}
+                    
                     for sub in self.subsystems:
                         sub.eval_{func_name}_eq()
                     self.{func_name}_blocks = sum([s.{func_name}_blocks for s in self.subsystems],[])
                 '''
         indent = 4*' '
+        p = self.printer
         text = text.expandtabs()
         text = textwrap.dedent(text)
+        
+        equations = p._print(getattr(self.mbs,'%s_equations'%func_name)).split(',')
+        equations = equations[-1]
+        
+        ground_map = self.mbs.mapped_gen_coordinates[0:2] + self.mbs.mapped_gen_velocities[0:2]
+        pattern = '|'.join([p._print(i.lhs) for i in ground_map])
+        self_inserter = self._insert_string('self.')
+        equations = re.sub(pattern,self_inserter,equations)
+                
+        equations = textwrap.indent(equations,indent).lstrip()
+        equations = 'self.%s_eq_blocks = %s'%(func_name,equations.lstrip())
+        
+        text = text.format(func_name = func_name,
+                           equations = equations)
         text = textwrap.indent(text,indent)
         return text
     

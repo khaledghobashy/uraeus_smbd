@@ -134,24 +134,40 @@ class numerical_assembly(object):
 
     
     def eval_pos_eq(self):
+        t = self.t
+
+        self.pos_eq_blocks = (-1.0*'Pg_ground' + self.P_ground)]
+
         for sub in self.subsystems:
             sub.eval_pos_eq()
         self.pos_blocks = sum([s.pos_blocks for s in self.subsystems],[])
 
     
     def eval_vel_eq(self):
+        t = self.t
+
+        self.vel_eq_blocks = dtype=np.float64)]
+
         for sub in self.subsystems:
             sub.eval_vel_eq()
         self.vel_blocks = sum([s.vel_blocks for s in self.subsystems],[])
 
     
     def eval_acc_eq(self):
+        t = self.t
+
+        self.acc_eq_blocks = dtype=np.float64)]
+
         for sub in self.subsystems:
             sub.eval_acc_eq()
         self.acc_blocks = sum([s.acc_blocks for s in self.subsystems],[])
 
     
     def eval_jac_eq(self):
+        t = self.t
+
+        self.jac_eq_blocks = dtype=np.float64)]
+
         for sub in self.subsystems:
             sub.eval_jac_eq()
         self.jac_blocks = sum([s.jac_blocks for s in self.subsystems],[])
