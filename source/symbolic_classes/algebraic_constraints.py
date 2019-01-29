@@ -79,6 +79,8 @@ class algebraic_constraints(object):
         self._arguments = l
 
     def _create_bodies_locals(self):
+        self._constants = []
+        
         if self.def_axis == 1:
             axis   = self.axis_1
             marker = self.marker_1
@@ -87,7 +89,8 @@ class algebraic_constraints(object):
             mi_bar_eq = sm.Eq(self.mi_bar.A, mi_bar)
             mj_bar    = marker.express(self.body_j)
             mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
-        
+            markers_equalities = [mi_bar_eq,mj_bar_eq]
+            
         elif self.def_axis == 2:
             axis1  = self.axis_1
             axis2  = self.axis_2
@@ -101,15 +104,22 @@ class algebraic_constraints(object):
             marker2.orient_along(axis1,axis2)
             mj_bar    = marker2.express(self.body_j)
             mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
+            markers_equalities = [mi_bar_eq,mj_bar_eq]
         
+        elif self.def_axis == 0:
+            markers_equalities = []
         else: raise NotImplementedError
-                
+        self._constants += markers_equalities
+
         if self.def_locs == 1:
             loc  = self.loc_1
             ui_bar_eq = sm.Eq(self.ui_bar, loc.express(self.body_i) - self.Ri.express(self.body_i))
             uj_bar_eq = sm.Eq(self.uj_bar, loc.express(self.body_j) - self.Rj.express(self.body_j))
+            location_equalities = [ui_bar_eq,uj_bar_eq]
+        elif self.def_locs == 0:
+            location_equalities = []
         else: raise NotImplementedError
-        self._constants = [ui_bar_eq,uj_bar_eq,mi_bar_eq,mj_bar_eq]
+        self._constants += location_equalities
     
     
     @property
@@ -421,11 +431,8 @@ class actuator(algebraic_constraints):
     
     @property
     def arguments(self):
-        return [self.F]
-    @property
-    def constants(self):
-        return []
-    
+        return super().arguments + [self.F]
+        
 
 class joint_actuator(actuator):
     
@@ -469,10 +476,9 @@ class absolute_actuator(actuator):
         sym_jac = sm.MatrixSymbol('%sJ_%s'%(self.prefix,self.id_name),1,3)
         return super().arguments + [sym_jac]
 
-#    @property
-#    def constants(self):
-#        sym_jac = sm.MatrixSymbol('%sJ_%s'%(self.prefix,self.id_name),1,3)
-#        return [sm.Eq(sym_jac,sm.zeros(1,3))]
+    @property
+    def constants(self):
+        return []
 
     
     

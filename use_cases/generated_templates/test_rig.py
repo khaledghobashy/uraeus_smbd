@@ -16,6 +16,7 @@ class configuration(object):
     def __init__(self):
         self.F_mcr_ver_act = lambda t : 0
         self.J_mcr_ver_act = np.array([[0, 0, 0]],dtype=np.float64)
+        self.ax1_jcr_rev = np.array([[0], [0], [0]],dtype=np.float64)
         self.F_jcr_rev = lambda t : 0
 
         self._set_arguments()
@@ -23,13 +24,18 @@ class configuration(object):
     def _set_arguments(self):
         self.F_mcl_ver_act = self.F_mcr_ver_act
         self.J_mcl_ver_act = Mirror(self.J_mcr_ver_act)
+        self.ax1_jcl_rev = Mirror(self.ax1_jcr_rev)
         self.F_jcl_rev = self.F_jcr_rev
 
     def eval_constants(self):
 
-        
+        c0 = Triad(self.ax1_jcr_rev,)
+        c1 = Triad(self.ax1_jcl_rev,)
 
-        
+        self.Mbar_vbr_hub_jcr_rev = multi_dot([A(self.P_vbr_hub).T,c0])
+        self.Mbar_vbr_upright_jcr_rev = multi_dot([A(self.P_vbr_upright).T,c0])
+        self.Mbar_vbl_hub_jcl_rev = multi_dot([A(self.P_vbl_hub).T,c1])
+        self.Mbar_vbl_upright_jcl_rev = multi_dot([A(self.P_vbl_upright).T,c1])
 
 
 
@@ -66,11 +72,11 @@ class topology(object):
 
     
     def set_gen_coordinates(self,q):
-        self.
+        pass
 
     
     def set_gen_velocities(self,qd):
-        self.
+        pass
 
     
     def eval_pos_eq(self):
@@ -81,13 +87,13 @@ class topology(object):
         x1 = config.F_jcr_rev(t,)
         x2 = A(self.P_vbr_hub).T
         x3 = A(self.P_vbr_upright)
-        x4 = 'Mbar_vbr_upright_jcr_rev'[:,0:1]
+        x4 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
         x5 = config.F_jcl_rev(t,)
         x6 = A(self.P_vbl_hub).T
         x7 = A(self.P_vbl_upright)
-        x8 = 'Mbar_vbl_upright_jcl_rev'[:,0:1]
+        x8 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
 
-        self.pos_eq_blocks = [-1*config.F_mcr_ver_act(t,) + self.R_vbr_hub[2]*x0,-1*config.F_mcl_ver_act(t,) + self.R_vbl_hub[2]*x0,(cos(x1)*multi_dot(['Mbar_vbr_hub_jcr_rev'[:,1:2].T,x2,x3,x4]) + sin(x1)*-1.0*multi_dot(['Mbar_vbr_hub_jcr_rev'[:,0:1].T,x2,x3,x4])),(cos(x5)*multi_dot(['Mbar_vbl_hub_jcl_rev'[:,1:2].T,x6,x7,x8]) + sin(x5)*-1.0*multi_dot(['Mbar_vbl_hub_jcl_rev'[:,0:1].T,x6,x7,x8]))]
+        self.pos_eq_blocks = [-1*config.F_mcr_ver_act(t,) + self.R_vbr_hub[2]*x0,-1*config.F_mcl_ver_act(t,) + self.R_vbl_hub[2]*x0,(cos(x1)*multi_dot([config.Mbar_vbr_hub_jcr_rev[:,1:2].T,x2,x3,x4]) + sin(x1)*-1.0*multi_dot([config.Mbar_vbr_hub_jcr_rev[:,0:1].T,x2,x3,x4])),(cos(x5)*multi_dot([config.Mbar_vbl_hub_jcl_rev[:,1:2].T,x6,x7,x8]) + sin(x5)*-1.0*multi_dot([config.Mbar_vbl_hub_jcl_rev[:,0:1].T,x6,x7,x8]))]
 
     
     def eval_vel_eq(self):
@@ -107,24 +113,24 @@ class topology(object):
         a0 = np.zeros((1,1),dtype=np.float64)
         a1 = np.eye(1,dtype=np.float64)
         a2 = config.F_jcr_rev(t,)
-        a3 = 'Mbar_vbr_upright_jcr_rev'[:,0:1]
+        a3 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
         a4 = self.P_vbr_upright
         a5 = cos(a2)
         a6 = self.Pd_vbr_hub
-        a7 = 'Mbar_vbr_hub_jcr_rev'[:,1:2]
+        a7 = config.Mbar_vbr_hub_jcr_rev[:,1:2]
         a8 = sin(a2)
-        a9 = 'Mbar_vbr_hub_jcr_rev'[:,0:1]
+        a9 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
         a10 = self.P_vbr_hub
         a11 = A(a10).T
         a12 = self.Pd_vbr_upright
         a13 = config.F_jcl_rev(t,)
-        a14 = 'Mbar_vbl_upright_jcl_rev'[:,0:1]
+        a14 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
         a15 = self.P_vbl_upright
         a16 = cos(a13)
         a17 = self.Pd_vbl_hub
-        a18 = 'Mbar_vbl_hub_jcl_rev'[:,1:2]
+        a18 = config.Mbar_vbl_hub_jcl_rev[:,1:2]
         a19 = sin(a13)
-        a20 = 'Mbar_vbl_hub_jcl_rev'[:,0:1]
+        a20 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
         a21 = self.P_vbl_hub
         a22 = A(a21).T
         a23 = self.Pd_vbl_upright
@@ -138,21 +144,21 @@ class topology(object):
 
         j0 = np.zeros((1,4),dtype=np.float64)
         j1 = np.zeros((1,3),dtype=np.float64)
-        j2 = 'Mbar_vbr_upright_jcr_rev'[:,0:1]
+        j2 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
         j3 = self.P_vbr_upright
         j4 = config.F_jcr_rev(t,)
         j5 = cos(j4)
         j6 = self.P_vbr_hub
-        j7 = 'Mbar_vbr_hub_jcr_rev'[:,1:2]
-        j8 = 'Mbar_vbr_hub_jcr_rev'[:,0:1]
+        j7 = config.Mbar_vbr_hub_jcr_rev[:,1:2]
+        j8 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
         j9 = A(j6).T
-        j10 = 'Mbar_vbl_upright_jcl_rev'[:,0:1]
+        j10 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
         j11 = self.P_vbl_upright
         j12 = config.F_jcl_rev(t,)
         j13 = cos(j12)
         j14 = self.P_vbl_hub
-        j15 = 'Mbar_vbl_hub_jcl_rev'[:,1:2]
-        j16 = 'Mbar_vbl_hub_jcl_rev'[:,0:1]
+        j15 = config.Mbar_vbl_hub_jcl_rev[:,1:2]
+        j16 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
         j17 = A(j14).T
 
         self.jac_eq_blocks = [config.J_mcr_ver_act,j0,j1,j0,config.J_mcl_ver_act,j0,j1,j0,j1,multi_dot([j2.T,A(j3).T,(j5*B(j6,j7) + sin(j4)*-1.0*B(j6,j8))]),j1,multi_dot([(j5*multi_dot([j7.T,j9]) + sin(j4)*-1.0*multi_dot([j8.T,j9])),B(j3,j2)]),j1,multi_dot([j10.T,A(j11).T,(j13*B(j14,j15) + sin(j12)*-1.0*B(j14,j16))]),j1,multi_dot([(j13*multi_dot([j15.T,j17]) + sin(j12)*-1.0*multi_dot([j16.T,j17])),B(j11,j10)])]

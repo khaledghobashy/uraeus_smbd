@@ -110,12 +110,16 @@ class template_code_generator(abstract_generator):
         indent = 4*' '
         
         symbolic_equality  = getattr(self,'%s_exp'%func_name)
-        pattern = '|'.join(getattr(self,'%s_sym'%func_name))
-        self_inserter = self._insert_string('self.')
         
-        numerical_equality = '\n'.join([p._print(i) for i in symbolic_equality])
-        numerical_equality = re.sub(pattern,self_inserter,numerical_equality)
-        numerical_equality = textwrap.indent(numerical_equality,indent).lstrip()
+        if len(symbolic_equality) !=0:
+            pattern = '|'.join(getattr(self,'%s_sym'%func_name))
+            self_inserter = self._insert_string('self.')
+            
+            numerical_equality = '\n'.join([p._print(i) for i in symbolic_equality])
+            numerical_equality = re.sub(pattern,self_inserter,numerical_equality)
+            numerical_equality = textwrap.indent(numerical_equality,indent).lstrip()
+        else:
+            numerical_equality = 'pass'
         
         text = text.format(equalities = numerical_equality)
         text = textwrap.indent(text,indent)
@@ -196,9 +200,7 @@ class template_code_generator(abstract_generator):
                         
                     def eval_constants(self):
                         
-                        {cse_var_txt}
-
-                        {cse_exp_txt}
+                        {constants}
                 '''
         
         p = self.printer
@@ -220,18 +222,20 @@ class template_code_generator(abstract_generator):
         outputs = re.sub(pattern,self_inserter,outputs)
         outputs = textwrap.indent(outputs,indent).lstrip()
         
-        cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
-        cse_var_txt = re.sub(pattern,self_inserter,cse_var_txt)
-        cse_exp_txt = re.sub(pattern,self_inserter,cse_exp_txt)
-        cse_var_txt = textwrap.indent(cse_var_txt,indent).lstrip()
-        cse_exp_txt = textwrap.indent(cse_exp_txt,indent).lstrip()
-                
+        if len(consts) !=0:
+            cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
+            cse_var_txt = re.sub(pattern,self_inserter,cse_var_txt)
+            cse_exp_txt = re.sub(pattern,self_inserter,cse_exp_txt)
+            constants = '\n'.join([cse_var_txt,'',cse_exp_txt])
+            constants = textwrap.indent(constants,indent).lstrip()
+        else:
+            constants = 'pass'
+            
         text = text.expandtabs()
         text = textwrap.dedent(text)
         text = text.format(inputs  = inputs,
                            outputs = outputs,
-                           cse_var_txt = cse_var_txt,
-                           cse_exp_txt = cse_exp_txt)
+                           constants = constants)
         return text
 
     def write_template_assembler(self):

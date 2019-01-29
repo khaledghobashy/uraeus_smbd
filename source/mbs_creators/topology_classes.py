@@ -105,7 +105,7 @@ class parametric_configuration(object):
         inputs = [g.nodes[i]['func'] for i,d in g.out_degree() if condition(i,d)]
         return inputs
     
-    def draw_inputs_graph(self):
+    def draw_graph(self):
         plt.figure(figsize=(10,6))
         nx.draw_spring(self.graph,with_labels=True)
         plt.show()        

@@ -66,13 +66,18 @@ class universal(algebraic_constraints,metaclass=joint_constructor):
 
 
 class rotational_actuator(joint_actuator,metaclass=joint_constructor):
+    def_axis = 1
+    def_locs = 0
     vector_equations = [angle_constraint()]
+    
     @property
     def pos_level_equations(self):
         return sm.BlockMatrix(self._pos_level_equations)
 
 
 class absolute_locator(absolute_actuator,metaclass=joint_constructor):
+    def_axis = 0
+    def_locs = 0
     vector_equations = [coordinate_constraint()]
 
 
