@@ -7,8 +7,11 @@ from scipy.misc import derivative
 from numpy import cos, sin
 
 def Mirror(v):
-    m = np.array([[1,0,0],[0,-1,0],[0,0,1]],dtype=np.float64)
-    return m.dot(v)
+    if v.shape == (1,3):
+        return v
+    else:
+        m = np.array([[1,0,0],[0,-1,0],[0,0,1]],dtype=np.float64)
+        return m.dot(v)
 
 
 class configuration(object):

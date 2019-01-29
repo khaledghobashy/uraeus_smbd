@@ -214,8 +214,8 @@ class abstract_topology(object):
         plt.show()
     
     def _coordinates_mapper(self,sym):
-        q  = []
         q_sym  = sm.MatrixSymbol(sym,self.n,1)
+        q = []
         i = 0
         for b in itertools.filterfalse(self._check_virtual_node,self.nodes):
             q_block = getattr(self.nodes[b]['obj'],sym)
@@ -648,9 +648,33 @@ class assembly(subsystem):
         for e in self.interface_graph.edges:
             self._assemble_edge(e)
     
+    def _assemble_equations(self):
+        
+        nodelist    = self.nodes
+        cols = 2*len(nodelist)
+        nve  = 2
+        
+        equations = sm.MutableSparseMatrix(nve,1,None)
+        vel_rhs   = sm.MutableSparseMatrix(nve,1,None)
+        acc_rhs   = sm.MutableSparseMatrix(nve,1,None)
+        jacobian  = sm.MutableSparseMatrix(nve,cols,None)
+        
+        row_ind = 0
+        b = self.nodes['ground']['obj']
+        i = self.nodes_indicies['ground']
+        jacobian[row_ind:row_ind+2,i*2:i*2+2]    = b.normalized_jacobian.blocks
+        equations[row_ind:row_ind+2,0] = b.normalized_pos_equation.blocks
+        vel_rhs[row_ind:row_ind+2,0]   = b.normalized_vel_equation.blocks
+        acc_rhs[row_ind:row_ind+2,0]   = b.normalized_acc_equation.blocks
+            
+        self.pos_equations = equations
+        self.vel_equations = vel_rhs
+        self.acc_equations = acc_rhs
+        self.jac_equations = jacobian
     
     def assemble_model(self):
         self._initialize_interface()
+        self._assemble_equations()
         
     def draw_interface_graph(self):
         plt.figure(figsize=(10,6))
