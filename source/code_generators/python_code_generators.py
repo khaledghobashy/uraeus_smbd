@@ -214,7 +214,8 @@ class template_code_generator(abstract_generator):
         consts = self.edges_constants_exp
         
         pattern = '|'.join( self.edges_arguments_sym + self.edges_constants_sym
-                           +self.virtual_coordinates + self.gen_coordinates_sym)
+                           +self.virtual_coordinates + self.gen_coordinates_sym
+                           +self.gen_velocities_sym)
         self_inserter = self._insert_string('self.')
         
         inputs = '\n'.join([p._print(exp) for exp in inputs])
@@ -429,30 +430,30 @@ class assembly_code_generator(template_code_generator):
         text = '''
                 def eval_{func_name}_eq(self):
 
-                    {equations}
+                    {ground_data}
                     
                     for sub in self.subsystems:
                         sub.eval_{func_name}_eq()
-                    self.{func_name}_blocks = sum([s.{func_name}_blocks for s in self.subsystems],[])
+                    self.{func_name}_eq_blocks = sum([s.{func_name}_blocks for s in self.subsystems],[])
+                    self.{func_name}_eq_blocks += {func_name}_ground_eq_blocks
                 '''
         indent = 4*' '
         p = self.printer
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
-        equations = p._print(getattr(self.mbs,'%s_equations'%func_name)).split('\n')
-        equations = equations[-1]
+        matrix = p._print(getattr(self.mbs,'%s_equations'%func_name)).split('\n')
+        rows,cols,ground_data = matrix
         
-        ground_map = self.mbs.mapped_gen_coordinates[0:2] + self.mbs.mapped_gen_velocities[0:2]
-        pattern = '|'.join([p._print(i.lhs) for i in ground_map])
+        pattern = '|'.join([p._print(i) for i in self.mbs.nodes['ground']['arguments']])
         self_inserter = self._insert_string('self.')
-        equations = re.sub(pattern,self_inserter,equations)
+        ground_data = re.sub(pattern,self_inserter,ground_data)
                 
-        equations = textwrap.indent(equations,indent).lstrip()
-        equations = 'self.%s_eq_blocks = %s'%(func_name,equations.lstrip())
+        ground_data = textwrap.indent(ground_data,indent).lstrip()
+        ground_data = '%s_ground_eq_blocks = %s'%(func_name,ground_data.lstrip())
         
         text = text.format(func_name = func_name,
-                           equations = equations)
+                           ground_data = ground_data)
         text = textwrap.indent(text,indent)
         return text
     
@@ -487,11 +488,15 @@ class assembly_code_generator(template_code_generator):
                 class numerical_assembly(object):
 
                     def __init__(self):
-                        self.Pg_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
                         self.subsystems = [{subsystems}]
                         
                         self.interface_map = {interface_map}
                         self.indicies_map  = {indicies_map}
+                        
+                        self.Pg_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
+                        self.gr_rows = np.array([0,1])
+                        self.gr_jac_rows = np.array([0,0,1,1])
+                        self.gr_jac_cols = np.array([0,1,0,1])
                 '''
         subsystems = ','.join(self.mbs.subsystems.keys())
         interface_map = self.mbs.interface_map
@@ -523,9 +528,17 @@ class assembly_code_generator(template_code_generator):
                     for sub in self.subsystems:
                         sub.assemble_template(self.indicies_map,self.interface_map,offset)
                         offset += sub.nrows
+                    
+                    self.gr_rows += offset
+                    self.gr_jac_rows += offset
+                    
                     self.rows = np.concatenate([s.rows for s in self.subsystems])
                     self.jac_rows = np.concatenate([s.jac_rows for s in self.subsystems])
                     self.jac_cols = np.concatenate([s.jac_cols for s in self.subsystems])
+                    
+                    self.rows = np.concatenate([self.rows,self.gr_rows])
+                    self.jac_rows = np.concatenate([self.jac_rows,self.gr_jac_rows])
+                    self.jac_cols = np.concatenate([self.jac_cols,self.gr_jac_cols])
                '''
         indent = 4*' '
         text = text.expandtabs()

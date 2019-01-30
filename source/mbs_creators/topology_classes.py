@@ -55,17 +55,19 @@ class parametric_configuration(object):
 
         for n in filtered_nodes:
             m      = t_nodes[n]['mirr']
-            args_n = t_nodes[n]['arguments'][0]
-            self._arguments_sym+=[args_n]
+            args_n = t_nodes[n]['arguments']
+            nodes_args_n = [(str(i),{'func':Eq(i)}) for i in args_n]
+            self._arguments_sym += args_n
             if m == n:
-                graph.add_node(str(args_n))
-                graph.nodes[str(args_n)].update({'func': Eq(args_n)})
+                graph.add_nodes_from(nodes_args_n)
             else:
-                args_m = t_nodes[m]['arguments'][0]
-                graph.add_edge(str(args_n),str(args_m))
-                graph.nodes[str(args_n)].update({'func': Eq(args_n)})
-                graph.nodes[str(args_m)].update({'func': Eq(args_n,args_m)})
-                self._arguments_sym+=[args_m]
+                args_m = t_nodes[m]['arguments']
+                args_c = zip(args_n,args_m)
+                nodes_args_m = [(str(m),{'func':Eq(n,m)}) for n,m in args_c]
+                graph.add_nodes_from(nodes_args_n+nodes_args_m)
+                edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
+                graph.add_edges_from(edges)    
+                self._arguments_sym += args_m
 
     def _get_edges_arguments(self):
         Eq = self._set_equality
@@ -77,7 +79,7 @@ class parametric_configuration(object):
                 m = t_edges[e]['mirr']
                 args_n = t_edges[e]['arguments']
                 nodes_args_n = [(str(i),{'func':Eq(i)}) for i in args_n]
-                self._arguments_sym+=[i for i in args_n]
+                self._arguments_sym += args_n
                 if m == n:
                     graph.add_nodes_from(nodes_args_n)
                 else:
@@ -88,7 +90,7 @@ class parametric_configuration(object):
                     graph.add_nodes_from(nodes_args_n+nodes_args_m)
                     edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
                     graph.add_edges_from(edges)    
-                    self._arguments_sym+=[i for i in args_m]
+                    self._arguments_sym += args_m
     
     def assemble_base_layer(self):
         self._get_nodes_arguments()
