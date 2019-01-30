@@ -20,8 +20,10 @@ class solver(object):
     
     def __init__(self,model):
         self.model = model
-        model.set_q(model.config.q_initial)
-        model.set_qd(model.config.qd_initial)
+        self.nrows = model.nrows
+        self.ncols = model.ncols
+        
+        model.set_initial_states()
                 
         self.pos_history = {0:self.model.config.q_initial}
         self.vel_history = {}

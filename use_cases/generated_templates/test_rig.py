@@ -37,7 +37,7 @@ class configuration(object):
         dataframe = pd.read_csv(csv_file,index_col=0)
         for ind in dataframe.index:
             shape = getattr(self,ind).shape
-            v = np.array(dataframe.loc[ind])
+            v = np.array(dataframe.loc[ind],dtype=np.float64)
             v = np.resize(v,shape)
             setattr(self,ind,v)
         self._set_arguments()
@@ -54,6 +54,16 @@ class configuration(object):
         self.Mbar_vbl_upright_jcl_rev = multi_dot([A(self.P_vbl_upright).T,c1])
         self.Mbar_vbs_steer_gear_jcs_steer_gear = multi_dot([A(self.P_vbs_steer_gear).T,c2])
         self.Mbar_vbs_chassis_jcs_steer_gear = multi_dot([A(self.P_vbs_chassis).T,c2])
+
+    @property
+    def q(self):
+        q = []
+        return q
+
+    @property
+    def qd(self):
+        qd = []
+        return qd
 
 
 
@@ -75,13 +85,13 @@ class topology(object):
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
-        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
-        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
-        self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
-        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
-        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
         self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
+        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
+        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
         self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
+        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
+        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
+        self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset
@@ -89,6 +99,10 @@ class topology(object):
         self.rows += self.rows_offset
         self.jac_rows += self.rows_offset
         self.jac_cols = np.array([self.vbs_ground*2,self.vbs_ground*2+1,self.vbr_hub*2,self.vbr_hub*2+1,self.vbs_ground*2,self.vbs_ground*2+1,self.vbl_hub*2,self.vbl_hub*2+1,self.vbr_hub*2,self.vbr_hub*2+1,self.vbr_upright*2,self.vbr_upright*2+1,self.vbl_hub*2,self.vbl_hub*2+1,self.vbl_upright*2,self.vbl_upright*2+1,self.vbs_steer_gear*2,self.vbs_steer_gear*2+1,self.vbs_chassis*2,self.vbs_chassis*2+1,])
+
+    def set_initial_states(self):
+        self.set_gen_coordinates(self.config.q)
+        self.set_gen_velocities(self.config.qd)
 
     
     def set_gen_coordinates(self,q):

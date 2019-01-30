@@ -207,7 +207,7 @@ class template_code_generator(abstract_generator):
                         dataframe = pd.read_csv(csv_file,index_col=0)
                         for ind in dataframe.index:
                             shape = getattr(self,ind).shape
-                            v = np.array(dataframe.loc[ind])
+                            v = np.array(dataframe.loc[ind],dtype=np.float64)
                             v = np.resize(v,shape)
                             setattr(self,ind,v)
                         self._set_arguments()
@@ -215,6 +215,16 @@ class template_code_generator(abstract_generator):
                     def eval_constants(self):
                         
                         {constants}
+                    
+                    @property
+                    def q(self):
+                        q = {coordinates}
+                        return q
+                    
+                    @property
+                    def qd(self):
+                        qd = {velocities}
+                        return qd
                 '''
         
         p = self.printer
@@ -245,12 +255,24 @@ class template_code_generator(abstract_generator):
             constants = textwrap.indent(constants,indent).lstrip()
         else:
             constants = 'pass'
-            
+        
+        coordinates = ','.join(self.gen_coordinates_sym)
+        coordinates = re.sub(pattern,self_inserter,coordinates)
+        coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
+        coordinates = textwrap.indent(coordinates,indent).lstrip()
+        
+        velocities = ','.join(self.gen_velocities_sym)
+        velocities = re.sub(pattern,self_inserter,velocities)
+        velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
+        velocities = textwrap.indent(velocities,indent).lstrip()
+        
         text = text.expandtabs()
         text = textwrap.dedent(text)
         text = text.format(inputs  = inputs,
                            outputs = outputs,
-                           constants = constants)
+                           constants = constants,
+                           coordinates = coordinates,
+                           velocities = velocities)
         return text
 
     def write_template_assembler(self):
@@ -266,6 +288,10 @@ class template_code_generator(abstract_generator):
                     self.rows += self.rows_offset
                     self.jac_rows += self.rows_offset
                     self.jac_cols = {jac_cols}
+                
+                def set_initial_states(self):
+                    self.set_gen_coordinates(self.config.q)
+                    self.set_gen_velocities(self.config.qd)
                '''
         
         indent = 4*' '
@@ -509,11 +535,14 @@ class assembly_code_generator(template_code_generator):
                         
                         self.R_ground  = np.array([[0],[0],[0]],dtype=np.float64)
                         self.P_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
-                        self.Pg_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
+                        self.Pg_ground = np.array([[1],[0],[0],[0]],dtype=np.float64)
                         
                         self.gr_rows = np.array([0,1])
                         self.gr_jac_rows = np.array([0,0,1,1])
                         self.gr_jac_cols = np.array([0,1,0,1])
+                        
+                        self.nrows = {nrows}
+                        self.ncols = {ncols}
                 '''
         
         subsystems = ','.join(self.mbs.subsystems.keys())
@@ -523,7 +552,9 @@ class assembly_code_generator(template_code_generator):
         text = textwrap.dedent(text)
         text = text.format(subsystems = subsystems,
                            interface_map = interface_map,
-                           indicies_map  = indicies_map)
+                           indicies_map  = indicies_map,
+                           nrows = self.mbs.nve,
+                           ncols = 2*len(self.mbs.nodes))
         return text
 
     def write_class_helpers(self):
@@ -531,6 +562,12 @@ class assembly_code_generator(template_code_generator):
                 def set_time(self,t):
                     for sub in self.subsystems:
                         sub.t = t
+                
+                def set_initial_states(self):
+                    for sub in self.subsystems:
+                        sub.set_initial_states()
+                    coordinates = [sub.config.q for sub in self.subsystems if len(sub.config.q)!=0]
+                    self.q = np.concatenate([self.R_ground,self.P_ground,*coordinates])
                 '''
         indent = 4*' '
         text = text.expandtabs()

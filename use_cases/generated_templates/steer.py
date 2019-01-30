@@ -47,7 +47,7 @@ class configuration(object):
         dataframe = pd.read_csv(csv_file,index_col=0)
         for ind in dataframe.index:
             shape = getattr(self,ind).shape
-            v = np.array(dataframe.loc[ind])
+            v = np.array(dataframe.loc[ind],dtype=np.float64)
             v = np.resize(v,shape)
             setattr(self,ind,v)
         self._set_arguments()
@@ -88,6 +88,16 @@ class configuration(object):
         self.ubar_rbl_rocker_jcl_rocker_ch = (multi_dot([c7,c15]) + c9)
         self.ubar_vbs_chassis_jcl_rocker_ch = (multi_dot([c11,c15]) + c13)
 
+    @property
+    def q(self):
+        q = np.concatenate([self.R_rbs_coupler,self.P_rbs_coupler,self.R_rbr_rocker,self.P_rbr_rocker,self.R_rbl_rocker,self.P_rbl_rocker])
+        return q
+
+    @property
+    def qd(self):
+        qd = np.concatenate([self.Rd_rbs_coupler,self.Pd_rbs_coupler,self.Rd_rbr_rocker,self.Pd_rbr_rocker,self.Rd_rbl_rocker,self.Pd_rbl_rocker])
+        return qd
+
 
 
 class topology(object):
@@ -119,6 +129,10 @@ class topology(object):
         self.rows += self.rows_offset
         self.jac_rows += self.rows_offset
         self.jac_cols = np.array([self.rbs_coupler*2,self.rbs_coupler*2+1,self.rbr_rocker*2,self.rbr_rocker*2+1,self.rbs_coupler*2,self.rbs_coupler*2+1,self.rbl_rocker*2,self.rbl_rocker*2+1,self.rbs_coupler*2,self.rbs_coupler*2+1,self.rbl_rocker*2,self.rbl_rocker*2+1,self.rbs_coupler*2,self.rbs_coupler*2+1,self.rbl_rocker*2,self.rbl_rocker*2+1,self.rbs_coupler*2,self.rbs_coupler*2+1,self.rbl_rocker*2,self.rbl_rocker*2+1,self.rbr_rocker*2,self.rbr_rocker*2+1,self.vbs_chassis*2,self.vbs_chassis*2+1,self.rbr_rocker*2,self.rbr_rocker*2+1,self.vbs_chassis*2,self.vbs_chassis*2+1,self.rbr_rocker*2,self.rbr_rocker*2+1,self.vbs_chassis*2,self.vbs_chassis*2+1,self.rbl_rocker*2,self.rbl_rocker*2+1,self.vbs_chassis*2,self.vbs_chassis*2+1,self.rbl_rocker*2,self.rbl_rocker*2+1,self.vbs_chassis*2,self.vbs_chassis*2+1,self.rbl_rocker*2,self.rbl_rocker*2+1,self.vbs_chassis*2,self.vbs_chassis*2+1,self.rbs_coupler*2+1,self.rbr_rocker*2+1,self.rbl_rocker*2+1])
+
+    def set_initial_states(self):
+        self.set_gen_coordinates(self.config.q)
+        self.set_gen_velocities(self.config.qd)
 
     
     def set_gen_coordinates(self,q):
