@@ -36,4 +36,3 @@ assembled.draw_interface_graph()
 numerical_code = assembly_code_generator(assembled)
 numerical_code.write_code_file()
 
-'s'
