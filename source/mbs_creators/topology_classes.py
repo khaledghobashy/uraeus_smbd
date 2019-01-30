@@ -74,7 +74,7 @@ class parametric_configuration(object):
         graph   = self.graph
         t_edges = self.topology.edges
         for e in t_edges:
-            n = e[-1]
+            n = t_edges[e]['name']
             if t_edges[e]['align'] in 'sr':
                 m = t_edges[e]['mirr']
                 args_n = t_edges[e]['arguments']

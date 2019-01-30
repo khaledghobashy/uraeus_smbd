@@ -26,6 +26,8 @@ assembled.add_subsystem(TR_sym)
 assembled.assign_virtual_body('SU1.vbr_steer','ST.rbr_rocker')
 assembled.assign_virtual_body('TR.vbr_upright','SU1.rbr_upright')
 assembled.assign_virtual_body('TR.vbr_hub','SU1.rbr_hub')
+assembled.assign_virtual_body('TR.vbs_steer_gear','ST.rbl_rocker')
+
 
 assembled.assemble_model()
 assembled.draw_topology()

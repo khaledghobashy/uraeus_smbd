@@ -42,10 +42,11 @@ class abstract_generator(object):
         self.jac_cols = sum([e for e in self.mbs.cols],[])
             
     
-    def create_config_dataframe(self):
-        indecies = [i[1:-1] for i in self.num_args_sym]
-        dataframe = pd.DataFrame(index=indecies,columns=range(0,4,1),dtype=np.float64)
-        self.config_dataframe = dataframe
+    def _create_inputs_dataframe(self):
+        indecies = [i.lhs for i in self.input_args if isinstance(i.lhs,sm.MatrixSymbol)]
+        shape = (len(indecies),4)
+        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
+        return dataframe
     
     def _generate_cse(self,equations,symbol):
         p = self.printer
@@ -177,9 +178,10 @@ class template_code_generator(abstract_generator):
                 from source.cython_definitions.matrix_funcs import A, B, triad as Triad
                 from scipy.misc import derivative
                 from numpy import cos, sin
+                import pandas as pd
                 
                 def Mirror(v):
-                    if v.shape == (1,3):
+                    if v.shape in ((1,3),(4,1)):
                         return v
                     else:
                         m = np.array([[1,0,0],[0,-1,0],[0,0,1]],dtype=np.float64)
@@ -200,7 +202,16 @@ class template_code_generator(abstract_generator):
                         
                     def _set_arguments(self):
                         {outputs}
-                        
+                    
+                    def load_from_csv(self,csv_file):
+                        dataframe = pd.read_csv(csv_file,index_col=0)
+                        for ind in dataframe.index:
+                            shape = getattr(self,ind).shape
+                            v = np.array(dataframe.loc[ind])
+                            v = np.resize(v,shape)
+                            setattr(self,ind,v)
+                        self._set_arguments()
+                    
                     def eval_constants(self):
                         
                         {constants}
@@ -366,6 +377,9 @@ class template_code_generator(abstract_generator):
         text = '\n'.join([imports,config_class,system_class])
         with open('%s.py'%self.mbs.name,'w') as file:
             file.write(text)
+        
+        inputs_dataframe = self._create_inputs_dataframe()
+        inputs_dataframe.to_csv('%s_v1.csv'%self.mbs.name)
 
 ###############################################################################
 ###############################################################################
@@ -493,11 +507,15 @@ class assembly_code_generator(template_code_generator):
                         self.interface_map = {interface_map}
                         self.indicies_map  = {indicies_map}
                         
+                        self.R_ground  = np.array([[0],[0],[0]],dtype=np.float64)
+                        self.P_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
                         self.Pg_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
+                        
                         self.gr_rows = np.array([0,1])
                         self.gr_jac_rows = np.array([0,0,1,1])
                         self.gr_jac_cols = np.array([0,1,0,1])
                 '''
+        
         subsystems = ','.join(self.mbs.subsystems.keys())
         interface_map = self.mbs.interface_map
         indicies_map  = self.mbs.nodes_indicies
