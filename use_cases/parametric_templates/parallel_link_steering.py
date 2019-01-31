@@ -20,7 +20,7 @@ template.add_virtual_body('chassis')
 template.add_joint(revolute,'rocker_ch','rbr_rocker','vbs_chassis',mirrored=True)
 template.add_joint(spherical,'rc_sph','rbr_rocker','rbs_coupler')
 template.add_joint(cylinderical,'rc_cyl','rbl_rocker','rbs_coupler')
-template.add_joint_actuator(rotational_actuator,'steer_act','jcr_rocker_ch')
+#template.add_joint_actuator(rotational_actuator,'steer_act','jcr_rocker_ch')
 
 
 template.assemble_model()
