@@ -430,7 +430,7 @@ class assembly_code_generator(template_code_generator):
                     {ground_map}
                     offset = 7
                     for sub in self.subsystems:
-                        qs = {var}[offset:sub.n]
+                        qs = {var}[offset:sub.n+offset]
                         sub.set_gen_{func_name}(qs)
                         offset += sub.n
                         
@@ -474,7 +474,7 @@ class assembly_code_generator(template_code_generator):
                     
                     for sub in self.subsystems:
                         sub.eval_{func_name}_eq()
-                    self.{func_name}_eq_blocks = sum([s.{func_name}_blocks for s in self.subsystems],[])
+                    self.{func_name}_eq_blocks = sum([s.{func_name}_eq_blocks for s in self.subsystems],[])
                     self.{func_name}_eq_blocks += {func_name}_ground_eq_blocks
                 '''
         indent = 4*' '

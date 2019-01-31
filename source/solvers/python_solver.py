@@ -21,7 +21,6 @@ class solver(object):
     def __init__(self,model):
         self.model = model
         
-        
         self.nrows = model.nrows
         self.ncols = model.ncols
         self.jac_shape = (self.nrows,self.ncols)
@@ -33,10 +32,7 @@ class solver(object):
         self.acc_history = {}
         
     def assemble_equations(self,data):
-        shape = (self.nrows,1)
-        rows = self.model.rows
-        cols = np.zeros_like(self.model.rows)
-        mat = scipy_matrix_assembler(data,rows,cols,shape)
+        mat = np.concatenate(data)
         return mat
     
     def set_time(self,t):
@@ -67,6 +63,7 @@ class solver(object):
         return mat
         
     def eval_jac_eq(self):
+        self.model.eval_jac_eq()
         rows = self.model.jac_rows
         cols = self.model.jac_cols
         data = self.model.jac_eq_blocks
@@ -74,25 +71,24 @@ class solver(object):
         return mat
     
         
-    def newton_raphson(self,guess=None):
-        
-        guess = (self.model.config.q_initial if guess is None else guess)
+    def newton_raphson(self,guess):
         self.set_gen_coordinates(guess)
         
         A = self.eval_jac_eq().A
-        b = self.eval_pos_eq().A
+        b = self.eval_pos_eq()
         delta_q = np.linalg.solve(A,-b)
         
         itr=0
         while np.linalg.norm(delta_q)>1e-5:
             print(np.linalg.norm(delta_q))
-            guess += delta_q
+            guess = guess + delta_q
             
-            self.model.set_q(guess)
-            b = self.eval_pos_eq().A
+            self.set_gen_coordinates(guess)
+            b = self.eval_pos_eq()
             delta_q = np.linalg.solve(A,-b)
             
             if itr%5==0 and itr!=0:
+                print("Updating Jacobian \n")
                 A = self.eval_jac_eq().A
                 delta_q = np.linalg.solve(A,-b)
             if itr>200:
@@ -107,16 +103,16 @@ class solver(object):
         
         A = self.eval_jac_eq().A
         
-        vel_rhs = self.eval_vel_eq().A
+        vel_rhs = self.eval_vel_eq()
         v0 = np.linalg.solve(A,-vel_rhs)
         self.set_gen_velocities(v0)
         self.vel_history[0] = v0
         
-        acc_rhs = self.eval_acc_eq().A
+        acc_rhs = self.eval_acc_eq()
         self.acc_history[0] = np.linalg.solve(A,-acc_rhs)
         
         print('\nRunning System Kinematic Analysis:')
-        for i,t in enumerate(time_array[1:]):
+        for i,t in enumerate(time_array):
             self.set_time(t)
 
             g = self.pos_history[i] + self.vel_history[i]*dt  + 0.5*self.acc_history[i]*(dt**2)
@@ -125,12 +121,12 @@ class solver(object):
             self.pos_history[i+1] = self.pos
             A = self.eval_jac_eq().A
             
-            vel_rhs = self.eval_vel_eq().A
+            vel_rhs = self.eval_vel_eq()
             vi = np.linalg.solve(A,-vel_rhs)
             self.set_gen_velocities(vi)
             self.vel_history[i+1] = vi
 
-            acc_rhs = self.eval_acc_eq().A
+            acc_rhs = self.eval_acc_eq()
             self.acc_history[i+1] = np.linalg.solve(A,-acc_rhs)
             
             i+=1

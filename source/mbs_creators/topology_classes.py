@@ -269,8 +269,9 @@ class abstract_topology(object):
             joint_object  = self.edges[(b1,b2,joint_key)]['obj']
             edge_instance = edge_class(name,joint_object)
         elif issubclass(edge_class,absolute_locator):
+            b_obj = (b1_obj if b1!='vbs_ground' else b2_obj)
             coordinate    = self.edges[e]['coordinate']
-            edge_instance = edge_class(name,b2_obj,coordinate)
+            edge_instance = edge_class(name,b_obj,coordinate)
         else:
             edge_instance = edge_class(name,b1_obj,b2_obj)
         self.edges[e].update(self._obj_attr_dict(edge_instance))

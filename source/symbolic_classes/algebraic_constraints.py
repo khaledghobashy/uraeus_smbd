@@ -101,7 +101,7 @@ class algebraic_constraints(object):
             mi_bar    = marker1.express(self.body_i)
             mi_bar_eq = sm.Eq(self.mi_bar.A, mi_bar)
             
-            marker2.orient_along(axis2,marker1.A[:,0])
+            marker2.orient_along(axis2,marker1.A[:,1])
             mj_bar    = marker2.express(self.body_j)
             mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
             markers_equalities = [mi_bar_eq,mj_bar_eq]
