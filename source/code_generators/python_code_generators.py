@@ -528,6 +528,7 @@ class assembly_code_generator(template_code_generator):
                 class numerical_assembly(object):
 
                     def __init__(self):
+                        self._t = 0
                         self.subsystems = [{subsystems}]
                         
                         self.interface_map = {interface_map}
@@ -543,6 +544,9 @@ class assembly_code_generator(template_code_generator):
                         
                         self.nrows = {nrows}
                         self.ncols = {ncols}
+                        
+                        self.initialize_assembly()
+                        
                 '''
         
         subsystems = ','.join(self.mbs.subsystems.keys())
@@ -559,7 +563,12 @@ class assembly_code_generator(template_code_generator):
 
     def write_class_helpers(self):
         text = '''
-                def set_time(self,t):
+                @property
+                def t(self):
+                    return self._t
+                @t.setter
+                def t(self,t):
+                    self._t = t
                     for sub in self.subsystems:
                         sub.t = t
                 
@@ -567,7 +576,13 @@ class assembly_code_generator(template_code_generator):
                     for sub in self.subsystems:
                         sub.set_initial_states()
                     coordinates = [sub.config.q for sub in self.subsystems if len(sub.config.q)!=0]
-                    self.q = np.concatenate([self.R_ground,self.P_ground,*coordinates])
+                    self.q0 = np.concatenate([self.R_ground,self.P_ground,*coordinates])
+                
+                def initialize_assembly(self):
+                    self.t = 0
+                    self.assemble_system()
+                    self.set_initial_states()
+                    self.eval_constants()
                 '''
         indent = 4*' '
         text = text.expandtabs()

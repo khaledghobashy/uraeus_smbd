@@ -11,8 +11,8 @@ from scipy.sparse.linalg import spsolve
 import pandas as pd
 
 
-def scipy_matrix_assembler(data,rows,cols,n,m):
-    mat = sc.empty((m+1,n+1),dtype=np.object)
+def scipy_matrix_assembler(data,rows,cols,shape):
+    mat = sc.empty(shape,dtype=np.object)
     mat[rows,cols] = data
     return sc.sparse.bmat(mat)
 
@@ -20,48 +20,64 @@ class solver(object):
     
     def __init__(self,model):
         self.model = model
+        
+        
         self.nrows = model.nrows
         self.ncols = model.ncols
+        self.jac_shape = (self.nrows,self.ncols)
         
         model.set_initial_states()
                 
-        self.pos_history = {0:self.model.config.q_initial}
+        self.pos_history = {0:self.model.q0}
         self.vel_history = {}
         self.acc_history = {}
-    
-    def _matrix_assembler(self,data,rows,cols):
-        mat = scipy_matrix_assembler(data,rows,cols)
+        
+    def assemble_equations(self,data):
+        shape = (self.nrows,1)
+        rows = self.model.rows
+        cols = np.zeros_like(self.model.rows)
+        mat = scipy_matrix_assembler(data,rows,cols,shape)
         return mat
+    
+    def set_time(self,t):
+        self.model.t = t
+    
+    def set_gen_coordinates(self,q):
+        self.model.set_gen_coordinates(q)
+    
+    def set_gen_velocities(self,qd):
+        self.model.set_gen_velocities(qd)
     
     def eval_pos_eq(self):
         self.model.eval_pos_eq()
-        data, rows, cols = self.model.pos_eq_blocks,self.model.pos_rows,self.model.pos_cols
-        mat = self._matrix_assembler(data,rows,cols)
+        data = self.model.pos_eq_blocks
+        mat = self.assemble_equations(data)
         return mat
         
     def eval_vel_eq(self):
         self.model.eval_vel_eq()
-        data, rows, cols = self.model.vel_eq_blocks,self.model.vel_rows,self.model.vel_cols
-        mat = self._matrix_assembler(data,rows,cols)
+        data = self.model.vel_eq_blocks
+        mat = self.assemble_equations(data)
         return mat
         
     def eval_acc_eq(self):
         self.model.eval_acc_eq()
-        data, rows, cols = self.model.acc_eq_blocks,self.model.acc_rows,self.model.acc_cols
-        mat = self._matrix_assembler(data,rows,cols)
+        data = self.model.acc_eq_blocks
+        mat = self.assemble_equations(data)
         return mat
         
     def eval_jac_eq(self):
-        self.model.eval_jac_eq()
-        data, rows, cols = self.model.jac_eq_blocks,self.model.jac_rows,self.model.jac_cols
-        mat = self._matrix_assembler(data,rows,cols)
+        rows = self.model.jac_rows
+        cols = self.model.jac_cols
+        data = self.model.jac_eq_blocks
+        mat = scipy_matrix_assembler(data,rows,cols,self.jac_shape)
         return mat
     
         
     def newton_raphson(self,guess=None):
         
         guess = (self.model.config.q_initial if guess is None else guess)
-        self.model.set_q(guess)
+        self.set_gen_coordinates(guess)
         
         A = self.eval_jac_eq().A
         b = self.eval_pos_eq().A
@@ -70,7 +86,7 @@ class solver(object):
         itr=0
         while np.linalg.norm(delta_q)>1e-5:
             print(np.linalg.norm(delta_q))
-            guess=guess+delta_q
+            guess += delta_q
             
             self.model.set_q(guess)
             b = self.eval_pos_eq().A
@@ -93,15 +109,15 @@ class solver(object):
         
         vel_rhs = self.eval_vel_eq().A
         v0 = np.linalg.solve(A,-vel_rhs)
-        self.model.set_qd(v0)
+        self.set_gen_velocities(v0)
         self.vel_history[0] = v0
         
         acc_rhs = self.eval_acc_eq().A
         self.acc_history[0] = np.linalg.solve(A,-acc_rhs)
         
         print('\nRunning System Kinematic Analysis:')
-        for i,step in enumerate(time_array[1:]):
-            self.model.t = step
+        for i,t in enumerate(time_array[1:]):
+            self.set_time(t)
 
             g = self.pos_history[i] + self.vel_history[i]*dt  + 0.5*self.acc_history[i]*(dt**2)
             
@@ -111,10 +127,12 @@ class solver(object):
             
             vel_rhs = self.eval_vel_eq().A
             vi = np.linalg.solve(A,-vel_rhs)
-            self.model.set_qd(vi)
+            self.set_gen_velocities(vi)
             self.vel_history[i+1] = vi
 
             acc_rhs = self.eval_acc_eq().A
             self.acc_history[i+1] = np.linalg.solve(A,-acc_rhs)
             
             i+=1
+        
+        
