@@ -6,74 +6,13 @@ Created on Tue Jan  1 10:47:50 2019
 """
 
 import sympy as sm
+import collections
 
 import networkx as nx
 import matplotlib.pyplot as plt
 
 sm.init_printing(pretty_print=False,use_latex=True,forecolor='White')
-enclose = True
 
-class mbs_string(str):
-    
-    _instances = []
-    
-    def __new__(cls,name,prefix='',id_=''):
-        name = prefix+id_+name
-        return str.__new__(cls,name)
-        
-        
-    def __init__(self,name,prefix='',id_=''):
-        self._name  = name
-        self._prefix = prefix
-        self._id_ = id_
-        
-    @property
-    def name(self):
-        return self._name
-    @name.setter
-    def name(self,value):
-        self._name = value
-        
-    @property
-    def prefix(self):
-        prefix = (self._prefix if self._prefix=='' else self._prefix+'.')
-        return prefix
-    @prefix.setter
-    def prefix(self,value):
-        self._prefix = value
-    
-    @property
-    def id_(self):
-        id_ = (self._id_ if self._id_=='' else self._id_+'_')
-        return id_
-    @id_.setter
-    def id_(self,value):
-        self._id_ = value
-    
-    @property
-    def id_name(self):
-        return self.id_ + self.name
-    
-#    def __str__(self):
-#        return '%s%s%s'%(self.prefix,self.id_,self.name)
-#    
-    def __repr__(self):
-        return '%s%s%s'%(self.prefix,self.id_,self.name)
-#    
-#    def __iter__(self):
-#        return iter((self.prefix,self.id_,self.name))
-#    
-#    def __eq__(self,other):
-#        return str(self)==str(other)
-#    
-#    def __hash__(self):
-#        return hash(str(self))
-#    
-#    def __copy__(self):
-#        return mbs_string(self._name,self._prefix,self._id_)
-#    def __deepcopy__(self,*args):
-#        return mbs_string(self._name,self._prefix,self._id_)
-        
 ###############################################################################
 ###############################################################################
 
@@ -83,16 +22,16 @@ class AbstractMatrix(sm.MatrixExpr):
     is_Matrix = True
     shape = (3,3)
     
-    def __init__(self,sym):
+    def __init__(self,*args):
         pass
-    
     def doit(self):
         return self
     
 class A(AbstractMatrix):
     
     def _latex(self,expr):
-        return r'{A(%s)}'%self.args[0]
+        p = self.args[0]
+        return r'{A(%s)}'%p.name
 
 
 class G(AbstractMatrix):
@@ -105,23 +44,39 @@ class E(AbstractMatrix):
 class B(AbstractMatrix):
     shape = (3,4)
     def __init__(self,sym1,sym2):
-        super().__init__(sym1)
-    
+        pass
     def _latex(self,expr):
         p,u = self.args
-        return r'{B(%s,%s)}'%(p,u.name)
+        return r'{B(%s,%s)}'%(p.name,u.name)
     
+###############################################################################
+###############################################################################
+
 class Triad(AbstractMatrix):
     def __init__(self,v1,v2=None):
         super().__init__(v1)
-    
+        
 class Mirror(AbstractMatrix):
     def __init__(self,v1):
         super().__init__(v1)
         self.shape = v1.shape
-    
     def _latex(self,expr):
-        return r'{Mir(%s)}'%self.args[0]
+        return r'{Mir(%s)}'%self.args[0].name
+
+class Centered(AbstractMatrix):
+    shape = (3,1)
+    def __init__(self,*args):
+        super().__init__(*args)
+    def _latex(self,expr):
+        return r'{Centered%s}'%(self.args,)
+
+class Oriented(AbstractMatrix):
+    shape = (3,1)
+    def __init__(self,*args):
+        super().__init__(*args)
+    def _latex(self,expr):
+        return r'{Oriented%s}'%(self.args,) 
+
 ###############################################################################
 ###############################################################################
 
@@ -157,11 +112,7 @@ class base_vector(sm.MatrixSlice):
         return self._formated
     
     def _ccode(self,expr,**kwargs):
-        global enclose
-        if enclose:
-            return '%r[:,%s:%s]'%(self.frame.name,*self.slice)
-        else:
-            return '%s[:,%s:%s]'%(self.frame.name,*self.slice)
+        return '%r[:,%s:%s]'%(self.frame.name,*self.slice)
     
     def _sympystr (self,expr):
         return '%s[:,%s]'%(self.frame.name,self.slice)
@@ -324,6 +275,10 @@ class reference_frame(object):
         tree = self.global_frame.references_tree
         return self.global_frame.express_func(self,other,tree)
     
+    @property
+    def free_symbols(self):
+        return set()
+    
 ###############################################################################
 ###############################################################################
 
@@ -351,13 +306,17 @@ class vector(sm.MatrixSymbol):
     @property
     def name(self):
         return self._formated_name
-    
+    @property
+    def raw_name(self):
+        return self._raw_name
+   
     def doit(self):
         return self
     
     def __str__(self):
-        return self._raw_name
-    
+        return self.raw_name
+
+        
 ###############################################################################
 class quatrenion(sm.MatrixSymbol):
     
@@ -377,6 +336,9 @@ class quatrenion(sm.MatrixSymbol):
     @property
     def name(self):
         return self._formated_name 
+    @property
+    def raw_name(self):
+        return self._raw_name
 
     def doit(self):
         return self
@@ -384,10 +346,10 @@ class quatrenion(sm.MatrixSymbol):
     @property
     def func(self):
         return self.__class__
-            
-    def __str__(self):
-        return self._raw_name
     
+    def __str__(self):
+        return self.raw_name
+                
 ###############################################################################
 ###############################################################################
 

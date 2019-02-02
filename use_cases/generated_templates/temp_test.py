@@ -14,7 +14,7 @@ from source.solvers.python_solver import solver
 
 f.SU1.config.load_from_csv('temp_front_axle/dwb_v1_mod.csv')
 f.ST.config.load_from_csv('temp_front_axle/steer_v1_mod.csv')
-f.TR.config.load_from_csv('test_rig_v1.csv')
+f.TR.config.load_from_csv('temp_front_axle/test_rig_v1_mod.csv')
 
 f.TR.config.F_jcs_steer_gear = lambda t : np.deg2rad(15)*np.sin(t)
 f.TR.config.F_mcr_ver_act = lambda t : 170*np.sin(t)
@@ -25,7 +25,7 @@ assm.set_gen_coordinates(assm.q0)
 soln = solver(assm)
 soln.newton_raphson(assm.q0)
 
-time_array = np.linspace(0,5,150)
+time_array = np.linspace(0,5,100)
 soln.solve_kds(time_array)
 
 pos = pd.DataFrame(np.concatenate(list(soln.pos_history.values()),1))

@@ -7,6 +7,28 @@ Created on Wed Jan  2 14:24:10 2019
 
 import numpy as np
 
+def mirrored(v):
+    if v.shape != (3,1):
+        return v
+    else:
+        m = np.array([[1,0,0],[0,-1,0],[0,0,1]],dtype=np.float64)
+        return m.dot(v)
+
+def centered(*args):
+    p = np.sum([args],1)/len(args)
+    return p
+
+def oriented(*args):
+    if len(args) == 2:
+        v = args[1] - args[0]
+    elif len(args) == 3:
+        a1 = args[1] - args[0]
+        a2 = args[2] - args[0]
+        v = np.cross(a2,a1,axisa=0,axisb=0)
+        v = np.reshape(v,(3,1))
+    v = v/np.linalg.norm(v)
+    return v
+
 def vec2skew(v):
     '''
     converting the vector v into a skew-symetric matrix form
@@ -18,7 +40,7 @@ def vec2skew(v):
         vs: 3x3 ndarray representing the skew-symmetric form of the vector
     =======================================================================
     '''
-    vs=np.array([[0,-v[2,0],v[1,0]],
+    vs = np.array([[0,-v[2,0],v[1,0]],
                  [v[2,0],0,-v[0,0]],
                  [-v[1,0],v[0,0],0]])
     return vs

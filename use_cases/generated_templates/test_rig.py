@@ -85,12 +85,12 @@ class topology(object):
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
-        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
+        self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
         self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
         self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
-        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
-        self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
         self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
+        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
+        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
@@ -184,7 +184,7 @@ class topology(object):
         a33 = A(a32).T
         a34 = self.Pd_vbs_chassis
 
-        self.acc_eq_blocks = [(a0 + derivative(config.F_mcr_ver_act,t,0.1,2)*-1.0*a1),(a0 + derivative(config.F_mcl_ver_act,t,0.1,2)*-1.0*a1),(derivative(config.F_jcr_rev,t,0.1,2)*-1.0*a1 + multi_dot([a3.T,A(a4).T,(a5*B(a6,a7) + a8*-1.0*B(a6,a9)),a6]) + multi_dot([(a5*multi_dot([a7.T,a11]) + a8*-1.0*multi_dot([a9.T,a11])),B(a12,a3),a12]) + 2.0*multi_dot([((a5*multi_dot([B(a10,a7),a6])).T + a8*-1.0*multi_dot([a6.T,B(a10,a9).T])),B(a4,a3),a12])),(derivative(config.F_jcl_rev,t,0.1,2)*-1.0*a1 + multi_dot([a14.T,A(a15).T,(a16*B(a17,a18) + a19*-1.0*B(a17,a20)),a17]) + multi_dot([(a16*multi_dot([a18.T,a22]) + a19*-1.0*multi_dot([a20.T,a22])),B(a23,a14),a23]) + 2.0*multi_dot([((a16*multi_dot([B(a21,a18),a17])).T + a19*-1.0*multi_dot([a17.T,B(a21,a20).T])),B(a15,a14),a23])),(derivative(config.F_jcs_steer_gear,t,0.1,2)*-1.0*a1 + multi_dot([a25.T,A(a26).T,(a27*B(a28,a29) + a30*-1.0*B(a28,a31)),a28]) + multi_dot([(a27*multi_dot([a29.T,a33]) + a30*-1.0*multi_dot([a31.T,a33])),B(a34,a25),a34]) + 2.0*multi_dot([((a27*multi_dot([B(a32,a29),a28])).T + a30*-1.0*multi_dot([a28.T,B(a32,a31).T])),B(a26,a25),a34]))]
+        self.acc_eq_blocks = [(a0 + derivative(config.F_mcr_ver_act,t,0.1,2)*-1.0*a1),(a0 + derivative(config.F_mcl_ver_act,t,0.1,2)*-1.0*a1),(derivative(a2,t,0.1,2)*-1.0*a1 + multi_dot([a3.T,A(a4).T,(a5*B(a6,a7) + a8*-1.0*B(a6,a9)),a6]) + multi_dot([(a5*multi_dot([a7.T,a11]) + a8*-1.0*multi_dot([a9.T,a11])),B(a12,a3),a12]) + 2.0*multi_dot([((a5*multi_dot([B(a10,a7),a6])).T + a8*-1.0*multi_dot([a6.T,B(a10,a9).T])),B(a4,a3),a12])),(derivative(a13,t,0.1,2)*-1.0*a1 + multi_dot([a14.T,A(a15).T,(a16*B(a17,a18) + a19*-1.0*B(a17,a20)),a17]) + multi_dot([(a16*multi_dot([a18.T,a22]) + a19*-1.0*multi_dot([a20.T,a22])),B(a23,a14),a23]) + 2.0*multi_dot([((a16*multi_dot([B(a21,a18),a17])).T + a19*-1.0*multi_dot([a17.T,B(a21,a20).T])),B(a15,a14),a23])),(derivative(a24,t,0.1,2)*-1.0*a1 + multi_dot([a25.T,A(a26).T,(a27*B(a28,a29) + a30*-1.0*B(a28,a31)),a28]) + multi_dot([(a27*multi_dot([a29.T,a33]) + a30*-1.0*multi_dot([a31.T,a33])),B(a34,a25),a34]) + 2.0*multi_dot([((a27*multi_dot([B(a32,a29),a28])).T + a30*-1.0*multi_dot([a28.T,B(a32,a31).T])),B(a26,a25),a34]))]
 
     
     def eval_jac_eq(self):

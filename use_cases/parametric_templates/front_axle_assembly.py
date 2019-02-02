@@ -19,6 +19,7 @@ TR_sym  = subsystem('TR',testrig.template)
 
 
 assembled = assembly('front_axle')
+
 assembled.add_subsystem(SU1_sym)
 assembled.add_subsystem(ST_sym)
 assembled.add_subsystem(TR_sym)
