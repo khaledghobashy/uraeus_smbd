@@ -35,6 +35,11 @@ ax1_jcr_lca_upright,0.0,0.0,0.0,0.0
 pt1_jcr_lca_upright,0.0,0.0,0.0,0.0
 ax1_jcr_lca_chassis,0.0,0.0,0.0,0.0
 pt1_jcr_lca_chassis,0.0,0.0,0.0,0.0
+ax1_jcr_strut_lca,0.0,0.0,0.0,0.0
+ax2_jcr_strut_lca,0.0,0.0,0.0,0.0
+pt1_jcr_strut_lca,0.0,0.0,0.0,0.0
+ax1_jcr_tie_upright,0.0,0.0,0.0,0.0
+pt1_jcr_tie_upright,0.0,0.0,0.0,0.0
 ax1_jcr_hub_bearing,0.0,0.0,0.0,0.0
 pt1_jcr_hub_bearing,0.0,0.0,0.0,0.0
 ax1_jcr_strut_chassis,0.0,0.0,0.0,0.0
@@ -42,11 +47,6 @@ ax2_jcr_strut_chassis,0.0,0.0,0.0,0.0
 pt1_jcr_strut_chassis,0.0,0.0,0.0,0.0
 ax1_jcr_strut,0.0,0.0,0.0,0.0
 pt1_jcr_strut,0.0,0.0,0.0,0.0
-ax1_jcr_strut_lca,0.0,0.0,0.0,0.0
-ax2_jcr_strut_lca,0.0,0.0,0.0,0.0
-pt1_jcr_strut_lca,0.0,0.0,0.0,0.0
-ax1_jcr_tie_upright,0.0,0.0,0.0,0.0
-pt1_jcr_tie_upright,0.0,0.0,0.0,0.0
 ax1_jcr_tie_steering,0.0,0.0,0.0,0.0
 ax2_jcr_tie_steering,0.0,0.0,0.0,0.0
 pt1_jcr_tie_steering,0.0,0.0,0.0,0.0

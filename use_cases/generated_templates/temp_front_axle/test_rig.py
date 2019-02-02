@@ -48,10 +48,10 @@ class configuration(object):
         c1 = Triad(self.ax1_jcl_rev,)
         c2 = Triad(self.ax1_jcs_steer_gear,)
 
-        self.Mbar_vbr_upright_jcr_rev = multi_dot([A(self.P_vbr_upright).T,c0])
         self.Mbar_vbr_hub_jcr_rev = multi_dot([A(self.P_vbr_hub).T,c0])
-        self.Mbar_vbl_upright_jcl_rev = multi_dot([A(self.P_vbl_upright).T,c1])
+        self.Mbar_vbr_upright_jcr_rev = multi_dot([A(self.P_vbr_upright).T,c0])
         self.Mbar_vbl_hub_jcl_rev = multi_dot([A(self.P_vbl_hub).T,c1])
+        self.Mbar_vbl_upright_jcl_rev = multi_dot([A(self.P_vbl_upright).T,c1])
         self.Mbar_vbs_steer_gear_jcs_steer_gear = multi_dot([A(self.P_vbs_steer_gear).T,c2])
         self.Mbar_vbs_chassis_jcs_steer_gear = multi_dot([A(self.P_vbs_chassis).T,c2])
 
@@ -98,7 +98,7 @@ class topology(object):
         self._set_mapping(indicies_map,interface_map)
         self.rows += self.rows_offset
         self.jac_rows += self.rows_offset
-        self.jac_cols = np.array([self.vbs_ground*2,self.vbs_ground*2+1,self.vbr_hub*2,self.vbr_hub*2+1,self.vbs_ground*2,self.vbs_ground*2+1,self.vbl_hub*2,self.vbl_hub*2+1,self.vbr_hub*2,self.vbr_hub*2+1,self.vbr_upright*2,self.vbr_upright*2+1,self.vbl_hub*2,self.vbl_hub*2+1,self.vbl_upright*2,self.vbl_upright*2+1,self.vbs_steer_gear*2,self.vbs_steer_gear*2+1,self.vbs_chassis*2,self.vbs_chassis*2+1])
+        self.jac_cols = np.array([self.vbs_ground*2,self.vbs_ground*2+1,self.vbr_hub*2,self.vbr_hub*2+1,self.vbs_ground*2,self.vbs_ground*2+1,self.vbl_hub*2,self.vbl_hub*2+1,self.vbr_hub*2,self.vbr_hub*2+1,self.vbr_upright*2,self.vbr_upright*2+1,self.vbl_hub*2,self.vbl_hub*2+1,self.vbl_upright*2,self.vbl_upright*2+1,self.vbs_steer_gear*2,self.vbs_steer_gear*2+1,self.vbs_chassis*2,self.vbs_chassis*2+1,])
 
     def set_initial_states(self):
         self.set_gen_coordinates(self.config.q)
@@ -119,19 +119,19 @@ class topology(object):
 
         x0 = np.eye(1,dtype=np.float64)
         x1 = config.F_jcr_rev(t,)
-        x2 = A(self.P_vbr_upright).T
-        x3 = A(self.P_vbr_hub)
-        x4 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
+        x2 = A(self.P_vbr_hub).T
+        x3 = A(self.P_vbr_upright)
+        x4 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
         x5 = config.F_jcl_rev(t,)
-        x6 = A(self.P_vbl_upright).T
-        x7 = A(self.P_vbl_hub)
-        x8 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
+        x6 = A(self.P_vbl_hub).T
+        x7 = A(self.P_vbl_upright)
+        x8 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
         x9 = config.F_jcs_steer_gear(t,)
         x10 = A(self.P_vbs_steer_gear).T
         x11 = A(self.P_vbs_chassis)
         x12 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
 
-        self.pos_eq_blocks = [-1*config.F_mcr_ver_act(t,) + self.R_vbr_hub[2]*x0,-1*config.F_mcl_ver_act(t,) + self.R_vbl_hub[2]*x0,(cos(x1)*multi_dot([config.Mbar_vbr_upright_jcr_rev[:,1:2].T,x2,x3,x4]) + sin(x1)*-1.0*multi_dot([config.Mbar_vbr_upright_jcr_rev[:,0:1].T,x2,x3,x4])),(cos(x5)*multi_dot([config.Mbar_vbl_upright_jcl_rev[:,1:2].T,x6,x7,x8]) + sin(x5)*-1.0*multi_dot([config.Mbar_vbl_upright_jcl_rev[:,0:1].T,x6,x7,x8])),(cos(x9)*multi_dot([config.Mbar_vbs_steer_gear_jcs_steer_gear[:,1:2].T,x10,x11,x12]) + sin(x9)*-1.0*multi_dot([config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1].T,x10,x11,x12]))]
+        self.pos_eq_blocks = [-1*config.F_mcr_ver_act(t,) + self.R_vbr_hub[2]*x0,-1*config.F_mcl_ver_act(t,) + self.R_vbl_hub[2]*x0,(cos(x1)*multi_dot([config.Mbar_vbr_hub_jcr_rev[:,1:2].T,x2,x3,x4]) + sin(x1)*-1.0*multi_dot([config.Mbar_vbr_hub_jcr_rev[:,0:1].T,x2,x3,x4])),(cos(x5)*multi_dot([config.Mbar_vbl_hub_jcl_rev[:,1:2].T,x6,x7,x8]) + sin(x5)*-1.0*multi_dot([config.Mbar_vbl_hub_jcl_rev[:,0:1].T,x6,x7,x8])),(cos(x9)*multi_dot([config.Mbar_vbs_steer_gear_jcs_steer_gear[:,1:2].T,x10,x11,x12]) + sin(x9)*-1.0*multi_dot([config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1].T,x10,x11,x12]))]
 
     
     def eval_vel_eq(self):
@@ -151,27 +151,27 @@ class topology(object):
         a0 = np.zeros((1,1),dtype=np.float64)
         a1 = np.eye(1,dtype=np.float64)
         a2 = config.F_jcr_rev(t,)
-        a3 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
-        a4 = self.P_vbr_hub
+        a3 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
+        a4 = self.P_vbr_upright
         a5 = cos(a2)
-        a6 = self.Pd_vbr_upright
-        a7 = config.Mbar_vbr_upright_jcr_rev[:,1:2]
+        a6 = self.Pd_vbr_hub
+        a7 = config.Mbar_vbr_hub_jcr_rev[:,1:2]
         a8 = sin(a2)
-        a9 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
-        a10 = self.P_vbr_upright
+        a9 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
+        a10 = self.P_vbr_hub
         a11 = A(a10).T
-        a12 = self.Pd_vbr_hub
+        a12 = self.Pd_vbr_upright
         a13 = config.F_jcl_rev(t,)
-        a14 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
-        a15 = self.P_vbl_hub
+        a14 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
+        a15 = self.P_vbl_upright
         a16 = cos(a13)
-        a17 = self.Pd_vbl_upright
-        a18 = config.Mbar_vbl_upright_jcl_rev[:,1:2]
+        a17 = self.Pd_vbl_hub
+        a18 = config.Mbar_vbl_hub_jcl_rev[:,1:2]
         a19 = sin(a13)
-        a20 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
-        a21 = self.P_vbl_upright
+        a20 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
+        a21 = self.P_vbl_hub
         a22 = A(a21).T
-        a23 = self.Pd_vbl_hub
+        a23 = self.Pd_vbl_upright
         a24 = config.F_jcs_steer_gear(t,)
         a25 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
         a26 = self.P_vbs_chassis
@@ -193,21 +193,21 @@ class topology(object):
 
         j0 = np.zeros((1,4),dtype=np.float64)
         j1 = np.zeros((1,3),dtype=np.float64)
-        j2 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
-        j3 = self.P_vbr_hub
+        j2 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
+        j3 = self.P_vbr_upright
         j4 = config.F_jcr_rev(t,)
         j5 = cos(j4)
-        j6 = self.P_vbr_upright
-        j7 = config.Mbar_vbr_upright_jcr_rev[:,1:2]
-        j8 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
+        j6 = self.P_vbr_hub
+        j7 = config.Mbar_vbr_hub_jcr_rev[:,1:2]
+        j8 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
         j9 = A(j6).T
-        j10 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
-        j11 = self.P_vbl_hub
+        j10 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
+        j11 = self.P_vbl_upright
         j12 = config.F_jcl_rev(t,)
         j13 = cos(j12)
-        j14 = self.P_vbl_upright
-        j15 = config.Mbar_vbl_upright_jcl_rev[:,1:2]
-        j16 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
+        j14 = self.P_vbl_hub
+        j15 = config.Mbar_vbl_hub_jcl_rev[:,1:2]
+        j16 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
         j17 = A(j14).T
         j18 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
         j19 = self.P_vbs_chassis
@@ -218,5 +218,5 @@ class topology(object):
         j24 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1]
         j25 = A(j22).T
 
-        self.jac_eq_blocks = [j1,j0,config.J_mcr_ver_act,j0,j1,j0,config.J_mcl_ver_act,j0,j1,multi_dot([(j5*multi_dot([j7.T,j9]) + sin(j4)*-1.0*multi_dot([j8.T,j9])),B(j3,j2)]),j1,multi_dot([j2.T,A(j3).T,(j5*B(j6,j7) + sin(j4)*-1.0*B(j6,j8))]),j1,multi_dot([(j13*multi_dot([j15.T,j17]) + sin(j12)*-1.0*multi_dot([j16.T,j17])),B(j11,j10)]),j1,multi_dot([j10.T,A(j11).T,(j13*B(j14,j15) + sin(j12)*-1.0*B(j14,j16))]),j1,multi_dot([j18.T,A(j19).T,(j21*B(j22,j23) + sin(j20)*-1.0*B(j22,j24))]),j1,multi_dot([(j21*multi_dot([j23.T,j25]) + sin(j20)*-1.0*multi_dot([j24.T,j25])),B(j19,j18)])]
+        self.jac_eq_blocks = [j1,j0,config.J_mcr_ver_act,j0,j1,j0,config.J_mcl_ver_act,j0,j1,multi_dot([j2.T,A(j3).T,(j5*B(j6,j7) + sin(j4)*-1.0*B(j6,j8))]),j1,multi_dot([(j5*multi_dot([j7.T,j9]) + sin(j4)*-1.0*multi_dot([j8.T,j9])),B(j3,j2)]),j1,multi_dot([j10.T,A(j11).T,(j13*B(j14,j15) + sin(j12)*-1.0*B(j14,j16))]),j1,multi_dot([(j13*multi_dot([j15.T,j17]) + sin(j12)*-1.0*multi_dot([j16.T,j17])),B(j11,j10)]),j1,multi_dot([j18.T,A(j19).T,(j21*B(j22,j23) + sin(j20)*-1.0*B(j22,j24))]),j1,multi_dot([(j21*multi_dot([j23.T,j25]) + sin(j20)*-1.0*multi_dot([j24.T,j25])),B(j19,j18)])]
   

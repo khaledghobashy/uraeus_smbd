@@ -451,22 +451,22 @@ class absolute_actuator(actuator):
     
     coordinates_map = {'x':0,'y':1,'z':2}
     
-    def __init__(self,name,body_i=None,coordinate='z'):
+    def __init__(self,name,body_i=None,body_j=None,coordinate='z'):
         self.coordinate = coordinate
         self.i = self.coordinates_map[self.coordinate]
-        super().__init__(name)
+        super().__init__(name,body_i,body_j)
         self._construct_actuation_functions()
-        if body_i is not None:
-            self.body = body_i
-    
-    @property
-    def body(self):
-        return self._body_i
-    
-    @body.setter
-    def body(self,value):
-        self.body_i = value
-        self.construct()
+#        if body_i is not None:
+#            self.body = body_i
+#    
+#    @property
+#    def body(self):
+#        return self._body_j
+#    
+#    @body.setter
+#    def body(self,value):
+#        self.body_j = value
+#        self.construct()
     
     def _construct(self):
         self._create_equations_lists()

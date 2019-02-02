@@ -39,7 +39,7 @@ class abstract_generator(object):
         self.output_args = self.config.outputs_layer()
                 
         self.bodies = sum([list(e) for e in self.mbs.bodies],[])
-        self.jac_cols = sum([e for e in self.mbs.cols],[])
+        self.jac_cols = self.mbs.cols #sum([e for e in self.mbs.cols],[])
             
     
     def _create_inputs_dataframe(self):
@@ -77,8 +77,9 @@ class abstract_generator(object):
         
     def _setup_jac_equations(self):
         self._setup_x_equations('jac','j')
-        scols = ','.join(['self.%s*2,self.%s*2+1'%(i,i) for i in self.jac_cols])
-        scols += ','+','.join(['self.%s*2+1'%i for i in self.bodies])
+#        scols = ','.join(['self.%s*2,self.%s*2+1'%(i,i) for i in self.jac_cols])
+#        scols += ','+','.join(['self.%s*2+1'%i for i in self.bodies])
+        scols = ','.join(['self.%s'%i for i in self.jac_cols])
         self.jac_eq_cols = 'np.array([%s])'%scols
 
         

@@ -112,7 +112,7 @@ class solver(object):
         self.acc_history[0] = np.linalg.solve(A,-acc_rhs)
         
         print('\nRunning System Kinematic Analysis:')
-        for i,t in enumerate(time_array):
+        for i,t in enumerate(time_array[1:]):
             self.set_time(t)
 
             g = self.pos_history[i] + self.vel_history[i]*dt  + 0.5*self.acc_history[i]*(dt**2)
