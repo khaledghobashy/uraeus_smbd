@@ -120,8 +120,8 @@ class topology(object):
         self.rbs_coupler = indicies_map[p+'rbs_coupler']
         self.rbr_rocker = indicies_map[p+'rbr_rocker']
         self.rbl_rocker = indicies_map[p+'rbl_rocker']
-        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
         self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
+        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset
