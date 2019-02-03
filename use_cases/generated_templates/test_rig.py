@@ -118,20 +118,17 @@ class topology(object):
         t = self.t
 
         x0 = np.eye(1,dtype=np.float64)
-        x1 = config.F_jcr_rev(t,)
-        x2 = A(self.P_vbr_upright).T
-        x3 = A(self.P_vbr_hub)
-        x4 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
-        x5 = config.F_jcl_rev(t,)
-        x6 = A(self.P_vbl_upright).T
-        x7 = A(self.P_vbl_hub)
-        x8 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
-        x9 = config.F_jcs_steer_gear(t,)
-        x10 = A(self.P_vbs_steer_gear).T
-        x11 = A(self.P_vbs_chassis)
-        x12 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
+        x1 = A(self.P_vbr_upright).T
+        x2 = A(self.P_vbr_hub)
+        x3 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
+        x4 = A(self.P_vbl_upright).T
+        x5 = A(self.P_vbl_hub)
+        x6 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
+        x7 = A(self.P_vbs_steer_gear).T
+        x8 = A(self.P_vbs_chassis)
+        x9 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
 
-        self.pos_eq_blocks = [-1*config.F_mcr_ver_act(t,) + self.R_vbr_hub[2]*x0,-1*config.F_mcl_ver_act(t,) + self.R_vbl_hub[2]*x0,(cos(x1)*multi_dot([config.Mbar_vbr_upright_jcr_rev[:,1:2].T,x2,x3,x4]) + sin(x1)*-1.0*multi_dot([config.Mbar_vbr_upright_jcr_rev[:,0:1].T,x2,x3,x4])),(cos(x5)*multi_dot([config.Mbar_vbl_upright_jcl_rev[:,1:2].T,x6,x7,x8]) + sin(x5)*-1.0*multi_dot([config.Mbar_vbl_upright_jcl_rev[:,0:1].T,x6,x7,x8])),(cos(x9)*multi_dot([config.Mbar_vbs_steer_gear_jcs_steer_gear[:,1:2].T,x10,x11,x12]) + sin(x9)*-1.0*multi_dot([config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1].T,x10,x11,x12]))]
+        self.pos_eq_blocks = [-1*config.F_mcr_ver_act(t,) + self.R_vbr_hub[2]*x0,-1*config.F_mcl_ver_act(t,) + self.R_vbl_hub[2]*x0,(cos(config.F_jcr_rev(t,))*multi_dot([config.Mbar_vbr_upright_jcr_rev[:,1:2].T,x1,x2,x3]) + sin(config.F_jcr_rev(t,))*-1*multi_dot([config.Mbar_vbr_upright_jcr_rev[:,0:1].T,x1,x2,x3])),(cos(config.F_jcl_rev(t,))*multi_dot([config.Mbar_vbl_upright_jcl_rev[:,1:2].T,x4,x5,x6]) + sin(config.F_jcl_rev(t,))*-1*multi_dot([config.Mbar_vbl_upright_jcl_rev[:,0:1].T,x4,x5,x6])),(cos(config.F_jcs_steer_gear(t,))*multi_dot([config.Mbar_vbs_steer_gear_jcs_steer_gear[:,1:2].T,x7,x8,x9]) + sin(config.F_jcs_steer_gear(t,))*-1*multi_dot([config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1].T,x7,x8,x9]))]
 
     
     def eval_vel_eq(self):
@@ -141,7 +138,7 @@ class topology(object):
         v0 = np.zeros((1,1),dtype=np.float64)
         v1 = np.eye(1,dtype=np.float64)
 
-        self.vel_eq_blocks = [(v0 + derivative(config.F_mcr_ver_act,t,0.1,1)*-1.0*v1),(v0 + derivative(config.F_mcl_ver_act,t,0.1,1)*-1.0*v1),(v0 + derivative(config.F_jcr_rev,t,0.1,1)*-1.0*v1),(v0 + derivative(config.F_jcl_rev,t,0.1,1)*-1.0*v1),(v0 + derivative(config.F_jcs_steer_gear,t,0.1,1)*-1.0*v1)]
+        self.vel_eq_blocks = [(v0 + derivative(config.F_mcr_ver_act,t,0.1,1)*-1*v1),(v0 + derivative(config.F_mcl_ver_act,t,0.1,1)*-1*v1),(v0 + derivative(config.F_jcr_rev,t,0.1,1)*-1*v1),(v0 + derivative(config.F_jcl_rev,t,0.1,1)*-1*v1),(v0 + derivative(config.F_jcs_steer_gear,t,0.1,1)*-1*v1)]
 
     
     def eval_acc_eq(self):
@@ -150,41 +147,32 @@ class topology(object):
 
         a0 = np.zeros((1,1),dtype=np.float64)
         a1 = np.eye(1,dtype=np.float64)
-        a2 = config.F_jcr_rev(t,)
-        a3 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
-        a4 = self.P_vbr_hub
-        a5 = cos(a2)
-        a6 = self.Pd_vbr_upright
-        a7 = config.Mbar_vbr_upright_jcr_rev[:,1:2]
-        a8 = sin(a2)
-        a9 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
-        a10 = self.P_vbr_upright
-        a11 = A(a10).T
-        a12 = self.Pd_vbr_hub
-        a13 = config.F_jcl_rev(t,)
-        a14 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
-        a15 = self.P_vbl_hub
-        a16 = cos(a13)
-        a17 = self.Pd_vbl_upright
-        a18 = config.Mbar_vbl_upright_jcl_rev[:,1:2]
-        a19 = sin(a13)
-        a20 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
-        a21 = self.P_vbl_upright
-        a22 = A(a21).T
-        a23 = self.Pd_vbl_hub
-        a24 = config.F_jcs_steer_gear(t,)
-        a25 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
-        a26 = self.P_vbs_chassis
-        a27 = cos(a24)
-        a28 = self.Pd_vbs_steer_gear
-        a29 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,1:2]
-        a30 = sin(a24)
-        a31 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1]
-        a32 = self.P_vbs_steer_gear
-        a33 = A(a32).T
-        a34 = self.Pd_vbs_chassis
+        a2 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
+        a3 = self.P_vbr_hub
+        a4 = self.Pd_vbr_upright
+        a5 = config.Mbar_vbr_upright_jcr_rev[:,1:2]
+        a6 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
+        a7 = self.P_vbr_upright
+        a8 = A(a7).T
+        a9 = self.Pd_vbr_hub
+        a10 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
+        a11 = self.P_vbl_hub
+        a12 = self.Pd_vbl_upright
+        a13 = config.Mbar_vbl_upright_jcl_rev[:,1:2]
+        a14 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
+        a15 = self.P_vbl_upright
+        a16 = A(a15).T
+        a17 = self.Pd_vbl_hub
+        a18 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
+        a19 = self.P_vbs_chassis
+        a20 = self.Pd_vbs_steer_gear
+        a21 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,1:2]
+        a22 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1]
+        a23 = self.P_vbs_steer_gear
+        a24 = A(a23).T
+        a25 = self.Pd_vbs_chassis
 
-        self.acc_eq_blocks = [(a0 + derivative(config.F_mcr_ver_act,t,0.1,2)*-1.0*a1),(a0 + derivative(config.F_mcl_ver_act,t,0.1,2)*-1.0*a1),(derivative(a2,t,0.1,2)*-1.0*a1 + multi_dot([a3.T,A(a4).T,(a5*B(a6,a7) + a8*-1.0*B(a6,a9)),a6]) + multi_dot([(a5*multi_dot([a7.T,a11]) + a8*-1.0*multi_dot([a9.T,a11])),B(a12,a3),a12]) + 2.0*multi_dot([((a5*multi_dot([B(a10,a7),a6])).T + a8*-1.0*multi_dot([a6.T,B(a10,a9).T])),B(a4,a3),a12])),(derivative(a13,t,0.1,2)*-1.0*a1 + multi_dot([a14.T,A(a15).T,(a16*B(a17,a18) + a19*-1.0*B(a17,a20)),a17]) + multi_dot([(a16*multi_dot([a18.T,a22]) + a19*-1.0*multi_dot([a20.T,a22])),B(a23,a14),a23]) + 2.0*multi_dot([((a16*multi_dot([B(a21,a18),a17])).T + a19*-1.0*multi_dot([a17.T,B(a21,a20).T])),B(a15,a14),a23])),(derivative(a24,t,0.1,2)*-1.0*a1 + multi_dot([a25.T,A(a26).T,(a27*B(a28,a29) + a30*-1.0*B(a28,a31)),a28]) + multi_dot([(a27*multi_dot([a29.T,a33]) + a30*-1.0*multi_dot([a31.T,a33])),B(a34,a25),a34]) + 2.0*multi_dot([((a27*multi_dot([B(a32,a29),a28])).T + a30*-1.0*multi_dot([a28.T,B(a32,a31).T])),B(a26,a25),a34]))]
+        self.acc_eq_blocks = [(a0 + derivative(config.F_mcr_ver_act,t,0.1,2)*-1*a1),(a0 + derivative(config.F_mcl_ver_act,t,0.1,2)*-1*a1),(derivative(config.F_jcr_rev,t,0.1,2)*-1*a1 + multi_dot([a2.T,A(a3).T,(cos(config.F_jcr_rev(t,))*B(a4,a5) + sin(config.F_jcr_rev(t,))*-1*B(a4,a6)),a4]) + multi_dot([(cos(config.F_jcr_rev(t,))*multi_dot([a5.T,a8]) + sin(config.F_jcr_rev(t,))*-1*multi_dot([a6.T,a8])),B(a9,a2),a9]) + 2*multi_dot([((cos(config.F_jcr_rev(t,))*multi_dot([B(a7,a5),a4])).T + sin(config.F_jcr_rev(t,))*-1*multi_dot([a4.T,B(a7,a6).T])),B(a3,a2),a9])),(derivative(config.F_jcl_rev,t,0.1,2)*-1*a1 + multi_dot([a10.T,A(a11).T,(cos(config.F_jcl_rev(t,))*B(a12,a13) + sin(config.F_jcl_rev(t,))*-1*B(a12,a14)),a12]) + multi_dot([(cos(config.F_jcl_rev(t,))*multi_dot([a13.T,a16]) + sin(config.F_jcl_rev(t,))*-1*multi_dot([a14.T,a16])),B(a17,a10),a17]) + 2*multi_dot([((cos(config.F_jcl_rev(t,))*multi_dot([B(a15,a13),a12])).T + sin(config.F_jcl_rev(t,))*-1*multi_dot([a12.T,B(a15,a14).T])),B(a11,a10),a17])),(derivative(config.F_jcs_steer_gear,t,0.1,2)*-1*a1 + multi_dot([a18.T,A(a19).T,(cos(config.F_jcs_steer_gear(t,))*B(a20,a21) + sin(config.F_jcs_steer_gear(t,))*-1*B(a20,a22)),a20]) + multi_dot([(cos(config.F_jcs_steer_gear(t,))*multi_dot([a21.T,a24]) + sin(config.F_jcs_steer_gear(t,))*-1*multi_dot([a22.T,a24])),B(a25,a18),a25]) + 2*multi_dot([((cos(config.F_jcs_steer_gear(t,))*multi_dot([B(a23,a21),a20])).T + sin(config.F_jcs_steer_gear(t,))*-1*multi_dot([a20.T,B(a23,a22).T])),B(a19,a18),a25]))]
 
     
     def eval_jac_eq(self):
@@ -195,28 +183,22 @@ class topology(object):
         j1 = np.zeros((1,3),dtype=np.float64)
         j2 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
         j3 = self.P_vbr_hub
-        j4 = config.F_jcr_rev(t,)
-        j5 = cos(j4)
-        j6 = self.P_vbr_upright
-        j7 = config.Mbar_vbr_upright_jcr_rev[:,1:2]
-        j8 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
-        j9 = A(j6).T
-        j10 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
-        j11 = self.P_vbl_hub
-        j12 = config.F_jcl_rev(t,)
-        j13 = cos(j12)
-        j14 = self.P_vbl_upright
-        j15 = config.Mbar_vbl_upright_jcl_rev[:,1:2]
-        j16 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
-        j17 = A(j14).T
-        j18 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
-        j19 = self.P_vbs_chassis
-        j20 = config.F_jcs_steer_gear(t,)
-        j21 = cos(j20)
-        j22 = self.P_vbs_steer_gear
-        j23 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,1:2]
-        j24 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1]
-        j25 = A(j22).T
+        j4 = self.P_vbr_upright
+        j5 = config.Mbar_vbr_upright_jcr_rev[:,1:2]
+        j6 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
+        j7 = A(j4).T
+        j8 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
+        j9 = self.P_vbl_hub
+        j10 = self.P_vbl_upright
+        j11 = config.Mbar_vbl_upright_jcl_rev[:,1:2]
+        j12 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
+        j13 = A(j10).T
+        j14 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
+        j15 = self.P_vbs_chassis
+        j16 = self.P_vbs_steer_gear
+        j17 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,1:2]
+        j18 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1]
+        j19 = A(j16).T
 
-        self.jac_eq_blocks = [j1,j0,config.J_mcr_ver_act,j0,j1,j0,config.J_mcl_ver_act,j0,j1,multi_dot([(j5*multi_dot([j7.T,j9]) + sin(j4)*-1.0*multi_dot([j8.T,j9])),B(j3,j2)]),j1,multi_dot([j2.T,A(j3).T,(j5*B(j6,j7) + sin(j4)*-1.0*B(j6,j8))]),j1,multi_dot([(j13*multi_dot([j15.T,j17]) + sin(j12)*-1.0*multi_dot([j16.T,j17])),B(j11,j10)]),j1,multi_dot([j10.T,A(j11).T,(j13*B(j14,j15) + sin(j12)*-1.0*B(j14,j16))]),j1,multi_dot([j18.T,A(j19).T,(j21*B(j22,j23) + sin(j20)*-1.0*B(j22,j24))]),j1,multi_dot([(j21*multi_dot([j23.T,j25]) + sin(j20)*-1.0*multi_dot([j24.T,j25])),B(j19,j18)])]
+        self.jac_eq_blocks = [j1,j0,config.J_mcr_ver_act,j0,j1,j0,config.J_mcl_ver_act,j0,j1,multi_dot([(cos(config.F_jcr_rev(t,))*multi_dot([j5.T,j7]) + sin(config.F_jcr_rev(t,))*-1*multi_dot([j6.T,j7])),B(j3,j2)]),j1,multi_dot([j2.T,A(j3).T,(cos(config.F_jcr_rev(t,))*B(j4,j5) + sin(config.F_jcr_rev(t,))*-1*B(j4,j6))]),j1,multi_dot([(cos(config.F_jcl_rev(t,))*multi_dot([j11.T,j13]) + sin(config.F_jcl_rev(t,))*-1*multi_dot([j12.T,j13])),B(j9,j8)]),j1,multi_dot([j8.T,A(j9).T,(cos(config.F_jcl_rev(t,))*B(j10,j11) + sin(config.F_jcl_rev(t,))*-1*B(j10,j12))]),j1,multi_dot([j14.T,A(j15).T,(cos(config.F_jcs_steer_gear(t,))*B(j16,j17) + sin(config.F_jcs_steer_gear(t,))*-1*B(j16,j18))]),j1,multi_dot([(cos(config.F_jcs_steer_gear(t,))*multi_dot([j17.T,j19]) + sin(config.F_jcs_steer_gear(t,))*-1*multi_dot([j18.T,j19])),B(j15,j14)])]
   

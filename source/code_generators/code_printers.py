@@ -84,7 +84,7 @@ class numerical_printer(C99CodePrinter):
                 vectors.append(self._print_MatMul(i))
             elif isinstance(i,sm.Number):
                 #print('Scalar: %s'%i)
-                scalars.append(str(float(i)))
+                scalars.append(self._print(i))
             else:
                 #print('Expression: %s'%i)
                 express.append(self._print(i))
@@ -178,9 +178,9 @@ class numerical_printer(C99CodePrinter):
     def _print_Function(self,expr):
         func = expr.__class__
         return "'%r'%s"%(func,expr.args)
-    
+        
     def _print_transpose(self,expr):
-        return '%s'%expr.args
+        return '%s'%(*[self._print(i) for i in expr.args],)
 
     def _print_Derivative(self,expr):
         func = expr.args[0]

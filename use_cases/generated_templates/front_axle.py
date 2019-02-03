@@ -186,7 +186,7 @@ class numerical_assembly(object):
     
     def eval_pos_eq(self):
 
-        pos_ground_eq_blocks = [self.R_ground,(-1.0*self.Pg_ground + self.P_ground)]
+        pos_ground_eq_blocks = [self.R_ground,(-1*self.Pg_ground + self.P_ground)]
 
         for sub in self.subsystems:
             sub.eval_pos_eq()

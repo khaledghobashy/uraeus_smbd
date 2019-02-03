@@ -120,6 +120,9 @@ class base_vector(sm.MatrixSlice):
     @property
     def func(self):
         return base_vector
+    @property
+    def free_symbols(self):
+        return set()
 
 ###############################################################################
 class dcm(sm.MatrixSymbol):

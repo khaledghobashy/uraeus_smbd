@@ -51,7 +51,7 @@ class abstract_generator(object):
     def _generate_cse(self,equations,symbol):
         p = self.printer
         cse_symbols = sm.iterables.numbered_symbols(symbol)
-        cse = sm.cse(equations,symbols=cse_symbols)
+        cse = sm.cse(equations,symbols=cse_symbols,ignore=(sm.S('t'),))
         cse_variables   = '\n'.join([p._print(exp) for exp in cse[0]])
         cse_expressions = '\n'.join([p._print(exp) for exp in cse[1]])
         return cse_variables, cse_expressions    
