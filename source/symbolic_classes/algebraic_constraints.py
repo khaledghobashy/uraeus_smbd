@@ -21,7 +21,7 @@ class algebraic_constraints(object):
     
     def __init__(self,name,body_i=None,body_j=None):
         splited_name = name.split('.')
-        self.id_name = ''.join(splited_name[-1])
+        self._id_name = ''.join(splited_name[-1])
         self.prefix  = '.'.join(splited_name[:-1])
         self.prefix  = (self.prefix+'.' if self.prefix!='' else self.prefix)
         self._name   = name
@@ -41,6 +41,10 @@ class algebraic_constraints(object):
     @property
     def name(self):
         return self._name
+    @property
+    def id_name(self):
+        splited_name = self.name.split('.')
+        return ''.join(splited_name[-1])
     
     def _construct(self):
         self._create_equations_lists()

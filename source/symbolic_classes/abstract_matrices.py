@@ -6,8 +6,6 @@ Created on Tue Jan  1 10:47:50 2019
 """
 
 import sympy as sm
-import collections
-
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -56,7 +54,7 @@ class Triad(AbstractMatrix):
     def __init__(self,v1,v2=None):
         super().__init__(v1)
         
-class Mirror(AbstractMatrix):
+class Mirrored(AbstractMatrix):
     def __init__(self,v1):
         super().__init__(v1)
         self.shape = v1.shape

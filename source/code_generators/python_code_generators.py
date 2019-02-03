@@ -32,9 +32,10 @@ class abstract_generator(object):
         self.gen_velocities_sym  = [printer._print(exp.lhs) for exp in self.gen_velocities_exp]
         self.edges_arguments_sym = [printer._print(exp) for exp in self.mbs.edges_arguments]
         self.edges_constants_sym = [printer._print(exp.lhs) for exp in self.edges_constants_exp]
-
-        self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.virtual_coordinates]
                 
+        self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.virtual_coordinates]
+        
+        self.config_vars = [printer._print(i) for i in self.mbs.param_config.arguments_symbols]
         self.input_args  = self.config.inputs_layer()
         self.output_args = self.config.outputs_layer()
         
@@ -173,18 +174,14 @@ class template_code_generator(abstract_generator):
         text = '''
                 import numpy as np
                 import scipy as sc
-                from numpy.linalg import multi_dot
-                from source.cython_definitions.matrix_funcs import A, B, triad as Triad
+                import pandas as pd
                 from scipy.misc import derivative
                 from numpy import cos, sin
-                import pandas as pd
+                from numpy.linalg import multi_dot
+                from source.cython_definitions.matrix_funcs import A, B, triad as Triad
+                from source.solvers.py_numerical_functions import mirrored
                 
-                def Mirror(v):
-                    if v.shape in ((1,3),(4,1)):
-                        return v
-                    else:
-                        m = np.array([[1,0,0],[0,-1,0],[0,0,1]],dtype=np.float64)
-                        return m.dot(v)
+                Mirrored = mirrored
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -235,7 +232,7 @@ class template_code_generator(abstract_generator):
         
         pattern = '|'.join( self.edges_arguments_sym + self.edges_constants_sym
                            +self.virtual_coordinates + self.gen_coordinates_sym
-                           +self.gen_velocities_sym)
+                           +self.gen_velocities_sym + self.config_vars)
         self_inserter = self._insert_string('self.')
         
         inputs = '\n'.join([p._print(exp) for exp in inputs])

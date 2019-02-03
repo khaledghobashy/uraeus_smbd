@@ -1,18 +1,14 @@
 
 import numpy as np
 import scipy as sc
-from numpy.linalg import multi_dot
-from source.cython_definitions.matrix_funcs import A, B, triad as Triad
+import pandas as pd
 from scipy.misc import derivative
 from numpy import cos, sin
-import pandas as pd
+from numpy.linalg import multi_dot
+from source.cython_definitions.matrix_funcs import A, B, triad as Triad
+from source.solvers.py_numerical_functions import mirrored
 
-def Mirror(v):
-    if v.shape in ((1,3),(4,1)):
-        return v
-    else:
-        m = np.array([[1,0,0],[0,-1,0],[0,0,1]],dtype=np.float64)
-        return m.dot(v)
+Mirrored = mirrored
 
 
 class configuration(object):
@@ -29,8 +25,8 @@ class configuration(object):
 
     def _set_arguments(self):
         self.F_mcl_ver_act = self.F_mcr_ver_act
-        self.J_mcl_ver_act = Mirror(self.J_mcr_ver_act)
-        self.ax1_jcl_rev = Mirror(self.ax1_jcr_rev)
+        self.J_mcl_ver_act = Mirrored(self.J_mcr_ver_act)
+        self.ax1_jcl_rev = Mirrored(self.ax1_jcr_rev)
         self.F_jcl_rev = self.F_jcr_rev
 
     def load_from_csv(self,csv_file):

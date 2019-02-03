@@ -22,13 +22,9 @@ class numerical_printer(C99CodePrinter):
         return 'np.zeros(%s,dtype=np.float64)'%(expr.shape)
         
     def _print_AbstractMatrix(self,expr):
-        args = [self._print(i) for i in expr.args]
+        args = ','.join([self._print(i) for i in expr.args])
         name = expr.__class__.__name__
-        
-        if len(args) ==1:
-            return '%s(%s)'%(name,args[0])
-        else:
-            return '%s%s'%(name,(*args,))
+        return '%s(%s)'%(name,args)
     
     def _print_B(self,expr):
         p, u = expr.args
@@ -106,9 +102,6 @@ class numerical_printer(C99CodePrinter):
         #print('end \n')
         return e + s + v 
         
-
-    '''def _print_Matrix(self,expr):
-        return 'np.array(%s)'%(expr.tolist())'''
     
     def _print_Identity(self,expr):
         shape = expr.args[0]

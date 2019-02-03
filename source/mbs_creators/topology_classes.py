@@ -11,7 +11,7 @@ import networkx as nx
 import itertools
 
 from source.symbolic_classes.abstract_matrices import (global_frame, vector,
-                                                       reference_frame, Mirror)
+                                                       reference_frame, Mirrored)
 from source.symbolic_classes.bodies import body, ground, virtual_body
 from source.symbolic_classes.spatial_joints import absolute_locator
 from source.symbolic_classes.algebraic_constraints import joint_actuator
@@ -22,22 +22,20 @@ class parametric_configuration(object):
     def __init__(self,mbs_instance):
         self.topology = mbs_instance
         self.name = self.topology.name
-        self.graph = nx.DiGraph(name=self.name)
-        self._arguments_sym = []
-    
+        self.graph = nx.DiGraph(name=self.name)    
     
     def _obj_attr_dict(self,obj):
-        Eq = self._set_equality
+        Eq = self._set_base_equality
         attr_dict = {'obj':obj,'mirr':None,'align':'s','func':Eq(obj),
                      'primary':False}
         return attr_dict
     
     
-    def _set_equality(self,sym1,sym2=None):
+    def _set_base_equality(self,sym1,sym2=None):
         t = sm.symbols('t')
         if sym1 and sym2:
             if isinstance(sym1,sm.MatrixSymbol):
-                return sm.Eq(sym2,Mirror(sym1))
+                return sm.Eq(sym2,Mirrored(sym1))
             elif issubclass(sym1,sm.Function):
                 return sm.Eq(sym2,sym1)
         else:
@@ -48,10 +46,10 @@ class parametric_configuration(object):
     
     @property
     def arguments_symbols(self):
-        return set(self._arguments_sym)
+        return set(nx.get_node_attributes(self.graph,'obj').values())
     
     def _get_nodes_arguments(self):
-        Eq = self._set_equality
+        Eq = self._set_base_equality
         graph   = self.graph
         t_nodes = self.topology.nodes
         
@@ -64,21 +62,25 @@ class parametric_configuration(object):
         for n in filtered_nodes:
             m      = t_nodes[n]['mirr']
             args_n = t_nodes[n]['arguments']
-            nodes_args_n = [(str(i),{'func':Eq(i)}) for i in args_n]
-            self._arguments_sym += args_n
+            nodes_args_n = [(str(i),{'func':Eq(i),'obj':i}) for i in args_n]
             if m == n:
                 graph.add_nodes_from(nodes_args_n)
+                mirr = {i[0]:i[0] for i in nodes_args_n}
+                nx.set_node_attributes(self.graph,mirr,'mirr')
             else:
                 args_m = t_nodes[m]['arguments']
                 args_c = zip(args_n,args_m)
-                nodes_args_m = [(str(m),{'func':Eq(n,m)}) for n,m in args_c]
+                nodes_args_m = [(str(m),{'func':Eq(n,m),'obj':m}) for n,m in args_c]
                 graph.add_nodes_from(nodes_args_n+nodes_args_m)
                 edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
                 graph.add_edges_from(edges)    
-                self._arguments_sym += args_m
+                mirr = {m:n for n,m in edges}
+                nx.set_node_attributes(self.graph,mirr,'mirr')
+                mirr = {n:m for n,m in edges}
+                nx.set_node_attributes(self.graph,mirr,'mirr')
 
     def _get_edges_arguments(self):
-        Eq = self._set_equality
+        Eq = self._set_base_equality
         graph   = self.graph
         t_edges = self.topology.edges
         for e in t_edges:
@@ -86,19 +88,23 @@ class parametric_configuration(object):
             if t_edges[e]['align'] in 'sr':
                 m = t_edges[e]['mirr']
                 args_n = t_edges[e]['arguments']
-                nodes_args_n = [(str(i),{'func':Eq(i)}) for i in args_n]
-                self._arguments_sym += args_n
+                nodes_args_n = [(str(i),{'func':Eq(i),'obj':i}) for i in args_n]
                 if m == n:
                     graph.add_nodes_from(nodes_args_n)
+                    mirr = {i[0]:i[0] for i in nodes_args_n}
+                    nx.set_node_attributes(self.graph,mirr,'mirr')
                 else:
                     e2 = self.topology._edges_map[m]
                     args_m = t_edges[e2]['arguments']
                     args_c = zip(args_n,args_m)
-                    nodes_args_m = [(str(m),{'func':Eq(n,m)}) for n,m in args_c]
+                    nodes_args_m = [(str(m),{'func':Eq(n,m),'obj':m}) for n,m in args_c]
                     graph.add_nodes_from(nodes_args_n+nodes_args_m)
                     edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
                     graph.add_edges_from(edges)    
-                    self._arguments_sym += args_m
+                    mirr = {m:n for n,m in edges}
+                    nx.set_node_attributes(self.graph,mirr,'mirr')
+                    mirr = {n:m for n,m in edges}
+                    nx.set_node_attributes(self.graph,mirr,'mirr')
     
     def assemble_base_layer(self):
         self._get_nodes_arguments()
@@ -111,7 +117,7 @@ class parametric_configuration(object):
         self.graph.add_node(name,**attr_dict)
     
     def add_point(self,name,mirror=False):
-        Eq = self._set_equality
+        Eq = self._set_base_equality
         graph = self.graph
         if mirror:
             node1 = 'hpr_%s'%name
@@ -121,7 +127,7 @@ class parametric_configuration(object):
             graph.nodes[node1].update({'mirr':node2,'align':'r'})
             graph.nodes[node2].update({'mirr':node1,'align':'l'})
             obj1 = graph.nodes[node1]['obj']
-            obj2 = graph.nodes[node1]['obj']
+            obj2 = graph.nodes[node2]['obj']
             graph.nodes[node2].update({'func':Eq(obj1,obj2)})
             graph.add_edge(node1,node2)
         else:
@@ -132,7 +138,9 @@ class parametric_configuration(object):
     def _add_relation(self,relation,node,nbunch):
         graph = self.graph
         edges = [(i,node) for i in nbunch]
-        graph.nodes[node]['func'] = sm.Equality(node,relation(*nbunch))
+        obj = graph.nodes[node]['obj']
+        nobj = [graph.nodes[n]['obj'] for n in nbunch]
+        graph.nodes[node]['func'] = sm.Equality(obj,relation(*nobj))
         graph.add_edges_from(edges)
     
     def add_relation(self,relation,node,nbunch,mirror=False):
@@ -157,10 +165,18 @@ class parametric_configuration(object):
         inputs = [g.nodes[i]['func'] for i,d in g.out_degree() if condition(i,d)]
         return inputs
     
+    def draw_successors(self,n):
+        nodes = self.graph.successors(n)
+        g = self.graph.subgraph([n,*nodes])
+        plt.figure(figsize=(10,6))
+        nx.draw_networkx(g,with_labels=True)
+        plt.show() 
+        
+    
     def draw_graph(self):
         plt.figure(figsize=(10,6))
-        nx.draw_spring(self.graph,with_labels=True)
-        plt.show()        
+        nx.draw_circular(self.graph,with_labels=True)
+        plt.show()     
 
 ###############################################################################
 ###############################################################################

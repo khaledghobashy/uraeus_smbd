@@ -18,14 +18,13 @@ f.TR.config.load_from_csv('temp_front_axle/test_rig_v1_mod.csv')
 
 f.TR.config.F_jcs_steer_gear = lambda t : np.deg2rad(15)*np.sin(t)
 f.TR.config.F_mcr_ver_act = lambda t : 170*np.sin(t)
-f.TR.config.F_mcr_rev = lambda t : np.deg2rad(360)*t
+f.TR.config.F_jcr_rev = lambda t : np.deg2rad(360)*t
 
 assm = f.numerical_assembly()
 assm.set_gen_coordinates(assm.q0)
 soln = solver(assm)
-soln.newton_raphson(assm.q0)
 
-time_array = np.linspace(0,5,100)
+time_array = np.linspace(0,5,150)
 soln.solve_kds(time_array)
 
 pos = pd.DataFrame(np.concatenate(list(soln.pos_history.values()),1))
@@ -35,3 +34,4 @@ plt.figure(figsize=(8,4))
 plt.plot(vertical_travel,pos.T[8])
 plt.grid()
 plt.show()
+

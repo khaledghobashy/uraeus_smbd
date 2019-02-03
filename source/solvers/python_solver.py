@@ -5,11 +5,19 @@ Created on Tue Jan  1 13:21:35 2019
 @author: khale
 """
 
+import sys
 import numpy as np
 import scipy as sc
 from scipy.sparse.linalg import spsolve
 import pandas as pd
 
+def progress_bar(steps,i):
+    sys.stdout.write('\r')
+    length=(100*(1+i)//(4*steps))
+    percentage=100*(1+i)//steps
+    sys.stdout.write("Progress: ")
+    sys.stdout.write("[%-25s] %d%% of %s steps." % ('='*length,percentage, steps+1))
+    sys.stdout.flush()
 
 def scipy_matrix_assembler(data,rows,cols,shape):
     mat = sc.empty(shape,dtype=np.object)
@@ -80,7 +88,7 @@ class solver(object):
         
         itr=0
         while np.linalg.norm(delta_q)>1e-5:
-            print(np.linalg.norm(delta_q))
+#            print(np.linalg.norm(delta_q))
             guess = guess + delta_q
             
             self.set_gen_coordinates(guess)
@@ -88,7 +96,7 @@ class solver(object):
             delta_q = np.linalg.solve(A,-b)
             
             if itr%5==0 and itr!=0:
-                print("Updating Jacobian \n")
+#                print("Updating Jacobian \n")
                 A = self.eval_jac_eq().A
                 delta_q = np.linalg.solve(A,-b)
             if itr>200:
@@ -113,6 +121,7 @@ class solver(object):
         
         print('\nRunning System Kinematic Analysis:')
         for i,t in enumerate(time_array[1:]):
+            progress_bar(len(time_array)-1,i)
             self.set_time(t)
 
             g = self.pos_history[i] + self.vel_history[i]*dt  + 0.5*self.acc_history[i]*(dt**2)
