@@ -165,6 +165,12 @@ class parametric_configuration(object):
         inputs = [g.nodes[i]['func'] for i,d in g.out_degree() if condition(i,d)]
         return inputs
     
+    def _get_node_dependencies(self,n):
+        nodes = self.graph.in_edges([n])
+    
+    def get_dependencies(self):
+        pass
+    
     def draw_successors(self,n):
         nodes = self.graph.successors(n)
         g = self.graph.subgraph([n,*nodes])
