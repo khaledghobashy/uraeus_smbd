@@ -21,7 +21,6 @@ template.add_joint(revolute,'rocker_ch','rbr_rocker','vbs_chassis',mirrored=True
 template.add_joint(spherical,'rc_sph','rbr_rocker','rbs_coupler')
 template.add_joint(cylinderical,'rc_cyl','rbl_rocker','rbs_coupler')
 
-
 template.assemble_model()
 
 template.param_config.add_point('rocker_chassis',mirror=True)

@@ -5,7 +5,7 @@ Created on Tue Jan 29 08:18:17 2019
 @author: khaled.ghobashy
 """
 
-
+from source.symbolic_classes.abstract_matrices import Config_Relations as CR
 from source.symbolic_classes.spatial_joints import (revolute, universal, spherical,
                                                     cylinderical)
 
@@ -37,5 +37,47 @@ template.add_joint(cylinderical,'strut','rbr_upper_strut','rbr_lower_strut',mirr
 
 template.assemble_model()
 
-numerical_code = template_code_generator(template)
-numerical_code.write_code_file()
+
+template.param_config.add_point('ucaf',mirror=True)
+template.param_config.add_point('ucar',mirror=True)
+template.param_config.add_point('ucao',mirror=True)
+template.param_config.add_point('lcaf',mirror=True)
+template.param_config.add_point('lcar',mirror=True)
+template.param_config.add_point('lcao',mirror=True)
+template.param_config.add_point('tro',mirror=True)
+template.param_config.add_point('tri',mirror=True)
+template.param_config.add_point('strut_chassis',mirror=True)
+template.param_config.add_point('strut_mid',mirror=True)
+template.param_config.add_point('strut_lca',mirror=True)
+template.param_config.add_point('wc',mirror=True)
+
+template.param_config.add_relation(CR.Equal_to,'pt1_jcr_uca_upright',['hpr_ucao'],True)
+template.param_config.add_relation(CR.Equal_to,'pt1_jcr_lca_upright',['hpr_lcao'],True)
+template.param_config.add_relation(CR.Equal_to,'pt1_jcr_tie_upright',['hpr_tro'],True)
+
+template.param_config.add_relation(CR.Centered,'pt1_jcr_uca_chassis',['hpr_ucaf','hpr_ucar'],True)
+template.param_config.add_relation(CR.Oriented,'ax1_jcr_uca_chassis',['hpr_ucaf','hpr_ucar'],True)
+
+template.param_config.add_relation(CR.Centered,'pt1_jcr_lca_chassis',['hpr_lcaf','hpr_lcar'],True)
+template.param_config.add_relation(CR.Oriented,'ax1_jcr_lca_chassis',['hpr_lcaf','hpr_lcar'],True)
+
+template.param_config.add_relation(CR.Equal_to,'pt1_jcr_hub_bearing',['hpr_wc'],True)
+
+template.param_config.add_relation(CR.Equal_to,'pt1_jcr_strut_chassis',['hpr_strut_chassis'],True)
+template.param_config.add_relation(CR.Oriented,'ax1_jcr_strut_chassis',['hpr_strut_chassis','hpr_strut_lca'],True)
+template.param_config.add_relation(CR.Oriented,'ax2_jcr_strut_chassis',['hpr_strut_lca','hpr_strut_chassis'],True)
+
+template.param_config.add_relation(CR.Equal_to,'pt1_jcr_strut_lca',['hpr_strut_lca'],True)
+template.param_config.add_relation(CR.Oriented,'ax1_jcr_strut_lca',['hpr_strut_chassis','hpr_strut_lca'],True)
+template.param_config.add_relation(CR.Oriented,'ax2_jcr_strut_lca',['hpr_strut_lca','hpr_strut_chassis'],True)
+
+template.param_config.add_relation(CR.Equal_to,'pt1_jcr_tie_steering',['hpr_tri'],True)
+template.param_config.add_relation(CR.Oriented,'ax1_jcr_tie_steering',['hpr_tri','hpr_tro'],True)
+template.param_config.add_relation(CR.Oriented,'ax2_jcr_tie_steering',['hpr_tro','hpr_tri'],True)
+
+template.param_config.add_relation(CR.Equal_to,'pt1_jcr_strut',['hpr_strut_mid'],True)
+template.param_config.add_relation(CR.Oriented,'ax1_jcr_strut',['hpr_strut_lca','hpr_strut_chassis'],True)
+
+
+#numerical_code = template_code_generator(template)
+#numerical_code.write_code_file()
