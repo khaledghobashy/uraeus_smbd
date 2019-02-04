@@ -44,7 +44,8 @@ class abstract_generator(object):
             
     
     def _create_inputs_dataframe(self):
-        indecies = [i.lhs for i in self.input_args if isinstance(i.lhs,sm.MatrixSymbol)]
+        indecies = [str(i.lhs) for i in self.input_args if isinstance(i.lhs,sm.MatrixSymbol)]
+        indecies.sort()
         shape = (len(indecies),4)
         dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
         return dataframe

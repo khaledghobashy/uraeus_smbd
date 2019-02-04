@@ -51,6 +51,16 @@ template.param_config.add_point('strut_mid',mirror=True)
 template.param_config.add_point('strut_lca',mirror=True)
 template.param_config.add_point('wc',mirror=True)
 
+template.param_config.add_relation(CR.Centered,'hpr_strut_mid',['hpr_strut_chassis','hpr_strut_lca'],True)
+
+template.param_config.add_relation(CR.Centered,'R_rbr_uca',['hpr_ucao','hpr_ucaf','hpr_ucar'],True)
+template.param_config.add_relation(CR.Centered,'R_rbr_lca',['hpr_lcao','hpr_lcaf','hpr_lcar'],True)
+template.param_config.add_relation(CR.Centered,'R_rbr_upright',['hpr_ucao','hpr_lcao','hpr_wc'],True)
+template.param_config.add_relation(CR.Centered,'R_rbr_upper_strut',['hpr_strut_chassis','hpr_strut_mid'],True)
+template.param_config.add_relation(CR.Centered,'R_rbr_lower_strut',['hpr_strut_lca','hpr_strut_mid'],True)
+template.param_config.add_relation(CR.Centered,'R_rbr_tie_rod',['hpr_tro','hpr_tri'],True)
+template.param_config.add_relation(CR.Centered,'R_rbr_hub',['hpr_wc','R_rbr_upright'],True)
+
 template.param_config.add_relation(CR.Equal_to,'pt1_jcr_uca_upright',['hpr_ucao'],True)
 template.param_config.add_relation(CR.Equal_to,'pt1_jcr_lca_upright',['hpr_lcao'],True)
 template.param_config.add_relation(CR.Equal_to,'pt1_jcr_tie_upright',['hpr_tro'],True)
@@ -79,5 +89,5 @@ template.param_config.add_relation(CR.Equal_to,'pt1_jcr_strut',['hpr_strut_mid']
 template.param_config.add_relation(CR.Oriented,'ax1_jcr_strut',['hpr_strut_lca','hpr_strut_chassis'],True)
 
 
-#numerical_code = template_code_generator(template)
-#numerical_code.write_code_file()
+numerical_code = template_code_generator(template)
+numerical_code.write_code_file()

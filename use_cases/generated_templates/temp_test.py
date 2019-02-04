@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import use_cases.generated_templates.front_axle as f
 from source.solvers.python_solver import solver
 
-f.SU1.config.load_from_csv('temp_front_axle/dwb_v1_mod.csv')
+f.SU1.config.load_from_csv('temp_front_axle/dwb_v1_mod_2.csv')
 f.ST.config.load_from_csv('temp_front_axle/steer_v1_mod_2.csv')
 f.TR.config.load_from_csv('temp_front_axle/test_rig_v1_mod.csv')
 
