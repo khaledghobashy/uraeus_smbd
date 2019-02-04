@@ -36,8 +36,8 @@ class abstract_generator(object):
         self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.virtual_coordinates]
         
         self.config_vars = [printer._print(i) for i in self.mbs.param_config.arguments_symbols]
-        self.input_args  = self.config.inputs_layer()
-        self.output_args = self.config.outputs_layer()
+        self.input_args  = self.config.input_equalities
+        self.output_args = self.config.output_equalities
         
         self.bodies = self.mbs.bodies
         self.jac_cols = self.mbs.jac_cols #sum([e for e in self.mbs.cols],[])
@@ -178,10 +178,9 @@ class template_code_generator(abstract_generator):
                 from scipy.misc import derivative
                 from numpy import cos, sin
                 from numpy.linalg import multi_dot
-                from source.cython_definitions.matrix_funcs import A, B, triad as Triad
-                from source.solvers.py_numerical_functions import mirrored
+                from source.cython_definitions.matrix_funcs import A, B, triad
+                from source.solvers.py_numerical_functions import mirrored, centered, oriented
                 
-                Mirrored = mirrored
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)

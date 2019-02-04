@@ -46,20 +46,20 @@ class B(AbstractMatrix):
     def _latex(self,expr):
         p,u = self.args
         return r'{B(%s,%s)}'%(p.name,u.name)
-    
-###############################################################################
-###############################################################################
 
 class Triad(AbstractMatrix):
     def __init__(self,v1,v2=None):
         super().__init__(v1)
-        
+    
+###############################################################################
+###############################################################################
+    
 class Mirrored(AbstractMatrix):
     def __init__(self,v1):
         super().__init__(v1)
         self.shape = v1.shape
     def _latex(self,expr):
-        return r'{Mir(%s)}'%self.args[0].name
+        return r'{Mirrored(%s)}'%self.args[0].name
 
 class Centered(AbstractMatrix):
     shape = (3,1)
@@ -73,7 +73,21 @@ class Oriented(AbstractMatrix):
     def __init__(self,*args):
         super().__init__(*args)
     def _latex(self,expr):
-        return r'{Oriented%s}'%(self.args,) 
+        return r'{Oriented%s}'%(self.args,)
+
+class Equal_to(AbstractMatrix):
+    shape = (3,1)
+    def __init__(self,*args):
+        super().__init__(*args)
+    def _latex(self,expr):
+        return r'{Equal_to%s}'%(self.args,)
+
+class Config_Relations(object):
+    
+    Mirrored = Mirrored
+    Centered = Centered
+    Oriented = Oriented
+    Equal_to = Equal_to
 
 ###############################################################################
 ###############################################################################

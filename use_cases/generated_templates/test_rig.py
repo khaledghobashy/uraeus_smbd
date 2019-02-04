@@ -5,29 +5,28 @@ import pandas as pd
 from scipy.misc import derivative
 from numpy import cos, sin
 from numpy.linalg import multi_dot
-from source.cython_definitions.matrix_funcs import A, B, triad as Triad
-from source.solvers.py_numerical_functions import mirrored
+from source.cython_definitions.matrix_funcs import A, B, triad
+from source.solvers.py_numerical_functions import mirrored, centered, oriented
 
-Mirrored = mirrored
 
 
 class configuration(object):
 
     def __init__(self):
-        self.F_mcr_ver_act = lambda t : 0
         self.J_mcr_ver_act = np.array([[0, 0, 0]],dtype=np.float64)
         self.ax1_jcr_rev = np.array([[0], [0], [0]],dtype=np.float64)
-        self.F_jcr_rev = lambda t : 0
-        self.ax1_jcs_steer_gear = np.array([[0], [0], [0]],dtype=np.float64)
         self.F_jcs_steer_gear = lambda t : 0
+        self.F_jcr_rev = lambda t : 0
+        self.F_mcr_ver_act = lambda t : 0
+        self.ax1_jcs_steer_gear = np.array([[0], [0], [0]],dtype=np.float64)
 
         self._set_arguments()
 
     def _set_arguments(self):
-        self.F_mcl_ver_act = self.F_mcr_ver_act
-        self.J_mcl_ver_act = Mirrored(self.J_mcr_ver_act)
-        self.ax1_jcl_rev = Mirrored(self.ax1_jcr_rev)
+        self.J_mcl_ver_act = mirrored(self.J_mcr_ver_act)
+        self.ax1_jcl_rev = mirrored(self.ax1_jcr_rev)
         self.F_jcl_rev = self.F_jcr_rev
+        self.F_mcl_ver_act = self.F_mcr_ver_act
 
     def load_from_csv(self,csv_file):
         dataframe = pd.read_csv(csv_file,index_col=0)
@@ -40,9 +39,9 @@ class configuration(object):
 
     def eval_constants(self):
 
-        c0 = Triad(self.ax1_jcr_rev,)
-        c1 = Triad(self.ax1_jcl_rev,)
-        c2 = Triad(self.ax1_jcs_steer_gear,)
+        c0 = triad(self.ax1_jcr_rev)
+        c1 = triad(self.ax1_jcl_rev)
+        c2 = triad(self.ax1_jcs_steer_gear)
 
         self.Mbar_vbr_upright_jcr_rev = multi_dot([A(self.P_vbr_upright).T,c0])
         self.Mbar_vbr_hub_jcr_rev = multi_dot([A(self.P_vbr_hub).T,c0])
@@ -81,13 +80,13 @@ class topology(object):
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
-        self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
-        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
-        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
-        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
-        self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
-        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
+        self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
+        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
+        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
+        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
+        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
+        self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset

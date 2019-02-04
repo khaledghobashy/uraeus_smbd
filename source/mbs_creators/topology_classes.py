@@ -141,6 +141,8 @@ class parametric_configuration(object):
         obj = graph.nodes[node]['obj']
         nobj = [graph.nodes[n]['obj'] for n in nbunch]
         graph.nodes[node]['func'] = sm.Equality(obj,relation(*nobj))
+        removed_edges = list(graph.in_edges(node))
+        graph.remove_edges_from(removed_edges)
         graph.add_edges_from(edges)
     
     def add_relation(self,relation,node,nbunch,mirror=False):
@@ -154,26 +156,46 @@ class parametric_configuration(object):
         else:
             self._add_relation(relation,node,nbunch)
     
-    def inputs_layer(self):
+    @property
+    def input_nodes(self):
+        nodes = set((i for i,d in self.graph.in_degree() if d == 0))
+        return nodes
+    @property
+    def input_equalities(self):
         g = self.graph
-        inputs = [g.nodes[i]['func'] for i,d in g.in_degree() if d == 0]
-        return inputs
+        nodes = self.input_nodes
+        equalities = [g.nodes[i]['func'] for i,d in g.in_degree(nodes) if d == 0]
+        return equalities
     
-    def outputs_layer(self):
+    @property
+    def output_nodes(self):
+        condition = lambda i,d : d==0 and self.graph.in_degree(i)!=0
+        nodes = set((i for i,d in self.graph.out_degree() if condition(i,d)))
+        return nodes
+    @property
+    def output_equalities(self):
         g = self.graph
-        condition = lambda i,d : d==0 and g.in_degree(i)!=0
-        inputs = [g.nodes[i]['func'] for i,d in g.out_degree() if condition(i,d)]
-        return inputs
+        nodes = self.output_nodes
+        equalities = [g.nodes[i]['func'] for i,d in g.out_degree(nodes) if d == 0]
+        return self.mid_equalities + equalities
     
-    def _get_node_dependencies(self,n):
-        nodes = self.graph.in_edges([n])
+    def _get_node_dependencies(self,n,mid_layer):
+        edges = [e[:-1] for e in nx.edge_bfs(self.graph,n,'reverse')]
+        for e in edges:
+            node = e[0]
+            if node not in self.input_nodes and node not in mid_layer:
+                mid_layer.append(node)
     
-    def get_dependencies(self):
-        pass
+    @property
+    def mid_equalities(self):
+        mid_layer = []
+        for n in self.output_nodes:
+            self._get_node_dependencies(n,mid_layer)
+        return [self.graph.nodes[n]['func'] for n in mid_layer]
     
-    def draw_successors(self,n):
-        nodes = self.graph.successors(n)
-        g = self.graph.subgraph([n,*nodes])
+    def draw_node_dependencies(self,n):
+        edges = [e[:-1] for e in nx.edge_bfs(self.graph,n,'reverse')]
+        g = self.graph.edge_subgraph(edges)
         plt.figure(figsize=(10,6))
         nx.draw_networkx(g,with_labels=True)
         plt.show() 

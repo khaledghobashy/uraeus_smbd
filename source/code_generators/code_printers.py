@@ -9,9 +9,6 @@ import sympy as sm
 import numpy as np
 from sympy.printing.ccode import C99CodePrinter
 
-ccode_print = True
-enclose = True
-
 class numerical_printer(C99CodePrinter):
 
         
@@ -24,41 +21,20 @@ class numerical_printer(C99CodePrinter):
     def _print_AbstractMatrix(self,expr):
         args = ','.join([self._print(i) for i in expr.args])
         name = expr.__class__.__name__
+        name = (name.lower() if len(name)>1 else name)
         return '%s(%s)'%(name,args)
-    
-    def _print_B(self,expr):
-        p, u = expr.args
-        return 'B(%s,%s)'%(self._print(p),self._print(u))
-    
-    def _print_Triad(self,expr):
-        try:
-             p, u = expr.args
-        except ValueError:
-            p, u = (expr.args[0],'')
-        return 'Triad(%s,%s)'%(self._print(p),self._print(u))
-        
+            
+    def _print_Equal_to(self,expr):
+        return '%s'%self._print(expr.args[0])
     
     def _print_dcm(self,expr):
-        global enclose
-        if enclose :
-            return '%r'%expr._raw_name
-        else:
-            return '%s'%expr._raw_name
-    
+        return '%r'%expr._raw_name
     
     def _print_vector(self,expr):
-        global enclose
-        if enclose :
-            return '%r'%expr._raw_name
-        else:
-            return '%s'%expr._raw_name
+        return '%r'%expr._raw_name
     
     def _print_quatrenion(self,expr):
-        global enclose
-        if enclose :
-            return '%r'%expr._raw_name
-        else:
-            return '%s'%expr._raw_name
+        return '%r'%expr._raw_name
     
     def _print_Mul(self,expr):
         return '*'.join([self._print(i) for i in expr.args])

@@ -15,7 +15,8 @@ def mirrored(v):
         return m.dot(v)
 
 def centered(*args):
-    p = np.sum([args],1)/len(args)
+    p = np.sum(args,0)
+    p = p/len(args)
     return p
 
 def oriented(*args):
