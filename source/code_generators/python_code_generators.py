@@ -193,9 +193,7 @@ class template_code_generator(abstract_generator):
 
                     def __init__(self):
                         {inputs}
-                        
-                        self._set_arguments()
-                        
+                                                
                     def _set_arguments(self):
                         {outputs}
                     

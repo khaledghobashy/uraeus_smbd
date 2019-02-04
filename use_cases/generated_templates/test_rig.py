@@ -20,8 +20,6 @@ class configuration(object):
         self.F_mcr_ver_act = lambda t : 0
         self.ax1_jcs_steer_gear = np.array([[0], [0], [0]],dtype=np.float64)
 
-        self._set_arguments()
-
     def _set_arguments(self):
         self.J_mcl_ver_act = mirrored(self.J_mcr_ver_act)
         self.ax1_jcl_rev = mirrored(self.ax1_jcr_rev)
