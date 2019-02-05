@@ -18,12 +18,12 @@ class AbstractMatrix(sm.MatrixExpr):
     """
     **Abstract Class**
     
-    Representaion of symbolic matrices which their values are evaluated based 
+    Base class of symbolic matrices which their values are evaluated based 
     on given parameters. Can be thought of as an undefind functions that
     returns a matrix
 
     Class Attributes
-    ----------
+    ----------------
     is_commutative : False
         
     is_Matrix : True

@@ -12,6 +12,51 @@ from source.symbolic_classes.abstract_matrices import (reference_frame, vector,
 
 
 class body(reference_frame):
+    """A rigid body class.
+    
+    TODO
+    
+    Parameters
+    ----------
+    name : str
+        Name of the reference_frame instance. Should mimic a valid python 
+        variable name.
+    
+    Attributes
+    ----------
+    A :  A
+        The directional cosines matrix that represents the symbolic orientation
+        of the body relative to the global_frame. This matrix is function of
+        the body orientation parameters e.g. euler-parameters
+    R : vector
+        A symbolic matrix that represents the location of the body's reference 
+        point relative to the global origin.
+    Rd : vector
+        A symbolic matrix that represents the translational velocity of the
+        body's reference point relative to the global origin.
+    P : quatrenion
+        A symbolic matrix that represents the orientation of the body's 
+        reference frame relative to the global frame in terms of 
+        euler-parameters.
+    Pd : quatrenion
+        A symbolic matrix that represents the body rotaional velocity of the
+        body's reference frame relative to the global frame in terms of
+        euler_parameters derivatives.
+        
+    normalized_pos_equation : sympy.MatrixExpr
+        The normalization equation of the euler-parameters quatrenion at the
+        position level.
+    normalized_vel_equation : sympy.MatrixExpr
+        The normalization equation of the euler-parameters quatrenion at the
+        velocity level.
+    normalized_acc_equation : sympy.MatrixExpr
+        The normalization equation of the euler-parameters quatrenion at the
+        acceleration level.
+    normalized_jacobian : list (of sympy.MatrixExpr)
+        The normalization equation of the euler-parameters quatrenion at the
+        position level.
+        
+    """
     
     n   = 7
     nc  = 1
@@ -58,11 +103,8 @@ class body(reference_frame):
     
     @property
     def arguments(self):
-#        R  = sm.Eq(self.R,sm.MutableDenseMatrix([0,0,0]))
-#        P  = sm.Eq(self.P,sm.MutableDenseMatrix([1,0,0,0]))
-#        Rd = sm.Eq(self.Rd,sm.MutableDenseMatrix([0,0,0]))
-#        Pd = sm.Eq(self.Pd,sm.MutableDenseMatrix([0,0,0,0]))
-        return [self.R,self.P,self.Rd,self.Pd]
+        args = [self.R,self.P,self.Rd,self.Pd]
+        return args
     @property
     def constants(self):
         return []
@@ -91,7 +133,6 @@ class ground(body):
     
     @property
     def arguments(self):
-#        eq = sm.Eq(self.P_ground,sm.Matrix([1,0,0,0]))
         return super().arguments + [self.P_ground]
 
 
