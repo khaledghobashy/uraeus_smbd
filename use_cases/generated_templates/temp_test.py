@@ -12,12 +12,13 @@ import matplotlib.pyplot as plt
 import use_cases.generated_templates.front_axle as f
 from source.solvers.python_solver import solver
 
-f.SU1.config.load_from_csv('temp_front_axle/dwb_v1_mod_2.csv')
-f.ST.config.load_from_csv('temp_front_axle/steer_v1_mod_2.csv')
+f.SU1.config.load_from_csv('temp_front_axle/dwb_v1_mod2.csv')
+f.ST.config.load_from_csv('temp_front_axle/steer_v1_mod2.csv')
 f.TR.config.load_from_csv('temp_front_axle/test_rig_v1_mod.csv')
 
 f.TR.config.F_jcs_steer_gear = lambda t : np.deg2rad(15)*np.sin(t)
-f.TR.config.F_mcr_ver_act = lambda t : 170*np.sin(t) + 1
+f.TR.config.F_mcr_ver_act = lambda t : 170*np.sin(t)
+f.TR.config.F_mcl_ver_act = lambda t : 170*np.sin(t)
 f.TR.config.F_jcr_rev = lambda t : np.deg2rad(360)*t
 
 assm = f.numerical_assembly()

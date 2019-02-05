@@ -17,12 +17,12 @@ class configuration(object):
         self.ax1_jcr_rev = np.array([[0], [0], [0]],dtype=np.float64)
         self.F_jcs_steer_gear = lambda t : 0
         self.F_jcr_rev = lambda t : 0
-        self.F_mcr_ver_act = lambda t : 0
         self.ax1_jcs_steer_gear = np.array([[0], [0], [0]],dtype=np.float64)
+        self.F_mcr_ver_act = lambda t : 0
 
     def _set_arguments(self):
-        self.J_mcl_ver_act = mirrored(self.J_mcr_ver_act)
         self.ax1_jcl_rev = mirrored(self.ax1_jcr_rev)
+        self.J_mcl_ver_act = mirrored(self.J_mcr_ver_act)
         self.F_jcl_rev = self.F_jcr_rev
         self.F_mcl_ver_act = self.F_mcr_ver_act
 
@@ -78,13 +78,13 @@ class topology(object):
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
-        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
-        self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
-        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
-        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
         self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
         self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
+        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
         self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
+        self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
+        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
+        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset

@@ -15,6 +15,19 @@ sm.init_printing(pretty_print=False,use_latex=True,forecolor='White')
 ###############################################################################
 
 class AbstractMatrix(sm.MatrixExpr):
+    '''
+    Abstract Class.
+    Representaion of symbolic matrices which their values are evaluated based 
+    on given parameters. Can be thought of as an undefind functions that
+    returns a matrix
+
+    Main Class Attributes
+    ----------
+    is_commutative : False
+    
+    is_Matrix : True
+    
+    '''
     
     is_commutative = False
     is_Matrix = True
@@ -26,7 +39,18 @@ class AbstractMatrix(sm.MatrixExpr):
         return self
     
 class A(AbstractMatrix):
+    '''
+    Concrete Class.
+        Representaion of symbolic transformation matrix which represents the 
+        orientation of a rigid body in 3D space. The matrix is a function of 
+        the orientation parameters used, e.g. Euler-Parameters.
     
+    Parameters
+    ----------
+    P : quatrenion or vector
+        Orientation parameters of the rigid body.
+    '''
+        
     def _latex(self,expr):
         p = self.args[0]
         return r'{A(%s)}'%p.name
@@ -40,6 +64,19 @@ class E(AbstractMatrix):
     shape = (3,4)
     
 class B(AbstractMatrix):
+    '''
+    Concrete Class.
+        Representaion of symbolic transformation matrix which represents the 
+        orientation of a rigid body in 3D space. The matrix is a function of 
+        the orientation parameters used, e.g. Euler-Parameters.
+    
+    Parameters
+    ----------
+    P : quatrenion or vector
+        Orientation parameters of the rigid body.
+    u : body-local vector
+        A vector thet is defind relative to the body's local reference frame
+    '''
     shape = (3,4)
     def __init__(self,sym1,sym2):
         pass

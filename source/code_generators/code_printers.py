@@ -115,8 +115,9 @@ class numerical_printer(C99CodePrinter):
     
     def _print_MatrixSlice(self,expr):
         m, row_slice, col_slice = expr.args
-        m = self._print(m)
-        return f'{m}[{row_slice[0]}:{row_slice[1]},{col_slice[0]}:{col_slice[1]}]'
+        row_slice = '%s:%s'%(*row_slice[:-1],)
+        col_slice = '%s:%s'%(*col_slice[:-1],)
+        return '%s[%s,%s]'%(self._print(m),row_slice,col_slice)
     
     def _print_MutableDenseMatrix(self,expr):
         elements = expr.tolist()
