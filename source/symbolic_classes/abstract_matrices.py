@@ -16,15 +16,16 @@ sm.init_printing(pretty_print=False,use_latex=True,forecolor='White')
 
 class AbstractMatrix(sm.MatrixExpr):
     """
-    Abstract Class.
+    **Abstract Class**
+    
     Representaion of symbolic matrices which their values are evaluated based 
     on given parameters. Can be thought of as an undefind functions that
     returns a matrix
 
-    Main Class Attributes
+    Class Attributes
     ----------
     is_commutative : False
-    
+        
     is_Matrix : True
     
     """
@@ -40,10 +41,9 @@ class AbstractMatrix(sm.MatrixExpr):
     
 class A(AbstractMatrix):
     """
-    Concrete Class.
-        Representaion of symbolic transformation matrix which represents the 
-        orientation of a rigid body in 3D space. The matrix is a function of 
-        the orientation parameters used, e.g. Euler-Parameters.
+    Representaion of symbolic transformation matrix which represents the 
+    orientation of a rigid body in 3D space. The matrix is a function of 
+    the orientation parameters used, e.g. Euler-Parameters.
     
     Parameters
     ----------
@@ -362,7 +362,7 @@ class global_frame(object):
         joint markers, and their bi-directional transformations.
         
         2. Separation of multi-body systems' globals to prevent names collisions
-        and unpredicted wrong transformations, and also provide the extisability
+        and unpredictable wrong transformations, and also provide the extisability
         of nested globals in future development.
     
     The use of directed graph serves a natural and convenient way to capture
@@ -372,7 +372,7 @@ class global_frame(object):
     parent reference by two opposite **edges** that represents the tranfromation 
     between the frame and its' parent in the two directions.
     
-    Each **edge** holds an attribute called **mat** that represents the 
+    Each **edge** holds an attribute called *mat* that represents the 
     transformation matrix that performs transformation from the **tail node** 
     to the **head node** of that edge.
     
@@ -400,6 +400,10 @@ class global_frame(object):
     @property
     def edges(self):
         return self.references_tree.edges
+    
+    @property
+    def global_frame(self):
+        return self
     
     def merge_global(self,g,orient=False):
         """
@@ -480,6 +484,50 @@ class global_frame(object):
 
 ###############################################################################
 class reference_frame(object):
+    """A representation of generic reference frames.
+    
+    Parameters
+    ----------
+    name : str
+        Name of the reference_frame instance. Should mimic a valid python 
+        variable name.
+    parent : reference_frame_like, optional
+        The reference frame that this frame is referred to initially. Defaults
+        to the current globale_frame instance
+    formate_as : str, optional
+        A specially formated name for appropriate latex printing. defaults to
+        None.
+    
+    Attributes
+    ----------
+    global_instance : global_frame
+        The instance of `global_frame` that hold this reference frame in its'
+        directed graph network.
+    A : dcm or A
+        The directional cosines matrix that represents the symbolic orientation
+        of the given reference frame.
+    parent : reference_frame_like
+        The reference frame that this frame is referred to.
+    
+    Methods
+    -------
+    set_global_frame(global_instance)
+        **Class Method**. 
+        Specify the global_frame instance used where this reference frame 
+        exists.
+    
+    draw_tree()
+        Draw the directed graph of the global_frame instance used to add this
+        reference frame.
+    
+    orient_along(v1,v2=None)
+        Specify the reference_frame matrix :math:`A` to be a triad that is 
+        oriented using the given vectors v1 and v2.
+        
+    express(other)
+        Performe reference transformation between this frame and a given
+        reference frame.
+    """
     
     _is_global_set  = False
     global_frame = None
@@ -490,6 +538,10 @@ class reference_frame(object):
         cls.global_frame = global_instance
     
     def __new__(cls, name, parent=None,format_as=None):
+        """
+        Overloading the original __new__ method to check whether a global_frame
+        exists or not, and creat one if no global_frame exists.
+        """
         if not cls._is_global_set:
             print('creating global')
             global_instance = global_frame()
@@ -504,12 +556,20 @@ class reference_frame(object):
         self.parent = (parent if parent else self.global_frame)
         self.A = dcm(str(name),format_as=format_as)
              
-    def update_tree(self):
+    def _update_tree(self):
+        """
+        Update the global_frame references_tree and add directed edges with
+        their *mat* attribute.
+        """
         self.global_frame.references_tree.add_edge(self.parent.name, self.name, mat=self.A.T)
         self.global_frame.references_tree.add_edge(self.name, self.parent.name, mat=self.A)
     
     @property
     def A(self):
+        """
+        The matrix that represents the orientation of the reference frame 
+        relative to its' parent.
+        """
         return self._A
     @A.setter
     def A(self,value):
@@ -517,7 +577,7 @@ class reference_frame(object):
         self.i = base_vector(self,'i')
         self.j = base_vector(self,'j')
         self.k = base_vector(self,'k')
-        self.update_tree()
+        self._update_tree()
     
     @property
     def name(self):
@@ -527,12 +587,38 @@ class reference_frame(object):
         return self._raw_name
             
     def orient_along(self,v1,v2=None):
+        """
+        Specify the reference_frame matrix :math:`A` to be a triad that is 
+        oriented using the given vectors v1 and/or v2.
+        
+        Parameters
+        ----------
+        v1 : vector
+            Z-Axis of the triad.
+        v2 : vector, optional
+            X-Axis of the triad.
+        """
         if v2 is None:
             self.A = Triad(v1)
         else:
             self.A = Triad(v1,v2)
             
     def express(self,other):
+        """
+        Performe reference transformation between this frame and a given
+        reference frame.
+        
+        Parameters
+        ----------
+        other : reference_frame_like
+            The reference frame the where this frame is referred relative to.
+        
+        Returns
+        -------
+        mat : sympy.MatMul
+            A sequence of matrix multiplications that represents the symbolic
+            transformation to the given other frame. 
+        """
         tree = self.global_frame.references_tree
         return self.global_frame.express_func(self,other,tree)
     
@@ -544,11 +630,38 @@ class reference_frame(object):
 ###############################################################################
 
 class vector(sm.MatrixSymbol):
+    """A (3 x 1) symbolic matrix.
+    
+    Parameters
+    ----------
+    name : str
+        Name of the vector instance. Should mimic a valid python 
+        variable name.
+    frame : reference_frame_like, optional
+        The reference frame that this vector is referred to initially. Defaults
+        to the current globale_frame instance
+    formate_as : str, optional
+        A specially formated name for appropriate latex printing. defaults to
+        None.
+    
+    Attributes
+    ----------
+    frame : reference_frame_like
+        The reference frame that this frame is referred to.
+    
+    Methods
+    -------        
+    express(other)
+        Transform the vector from its' current frame to the given frame.
+    """
+    
     shape = (3,1)
     
     is_commutative = False
     
     def __new__(cls,name, frame=None, format_as=None):
+        # Oveloading the MatrixSymbol __new__ method to supply it with the 
+        # appropriat arguments (name,m,n)
         if format_as:
             name = format_as
         return super(vector,cls).__new__(cls,name,3,1)
@@ -560,9 +673,25 @@ class vector(sm.MatrixSymbol):
         self._args = (name,self.frame,self._formated_name)
         
     def express(self,frame=None):
-        frame = (frame if frame is not None else reference_frame.global_frame)
+        """
+        Transform the vector from its' current frame to the given frame.
+        
+        Parameters
+        ----------
+        frame : reference_frame_like, optional
+            The reference frame the where this frame is referred relative to.
+            Defaults to the vector's global_frame instance.
+        
+        Returns
+        -------
+        v : sympy.MatMul
+            The vector multiplied by sequence of matrix multiplications that 
+            represents the symbolic transformation to the given other frame. 
+        """
+        frame = (frame if frame is not None else self.frame.global_frame)
         A = self.frame.express(frame)
-        return A*self
+        v = A*self
+        return v
     
     @property
     def name(self):
@@ -580,11 +709,23 @@ class vector(sm.MatrixSymbol):
         
 ###############################################################################
 class quatrenion(sm.MatrixSymbol):
+    """A (4 x 1) symbolic matrix.
     
+    Parameters
+    ----------
+    name : str
+        Name of the vector instance. Should mimic a valid python 
+        variable name.
+    formate_as : str, optional
+        A specially formated name for appropriate latex printing. defaults to
+        None.    
+    """
     shape = (4,1)
     is_commutative = False
     
     def __new__(cls, name, format_as=None):
+        # Oveloading the MatrixSymbol __new__ method to supply it with the 
+        # appropriat arguments (name,m,n)
         if format_as:
             name = format_as
         return super(quatrenion,cls).__new__(cls,name,*cls.shape)
