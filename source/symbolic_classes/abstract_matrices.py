@@ -15,7 +15,7 @@ sm.init_printing(pretty_print=False,use_latex=True,forecolor='White')
 ###############################################################################
 
 class AbstractMatrix(sm.MatrixExpr):
-    '''
+    """
     Abstract Class.
     Representaion of symbolic matrices which their values are evaluated based 
     on given parameters. Can be thought of as an undefind functions that
@@ -27,7 +27,7 @@ class AbstractMatrix(sm.MatrixExpr):
     
     is_Matrix : True
     
-    '''
+    """
     
     is_commutative = False
     is_Matrix = True
@@ -39,7 +39,7 @@ class AbstractMatrix(sm.MatrixExpr):
         return self
     
 class A(AbstractMatrix):
-    '''
+    """
     Concrete Class.
         Representaion of symbolic transformation matrix which represents the 
         orientation of a rigid body in 3D space. The matrix is a function of 
@@ -49,7 +49,7 @@ class A(AbstractMatrix):
     ----------
     P : quatrenion or vector
         Orientation parameters of the rigid body.
-    '''
+    """
         
     def _latex(self,expr):
         p = self.args[0]
@@ -64,27 +64,39 @@ class E(AbstractMatrix):
     shape = (3,4)
     
 class B(AbstractMatrix):
-    '''
-    Concrete Class.
-        Representaion of symbolic transformation matrix which represents the 
-        orientation of a rigid body in 3D space. The matrix is a function of 
-        the orientation parameters used, e.g. Euler-Parameters.
+    r"""
+    Representaion of symbolic jacobian of the transformation
+    :math:`u = A(P)\bar{u}` with respect to euler-parameters quatrenion :math:`P`, 
+    where :math:`\bar{u}` is a body-local vector.
     
     Parameters
     ----------
     P : quatrenion or vector
         Orientation parameters of the rigid body.
     u : body-local vector
-        A vector thet is defind relative to the body's local reference frame
-    '''
+        A vector thet is defind relative to the body's local reference frame.
+    """
+    
     shape = (3,4)
-    def __init__(self,sym1,sym2):
+    def __init__(self,P,u):
         pass
     def _latex(self,expr):
         p,u = self.args
         return r'{B(%s,%s)}'%(p.name,u.name)
 
 class Triad(AbstractMatrix):
+    """
+    A symbolic matrix function that represents a triad of three orthonormal
+    vectors in 3D that is oriented given one or two vetcors
+    
+    Parameters
+    ----------
+    v1 : vector
+        Z-Axis of the triad.
+    v2 : vector, optional
+        X-Axis of the triad.
+    """
+    
     def __init__(self,v1,v2=None):
         super().__init__(v1)
     
@@ -92,13 +104,31 @@ class Triad(AbstractMatrix):
 ###############################################################################
     
 class Mirrored(AbstractMatrix):
-    def __init__(self,v1):
-        super().__init__(v1)
-        self.shape = v1.shape
+    """
+    A symbolic matrix function that represents a mirrored vector about the 
+    Y-Axis.
+    
+    Parameters
+    ----------
+    v : vector
+    
+    """
+    def __init__(self,v):
+        super().__init__(v)
+        self.shape = v.shape
     def _latex(self,expr):
         return r'{Mirrored(%s)}'%self.args[0].name
 
 class Centered(AbstractMatrix):
+    """
+    A symbolic matrix function that represents the center point of a collection
+    of points in 3D.
+    
+    Parameters
+    ----------
+    args : Collection of vectors
+    
+    """
     shape = (3,1)
     def __init__(self,*args):
         super().__init__(*args)
@@ -106,6 +136,16 @@ class Centered(AbstractMatrix):
         return r'{Centered%s}'%(self.args,)
 
 class Oriented(AbstractMatrix):
+    """
+    A symbolic matrix function that represents an oriented vector based on
+    the given parameters, either oriented along two points or normal to the
+    plane given by three points.
+    
+    Parameters
+    ----------
+    args : Collection of vectors
+    
+    """
     shape = (3,1)
     def __init__(self,*args):
         super().__init__(*args)
@@ -113,14 +153,26 @@ class Oriented(AbstractMatrix):
         return r'{Oriented%s}'%(self.args,)
 
 class Equal_to(AbstractMatrix):
+    """
+    A symbolic matrix function that functions as a place holder that reference
+    the value of a vector to that of another.
+    
+    Parameters
+    ----------
+    v : vector
+    
+    """
     shape = (3,1)
-    def __init__(self,*args):
-        super().__init__(*args)
+    def __init__(self,v):
+        super().__init__(v)
     def _latex(self,expr):
         return r'{Equal_to%s}'%(self.args,)
 
 class Config_Relations(object):
-    
+    """
+    A container class that holds the relational classes as its' attributes
+    for convienient access and import.    
+    """
     Mirrored = Mirrored
     Centered = Centered
     Oriented = Oriented
@@ -130,7 +182,18 @@ class Config_Relations(object):
 ###############################################################################
 
 class base_vector(sm.MatrixSlice):
+    """
+    A symbolic matrix function that represents the base-vectors (i,j,k) of 
+    a reference frame.
     
+    Parameters
+    ----------
+    frame : reference frame
+        An instance of a reference frame.
+    sym : str, {'i','j','k'}
+        A string character representing the base-vector name.
+        
+    """
     shape = (3,1)
     
     def __new__(cls,frame,sym):
@@ -147,9 +210,22 @@ class base_vector(sm.MatrixSlice):
     
     @property
     def name(self):
+        """
+        Returns the formated name of the instance which is suitable for Latex
+        printings.
+        """
         return self._formated
     
     def express(self,frame=None):
+        """
+        Transform the base-vector form its' current frame to the given frame.
+
+        Args
+        ----
+        frame : reference frame, optional
+            If frame = None, the default is to perform the transformation to the
+            global frame.
+        """
         frame = (frame if frame is not None else self.frame.global_frame)
         A = self.frame.parent.express(frame)
         return A*self
@@ -175,6 +251,19 @@ class base_vector(sm.MatrixSlice):
 
 ###############################################################################
 class dcm(sm.MatrixSymbol):
+    """
+    A symbolic matrix that represents a 3x3 directional cosines matrix.
+    Used to represent symbolic markers and as the default value of a reference
+    frame orientation matrix.
+    
+    Parameters
+    ----------
+    name : str
+        Should not contain any special characters.
+    format_as : str, optional
+        A formated version of the name that may contain special characters used
+        for pretty latex printing.
+    """
     shape = (3,3)
     
     is_commutative = False
@@ -202,6 +291,17 @@ class dcm(sm.MatrixSymbol):
         
 ###############################################################################
 class zero_matrix(sm.MatrixSymbol):
+    """
+    A symbolic matrix that represents a (m x n) zero matrix in a non-explicit
+    form.
+    
+    Parameters
+    ----------
+    m : int
+        Number of rows.
+    n : int
+        Number of cols.
+    """
     
     def __new__(cls,m,n):
         sym = r'{Z_{%sx%s}}'%(m,n)
@@ -228,6 +328,66 @@ class zero_matrix(sm.MatrixSymbol):
 
 ###############################################################################
 class global_frame(object):
+    """
+    A representation of the global frame of reference of a given spatial 
+    multi-body system.
+    
+    Parameters
+    ----------
+    name : str, (optional, Defaults to blank)
+        Name of the global_frame instance.
+    
+    Methods
+    -------
+    draw_tree()
+        Draw the directed graph.
+        
+    express_func(frame_1, frame_2, tree)
+        Perform transformation from frame_1 to frame_2 using the ralational tree.
+    
+    express(other)
+        Performe reference transformation between the global frame and a given
+        reference frame.
+    
+    merge_global(g,orient=False)
+        Add the content of a given global reference `g` to the current global
+        frame scoope.
+    
+    Notes
+    -----
+    This class provides two main functionalities:
+        
+        1. Initialization of a Directed Graph that serves as the storage of all
+        instantiated reference-frame objects in a given scoope, e.g. bodies and 
+        joint markers, and their bi-directional transformations.
+        
+        2. Separation of multi-body systems' globals to prevent names collisions
+        and unpredicted wrong transformations, and also provide the extisability
+        of nested globals in future development.
+    
+    The use of directed graph serves a natural and convenient way to capture
+    the relational information of the instantiated references.
+    
+    Every new reference is stored as a **node**, this node is connected to its' 
+    parent reference by two opposite **edges** that represents the tranfromation 
+    between the frame and its' parent in the two directions.
+    
+    Each **edge** holds an attribute called **mat** that represents the 
+    transformation matrix that performs transformation from the **tail node** 
+    to the **head node** of that edge.
+    
+    Transformations bwteen two given nodes are done by searching the graph for
+    the shortest path between these two nodes, where the transformation is 
+    simply the multiplication of all the matricies stored on the edges making
+    up this path. The seacrching is done using `networkx.algorithms.shortest_path`
+    function.
+    
+    It should be mentioned that any `express` method in the `abstract_matricies` 
+    module makes use of this class's `express_func` static method. 
+    Also it is worth mentioning that this operation is done symbolically on the 
+    matrix level and not its elements.
+    
+    """
         
     def __init__(self,name=''):
         self.name = name+'_grf'
@@ -242,6 +402,18 @@ class global_frame(object):
         return self.references_tree.edges
     
     def merge_global(self,g,orient=False):
+        """
+        Add the content of a given global reference `g` to the current global
+        frame scoope.
+        
+        Parameters
+        ----------
+        g : global_frame
+            An instance of the global_frame class.
+        orient : bool, (optional, Defaults to False)
+            Orient the given global_frame instance relative to the current 
+            global instance
+        """
         self.references_tree.add_nodes_from(g.nodes(data=True))
         self.references_tree.add_edges_from(g.edges(data=True))
         if not orient:
@@ -249,12 +421,35 @@ class global_frame(object):
             self.references_tree.add_edge(g.name, self.name, mat=1)
             
     def draw_tree(self):
+        """
+        Draw the directed graph tree using matplotlib.pyplot with the nodes
+        labled.
+        """
         plt.figure(figsize=(10,6))
         nx.draw(self.references_tree,with_labels=True)
         plt.show()
     
     @staticmethod
     def express_func(frame1,frame2,tree):
+        """
+        Static Method of the class the serves as a helper to the 
+        self.express(other) method definition and the reference_frame class
+        express method.
+        
+        Parameters
+        ----------
+        frame1, frame_2 : reference_frame_like
+            An instance of  `global_frame` or `reference_frame` classes.
+        tree : nx.DiGraph
+            The directed reference tree that stores the information of the 
+            relation between the given references.
+        
+        Returns
+        -------
+        mat : sympy.MatMul
+            A sequence of matrix multiplications that represents the 
+            transformation between the given frame.
+        """
         child_name  = frame1.name
         parent_name = frame2.name
         graph = tree
@@ -267,6 +462,20 @@ class global_frame(object):
         return mat
     
     def express(self,other):
+        """
+        Evaluate the symbolic transformation from self to other reference frame.
+        
+        Parameters
+        ----------
+        other : reference_frame_like
+            An instance of `global_frame` or `reference_frame` classes.
+       
+        Returns
+        -------
+        mat : sympy.MatMul
+            A sequence of matrix multiplications that represents the symbolic
+            transformation to the given other frame.
+        """
         return self.express_func(self,other,self.references_tree)
 
 ###############################################################################
