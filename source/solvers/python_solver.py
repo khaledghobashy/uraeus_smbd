@@ -128,7 +128,7 @@ class solver(object):
         self.pos = guess
     
     
-    def solve_kds(self,time_array):
+    def solve_kds(self,time_array,run_id='',save=False):
         dt = time_array[1]-time_array[0]
         
         A = self.eval_jac_eq()
