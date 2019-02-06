@@ -40,10 +40,27 @@ class solver(object):
         
         model.set_initial_states()
                 
-        self.pos_history = {0:self.model.q0}
-        self.vel_history = {}
-        self.acc_history = {}
+        self._pos_history = {0:self.model.q0}
+        self._vel_history = {}
+        self._acc_history = {}
         
+        sorted_coordinates = {v:k for k,v in self.model.indicies_map.items()}
+        self.coordinates_indicies = []
+        for name in sorted_coordinates.values():
+            self.coordinates_indicies += ['%s.%s'%(name,i) 
+            for i in ['x','y','z','e0','e1','e2','e3']]
+    
+    def creat_results_dataframes(self):
+        self.pos_dataframe = pd.DataFrame(
+                data = np.concatenate(list(self._pos_history.values()),1).T,
+                columns = self.coordinates_indicies)
+        self.vel_dataframe = pd.DataFrame(
+                data = np.concatenate(list(self._vel_history.values()),1).T,
+                columns = self.coordinates_indicies)
+        self.acc_dataframe = pd.DataFrame(
+                data = np.concatenate(list(self._acc_history.values()),1).T,
+                columns = self.coordinates_indicies)
+    
     def assemble_equations(self,data):
         mat = np.concatenate(data)
         return mat
@@ -119,30 +136,37 @@ class solver(object):
         vel_rhs = self.eval_vel_eq()
         v0 = solve(A,-vel_rhs)
         self.set_gen_velocities(v0)
-        self.vel_history[0] = v0
+        self._vel_history[0] = v0
         
         acc_rhs = self.eval_acc_eq()
-        self.acc_history[0] = solve(A,-acc_rhs)
+        self._acc_history[0] = solve(A,-acc_rhs)
         
         print('\nRunning System Kinematic Analysis:')
         for i,t in enumerate(time_array[1:]):
             progress_bar(len(time_array)-1,i)
             self.set_time(t)
 
-            g = self.pos_history[i] + self.vel_history[i]*dt  + 0.5*self.acc_history[i]*(dt**2)
+            g = self._pos_history[i] + self._vel_history[i]*dt  + 0.5*self._acc_history[i]*(dt**2)
             
             self.newton_raphson(g)
-            self.pos_history[i+1] = self.pos
+            self._pos_history[i+1] = self.pos
             A = self.eval_jac_eq()
             
             vel_rhs = self.eval_vel_eq()
             vi = solve(A,-vel_rhs)
             self.set_gen_velocities(vi)
-            self.vel_history[i+1] = vi
+            self._vel_history[i+1] = vi
 
             acc_rhs = self.eval_acc_eq()
-            self.acc_history[i+1] = solve(A,-acc_rhs)
+            self._acc_history[i+1] = solve(A,-acc_rhs)
             
             i+=1
         
+        self.creat_results_dataframes()
+    
+    def save_data(self,data,filename):
+        pass
+
         
+
+

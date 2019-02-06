@@ -24,6 +24,13 @@ class body(reference_frame):
     
     Attributes
     ----------
+    n : int
+        Number of generalized coordinates used to define the body configuration.
+    nc : int
+        Number of scalar constraint equations (euler-parameters normalization).
+    nve : int
+        Number of vetor constraint equations (euler-parameters normalization).
+    
     A :  A
         The directional cosines matrix that represents the symbolic orientation
         of the body relative to the global_frame. This matrix is function of
@@ -39,9 +46,14 @@ class body(reference_frame):
         reference frame relative to the global frame in terms of 
         euler-parameters.
     Pd : quatrenion
-        A symbolic matrix that represents the body rotaional velocity of the
-        body's reference frame relative to the global frame in terms of
-        euler_parameters derivatives.
+        A symbolic matrix that represents the rotaional velocity of the body's 
+        reference frame relative to the global frame in terms of
+        euler_parameters time-derivatives.
+    
+    q : sympy.BlockMatrix
+        Blockmatrix containing the position-level coordinates of the body
+    qd : sympy.BlockMatrix
+        Blockmatrix containing the velocity-level coordinates of the body
         
     normalized_pos_equation : sympy.MatrixExpr
         The normalization equation of the euler-parameters quatrenion at the
@@ -53,8 +65,13 @@ class body(reference_frame):
         The normalization equation of the euler-parameters quatrenion at the
         acceleration level.
     normalized_jacobian : list (of sympy.MatrixExpr)
-        The normalization equation of the euler-parameters quatrenion at the
-        position level.
+        The jacobian of the normalization equation of the euler-parameters 
+        quatrenion relative to the vector of euler-parameters.
+    
+    arguments : list
+        A list storing the [`R, P, Rd, Pd`] variables.
+    constants : list
+        An empty list just for code completeness in development code uses.
         
     """
     
@@ -112,6 +129,24 @@ class body(reference_frame):
 
 
 class ground(body):
+    """A representation of the gorund as a special case of a rigid body class.
+    
+    TODO
+        
+    Attributes
+    ----------
+    n : int
+        Number of generalized coordinates used to define the body configuration.
+    nc : int
+        Number of scalar constraint equations (euler-parameters normalization
+        and grounding constraints).
+    nve : int
+        Number of vetor constraint equations (euler-parameters normalization
+        and grounding constraints).
+    
+    P_ground :  quatrenion
+        A symbolic matrix that represents the fixed orientation of ground.
+    """
     
     n   = 7
     nc  = 7
