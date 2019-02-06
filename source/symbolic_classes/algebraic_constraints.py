@@ -6,8 +6,8 @@ Created on Tue Jan  1 11:06:05 2019
 """
 
 import sympy as sm
-from source.symbolic_classes.abstract_matrices import (reference_frame,vector,
-                                                       zero_matrix, B)
+from source.symbolic_classes.abstract_matrices import (reference_frame,vector, zero_matrix, 
+                                                       B, E, matrix_symbol, Skew)
 from source.symbolic_classes.bodies import body
 from IPython.display import display
 
@@ -25,6 +25,7 @@ class algebraic_constraints(object):
         self.prefix  = '.'.join(splited_name[:-1])
         self.prefix  = (self.prefix+'.' if self.prefix!='' else self.prefix)
         self._name   = name
+        
                 
         for i in range(self.def_axis):
             self._create_joint_def_axis(i+1)
@@ -56,6 +57,40 @@ class algebraic_constraints(object):
         self._acc_level_equations = []
         self._jacobian_i = []
         self._jacobian_j = []
+    
+    def _create_reactions_args(self):
+        body_i_name = self.body_i.id_name
+        
+        fromate_ = (self.prefix,self.id_name)
+        L_raw_name = '%sL_%s'%fromate_
+        L_frm_name = r'{%s\lambda_{%s}}'%fromate_
+        self.L = matrix_symbol(L_raw_name,self.nc,1,L_frm_name)
+        
+        fromate_ = (self.prefix,body_i_name,self.id_name)
+        
+        #Joint Reaction Load acting on body_i.
+        RLi_raw_name = '%sJL_%s_%s'%fromate_
+        RLi_frm_name = r'{%sL^{%s}_{%s}}'%fromate_
+        self.RLi = matrix_symbol(RLi_raw_name,7,1,RLi_frm_name)
+        self.RLi = -self.jacobian_i.T*self.L
+        
+        #Joint Reaction Force acting on body_i.
+        RFi_raw_name = '%sJF_%s_%s'%fromate_
+        RFi_frm_name = r'{%sF^{%s}_{%s}}'%fromate_
+        self.RFi = matrix_symbol(RFi_raw_name,3,self.nc,RFi_frm_name)
+        
+        #Joint Reaction Torque acting on body_i in terms of orientation parameters.
+        RTie_raw_name = '%sJTe_%s_%s'%fromate_
+        RTie_frm_name = r'{%sTe^{%s}_{%s}}'%fromate_
+        self.RTi_e = matrix_symbol(RTie_raw_name,4,self.nc,RTie_frm_name)
+        
+        #Joint Reaction Torque acting on body_i in terms of cartesian coordinates.
+        RTic_raw_name = '%sJTc_%s_%s'%fromate_
+        RTic_frm_name = r'{%sTc^{%s}_{%s}}'%fromate_
+        self.RTi_c = matrix_symbol(RTic_raw_name,self.nc,1,RTic_frm_name)
+        
+        self.RTi_c_eq = 0.5*E(self.Pi)*self.RTi_e - Skew(self.ui)*self.RFi
+        
 
     
     def _create_joint_def_axis(self,i):
@@ -211,8 +246,7 @@ class algebraic_constraints(object):
                      sm.BlockMatrix([[j.jacobian_i,j.jacobian_j]])]
         
         for i in equations: display(i)
-
-        
+    
 ###############################################################################
 ###############################################################################
 

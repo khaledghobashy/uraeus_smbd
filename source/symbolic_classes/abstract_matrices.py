@@ -50,7 +50,7 @@ class A(AbstractMatrix):
     P : quatrenion or vector
         Orientation parameters of the rigid body.
     """
-        
+    shape = (3,3)
     def _latex(self,expr):
         p = self.args[0]
         return r'{A(%s)}'%p.name
@@ -58,10 +58,16 @@ class A(AbstractMatrix):
 
 class G(AbstractMatrix):
     shape = (3,4)
+    def _latex(self,expr):
+        p = self.args[0]
+        return r'{G(%s)}'%p.name
     
 
 class E(AbstractMatrix):
     shape = (3,4)
+    def _latex(self,expr):
+        p = self.args[0]
+        return r'{E(%s)}'%p.name
     
 class B(AbstractMatrix):
     r"""
@@ -99,6 +105,13 @@ class Triad(AbstractMatrix):
     
     def __init__(self,v1,v2=None):
         super().__init__(v1)
+
+class Skew(AbstractMatrix):
+    shape = (3,3)
+    def _latex(self,expr):
+        p = self.args[0]
+        return r'{Skew(%s)}'%p
+
     
 ###############################################################################
 ###############################################################################
@@ -628,7 +641,34 @@ class reference_frame(object):
     
 ###############################################################################
 ###############################################################################
+class matrix_symbol(sm.MatrixSymbol):
+    
+    def __new__(cls,name,m,n, format_as=None):
+        # Oveloading the MatrixSymbol __new__ method to supply it with the 
+        # appropriat arguments (name,m,n)
+        if format_as:
+            name = format_as
+        return super(matrix_symbol,cls).__new__(cls,name,m,n)
+    
+    def __init__(self,name,m,n, format_as=None):
+        self._raw_name = name
+        self._formated_name = super().name
+        self._args = (name,m,n,self._formated_name)
+    
+    @property
+    def name(self):
+        return self._formated_name
+    @property
+    def raw_name(self):
+        return self._raw_name
+   
+    def doit(self):
+        return self
+    
+    def __str__(self):
+        return self.raw_name
 
+   
 class vector(sm.MatrixSymbol):
     """A (3 x 1) symbolic matrix.
     

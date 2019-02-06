@@ -8,7 +8,8 @@ Created on Tue Jan  1 10:57:47 2019
 import sympy as sm
 
 from source.symbolic_classes.abstract_matrices import (reference_frame, vector, 
-                                                       quatrenion, zero_matrix, A)
+                                                       quatrenion, zero_matrix,
+                                                       A, G, matrix_symbol)
 
 
 class body(reference_frame):
@@ -106,6 +107,10 @@ class body(reference_frame):
         self.normalized_jacobian = [zero_matrix(1,3), 2*self.P.T]
         
         #print('Exiting Body \n')
+        
+        self.M  = matrix_symbol('%sM_%s'%format_,3,3,r'{%sM_{%s}}'%format_)
+        self._J = matrix_symbol('%sJ_%s'%format_,3,3,r'{%sJ_{%s}}'%format_)
+        self.J  = 4*G(self.P).T*self._J*G(self.P)
     
     @property
     def name(self):
