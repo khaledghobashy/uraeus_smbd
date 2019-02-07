@@ -18,3 +18,5 @@ b = body('b')
 
 j = revolute('J',a,b)
 j._create_reactions_args()
+
+

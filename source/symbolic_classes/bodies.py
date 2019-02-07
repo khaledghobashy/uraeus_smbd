@@ -105,12 +105,12 @@ class body(reference_frame):
         self.normalized_vel_equation = zero_matrix(1,1)
         self.normalized_acc_equation = 2*sm.sqrt(self.Pd.T*self.Pd)
         self.normalized_jacobian = [zero_matrix(1,3), 2*self.P.T]
+                
+        self.M  = matrix_symbol('%sM_%s'%format_,3,3,r'{%sM_{%s}}'%format_)
+        self.Jbar = matrix_symbol('%sJbar_%s'%format_,3,3,r'{%s\bar{J}_{%s}}'%format_)
+        self.J  = 4*G(self.P).T*self.Jbar*G(self.P)
         
         #print('Exiting Body \n')
-        
-        self.M  = matrix_symbol('%sM_%s'%format_,3,3,r'{%sM_{%s}}'%format_)
-        self._J = matrix_symbol('%sJ_%s'%format_,3,3,r'{%sJ_{%s}}'%format_)
-        self.J  = 4*G(self.P).T*self._J*G(self.P)
     
     @property
     def name(self):
