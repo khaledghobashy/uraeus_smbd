@@ -203,6 +203,9 @@ class algebraic_constraints(object):
             location_equalities = []
         else: raise NotImplementedError
         self._constants += location_equalities
+        
+    def _construct_actuation_functions(self):
+        pass
     
     def _create_reactions_args(self):
         body_i_name = self.body_i.id_name
@@ -429,6 +432,7 @@ class joint_constructor(type):
         
         def construct(self):
             self._create_equations_lists()
+            self._construct_actuation_functions()
             for e in vector_equations:
                 e.construct(self)
             self._construct()
@@ -458,9 +462,10 @@ class actuator(algebraic_constraints):
         self._vel_function = sm.diff(self._pos_function,t)
         self._acc_function = sm.diff(self._pos_function,t,t)
     
-    def _construct(self):
-        super()._construct()
-        self._construct_actuation_functions()
+#    def _construct(self):
+#        self._construct_actuation_functions()
+#        super()._construct()
+        
     
     @property
     def pos_level_equations(self):
@@ -487,7 +492,6 @@ class joint_actuator(actuator):
             self._name = name
         else:
             super().__init__(name)
-            self._construct_actuation_functions()
 
 
 class absolute_actuator(actuator):
@@ -498,21 +502,6 @@ class absolute_actuator(actuator):
         self.coordinate = coordinate
         self.i = self.coordinates_map[self.coordinate]
         super().__init__(name,body_i,body_j)
-        self._construct_actuation_functions()
-#        if body_i is not None:
-#            self.body = body_i
-#    
-#    @property
-#    def body(self):
-#        return self._body_j
-#    
-#    @body.setter
-#    def body(self,value):
-#        self.body_j = value
-#        self.construct()
-    
-    def _construct(self):
-        self._create_equations_lists()
     
     @property
     def arguments(self):

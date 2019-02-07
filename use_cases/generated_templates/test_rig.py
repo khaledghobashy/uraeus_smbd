@@ -13,18 +13,18 @@ from source.solvers.py_numerical_functions import mirrored, centered, oriented
 class configuration(object):
 
     def __init__(self):
-        self.J_mcr_ver_act = np.array([[0, 0, 0]],dtype=np.float64)
         self.ax1_jcr_rev = np.array([[0], [0], [0]],dtype=np.float64)
-        self.F_jcs_steer_gear = lambda t : 0
-        self.F_jcr_rev = lambda t : 0
-        self.ax1_jcs_steer_gear = np.array([[0], [0], [0]],dtype=np.float64)
+        self.J_mcr_ver_act = np.array([[0, 0, 0]],dtype=np.float64)
         self.F_mcr_ver_act = lambda t : 0
+        self.F_jcr_rev = lambda t : 0
+        self.F_jcs_steer_gear = lambda t : 0
+        self.ax1_jcs_steer_gear = np.array([[0], [0], [0]],dtype=np.float64)
 
     def _set_arguments(self):
-        self.ax1_jcl_rev = mirrored(self.ax1_jcr_rev)
-        self.J_mcl_ver_act = mirrored(self.J_mcr_ver_act)
         self.F_jcl_rev = self.F_jcr_rev
+        self.J_mcl_ver_act = mirrored(self.J_mcr_ver_act)
         self.F_mcl_ver_act = self.F_mcr_ver_act
+        self.ax1_jcl_rev = mirrored(self.ax1_jcr_rev)
 
     def load_from_csv(self,csv_file):
         dataframe = pd.read_csv(csv_file,index_col=0)
@@ -78,13 +78,13 @@ class topology(object):
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
-        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
-        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
-        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
-        self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
         self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
-        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
+        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
+        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
+        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
+        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
+        self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset
@@ -128,44 +128,42 @@ class topology(object):
         config = self.config
         t = self.t
 
-        v0 = np.zeros((1,1),dtype=np.float64)
-        v1 = np.eye(1,dtype=np.float64)
+        v0 = np.eye(1,dtype=np.float64)
 
-        self.vel_eq_blocks = [(v0 + derivative(config.F_mcr_ver_act,t,0.1,1)*-1*v1),(v0 + derivative(config.F_mcl_ver_act,t,0.1,1)*-1*v1),(v0 + derivative(config.F_jcr_rev,t,0.1,1)*-1*v1),(v0 + derivative(config.F_jcl_rev,t,0.1,1)*-1*v1),(v0 + derivative(config.F_jcs_steer_gear,t,0.1,1)*-1*v1)]
+        self.vel_eq_blocks = [derivative(config.F_mcr_ver_act,t,0.1,1)*-1*v0,derivative(config.F_mcl_ver_act,t,0.1,1)*-1*v0,derivative(config.F_jcr_rev,t,0.1,1)*-1*v0,derivative(config.F_jcl_rev,t,0.1,1)*-1*v0,derivative(config.F_jcs_steer_gear,t,0.1,1)*-1*v0]
 
     
     def eval_acc_eq(self):
         config = self.config
         t = self.t
 
-        a0 = np.zeros((1,1),dtype=np.float64)
-        a1 = np.eye(1,dtype=np.float64)
-        a2 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
-        a3 = self.P_vbr_hub
-        a4 = self.Pd_vbr_upright
-        a5 = config.Mbar_vbr_upright_jcr_rev[:,1:2]
-        a6 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
-        a7 = self.P_vbr_upright
-        a8 = A(a7).T
-        a9 = self.Pd_vbr_hub
-        a10 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
-        a11 = self.P_vbl_hub
-        a12 = self.Pd_vbl_upright
-        a13 = config.Mbar_vbl_upright_jcl_rev[:,1:2]
-        a14 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
-        a15 = self.P_vbl_upright
-        a16 = A(a15).T
-        a17 = self.Pd_vbl_hub
-        a18 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
-        a19 = self.P_vbs_chassis
-        a20 = self.Pd_vbs_steer_gear
-        a21 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,1:2]
-        a22 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1]
-        a23 = self.P_vbs_steer_gear
-        a24 = A(a23).T
-        a25 = self.Pd_vbs_chassis
+        a0 = np.eye(1,dtype=np.float64)
+        a1 = config.Mbar_vbr_hub_jcr_rev[:,0:1]
+        a2 = self.P_vbr_hub
+        a3 = self.Pd_vbr_upright
+        a4 = config.Mbar_vbr_upright_jcr_rev[:,1:2]
+        a5 = config.Mbar_vbr_upright_jcr_rev[:,0:1]
+        a6 = self.P_vbr_upright
+        a7 = A(a6).T
+        a8 = self.Pd_vbr_hub
+        a9 = config.Mbar_vbl_hub_jcl_rev[:,0:1]
+        a10 = self.P_vbl_hub
+        a11 = self.Pd_vbl_upright
+        a12 = config.Mbar_vbl_upright_jcl_rev[:,1:2]
+        a13 = config.Mbar_vbl_upright_jcl_rev[:,0:1]
+        a14 = self.P_vbl_upright
+        a15 = A(a14).T
+        a16 = self.Pd_vbl_hub
+        a17 = config.Mbar_vbs_chassis_jcs_steer_gear[:,0:1]
+        a18 = self.P_vbs_chassis
+        a19 = self.Pd_vbs_steer_gear
+        a20 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,1:2]
+        a21 = config.Mbar_vbs_steer_gear_jcs_steer_gear[:,0:1]
+        a22 = self.P_vbs_steer_gear
+        a23 = A(a22).T
+        a24 = self.Pd_vbs_chassis
 
-        self.acc_eq_blocks = [(a0 + derivative(config.F_mcr_ver_act,t,0.1,2)*-1*a1),(a0 + derivative(config.F_mcl_ver_act,t,0.1,2)*-1*a1),(derivative(config.F_jcr_rev,t,0.1,2)*-1*a1 + multi_dot([a2.T,A(a3).T,(cos(config.F_jcr_rev(t,))*B(a4,a5) + sin(config.F_jcr_rev(t,))*-1*B(a4,a6)),a4]) + multi_dot([(cos(config.F_jcr_rev(t,))*multi_dot([a5.T,a8]) + sin(config.F_jcr_rev(t,))*-1*multi_dot([a6.T,a8])),B(a9,a2),a9]) + 2*multi_dot([((cos(config.F_jcr_rev(t,))*multi_dot([B(a7,a5),a4])).T + sin(config.F_jcr_rev(t,))*-1*multi_dot([a4.T,B(a7,a6).T])),B(a3,a2),a9])),(derivative(config.F_jcl_rev,t,0.1,2)*-1*a1 + multi_dot([a10.T,A(a11).T,(cos(config.F_jcl_rev(t,))*B(a12,a13) + sin(config.F_jcl_rev(t,))*-1*B(a12,a14)),a12]) + multi_dot([(cos(config.F_jcl_rev(t,))*multi_dot([a13.T,a16]) + sin(config.F_jcl_rev(t,))*-1*multi_dot([a14.T,a16])),B(a17,a10),a17]) + 2*multi_dot([((cos(config.F_jcl_rev(t,))*multi_dot([B(a15,a13),a12])).T + sin(config.F_jcl_rev(t,))*-1*multi_dot([a12.T,B(a15,a14).T])),B(a11,a10),a17])),(derivative(config.F_jcs_steer_gear,t,0.1,2)*-1*a1 + multi_dot([a18.T,A(a19).T,(cos(config.F_jcs_steer_gear(t,))*B(a20,a21) + sin(config.F_jcs_steer_gear(t,))*-1*B(a20,a22)),a20]) + multi_dot([(cos(config.F_jcs_steer_gear(t,))*multi_dot([a21.T,a24]) + sin(config.F_jcs_steer_gear(t,))*-1*multi_dot([a22.T,a24])),B(a25,a18),a25]) + 2*multi_dot([((cos(config.F_jcs_steer_gear(t,))*multi_dot([B(a23,a21),a20])).T + sin(config.F_jcs_steer_gear(t,))*-1*multi_dot([a20.T,B(a23,a22).T])),B(a19,a18),a25]))]
+        self.acc_eq_blocks = [derivative(config.F_mcr_ver_act,t,0.1,2)*-1*a0,derivative(config.F_mcl_ver_act,t,0.1,2)*-1*a0,(derivative(config.F_jcr_rev,t,0.1,2)*-1*a0 + multi_dot([a1.T,A(a2).T,(cos(config.F_jcr_rev(t,))*B(a3,a4) + sin(config.F_jcr_rev(t,))*-1*B(a3,a5)),a3]) + multi_dot([(cos(config.F_jcr_rev(t,))*multi_dot([a4.T,a7]) + sin(config.F_jcr_rev(t,))*-1*multi_dot([a5.T,a7])),B(a8,a1),a8]) + 2*multi_dot([((cos(config.F_jcr_rev(t,))*multi_dot([B(a6,a4),a3])).T + sin(config.F_jcr_rev(t,))*-1*multi_dot([a3.T,B(a6,a5).T])),B(a2,a1),a8])),(derivative(config.F_jcl_rev,t,0.1,2)*-1*a0 + multi_dot([a9.T,A(a10).T,(cos(config.F_jcl_rev(t,))*B(a11,a12) + sin(config.F_jcl_rev(t,))*-1*B(a11,a13)),a11]) + multi_dot([(cos(config.F_jcl_rev(t,))*multi_dot([a12.T,a15]) + sin(config.F_jcl_rev(t,))*-1*multi_dot([a13.T,a15])),B(a16,a9),a16]) + 2*multi_dot([((cos(config.F_jcl_rev(t,))*multi_dot([B(a14,a12),a11])).T + sin(config.F_jcl_rev(t,))*-1*multi_dot([a11.T,B(a14,a13).T])),B(a10,a9),a16])),(derivative(config.F_jcs_steer_gear,t,0.1,2)*-1*a0 + multi_dot([a17.T,A(a18).T,(cos(config.F_jcs_steer_gear(t,))*B(a19,a20) + sin(config.F_jcs_steer_gear(t,))*-1*B(a19,a21)),a19]) + multi_dot([(cos(config.F_jcs_steer_gear(t,))*multi_dot([a20.T,a23]) + sin(config.F_jcs_steer_gear(t,))*-1*multi_dot([a21.T,a23])),B(a24,a17),a24]) + 2*multi_dot([((cos(config.F_jcs_steer_gear(t,))*multi_dot([B(a22,a20),a19])).T + sin(config.F_jcs_steer_gear(t,))*-1*multi_dot([a19.T,B(a22,a21).T])),B(a18,a17),a24]))]
 
     
     def eval_jac_eq(self):

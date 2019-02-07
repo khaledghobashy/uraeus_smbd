@@ -315,6 +315,7 @@ class zero_matrix(sm.MatrixSymbol):
     n : int
         Number of cols.
     """
+    is_ZeroMatrix = True
     
     def __new__(cls,m,n):
         sym = r'{Z_{%sx%s}}'%(m,n)

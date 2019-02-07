@@ -27,6 +27,9 @@ class numerical_printer(C99CodePrinter):
     def _print_Equal_to(self,expr):
         return '%s'%self._print(expr.args[0])
     
+    def _print_matrix_symbol(self,expr):
+        return '%r'%expr._raw_name
+    
     def _print_dcm(self,expr):
         return '%r'%expr._raw_name
     
