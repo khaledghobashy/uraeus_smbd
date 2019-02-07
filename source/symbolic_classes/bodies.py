@@ -9,7 +9,7 @@ import sympy as sm
 
 from source.symbolic_classes.abstract_matrices import (reference_frame, vector, 
                                                        quatrenion, zero_matrix,
-                                                       A, G, matrix_symbol)
+                                                       A, G, E, matrix_symbol)
 
 
 class body(reference_frame):
@@ -99,6 +99,8 @@ class body(reference_frame):
         
         #print('Generating DCM')
         self.A = A(self.P)
+        self.G = G(self.P)
+        self.E = E(self.P)
                 
         #print('Generating Normalized Equations')
         self.normalized_pos_equation = sm.sqrt(self.P.T*self.P)-sm.Identity(1)

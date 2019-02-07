@@ -26,7 +26,6 @@ class algebraic_constraints(object):
         self.prefix  = (self.prefix+'.' if self.prefix!='' else self.prefix)
         self._name   = name
         
-                
         for i in range(self.def_axis):
             self._create_joint_def_axis(i+1)
         for i in range(self.def_locs):
@@ -47,51 +46,80 @@ class algebraic_constraints(object):
         splited_name = self.name.split('.')
         return ''.join(splited_name[-1])
     
-    def _construct(self):
-        self._create_equations_lists()
-        self._create_bodies_locals()
-            
-    def _create_equations_lists(self):
-        self._pos_level_equations = []
-        self._vel_level_equations = []
-        self._acc_level_equations = []
-        self._jacobian_i = []
-        self._jacobian_j = []
-    
-    def _create_reactions_args(self):
-        body_i_name = self.body_i.id_name
+    @property
+    def body_i(self):
+        return self._body_i
+    @body_i.setter
+    def body_i(self,body_i):
+        self._body_i = body_i
+        self.Ri  = body_i.R
+        self.Rdi = body_i.Rd
+        self.Pi  = body_i.P
+        self.Pdi = body_i.Pd
+        self.Ai  = body_i.A
         
-        fromate_ = (self.prefix,self.id_name)
-        L_raw_name = '%sL_%s'%fromate_
-        L_frm_name = r'{%s\lambda_{%s}}'%fromate_
-        self.L = matrix_symbol(L_raw_name,self.nc,1,L_frm_name)
-        
-        fromate_ = (self.prefix,body_i_name,self.id_name)
-        
-        #Joint Reaction Load acting on body_i.
-        RLi_raw_name = '%sJL_%s_%s'%fromate_
-        RLi_frm_name = r'{%sL^{%s}_{%s}}'%fromate_
-        self.RLi = matrix_symbol(RLi_raw_name,7,1,RLi_frm_name)
-        self.RLi = -self.jacobian_i.T*self.L
-        
-        #Joint Reaction Force acting on body_i.
-        RFi_raw_name = '%sJF_%s_%s'%fromate_
-        RFi_frm_name = r'{%sF^{%s}_{%s}}'%fromate_
-        self.RFi = matrix_symbol(RFi_raw_name,3,self.nc,RFi_frm_name)
-        
-        #Joint Reaction Torque acting on body_i in terms of orientation parameters.
-        RTie_raw_name = '%sJTe_%s_%s'%fromate_
-        RTie_frm_name = r'{%sTe^{%s}_{%s}}'%fromate_
-        self.RTi_e = matrix_symbol(RTie_raw_name,4,self.nc,RTie_frm_name)
-        
-        #Joint Reaction Torque acting on body_i in terms of cartesian coordinates.
-        RTic_raw_name = '%sJTc_%s_%s'%fromate_
-        RTic_frm_name = r'{%sTc^{%s}_{%s}}'%fromate_
-        self.RTi_c = matrix_symbol(RTic_raw_name,self.nc,1,RTic_frm_name)
-        
-        self.RTi_c_eq = 0.5*E(self.Pi)*self.RTi_e - Skew(self.ui)*self.RFi
-        
+        fromat_ = (self.prefix,body_i.id_name,self.id_name)
+        v_raw_name = '%subar_%s_%s'%fromat_
+        v_frm_name = r'{%s\bar{u}^{%s}_{%s}}'%fromat_
+        m_raw_name = '%sMbar_%s_%s'%fromat_
+        m_frm_name = r'{%s\bar{M}^{%s}_{%s}}'%fromat_
 
+        self.ui_bar = vector(v_raw_name,body_i,v_frm_name)        
+        self.mi_bar = reference_frame(m_raw_name,body_i,m_frm_name)
+        self.Bui = B(self.Pi,self.ui_bar)
+        self.ui = self.ui_bar.express()
+    
+    @property
+    def body_j(self):
+        return self._body_j
+    @body_j.setter
+    def body_j(self,body_j):
+        self._body_j = body_j
+        self.Rj  = body_j.R
+        self.Rdj = body_j.Rd
+        self.Pj  = body_j.P
+        self.Pdj = body_j.Pd
+        self.Aj  = body_j.A
+        
+        fromat_ = (self.prefix,body_j.id_name,self.id_name)
+        v_raw_name = '%subar_%s_%s'%fromat_
+        v_frm_name = r'{%s\bar{u}^{%s}_{%s}}'%fromat_
+        m_raw_name = '%sMbar_%s_%s'%fromat_
+        m_frm_name = r'{%s\bar{M}^{%s}_{%s}}'%fromat_
+
+        self.uj_bar = vector(v_raw_name,body_j,v_frm_name)        
+        self.mj_bar = reference_frame(m_raw_name,body_j,m_frm_name)
+        
+        self.Buj = B(self.Pj,self.uj_bar)
+        self.uj = self.uj_bar.express()
+    
+    @property
+    def dij(self):
+        return self.Ri + self.ui - self.Rj - self.uj
+    @property
+    def pos_level_equations(self):
+        return sm.BlockMatrix(self._pos_level_equations)
+    @property
+    def vel_level_equations(self):
+        return sm.BlockMatrix(self._vel_level_equations)
+    @property
+    def acc_level_equations(self):
+        return sm.BlockMatrix(self._acc_level_equations)
+    @property
+    def jacobian_i(self):
+        return sm.BlockMatrix(self._jacobian_i)
+    @property
+    def jacobian_j(self):
+        return sm.BlockMatrix(self._jacobian_j)
+    
+    @property
+    def arguments(self):
+        return self._arguments
+    @property
+    def constants(self):
+        return self._constants
+    
+    
     
     def _create_joint_def_axis(self,i):
         format_ = (self.prefix,i,self.id_name)
@@ -104,7 +132,7 @@ class algebraic_constraints(object):
         format_ = (self.prefix,i,self.id_name)
         u = vector('%spt%s_%s'%format_)
         setattr(self,'loc_%s'%i,u)
-    
+        
     def _create_joint_arguments(self):
         l = []
         for i in range(self.def_axis):
@@ -116,8 +144,21 @@ class algebraic_constraints(object):
             u = getattr(self,'loc_%s'%n)
             l.append(u)
         self._arguments = l
-
-    def _create_bodies_locals(self):
+    
+    
+    def _construct(self):
+        self._create_equations_lists()
+        self._create_local_equalities()
+        self._create_reactions_args()
+            
+    def _create_equations_lists(self):
+        self._pos_level_equations = []
+        self._vel_level_equations = []
+        self._acc_level_equations = []
+        self._jacobian_i = []
+        self._jacobian_j = []
+    
+    def _create_local_equalities(self):
         self._constants = []
         
         if self.def_axis == 1:
@@ -160,79 +201,39 @@ class algebraic_constraints(object):
         else: raise NotImplementedError
         self._constants += location_equalities
     
-    
-    @property
-    def body_i(self):
-        return self._body_i
-    @body_i.setter
-    def body_i(self,body_i):
-        self._body_i = body_i
-        self.Ri  = body_i.R
-        self.Rdi = body_i.Rd
-        self.Pi  = body_i.P
-        self.Pdi = body_i.Pd
-        self.Ai  = body_i.A
+    def _create_reactions_args(self):
+        body_i_name = self.body_i.id_name
         
-        fromate_ = (self.prefix,body_i.id_name,self.id_name)
-        v_raw_name = '%subar_%s_%s'%fromate_
-        v_frm_name = r'{%s\bar{u}^{%s}_{%s}}'%fromate_
-        m_raw_name = '%sMbar_%s_%s'%fromate_
-        m_frm_name = r'{%s\bar{M}^{%s}_{%s}}'%fromate_
-
-        self.ui_bar = vector(v_raw_name,body_i,v_frm_name)        
-        self.mi_bar = reference_frame(m_raw_name,body_i,m_frm_name)
-        self.Bui = B(self.Pi,self.ui_bar)
-        self.ui = self.ui_bar.express()
-    
-    @property
-    def body_j(self):
-        return self._body_j
-    @body_j.setter
-    def body_j(self,body_j):
-        self._body_j = body_j
-        self.Rj  = body_j.R
-        self.Rdj = body_j.Rd
-        self.Pj  = body_j.P
-        self.Pdj = body_j.Pd
-        self.Aj  = body_j.A
+        format_ = (self.prefix,self.id_name)
+        L_raw_name = '%sL_%s'%format_
+        L_frm_name = r'{%s\lambda_{%s}}'%format_
+        self.L = matrix_symbol(L_raw_name,self.nc,1,L_frm_name)
         
-        fromate_ = (self.prefix,body_j.id_name,self.id_name)
-        v_raw_name = '%subar_%s_%s'%fromate_
-        v_frm_name = r'{%s\bar{u}^{%s}_{%s}}'%fromate_
-        m_raw_name = '%sMbar_%s_%s'%fromate_
-        m_frm_name = r'{%s\bar{M}^{%s}_{%s}}'%fromate_
-
-        self.uj_bar = vector(v_raw_name,body_j,v_frm_name)        
-        self.mj_bar = reference_frame(m_raw_name,body_j,m_frm_name)
+        format_ = (self.prefix,body_i_name,self.id_name)
         
-        self.Buj = B(self.Pj,self.uj_bar)
-        self.uj = self.uj_bar.express()
-    
-    @property
-    def dij(self):
-        return self.Ri + self.ui - self.Rj - self.uj
-    @property
-    def pos_level_equations(self):
-        return sm.BlockMatrix(self._pos_level_equations)
-    @property
-    def vel_level_equations(self):
-        return sm.BlockMatrix(self._vel_level_equations)
-    @property
-    def acc_level_equations(self):
-        return sm.BlockMatrix(self._acc_level_equations)
-    @property
-    def jacobian_i(self):
-        return sm.BlockMatrix(self._jacobian_i)
-    @property
-    def jacobian_j(self):
-        return sm.BlockMatrix(self._jacobian_j)
-    
-    @property
-    def arguments(self):
-        return self._arguments
-    @property
-    def constants(self):
-        return self._constants
+        #Joint Reaction Load acting on body_i.
+        RLi_raw_name = '%sJL_%s_%s'%format_
+        RLi_frm_name = r'{%sL^{%s}_{%s}}'%format_
+        self.RLi = matrix_symbol(RLi_raw_name,7,1,RLi_frm_name)
+        self.RLi = -self.jacobian_i.T*self.L
+        
+        #Joint Reaction Force acting on body_i.
+        RFi_raw_name = '%sJF_%s_%s'%format_
+        RFi_frm_name = r'{%sF^{%s}_{%s}}'%format_
+        self.RFi = matrix_symbol(RFi_raw_name,3,self.nc,RFi_frm_name)
+        
+        #Joint Reaction Torque acting on body_i in terms of orientation parameters.
+        RTie_raw_name = '%sJTe_%s_%s'%format_
+        RTie_frm_name = r'{%sTe^{%s}_{%s}}'%format_
+        self.RTi_e = matrix_symbol(RTie_raw_name,4,self.nc,RTie_frm_name)
+        
+        #Joint Reaction Torque acting on body_i in terms of cartesian coordinates.
+        RTic_raw_name = '%sJTc_%s_%s'%format_
+        RTic_frm_name = r'{%sTc^{%s}_{%s}}'%format_
+        self.RTi_c = matrix_symbol(RTic_raw_name,self.nc,1,RTic_frm_name)
+        
+        self.RTi_c_eq = 0.5*E(self.Pi)*self.RTi_e - Skew(self.ui)*self.RFi
+        
     
     @classmethod
     def represent_equations(cls):
