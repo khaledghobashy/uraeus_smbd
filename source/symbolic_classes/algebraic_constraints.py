@@ -97,6 +97,10 @@ class algebraic_constraints(object):
     def dij(self):
         return self.Ri + self.ui - self.Rj - self.uj
     @property
+    def dijd(self):
+        return self.Rdi + self.Bui*self.Pdi - self.Rdj + self.Buj*self.Pdj
+    
+    @property
     def pos_level_equations(self):
         return sm.BlockMatrix(self._pos_level_equations)
     @property
@@ -147,7 +151,6 @@ class algebraic_constraints(object):
     
     
     def _construct(self):
-        self._create_equations_lists()
         self._create_local_equalities()
         self._create_reactions_args()
             
@@ -425,9 +428,10 @@ class joint_constructor(type):
         nc  = sum([e.nc for e in vector_equations])
         
         def construct(self):
-            self._construct()
+            self._create_equations_lists()
             for e in vector_equations:
                 e.construct(self)
+            self._construct()
                     
             
         attrs['construct'] = construct
