@@ -13,28 +13,32 @@ from source.solvers.py_numerical_functions import mirrored, centered, oriented
 class configuration(object):
 
     def __init__(self):
-        self.P_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.Rd_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
-        self.pt1_jcs_rc_cyl = np.array([[0], [0], [0]],dtype=np.float64)
-        self.ax1_jcs_rc_cyl = np.array([[0], [0], [0]],dtype=np.float64)
-        self.Pd_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.R_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
-        self.Rd_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_rbs_coupler = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rd_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_coupler = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.ax1_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
+        self.P_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rd_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
+        self.Pd_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.ax1_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
-        self.R_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
-        self.pt1_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
-        self.pt1_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
+        self.hpr_rocker_chassis = np.array([[0], [0], [0]],dtype=np.float64)
+        self.hpr_rocker_coupler = np.array([[0], [0], [0]],dtype=np.float64)
 
     def _set_arguments(self):
-        self.Rd_rbl_rocker = mirrored(self.Rd_rbr_rocker)
-        self.ax1_jcl_rocker_ch = mirrored(self.ax1_jcr_rocker_ch)
+        self.hpl_rocker_coupler = mirrored(self.hpr_rocker_coupler)
+        self.hpl_rocker_chassis = mirrored(self.hpr_rocker_chassis)
+        self.R_rbs_coupler = centered(self.hpr_rocker_coupler,self.hpl_rocker_coupler)
+        self.R_rbr_rocker = centered(self.hpr_rocker_chassis,self.hpr_rocker_coupler)
+        self.R_rbl_rocker = centered(self.hpl_rocker_chassis,self.hpl_rocker_coupler)
         self.P_rbl_rocker = mirrored(self.P_rbr_rocker)
-        self.R_rbl_rocker = mirrored(self.R_rbr_rocker)
+        self.Rd_rbl_rocker = mirrored(self.Rd_rbr_rocker)
         self.Pd_rbl_rocker = mirrored(self.Pd_rbr_rocker)
-        self.pt1_jcl_rocker_ch = mirrored(self.pt1_jcr_rocker_ch)
+        self.ax1_jcr_rocker_ch = oriented(self.hpr_rocker_coupler,self.hpl_rocker_coupler,self.hpr_rocker_chassis)
+        self.pt1_jcr_rocker_ch = self.hpr_rocker_chassis
+        self.ax1_jcl_rocker_ch = oriented(self.hpl_rocker_coupler,self.hpr_rocker_coupler,self.hpl_rocker_chassis)
+        self.pt1_jcl_rocker_ch = self.hpl_rocker_chassis
+        self.pt1_jcs_rc_sph = self.hpr_rocker_coupler
+        self.ax1_jcs_rc_cyl = oriented(self.hpr_rocker_coupler,self.hpl_rocker_coupler,self.hpr_rocker_chassis)
+        self.pt1_jcs_rc_cyl = self.hpl_rocker_coupler
 
     def load_from_csv(self,csv_file):
         dataframe = pd.read_csv(csv_file,index_col=0)
@@ -113,8 +117,8 @@ class topology(object):
         self.rbs_coupler = indicies_map[p+'rbs_coupler']
         self.rbr_rocker = indicies_map[p+'rbr_rocker']
         self.rbl_rocker = indicies_map[p+'rbl_rocker']
-        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
         self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
+        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset
