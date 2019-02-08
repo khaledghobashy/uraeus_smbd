@@ -11,7 +11,8 @@ import networkx as nx
 import itertools
 
 from source.symbolic_classes.abstract_matrices import (global_frame, vector,
-                                                       reference_frame, Mirrored)
+                                                       reference_frame, 
+                                                       Mirrored, zero_matrix)
 from source.symbolic_classes.bodies import body, ground, virtual_body
 from source.symbolic_classes.spatial_joints import absolute_locator
 from source.symbolic_classes.algebraic_constraints import joint_actuator
@@ -218,6 +219,15 @@ class abstract_topology(object):
         self._edges_keys_map = {}
         self._insert_ground()
         self._param_config = parametric_configuration(self)
+        self._initialize_force_graph()
+        
+    def _initialize_force_graph(self):
+        self.force_graph = nx.MultiDiGraph(name=self.name)
+        self._forces_map = {}
+        self._forces_keys_map = {}
+        attr_dict = self._typ_attr_dict(virtual_body)
+        self.force_graph.add_node(self.grf,**attr_dict)
+        
         
     def _set_global_frame(self):
         self.global_instance = global_frame(self.name)
@@ -312,6 +322,11 @@ class abstract_topology(object):
         plt.figure(figsize=(10,6))
         nx.draw_spring(self.selected_variant,with_labels=True)
         plt.show()
+        
+    def draw_forces_topology(self):
+        plt.figure(figsize=(10,6))
+        nx.draw_spring(self.force_graph,with_labels=True)
+        plt.show()
     
     def _coordinates_mapper(self,sym):
         q_sym  = sm.MatrixSymbol(sym,self.n,1)
@@ -374,7 +389,22 @@ class abstract_topology(object):
         self.edges[e].update(self._obj_attr_dict(edge_instance))
     
     def _assemble_edges(self):
-        [self._assemble_edge(e) for e in self.edges]
+        for e in self.edges : self._assemble_edge(e)
+    
+    def _assemble_force_edge(self,e):
+        edges = self.force_graph.edges
+        edge_class = edges[e]['cls']
+        name = edges[e]['name']
+        b1, b2, key = e
+        b1_obj = self.nodes[b1]['obj'] 
+        b2_obj = self.nodes[b2]['obj']
+        edge_instance = edge_class(name,b2_obj,b1_obj)
+        edges[e].update(self._force_obj_attr_dict(edge_instance))
+    
+    def _assemble_force_edges(self):
+        for e in self.force_graph.edges : self._assemble_force_edge(e)
+    def _assemble_force_nodes(self):
+        self.force_graph.add_nodes_from(self.nodes(data=True))
     
     def _remove_virtual_edges(self):
         self.graph.remove_edges_from(self.virtual_edges)
@@ -445,10 +475,45 @@ class abstract_topology(object):
         self.jac_cols = [(ind_b[i//2]+'*2' if i%2==0 else ind_b[i//2]+'*2+1') for i in cols_ind]
 
     
+    def _assemble_forces_equations(self):
+        nodes = self.force_graph.nodes
+        edges = self.force_graph.edges
+        nrows = 2*len(nodes)
+        F_applied = sm.MutableSparseMatrix(nrows,1,None)
+        for n in nodes:
+            in_edges  = self.force_graph.in_edges([n],data='obj')
+            if len(in_edges) == 0 :
+                Q_in_R = zero_matrix(3,1)
+                Q_in_P = zero_matrix(4,1)
+            else:
+                Q_in_R = sm.MatAdd(*[e[-1].Qi.blocks[0] for e in in_edges])
+                Q_in_P = sm.MatAdd(*[e[-1].Qi.blocks[1] for e in in_edges])
+            
+            out_edges = self.force_graph.out_edges([n],data='obj')
+            if len(out_edges) == 0 :
+                Q_out_R = zero_matrix(3,1)
+                Q_out_P = zero_matrix(4,1)
+            else:
+                Q_out_R = sm.MatAdd(*[e[-1].Qj.blocks[0] for e in out_edges])
+                Q_out_P = sm.MatAdd(*[e[-1].Qj.blocks[1] for e in out_edges])
+            
+            Q_t_R = Q_in_R + Q_out_R
+            Q_t_P = Q_in_P + Q_out_P
+            ind = self.nodes_indicies[n]
+            F_applied[ind*2] = Q_t_R
+            F_applied[ind*2+1] = Q_t_P
+        self.forces = F_applied
+            
+                
+                
+        
+    
     def assemble_model(self):
         self._set_global_frame()
         self._assemble_nodes()
         self._assemble_edges()
+        self._assemble_force_nodes()
+        self._assemble_force_edges()
         self._remove_virtual_edges()
         self._assemble_equations()
         self._initialize_toplogy_reqs()
@@ -466,20 +531,50 @@ class abstract_topology(object):
         
 ###############################################################################
 ###############################################################################
+from source.symbolic_classes.forces import gravity_force, centrifugal_force
 
 class topology(abstract_topology):
     
+    @staticmethod
+    def _force_typ_attr_dict(typ):
+        attr_dict = {'cls':typ}
+        return attr_dict
+    
+    @staticmethod
+    def _force_obj_attr_dict(obj):
+        attr_dict = {'obj':obj, 'name':obj.name}
+        return attr_dict
+    
+    def add_force(self,typ,name,body_i,body_j):
+        variant = self.force_graph
+        assert body_i and body_j in variant.nodes , 'bodies do not exist!'
+        edge  = (body_i,body_j)
+        if name not in self._forces_keys_map:
+            attr_dict = self._force_typ_attr_dict(typ)
+            attr_dict.update({'name':name})
+            key = variant.add_edge(*edge,**attr_dict)
+            self._forces_map[name] = (*edge,key)
+            self._forces_keys_map[name] = key
+    
+    def _add_node_forces(self,n,attr_dict):
+        grf = self.grf
+        self.force_graph.add_node(n,**attr_dict)
+        self.add_force(gravity_force,'%s_gravity'%n,grf,n)
+        self.add_force(centrifugal_force,'%s_centrifuge'%n,grf,n)
+        
     def add_body(self,name):
         variant = self.selected_variant
         if name not in variant.nodes():
             attr_dict = self._typ_attr_dict(body)
             variant.add_node(name,**attr_dict)
+            self._add_node_forces(name,attr_dict)
+            
     
     def add_joint(self,typ,name,body_i,body_j):
         assert body_i and body_j in self.nodes , 'bodies do not exist!'
         variant = self.selected_variant
         edge  = (body_i,body_j)
-        if edge not in variant.edges:
+        if name not in self._edges_keys_map:
             attr_dict = self._typ_attr_dict(typ)
             attr_dict.update({'name':name})
             key = variant.add_edge(*edge,**attr_dict)
@@ -514,12 +609,11 @@ class topology(abstract_topology):
 
 class template_based_topology(topology):
     
-    def __init__(self,name):
-        super().__init__(name)
-        self.grf = 'vbs_ground'
-    
+        
     def _insert_ground(self):
-        self.add_virtual_body('ground')    
+        self.grf = 'vbs_ground'
+        self.add_virtual_body('ground')
+        
     
     def add_body(self,name,mirrored=False):
         variant = self.selected_variant

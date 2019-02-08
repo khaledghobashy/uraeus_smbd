@@ -125,8 +125,8 @@ class generic_force(object):
         
 class gravity_force(generic_force):
     
-    def __init__(self,body):
-        name = 'G'
+    def __init__(self,name,body,*args):
+#        name = 'G'
         super().__init__(name,body)
     
     @property
@@ -139,8 +139,8 @@ class gravity_force(generic_force):
 
 class centrifugal_force(generic_force):
     
-    def __init__(self,body):
-        name = 'C'
+    def __init__(self,name,body,*args):
+#        name = 'C'
         super().__init__(name,body)
     
     @property

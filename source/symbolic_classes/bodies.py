@@ -26,7 +26,8 @@ class body(reference_frame):
     Attributes
     ----------
     n : int
-        Number of generalized coordinates used to define the body configuration.
+        Number of generalized coordinates used to define the body 
+        configuration.
     nc : int
         Number of scalar constraint equations (euler-parameters normalization).
     nve : int

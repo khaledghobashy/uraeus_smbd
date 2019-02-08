@@ -89,5 +89,5 @@ template.assemble_model()
 #template.param_config.add_relation(CR.Oriented,'ax1_jcr_strut',['hpr_strut_lca','hpr_strut_chassis'],True)
 #
 
-numerical_code = template_code_generator(template)
-numerical_code.write_code_file()
+#numerical_code = template_code_generator(template)
+#numerical_code.write_code_file()
