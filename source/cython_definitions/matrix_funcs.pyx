@@ -98,6 +98,63 @@ cpdef B(double[:,:] p, double[:,:] u):
 
     return m
 
+@cython.wraparound (False)
+@cython.boundscheck(False)
+cpdef E(double[:,:] p):
+    
+    cdef double e0 = p[0,0]
+    cdef double e1 = p[1,0]
+    cdef double e2 = p[2,0]
+    cdef double e3 = p[3,0]
+        
+    m = np.empty((3,4),dtype=np.float64)
+    cdef double[:,:] result = m.view()
+    
+    result[0,0] = -e1
+    result[0,1] =  e0
+    result[0,2] = -e3
+    result[0,3] =  e2
+    
+    result[1,0] = -e2
+    result[1,1] =  e3
+    result[1,2] =  e0
+    result[1,3] = -e1
+    
+    result[2,0] = -e3
+    result[2,1] = -e2
+    result[2,2] =  e1
+    result[2,3] =  e0
+
+    return m
+
+@cython.wraparound (False)
+@cython.boundscheck(False)
+cpdef G(double[:,:] p):
+    
+    cdef double e0 = p[0,0]
+    cdef double e1 = p[1,0]
+    cdef double e2 = p[2,0]
+    cdef double e3 = p[3,0]
+        
+    m = np.empty((3,4),dtype=np.float64)
+    cdef double[:,:] result = m.view()
+    
+    result[0,0] = -e1
+    result[0,1] =  e0
+    result[0,2] =  e3
+    result[0,3] = -e2
+    
+    result[1,0] = -e2
+    result[1,1] = -e3
+    result[1,2] =  e0
+    result[1,3] =  e1
+    
+    result[2,0] = -e3
+    result[2,1] =  e2
+    result[2,2] = -e1
+    result[2,3] =  e0
+
+    return m
 
 @cython.wraparound (False)
 @cython.boundscheck(False)
@@ -163,14 +220,11 @@ cpdef triad(double[:,:] v1, double[:,:] v2=None):
     
     return m
 
-
-
-
     
-@cython.wraparound (False)
+@cython.wraparound(False)
 @cython.boundscheck(False)
 @cython.nonecheck(False)
-@cython.cdivision (True)
+@cython.cdivision(True)
 cpdef sparse_assembler(list blocks, int[:] b_rows, int[:] b_cols,
                        list e_data, list e_rows, list e_cols): 
     cdef:

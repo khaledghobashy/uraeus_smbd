@@ -201,7 +201,13 @@ class algebraic_constraints(object):
             location_equalities = [ui_bar_eq,uj_bar_eq]
         elif self.def_locs == 0:
             location_equalities = []
-        else: raise NotImplementedError
+        elif self.def_locs == 2: 
+            loc1 = self.loc_1
+            loc2 = self.loc_2
+            ui_bar_eq = sm.Eq(self.ui_bar, loc1.express(self.body_i) - self.Ri.express(self.body_i))
+            uj_bar_eq = sm.Eq(self.uj_bar, loc2.express(self.body_j) - self.Rj.express(self.body_j))
+            location_equalities = [ui_bar_eq,uj_bar_eq]
+
         self._constants += location_equalities
         
     def _construct_actuation_functions(self):

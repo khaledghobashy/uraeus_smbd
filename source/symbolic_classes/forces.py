@@ -8,9 +8,9 @@ Created on Thu Feb  7 08:43:54 2019
 import sympy as sm
 from source.symbolic_classes.abstract_matrices import (reference_frame,
                                                        global_frame,vector, G, 
-                                                       Skew, 
+                                                       Skew, Force, Moment,
                                                        zero_matrix, matrix_symbol)
-from source.symbolic_classes.spatial_joints import cylinderical
+from source.symbolic_classes.spatial_joints import dummy_cylinderical
 
 
 class generic_force(object):
@@ -21,83 +21,36 @@ class generic_force(object):
         self.prefix  = '.'.join(splited_name[:-1])
         self.prefix  = (self.prefix+'.' if self.prefix!='' else self.prefix)
         self._name   = name
+        self.joint = dummy_cylinderical(name,body_i,body_j)
                 
         if body_i : self.body_i = body_i 
         if body_j : self.body_j = body_j
-            
-    @property
-    def name(self):
-        return self._name
-    @property
-    def id_name(self):
-        splited_name = self.name.split('.')
-        return ''.join(splited_name[-1])
-    
-    def construct(self):
-        self._construct_equations()
-    
+        
+    def __getattr__(self,attr):
+        try:
+            object.__getattribute__(self,attr)
+        except AttributeError:
+            j = object.__getattribute__(self,'joint')
+            return getattr(j,attr)
+                
     @property
     def body_i(self):
         return self._body_i
     @body_i.setter
     def body_i(self,body_i):
-        self._body_i = body_i
-        self.Ri  = body_i.R
-        self.Rdi = body_i.Rd
-        self.Pi  = body_i.P
-        self.Pdi = body_i.Pd
-        self.Ai  = body_i.A
+        self.joint.body_i = body_i
         self.Gi  = body_i.G
-        
-        bname = body_i.id_name
-        
-        fromat_   = (self.prefix,bname,self.id_name)
-        u_raw_name = '%subar_%s_%s'%fromat_
-        u_frm_name = r'{%s\bar{u}^{%s}_{%s}}'%fromat_
-        
-        self.ui_bar = vector(u_raw_name,body_i,u_frm_name)        
-        self.ui     = self.ui_bar.express()
-        
-        F_format = (self.prefix,'F',bname,self.id_name)
-        M_format = (self.prefix,'M',bname,self.id_name)
-        F_raw_name, F_frm_name = self._formatter(*F_format)
-        M_raw_name, M_frm_name = self._formatter(*M_format)
-        
-        self.Fi   = vector(F_raw_name,format_as=F_frm_name)
-        self.Mi   = vector(M_raw_name,format_as=M_frm_name)
-        self.Mi_e = 2*G(self.Pi).T*(self.Mi + Skew(self.ui).T*self.Fi)
+        self._construct_force_i()
     
     @property
     def body_j(self):
         return self._body_j
     @body_j.setter
     def body_j(self,body_j):
-        self._body_j = body_j
-        self.Rj  = body_j.R
-        self.Rdj = body_j.Rd
-        self.Pj  = body_j.P
-        self.Pdj = body_j.Pd
-        self.Aj  = body_j.A
+        self.joint.body_j = body_j
+        self.Gj  = body_j.G
+        self._construct_force_j()
         
-        bname = body_j.id_name
-
-        fromat_   = (self.prefix,bname,self.id_name)
-        u_raw_name = '%subar_%s_%s'%fromat_
-        u_frm_name = r'{%s\bar{u}^{%s}_{%s}}'%fromat_
-        
-        self.uj_bar = vector(u_raw_name,body_j,u_frm_name)        
-        self.uj     = self.uj_bar.express()
-        
-        F_format = (self.prefix,'F',bname,self.id_name)
-        M_format = (self.prefix,'M',bname,self.id_name)
-        F_raw_name, F_frm_name = self._formatter(*F_format)
-        M_raw_name, M_frm_name = self._formatter(*M_format)
-        
-        self.Fj   = vector(F_raw_name,format_as=F_frm_name)
-        self.Mj   = vector(M_raw_name,format_as=M_frm_name)
-        self.Mj_e = 2*G(self.Pj).T*(self.Mj + Skew(self.uj).T*self.Fj)
-    
-    
     @property
     def Qi(self):
         return sm.BlockMatrix([[self.Fi], [self.Mi_e]])
@@ -107,21 +60,41 @@ class generic_force(object):
     
     @property
     def arguments(self):
-        return [self.Fi,self.Mi,self.Fj,self.Mj]
+        config_args = self.joint.arguments
+        forces_inputs = [self.Fi,self.Mi,self.Fj,self.Mj]
+        args = config_args + forces_inputs
+        return args
+    
+    @property
+    def constants(self):
+        return self.joint.constants
+        
+    
+    def _construct_force_i(self):
+        bname = self.body_i.id_name
+        F_format = (self.prefix,'F',bname,self.id_name)
+        M_format = (self.prefix,'M',bname,self.id_name)
+        F_raw_name, F_frm_name = self._formatter(*F_format)
+        M_raw_name, M_frm_name = self._formatter(*M_format)
+        self.Fi   = vector(F_raw_name,format_as=F_frm_name)
+        self.Mi   = vector(M_raw_name,format_as=M_frm_name)
+        self.Mi_e = 2*G(self.Pi).T*(self.Mi + Skew(self.ui).T*self.Fi)
+    
+    def _construct_force_j(self):
+        bname = self.body_j.id_name
+        F_format = (self.prefix,'F',bname,self.id_name)
+        M_format = (self.prefix,'M',bname,self.id_name)
+        F_raw_name, F_frm_name = self._formatter(*F_format)
+        M_raw_name, M_frm_name = self._formatter(*M_format)
+        self.Fj   = vector(F_raw_name,format_as=F_frm_name)
+        self.Mj   = vector(M_raw_name,format_as=M_frm_name)
+        self.Mj_e = 2*G(self.Pj).T*(self.Mj + Skew(self.uj).T*self.Fj)
     
     @staticmethod
     def _formatter(*args):
         raw_name = '%s%s_%s_%s'%(*args,)
         frm_name = r'{%s{%s}^{%s}_{%s}}'%(*args,)
         return (raw_name,frm_name)
-    
-    def _construct_equations(self):
-        
-        Mi_e = 2*G(self.Pi).T*(self.Mi + Skew(self.ui).T*self.Fi)
-        Mj_e = 2*G(self.Pj).T*(self.Mj + Skew(self.uj).T*self.Fj)
-        
-        self._equations = [[[self.Fi], [Mi_e]], [[self.Fj], [Mj_e]]]
-        
         
 class gravity_force(generic_force):
     
@@ -159,17 +132,20 @@ class internal_force(generic_force):
         
         reference_frame.set_global_frame(body_i.global_frame)
         
-        virtual_joint = cylinderical(name,body_i,body_j)
+        virtual_joint = dummy_cylinderical(name,body_i,body_j)
         self.joint = virtual_joint
         
         format_ = (self.prefix,self.id_name)
         self.LF = matrix_symbol('%s%s_FL'%format_,1,1)
+
+        self.Fs = sm.Function('Fs_%s'%name)#('dx')
+        self.Fd = sm.Function('Fd_%s'%name)#('dv')
+        self.Fa = sm.Function('Fa_%s'%name)#('dv')
         
-        self.Kt = sm.symbols('%s%s_Kt'%format_)
-        self.Ct = sm.symbols('%s%s_Ct'%format_)
-        self.Kr = sm.symbols('%s%s_Kr'%format_)
-        self.Cr = sm.symbols('%s%s_Cr'%format_)
-        
+        self.Ms = sm.Function('Ms_%s'%name)#('dx')
+        self.Md = sm.Function('Md_%s'%name)#('dv')
+        self.Ma = sm.Function('Ma_%s'%name)#('dv')
+                
     @property
     def Qi(self):
         distance    = sm.sqrt(self.joint.dij.T*self.joint.dij)
@@ -178,14 +154,18 @@ class internal_force(generic_force):
         defflection = self.LF - distance
         velocity    = unit_vector.T*self.joint.dijd
              
-        self.Fi = unit_vector*(self.Kt*defflection - self.Ct*velocity)
+        self.Fi = unit_vector*(self.Fs(defflection) - self.Fd(velocity))
         Mi_e = 2*G(self.Pi).T*(self.Mi + Skew(self.ui).T*self.Fi)
-        return sm.BlockMatrix([[self.Fi], [Mi_e]])
+        
+        force_vector = sm.BlockMatrix([[self.Fi], [Mi_e]])
+        return force_vector
+    
     @property
     def Qj(self):
         self.Fj = -self.Fi
         Mj_e = 2*G(self.Pj).T*(self.Mj + Skew(self.uj).T*self.Fj)
-        return sm.BlockMatrix([[self.Fj], [Mj_e]])
+        force_vector = sm.BlockMatrix([[self.Fj], [Mj_e]])
+        return force_vector
 
     
     

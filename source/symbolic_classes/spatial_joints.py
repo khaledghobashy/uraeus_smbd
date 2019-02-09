@@ -80,5 +80,11 @@ class absolute_locator(absolute_actuator,metaclass=joint_constructor):
     def_locs = 0
     vector_equations = [coordinate_constraint()]
 
-
+class dummy_cylinderical(algebraic_constraints,metaclass=joint_constructor):
+    def_axis = 1
+    def_locs = 2
+    vector_equations = [dot_product_1('i','k'),
+                        dot_product_1('j','k'),
+                        dot_product_2('i'),
+                        dot_product_2('j')]
     

@@ -577,7 +577,8 @@ class topology(abstract_topology):
 
     def add_force(self,typ,name,body_i,body_j=None):
         variant = self.force_graph
-        assert body_i and body_j in variant.nodes , 'bodies do not exist!'
+        assert body_i and body_j in self.nodes,\
+        '%s or %s do not exist!'%(body_i,body_j)
         edge  = (body_i,body_j)
         if name not in self._forces_keys_map:
             attr_dict = self._force_typ_attr_dict(typ)
@@ -588,7 +589,7 @@ class topology(abstract_topology):
     
     def _add_node_forces(self,n,attr_dict):
         grf = self.grf
-        self.force_graph.add_node(n,**attr_dict)
+        self.force_graph.add_node(n)
         self.add_force(gravity_force,'%s_gravity'%n,grf,n)
         self.add_force(centrifugal_force,'%s_centrifuge'%n,grf,n)
 
@@ -699,8 +700,8 @@ class template_based_topology(topology):
     def add_force(self,typ,name,body_i,body_j,mirrored=False):
         variant = self.force_graph
         if mirrored:
-            body_i_mirr = variant.nodes[body_i]['mirr']
-            body_j_mirr = variant.nodes[body_j]['mirr']
+            body_i_mirr = self.nodes[body_i]['mirr']
+            body_j_mirr = self.nodes[body_j]['mirr']
             name1 = 'far_%s'%name
             name2 = 'fal_%s'%name
             super().add_force(typ,name1,body_i,body_j)

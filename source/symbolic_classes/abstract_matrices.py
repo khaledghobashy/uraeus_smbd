@@ -38,6 +38,9 @@ class AbstractMatrix(sm.MatrixExpr):
         pass
     def doit(self):
         return self
+    def _latex(self,expr):
+        name = self.__class__.__name__
+        return r'{%s%s}'%(name,self.args,)
     
 class A(AbstractMatrix):
     """
@@ -112,7 +115,22 @@ class Skew(AbstractMatrix):
         p = self.args[0]
         return r'{Skew(%s)}'%p
 
-    
+class Force(AbstractMatrix):
+    shape = (3,1)
+    def _latex(self,expr):
+        name = self.__class__.__name__
+        return r'{%s%s}'%(name,self.args,)
+class Moment(AbstractMatrix):
+    shape = (3,1)
+    def _latex(self,expr):
+        name = self.__class__.__name__
+        return r'{%s%s}'%(name,self.args,)
+
+
+def matrix_function_constructor(cls_name,shape=(3,1),**kwargs):
+    attrs = {'shape':shape}
+    cls = type(cls_name,(AbstractMatrix,),attrs)
+    return cls
 ###############################################################################
 ###############################################################################
     
@@ -323,7 +341,7 @@ class zero_matrix(sm.MatrixSymbol):
     def __init__(self,m,n):
         self.sym = super().name
         self._args = (m,n)
-    
+        
     def _latex(self,expr):
         return self.sym
     def _ccode(self,expr,**kwargs):
@@ -339,6 +357,7 @@ class zero_matrix(sm.MatrixSymbol):
     @property
     def shape(self):
         return self._args
+
 
 ###############################################################################
 class global_frame(object):
