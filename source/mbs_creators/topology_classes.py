@@ -304,6 +304,9 @@ class abstract_topology(object):
     def mapped_gen_velocities(self):
         return self._coordinates_mapper('qd')
     @property
+    def mapped_lagrange_multipliers(self):
+        return self._lagrange_multipliers_mapper()
+    @property
     def virtual_coordinates(self):
         q_virtuals = []
         for n in self.virtual_bodies:
@@ -374,6 +377,17 @@ class abstract_topology(object):
                 i+=s
         return q
     
+    def _lagrange_multipliers_mapper(self):
+        l = []
+        lamda = sm.MatrixSymbol('Lambda',self.nc,1)
+        i = 0
+        for e in itertools.filterfalse(self._check_virtual_edge,self.edges):
+            obj = self.edges[e]['obj']
+            nc = obj.nc
+            eq = sm.Eq(obj.L,lamda[i:i+nc])
+            l.append(eq)
+            i += nc
+        return l
     
     def _assemble_nodes(self):
         for n in self.nodes : self._assemble_node(n) 

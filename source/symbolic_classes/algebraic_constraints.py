@@ -86,6 +86,9 @@ class algebraic_constraints(object):
     @property
     def constants(self):
         return self._constants
+    @property
+    def reactions_equalities(self):
+        return self._reactions_equalities
     
     
     def _create_joint_def_axis(self,i):
@@ -116,6 +119,7 @@ class algebraic_constraints(object):
     def _construct(self):
         self._create_local_equalities()
         self._create_reactions_args()
+        self._create_reactions_equalities()
             
     def _create_equations_lists(self):
         self._pos_level_equations = []
@@ -190,24 +194,31 @@ class algebraic_constraints(object):
         Qi_raw_name = '%sQ_%s_%s'%format_
         Qi_frm_name = r'{%sQ^{%s}_{%s}}'%format_
         self.Qi = matrix_symbol(Qi_raw_name,7,1,Qi_frm_name)
-        self.Qi = -self.jacobian_i.T*self.L
+#        self.Qi = -self.jacobian_i.T*self.L
         
         #Joint Reaction Force acting on body_i.
         Fi_raw_name = '%sF_%s_%s'%format_
         Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
-        self.Fi = matrix_symbol(Fi_raw_name,3,self.nc,Fi_frm_name)
+        self.Fi = matrix_symbol(Fi_raw_name,3,1,Fi_frm_name)
         
         #Joint Reaction Torque acting on body_i in terms of orientation parameters.
         Tie_raw_name = '%sTe_%s_%s'%format_
         Tie_frm_name = r'{%sTe^{%s}_{%s}}'%format_
-        self.Ti_e = matrix_symbol(Tie_raw_name,4,self.nc,Tie_frm_name)
+        self.Ti_e = matrix_symbol(Tie_raw_name,4,1,Tie_frm_name)
         
         #Joint Reaction Torque acting on body_i in terms of cartesian coordinates.
         Ti_raw_name = '%sT_%s_%s'%format_
         Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
-        self.Ti = matrix_symbol(Ti_raw_name,self.nc,1,Ti_frm_name)
+        self.Ti = matrix_symbol(Ti_raw_name,3,1,Ti_frm_name)
         
         self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e - Skew(self.ui)*self.Fi
+        
+    def _create_reactions_equalities(self):
+        Qi_eq = sm.Eq(self.Qi,-self.jacobian_i.T*self.L)
+        Fi_eq = sm.Eq(self.Fi,self.Qi[0:3,0])
+        Ti_e_eq = sm.Eq(self.Ti_e,self.Qi[3:7,0])
+        Ti_eq = sm.Eq(self.Ti,self.Ti_eq)
+        self._reactions_equalities = [Qi_eq,Fi_eq,Ti_e_eq,Ti_eq]
         
     
     @classmethod
@@ -249,7 +260,7 @@ class spehrical_constraint(object):
         obj._jacobian_j.append(jacobian[1])
     
     
-    
+###############################################################################
 class dot_product_1(object):
     
     nc  = 1
@@ -286,7 +297,7 @@ class dot_product_1(object):
         obj._jacobian_i.append(jacobian[0])
         obj._jacobian_j.append(jacobian[1])
     
-
+###############################################################################
 class dot_product_2(object):
     
     nc  = 1
@@ -320,7 +331,7 @@ class dot_product_2(object):
         obj._jacobian_i.append(jacobian[0])
         obj._jacobian_j.append(jacobian[1])
         
-
+###############################################################################
 class angle_constraint(object):
     nc = 1
     
@@ -343,8 +354,8 @@ class angle_constraint(object):
         Pdj = obj.Pdj
         Z = zero_matrix(1,3)
         
-        c = sm.cos(obj.F('t'))
-        s = sm.sin(obj.F('t'))
+        c = sm.cos(obj.act_func('t'))
+        s = sm.sin(obj.act_func('t'))
         
         pos_level_equation = (v3.T*v2)*c - (v1.T*v2)*s
         vel_level_equation = zero_matrix(1,1)        
@@ -362,7 +373,7 @@ class angle_constraint(object):
         obj._jacobian_i.append(jacobian[0])
         obj._jacobian_j.append(jacobian[1])
 
-
+###############################################################################
 class coordinate_constraint(object):
     
     nc  = 1
@@ -426,15 +437,11 @@ class actuator(algebraic_constraints):
         
     def _construct_actuation_functions(self):
         self.t = t = sm.symbols('t')
-        self.F = sm.Function('%sF_%s'%(self.prefix,self.id_name))
-        self._pos_function = self.F(t)
+        self.act_func = sm.Function('%sAF_%s'%(self.prefix,self.id_name))
+        self._pos_function = self.act_func(t)
         self._vel_function = sm.diff(self._pos_function,t)
         self._acc_function = sm.diff(self._pos_function,t,t)
-    
-#    def _construct(self):
-#        self._construct_actuation_functions()
-#        super()._construct()
-        
+            
     
     @property
     def pos_level_equations(self):
@@ -448,8 +455,10 @@ class actuator(algebraic_constraints):
     
     @property
     def arguments(self):
-        return super().arguments + [self.F]
-        
+        return super().arguments + [self.act_func]
+
+###############################################################################
+###############################################################################
 
 class joint_actuator(actuator):
     
@@ -462,6 +471,8 @@ class joint_actuator(actuator):
         else:
             super().__init__(name)
 
+###############################################################################
+###############################################################################
 
 class absolute_actuator(actuator):
     
