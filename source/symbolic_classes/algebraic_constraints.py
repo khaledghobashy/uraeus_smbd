@@ -8,6 +8,7 @@ Created on Tue Jan  1 11:06:05 2019
 import sympy as sm
 from source.symbolic_classes.abstract_matrices import (reference_frame,vector, zero_matrix, 
                                                        B, E, matrix_symbol, Skew)
+from source.symbolic_classes.helper_funcs import body_setter, name_setter
 from source.symbolic_classes.bodies import body
 from IPython.display import display
 
@@ -20,12 +21,8 @@ class algebraic_constraints(object):
     def_locs = 1
     
     def __init__(self,name,body_i=None,body_j=None):
-        splited_name = name.split('.')
-        self._id_name = ''.join(splited_name[-1])
-        self.prefix  = '.'.join(splited_name[:-1])
-        self.prefix  = (self.prefix+'.' if self.prefix!='' else self.prefix)
-        self._name   = name
-        
+        name_setter(self,name)
+                
         for i in range(self.def_axis):
             self._create_joint_def_axis(i+1)
         for i in range(self.def_locs):
@@ -51,47 +48,14 @@ class algebraic_constraints(object):
         return self._body_i
     @body_i.setter
     def body_i(self,body_i):
-        self._body_i = body_i
-        self.Ri  = body_i.R
-        self.Rdi = body_i.Rd
-        self.Pi  = body_i.P
-        self.Pdi = body_i.Pd
-        self.Ai  = body_i.A
-        
-        fromat_ = (self.prefix,body_i.id_name,self.id_name)
-        v_raw_name = '%subar_%s_%s'%fromat_
-        v_frm_name = r'{%s\bar{u}^{%s}_{%s}}'%fromat_
-        m_raw_name = '%sMbar_%s_%s'%fromat_
-        m_frm_name = r'{%s\bar{M}^{%s}_{%s}}'%fromat_
-
-        self.ui_bar = vector(v_raw_name,body_i,v_frm_name)        
-        self.mi_bar = reference_frame(m_raw_name,body_i,m_frm_name)
-        self.Bui = B(self.Pi,self.ui_bar)
-        self.ui = self.ui_bar.express()
-    
+        body_setter(self,body_i,'i')
+            
     @property
     def body_j(self):
         return self._body_j
     @body_j.setter
     def body_j(self,body_j):
-        self._body_j = body_j
-        self.Rj  = body_j.R
-        self.Rdj = body_j.Rd
-        self.Pj  = body_j.P
-        self.Pdj = body_j.Pd
-        self.Aj  = body_j.A
-        
-        fromat_ = (self.prefix,body_j.id_name,self.id_name)
-        v_raw_name = '%subar_%s_%s'%fromat_
-        v_frm_name = r'{%s\bar{u}^{%s}_{%s}}'%fromat_
-        m_raw_name = '%sMbar_%s_%s'%fromat_
-        m_frm_name = r'{%s\bar{M}^{%s}_{%s}}'%fromat_
-
-        self.uj_bar = vector(v_raw_name,body_j,v_frm_name)        
-        self.mj_bar = reference_frame(m_raw_name,body_j,m_frm_name)
-        
-        self.Buj = B(self.Pj,self.uj_bar)
-        self.uj = self.uj_bar.express()
+        body_setter(self,body_j,'j')
     
     @property
     def dij(self):
@@ -122,7 +86,6 @@ class algebraic_constraints(object):
     @property
     def constants(self):
         return self._constants
-    
     
     
     def _create_joint_def_axis(self,i):
@@ -224,27 +187,27 @@ class algebraic_constraints(object):
         format_ = (self.prefix,body_i_name,self.id_name)
         
         #Joint Reaction Load acting on body_i.
-        RLi_raw_name = '%sJL_%s_%s'%format_
-        RLi_frm_name = r'{%sL^{%s}_{%s}}'%format_
-        self.RLi = matrix_symbol(RLi_raw_name,7,1,RLi_frm_name)
-        self.RLi = -self.jacobian_i.T*self.L
+        Qi_raw_name = '%sQ_%s_%s'%format_
+        Qi_frm_name = r'{%sQ^{%s}_{%s}}'%format_
+        self.Qi = matrix_symbol(Qi_raw_name,7,1,Qi_frm_name)
+        self.Qi = -self.jacobian_i.T*self.L
         
         #Joint Reaction Force acting on body_i.
-        RFi_raw_name = '%sJF_%s_%s'%format_
-        RFi_frm_name = r'{%sF^{%s}_{%s}}'%format_
-        self.RFi = matrix_symbol(RFi_raw_name,3,self.nc,RFi_frm_name)
+        Fi_raw_name = '%sF_%s_%s'%format_
+        Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
+        self.Fi = matrix_symbol(Fi_raw_name,3,self.nc,Fi_frm_name)
         
         #Joint Reaction Torque acting on body_i in terms of orientation parameters.
-        RTie_raw_name = '%sJTe_%s_%s'%format_
-        RTie_frm_name = r'{%sTe^{%s}_{%s}}'%format_
-        self.RTi_e = matrix_symbol(RTie_raw_name,4,self.nc,RTie_frm_name)
+        Tie_raw_name = '%sTe_%s_%s'%format_
+        Tie_frm_name = r'{%sTe^{%s}_{%s}}'%format_
+        self.Ti_e = matrix_symbol(Tie_raw_name,4,self.nc,Tie_frm_name)
         
         #Joint Reaction Torque acting on body_i in terms of cartesian coordinates.
-        RTic_raw_name = '%sJTc_%s_%s'%format_
-        RTic_frm_name = r'{%sTc^{%s}_{%s}}'%format_
-        self.RTi_c = matrix_symbol(RTic_raw_name,self.nc,1,RTic_frm_name)
+        Ti_raw_name = '%sT_%s_%s'%format_
+        Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
+        self.Ti = matrix_symbol(Ti_raw_name,self.nc,1,Ti_frm_name)
         
-        self.RTi_c_eq = 0.5*E(self.Pi)*self.RTi_e - Skew(self.ui)*self.RFi
+        self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e - Skew(self.ui)*self.Fi
         
     
     @classmethod

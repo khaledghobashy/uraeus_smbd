@@ -108,6 +108,8 @@ class body(reference_frame):
         self.normalized_vel_equation = zero_matrix(1,1)
         self.normalized_acc_equation = 2*sm.sqrt(self.Pd.T*self.Pd)
         self.normalized_jacobian = [zero_matrix(1,3), 2*self.P.T]
+        
+        self.mass = sm.symbols('m_%s'%self.id_name)
                 
         self.M  = matrix_symbol('%sM_%s'%format_,3,3,r'{%sM_{%s}}'%format_)
         self.Jbar = matrix_symbol('%sJbar_%s'%format_,3,3,r'{%s\bar{J}_{%s}}'%format_)
@@ -133,6 +135,14 @@ class body(reference_frame):
     @property
     def constants(self):
         return []
+    
+    @property
+    def inertia_arguments(self):
+        return [self.mass,self.Jbar]
+    @property
+    def inertia_constants(self):
+        mass_equality = sm.Eq(self.M,self.mass*sm.Identity)
+        return [mass_equality]
         
 
 
