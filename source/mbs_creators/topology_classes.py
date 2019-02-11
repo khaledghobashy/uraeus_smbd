@@ -10,216 +10,16 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import itertools
 
-from source.symbolic_classes.abstract_matrices import (global_frame, vector,
-                                                       reference_frame, 
-                                                       Mirrored, zero_matrix)
+from source.symbolic_classes.abstract_matrices import (global_frame, 
+                                                       reference_frame,
+                                                       zero_matrix)
 from source.symbolic_classes.bodies import body, ground, virtual_body
 from source.symbolic_classes.spatial_joints import absolute_locator
 from source.symbolic_classes.algebraic_constraints import joint_actuator
+from source.symbolic_classes.forces import generic_force, gravity_force, centrifugal_force
 
+from source.mbs_creators.topology_helpers import parametric_configuration
 
-class parametric_configuration(object):
-    
-    def __init__(self,mbs_instance):
-        self.topology = mbs_instance
-        self.name = self.topology.name
-        self.graph = nx.DiGraph(name=self.name)    
-   
-    @property
-    def arguments_symbols(self):
-        return set(nx.get_node_attributes(self.graph,'obj').values())
-    
-    @property
-    def input_nodes(self):
-        nodes = [i for i,d in self.graph.in_degree() if d == 0]
-        return nodes
-    @property
-    def input_equalities(self):
-        g = self.graph
-        nodes = self.input_nodes
-        equalities = [g.nodes[i]['func'] for i,d in g.in_degree(nodes) if d == 0]
-        return equalities
-    
-    @property
-    def output_nodes(self):
-        condition = lambda i,d : d==0 and self.graph.in_degree(i)!=0
-        nodes = [i for i,d in self.graph.out_degree() if condition(i,d)]
-        return nodes
-    @property
-    def output_equalities(self):
-        g = self.graph
-        nodes = self.output_nodes
-        equalities = [g.nodes[i]['func'] for i,d in g.out_degree(nodes) if d == 0]
-        return self.mid_equalities + equalities
-    
-    @property
-    def mid_equalities(self):
-        mid_layer = []
-        for n in self.output_nodes:
-            self._get_node_dependencies(n,mid_layer)
-        return [self.graph.nodes[n]['func'] for n in mid_layer]
-
-    def assemble_base_layer(self):
-        self._get_nodes_arguments()
-        self._get_edges_arguments()
-        nx.set_node_attributes(self.graph,True,'primary')
-    
-    
-    def add_point(self,name,mirror=False):
-        Eq = self._set_base_equality
-        graph = self.graph
-        if mirror:
-            node1 = 'hpr_%s'%name
-            node2 = 'hpl_%s'%name
-            self._add_point(node1)
-            self._add_point(node2)
-            graph.nodes[node1].update({'mirr':node2,'align':'r'})
-            graph.nodes[node2].update({'mirr':node1,'align':'l'})
-            obj1 = graph.nodes[node1]['obj']
-            obj2 = graph.nodes[node2]['obj']
-            graph.nodes[node2].update({'func':Eq(obj1,obj2)})
-            graph.add_edge(node1,node2)
-        else:
-            node1 = node2 = 'hps_%s'%name
-            self._add_point(node1)
-            graph.nodes[node1]['mirr'] = node2
-
-    
-    def add_relation(self,relation,node,nbunch,mirror=False):
-        if mirror:
-            node1 = node
-            node2 = self.graph.nodes[node1]['mirr']
-            nbunch1 = nbunch
-            nbunch2 = [self.graph.nodes[i]['mirr'] for i in nbunch1]
-            self._add_relation(relation,node1,nbunch1)
-            self._add_relation(relation,node2,nbunch2)
-        else:
-            self._add_relation(relation,node,nbunch)
-    
-
-    def draw_node_dependencies(self,n):
-        edges = [e[:-1] for e in nx.edge_bfs(self.graph,n,'reverse')]
-        g = self.graph.edge_subgraph(edges)
-        plt.figure(figsize=(10,6))
-        nx.draw_networkx(g,with_labels=True)
-        plt.show() 
-        
-    def draw_graph(self):
-        plt.figure(figsize=(10,6))
-        nx.draw_circular(self.graph,with_labels=True)
-        plt.show()     
-
-            
-    def _get_nodes_arguments(self):
-        Eq = self._set_base_equality
-        graph   = self.graph
-        t_nodes = self.topology.nodes
-        
-        def filter_cond(n):
-            cond = (n not in self.topology.virtual_bodies 
-                    and t_nodes[n]['align'] in 'sr')
-            return cond
-        filtered_nodes = filter(filter_cond,t_nodes)
-
-        for n in filtered_nodes:
-            m      = t_nodes[n]['mirr']
-            args_n = t_nodes[n]['arguments']
-            nodes_args_n = [(str(i),{'func':Eq(i),'obj':i}) for i in args_n]
-            if m == n:
-                graph.add_nodes_from(nodes_args_n)
-                mirr = {i[0]:i[0] for i in nodes_args_n}
-                nx.set_node_attributes(self.graph,mirr,'mirr')
-            else:
-                args_m = t_nodes[m]['arguments']
-                args_c = zip(args_n,args_m)
-                nodes_args_m = [(str(m),{'func':Eq(n,m),'obj':m}) for n,m in args_c]
-                graph.add_nodes_from(nodes_args_n+nodes_args_m)
-                edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
-                graph.add_edges_from(edges)    
-                mirr = {m:n for n,m in edges}
-                nx.set_node_attributes(self.graph,mirr,'mirr')
-                mirr = {n:m for n,m in edges}
-                nx.set_node_attributes(self.graph,mirr,'mirr')
-
-    def _get_edges_arguments(self):
-        Eq = self._set_base_equality
-        graph   = self.graph
-        t_edges = self.topology.edges
-        for e in t_edges:
-            n = t_edges[e]['name']
-            if t_edges[e]['align'] in 'sr':
-                m = t_edges[e]['mirr']
-                args_n = t_edges[e]['arguments']
-                nodes_args_n = [(str(i),{'func':Eq(i),'obj':i}) for i in args_n]
-                if m == n:
-                    graph.add_nodes_from(nodes_args_n)
-                    mirr = {i[0]:i[0] for i in nodes_args_n}
-                    nx.set_node_attributes(self.graph,mirr,'mirr')
-                else:
-                    e2 = self.topology._edges_map[m]
-                    args_m = t_edges[e2]['arguments']
-                    args_c = zip(args_n,args_m)
-                    nodes_args_m = [(str(m),{'func':Eq(n,m),'obj':m}) for n,m in args_c]
-                    graph.add_nodes_from(nodes_args_n+nodes_args_m)
-                    edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
-                    graph.add_edges_from(edges)    
-                    mirr = {m:n for n,m in edges}
-                    nx.set_node_attributes(self.graph,mirr,'mirr')
-                    mirr = {n:m for n,m in edges}
-                    nx.set_node_attributes(self.graph,mirr,'mirr')
-    
-    def _obj_attr_dict(self,obj):
-        Eq = self._set_base_equality
-        attr_dict = {'obj':obj,'mirr':None,'align':'s','func':Eq(obj),
-                     'primary':False}
-        return attr_dict
-    
-    def _set_base_equality(self,sym1,sym2=None):
-        t = sm.symbols('t')
-        if sym1 and sym2:
-            if isinstance(sym1,sm.MatrixSymbol):
-                return sm.Eq(sym2,Mirrored(sym1))
-            elif issubclass(sym1,sm.Function):
-                return sm.Eq(sym2,sym1)
-        else:
-            if isinstance(sym1,sm.MatrixSymbol):
-                return sm.Eq(sym1,sm.zeros(*sym1.shape))
-            elif issubclass(sym1,sm.Function):
-                return sm.Eq(sym1,sm.Lambda(t,0))
-
-    def _add_point(self,name):
-        v = vector(name)
-        attr_dict = self._obj_attr_dict(v)
-        self.graph.add_node(name,**attr_dict)
-
-    def _add_relation(self,relation,node,nbunch):
-        graph = self.graph
-        edges = [(i,node) for i in nbunch]
-        obj = graph.nodes[node]['obj']
-        nobj = [graph.nodes[n]['obj'] for n in nbunch]
-        graph.nodes[node]['func'] = sm.Equality(obj,relation(*nobj))
-        removed_edges = list(graph.in_edges(node))
-        graph.remove_edges_from(removed_edges)
-        graph.add_edges_from(edges)
-        
-    def _get_node_dependencies1(self,n,mid_layer):
-        edges = [e[:-1] for e in nx.edge_bfs(self.graph,n,'reverse')]
-        print(edges)
-        for e in edges:
-            node = e[0]
-            if node not in self.input_nodes and node not in mid_layer:
-                mid_layer.append(node)
-    
-    def _get_node_dependencies(self,n,mid_layer):
-        edges = reversed([e[:-1] for e in nx.edge_bfs(self.graph,n,'reverse')])
-        for e in edges:
-            node = e[0]
-            if node not in self.input_nodes and node not in mid_layer:
-                mid_layer.append(node)
-
-    
-
-###############################################################################
 ###############################################################################
 
 class abstract_topology(object):
@@ -227,11 +27,10 @@ class abstract_topology(object):
     def __init__(self,name):
         self.name = name
         self.graph = nx.MultiDiGraph(name=name)
+        self._insert_ground()
         self._edges_map = {}
         self._edges_keys_map = {}
-        self._insert_ground()
         self._param_config = parametric_configuration(self)
-        self._initialize_force_graph()
             
     @property
     def param_config(self):
@@ -246,21 +45,28 @@ class abstract_topology(object):
     @property
     def edges(self):
         return self.selected_variant.edges
+    
+    @property
+    def forces_graph(self):
+        edges = self.edges
+        condition = lambda e : issubclass(edges[e]['class'],generic_force)
+        filtered = filter(condition,edges)
+        return self.graph.edge_subgraph(filtered)
 
     @property
     def bodies(self):
-        bodies = itertools.filterfalse(self._check_virtual_node,self.nodes)
+        bodies = itertools.filterfalse(self._is_virtual_node,self.nodes)
         return list(bodies)
     
     @property
     def virtual_bodies(self):
-        condition = self._check_virtual_node
+        condition = self._is_virtual_node
         virtuals  = filter(condition,self.nodes)
         return set(virtuals)
     
     @property
     def virtual_edges(self):
-        condition = self._check_virtual_edge
+        condition = self._is_virtual_edge
         virtuals  = filter(condition,self.edges)
         return set(virtuals)
     
@@ -327,17 +133,15 @@ class abstract_topology(object):
         
     def draw_forces_topology(self):
         plt.figure(figsize=(10,6))
-        nx.draw_spring(self.force_graph,with_labels=True)
+        nx.draw_spring(self.forces_graph,with_labels=True)
         plt.show()
     
     def assemble_model(self):
         self._set_global_frame()
         self._assemble_nodes()
         self._assemble_edges()
-        self._assemble_force_nodes()
-        self._assemble_force_edges()
         self._remove_virtual_edges()
-        self._assemble_equations()
+        self._assemble_constraints_equations()
         self._assemble_forces_equations()
         self._initialize_toplogy_reqs()
 
@@ -350,26 +154,22 @@ class abstract_topology(object):
         self.grf = 'ground'
         self.graph.add_node(self.grf,**typ_dict)
     
-    def _initialize_force_graph(self):
-        self.force_graph = nx.MultiDiGraph(name=self.name)
-        self._forces_map = {}
-        self._forces_keys_map = {}
-        attr_dict = self._typ_attr_dict(virtual_body)
-        self.force_graph.add_node(self.grf,**attr_dict)
-
-    def _check_virtual_node(self,n):
-        body_type = self.nodes[n]['class']
-        return issubclass(body_type,virtual_body)
-    def _check_virtual_edge(self,e):
-       virtual_flag = self.edges[e].get('virtual',False)
-       return virtual_flag
+    def _is_force_edge(self,e):
+        return issubclass(self.edges[e]['class'],generic_force)
+    
+    def _is_virtual_node(self,n):
+        virtual_flag = self.nodes[n].get('virtual',False)
+        return virtual_flag
+    def _is_virtual_edge(self,e):
+        virtual_flag = self.edges[e].get('virtual',False)
+        return virtual_flag
 
 
     def _coordinates_mapper(self,sym):
         q_sym  = sm.MatrixSymbol(sym,self.n,1)
         q = []
         i = 0
-        for b in itertools.filterfalse(self._check_virtual_node,self.nodes):
+        for b in itertools.filterfalse(self._is_virtual_node,self.nodes):
             q_block = getattr(self.nodes[b]['obj'],sym)
             for qi in q_block.blocks:
                 s = qi.shape[0]
@@ -381,7 +181,7 @@ class abstract_topology(object):
         l = []
         lamda = sm.MatrixSymbol('Lambda',self.nc,1)
         i = 0
-        for e in itertools.filterfalse(self._check_virtual_edge,self.edges):
+        for e in itertools.filterfalse(self._is_virtual_edge,self.edges):
             obj = self.edges[e]['obj']
             nc = obj.nc
             eq = sm.Eq(obj.L,lamda[i:i+nc])
@@ -394,12 +194,6 @@ class abstract_topology(object):
     
     def _assemble_edges(self):
         for e in self.edges : self._assemble_edge(e)
-        
-    def _assemble_force_nodes(self):
-        self.force_graph.add_nodes_from(self.nodes(data=True))
-    
-    def _assemble_force_edges(self):
-        for e in self.force_graph.edges : self._assemble_force_edge(e)
     
     def _assemble_node(self,n):
         body_type = self.nodes[n]['class']
@@ -423,20 +217,11 @@ class abstract_topology(object):
             edge_instance = edge_class(name,b1_obj,b2_obj)
         self.edges[e].update(self._obj_attr_dict(edge_instance))
     
-    def _assemble_force_edge(self,e):
-        edges = self.force_graph.edges
-        edge_class = edges[e]['cls']
-        name = edges[e]['name']
-        b1, b2, key = e
-        b1_obj = self.nodes[b1]['obj'] 
-        b2_obj = self.nodes[b2]['obj']
-        edge_instance = edge_class(name,b2_obj,b1_obj)
-        edges[e].update(self._force_obj_attr_dict(edge_instance))
-    
+
     def _remove_virtual_edges(self):
         self.graph.remove_edges_from(self.virtual_edges)
 
-    def _assemble_equations(self):
+    def _assemble_constraints_equations(self):
         
         edgelist    = self.edges
         nodelist    = self.nodes
@@ -452,7 +237,7 @@ class abstract_topology(object):
         
         row_ind = 0
         for e in edgelist:
-            if self._check_virtual_edge(e):
+            if self._is_virtual_edge(e) or self._is_force_edge(e):
                 continue
             eo  = self.edges[e]['obj']
             u,v = e[:-1]
@@ -476,7 +261,7 @@ class abstract_topology(object):
             row_ind += eo.nve
         
         for i,n in enumerate(nodelist):
-            if self._check_virtual_node(n):
+            if self._is_virtual_node(n):
                 continue
             b = self.nodes[n]['obj']
             if isinstance(b,ground):
@@ -502,11 +287,12 @@ class abstract_topology(object):
 
     
     def _assemble_forces_equations(self):
-        nodes = self.force_graph.nodes
+        graph = self.forces_graph
+        nodes = self.nodes
         nrows = 2*len(nodes)
         F_applied = sm.MutableSparseMatrix(nrows,1,None)
         for n in nodes:
-            in_edges  = self.force_graph.in_edges([n],data='obj')
+            in_edges  = graph.in_edges([n],data='obj')
             if len(in_edges) == 0 :
                 Q_in_R = zero_matrix(3,1)
                 Q_in_P = zero_matrix(4,1)
@@ -514,7 +300,7 @@ class abstract_topology(object):
                 Q_in_R = sm.MatAdd(*[e[-1].Qi.blocks[0] for e in in_edges])
                 Q_in_P = sm.MatAdd(*[e[-1].Qi.blocks[1] for e in in_edges])
             
-            out_edges = self.force_graph.out_edges([n],data='obj')
+            out_edges = graph.out_edges([n],data='obj')
             if len(out_edges) == 0 :
                 Q_out_R = zero_matrix(3,1)
                 Q_out_P = zero_matrix(4,1)
@@ -544,7 +330,6 @@ class abstract_topology(object):
             
 ###############################################################################
 ###############################################################################
-from source.symbolic_classes.forces import gravity_force, centrifugal_force
 
 class topology(abstract_topology):
     
@@ -590,65 +375,47 @@ class topology(abstract_topology):
             self._edges_keys_map[name] = key
 
     def add_force(self,typ,name,body_i,body_j=None):
-        variant = self.force_graph
+        variant = self.selected_variant
         assert body_i and body_j in self.nodes,\
         '%s or %s do not exist!'%(body_i,body_j)
         edge  = (body_i,body_j)
-        if name not in self._forces_keys_map:
-            attr_dict = self._force_typ_attr_dict(typ)
+        if name not in self._edges_map:
+            attr_dict = self._typ_attr_dict(typ)
             attr_dict.update({'name':name})
             key = variant.add_edge(*edge,**attr_dict)
-            self._forces_map[name] = (*edge,key)
-            self._forces_keys_map[name] = key
+            self._edges_map[name] = (*edge,key)
+            self._edges_keys_map[name] = key
     
     def _add_node_forces(self,n,attr_dict):
         grf = self.grf
-        self.force_graph.add_node(n)
         self.add_force(gravity_force,'%s_gravity'%n,grf,n)
         self.add_force(centrifugal_force,'%s_centrifuge'%n,grf,n)
 
-    @staticmethod
-    def _force_typ_attr_dict(typ):
-        attr_dict = {'cls':typ,'align':'s'}
-        return attr_dict
-    
-    @staticmethod
-    def _force_obj_attr_dict(obj):
-        attr_dict = {'obj':obj, 'name':obj.name}
-        return attr_dict
 
 ###############################################################################
 ###############################################################################
 
 class template_based_topology(topology):
     
-    def add_body(self,name,mirrored=False):
+    def add_body(self,name,mirrored=False,virtual=False):
         variant = self.selected_variant
         if mirrored:
-            node1 = 'rbr_%s'%name
-            node2 = 'rbl_%s'%name
+            node1 = ('vbr_%s'%name if virtual else 'rbr_%s'%name)
+            node2 = ('vbl_%s'%name if virtual else 'rbl_%s'%name)
             super().add_body(node1)
             super().add_body(node2)
             variant.nodes[node1].update({'mirr':node2,'align':'r'})
             variant.nodes[node2].update({'mirr':node1,'align':'l'})
+            if virtual:
+                self._set_body_as_virtual(variant,node1)
+                self._set_body_as_virtual(variant,node2)
         else:
-            node1 = node2 = 'rbs_%s'%name
+            node1 = node2 = ('vbs_%s'%name if virtual else 'rbs_%s'%name)
             super().add_body(node1)
             variant.nodes[node1]['mirr'] = node2
+            if virtual:
+                self._set_body_as_virtual(variant,node1)
         
-    def add_virtual_body(self,name,mirrored=False):
-        variant = self.selected_variant
-        if mirrored:
-            node1 = 'vbr_%s'%name
-            node2 = 'vbl_%s'%name
-            self._add_virtual_body(node1)
-            self._add_virtual_body(node2)
-            variant.nodes[node1].update({'mirr':node2,'align':'r'})
-            variant.nodes[node2].update({'mirr':node1,'align':'l'})
-        else:
-            node1 = node2 = 'vbs_%s'%name
-            self._add_virtual_body(node1)
-            variant.nodes[node1]['mirr'] = node2
         
     def add_joint(self,typ,name,body_i,body_j,mirrored=False,virtual=False):
         variant = self.selected_variant
@@ -712,7 +479,7 @@ class template_based_topology(topology):
             variant.edges[act_edge].update({'mirr':name})
     
     def add_force(self,typ,name,body_i,body_j,mirrored=False):
-        variant = self.force_graph
+        variant = self.graph
         if mirrored:
             body_i_mirr = self.nodes[body_i]['mirr']
             body_j_mirr = self.nodes[body_j]['mirr']
@@ -720,30 +487,31 @@ class template_based_topology(topology):
             name2 = 'fal_%s'%name
             super().add_force(typ,name1,body_i,body_j)
             super().add_force(typ,name2,body_i_mirr,body_j_mirr)
-            force_edge1 = self._forces_map[name1]
-            force_edge2 = self._forces_map[name2]
+            force_edge1 = self._edges_map[name1]
+            force_edge2 = self._edges_map[name2]
             variant.edges[force_edge1].update({'mirr':name2,'align':'r'})
             variant.edges[force_edge2].update({'mirr':name1,'align':'l'})
         else:
             name = 'fas_%s'%name
             super().add_force(typ,name,body_i,body_j)
-            force_edge = self._forces_map[name]
+            force_edge = self._edges_map[name]
             variant.edges[force_edge].update({'mirr':name})
         
     def _insert_ground(self):
+        typ_dict = self._typ_attr_dict(ground)
         self.grf = 'vbs_ground'
-        self.add_virtual_body('ground')
+        self.graph.add_node(self.grf,**typ_dict)
+        self.nodes[self.grf]['mirr'] = self.grf
     
-    def _add_virtual_body(self,name):
-        variant = self.selected_variant
-        if name not in variant.nodes():
-            attr_dict = self._typ_attr_dict(virtual_body)
-            variant.add_node(name,**attr_dict)
 
     @staticmethod
     def _set_joint_as_virtual(variant,edge):
         d = {'nc':0,'nve':0,'virtual':True}
         variant.edges[edge].update(d)
+    @staticmethod
+    def _set_body_as_virtual(variant,node):
+        d = {'n':0,'nc':0,'nve':0,'virtual':True}
+        variant.nodes[node].update(d)
                 
 ###############################################################################
 ###############################################################################

@@ -16,6 +16,10 @@ from source.symbolic_classes.spatial_joints import dummy_cylinderical
 
 class generic_force(object):
     
+    n   = 0
+    nc  = 0
+    nve = 0
+    
     def __init__(self,name,body_i=None,body_j=None):
         name_setter(self,name)
         if body_i : self.body_i = body_i 
