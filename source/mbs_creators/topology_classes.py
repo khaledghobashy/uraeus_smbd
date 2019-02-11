@@ -47,6 +47,13 @@ class abstract_topology(object):
         return self.selected_variant.edges
     
     @property
+    def constraints_graph(self):
+        edges = self.edges
+        condition = lambda e : issubclass(edges[e]['class'],generic_force)
+        filtered = itertools.filterfalse(condition,edges)
+        return self.graph.edge_subgraph(filtered)
+
+    @property
     def forces_graph(self):
         edges = self.edges
         condition = lambda e : issubclass(edges[e]['class'],generic_force)
@@ -122,13 +129,13 @@ class abstract_topology(object):
     
     @property    
     def constants(self):
-        cons = nx.get_edge_attributes(self.graph,'constants').values()
+        cons = nx.get_edge_attributes(self.constraints_graph,'constants').values()
         return sum(cons,[])
 
     
-    def draw_topology(self):
+    def draw_constraints_topology(self):
         plt.figure(figsize=(10,6))
-        nx.draw_spring(self.selected_variant,with_labels=True)
+        nx.draw_spring(self.constraints_graph,with_labels=True)
         plt.show()
         
     def draw_forces_topology(self):
@@ -375,7 +382,7 @@ class topology(abstract_topology):
         assert body in self.nodes , 'body does not exist!'
         variant = self.selected_variant
         edge  = (body,self.grf)
-        if edge not in variant.edges:
+        if name not in self._edges_map:
             attr_dict = self._typ_attr_dict(absolute_locator)
             key = variant.add_edge(*edge,**attr_dict,coordinate=coordinate,name=name)
             self._edges_map[name] = (*edge,key)

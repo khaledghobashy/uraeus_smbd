@@ -18,7 +18,7 @@ ST_sym  = subsystem('ST',steer.template)
 TR_sym  = subsystem('TR',testrig.template)
 
 
-assembled = assembly('front_axle')
+assembled = assembly('front_axle111')
 
 assembled.add_subsystem(SU1_sym)
 assembled.add_subsystem(ST_sym)
@@ -30,7 +30,7 @@ assembled.assign_virtual_body('TR.vbr_hub','SU1.rbr_hub')
 assembled.assign_virtual_body('TR.vbs_steer_gear','ST.rbl_rocker')
 
 assembled.assemble_model()
-assembled.draw_topology()
+assembled.draw_constraints_topology()
 assembled.draw_interface_graph()
 
 numerical_code = assembly_code_generator(assembled)

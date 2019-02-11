@@ -67,8 +67,8 @@ class topology(object):
         self.config = config
         self.prefix = (prefix if prefix=='' else prefix+'.')
 
-        self.n = 0
-        self.nrows = 5
+        self.n = 7
+        self.nrows = 7
         self.ncols = 2*7
         self.rows = np.arange(self.nrows)
 
