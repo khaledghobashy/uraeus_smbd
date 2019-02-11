@@ -196,26 +196,29 @@ class abstract_topology(object):
         for e in self.edges : self._assemble_edge(e)
     
     def _assemble_node(self,n):
-        body_type = self.nodes[n]['class']
-        body_instance = body_type(n)
-        self.nodes[n].update(self._obj_attr_dict(body_instance))
+        nodes = self.nodes
+        node_class = nodes[n]['class']
+        body_instance = node_class(n)
+        nodes[n].update(self._obj_attr_dict(body_instance))
         
     def _assemble_edge(self,e):
-        edge_class = self.edges[e]['class']
-        name = self.edges[e]['name']
+        nodes = self.nodes
+        edges = self.edges
+        edge_class = edges[e]['class']
+        name = edges[e]['name']
         b1, b2, key = e
-        b1_obj = self.nodes[b1]['obj'] 
-        b2_obj = self.nodes[b2]['obj'] 
+        b1_obj = nodes[b1]['obj'] 
+        b2_obj = nodes[b2]['obj'] 
         if issubclass(edge_class,joint_actuator):
-            joint_key     = self._edges_keys_map[self.edges[e]['joint_name']]
-            joint_object  = self.edges[(b1,b2,joint_key)]['obj']
+            joint_key     = self._edges_keys_map[edges[e]['joint_name']]
+            joint_object  = edges[(b1,b2,joint_key)]['obj']
             edge_instance = edge_class(name,joint_object)
         elif issubclass(edge_class,absolute_locator):
-            coordinate    = self.edges[e]['coordinate']
+            coordinate    = edges[e]['coordinate']
             edge_instance = edge_class(name,b1_obj,b2_obj,coordinate)
         else:
             edge_instance = edge_class(name,b1_obj,b2_obj)
-        self.edges[e].update(self._obj_attr_dict(edge_instance))
+        edges[e].update(self._obj_attr_dict(edge_instance))
     
 
     def _remove_virtual_edges(self):
@@ -223,11 +226,11 @@ class abstract_topology(object):
 
     def _assemble_constraints_equations(self):
         
-        edgelist    = self.edges
-        nodelist    = self.nodes
+        edges    = self.edges
+        nodes    = self.nodes
         node_index  = self.nodes_indicies
 
-        cols = 2*len(nodelist)
+        cols = 2*len(nodes)
         nve  = self.nve  # number of constraint vector equations
         
         equations = sm.MutableSparseMatrix(nve,1,None)
@@ -236,10 +239,10 @@ class abstract_topology(object):
         jacobian  = sm.MutableSparseMatrix(nve,cols,None)
         
         row_ind = 0
-        for e in edgelist:
+        for e in edges:
             if self._is_virtual_edge(e) or self._is_force_edge(e):
                 continue
-            eo  = self.edges[e]['obj']
+            eo  = edges[e]['obj']
             u,v = e[:-1]
             
             # tracker of row index based on the current joint type and the history
@@ -260,10 +263,10 @@ class abstract_topology(object):
            
             row_ind += eo.nve
         
-        for i,n in enumerate(nodelist):
+        for i,n in enumerate(nodes):
             if self._is_virtual_node(n):
                 continue
-            b = self.nodes[n]['obj']
+            b = nodes[n]['obj']
             if isinstance(b,ground):
                 jacobian[row_ind:row_ind+2,i*2:i*2+2] = b.normalized_jacobian.blocks
                 equations[row_ind:row_ind+2,0] = b.normalized_pos_equation.blocks
@@ -289,24 +292,26 @@ class abstract_topology(object):
     def _assemble_forces_equations(self):
         graph = self.forces_graph
         nodes = self.nodes
-        nrows = 2*len(nodes)
+        nrows = 2*len(self.bodies)
         F_applied = sm.MutableSparseMatrix(nrows,1,None)
         for n in nodes:
+            if self._is_virtual_node(n):
+                continue
             in_edges  = graph.in_edges([n],data='obj')
             if len(in_edges) == 0 :
                 Q_in_R = zero_matrix(3,1)
                 Q_in_P = zero_matrix(4,1)
             else:
-                Q_in_R = sm.MatAdd(*[e[-1].Qi.blocks[0] for e in in_edges])
-                Q_in_P = sm.MatAdd(*[e[-1].Qi.blocks[1] for e in in_edges])
+                Q_in_R = sm.MatAdd(*[e[-1].Qj.blocks[0] for e in in_edges])
+                Q_in_P = sm.MatAdd(*[e[-1].Qj.blocks[1] for e in in_edges])
             
             out_edges = graph.out_edges([n],data='obj')
             if len(out_edges) == 0 :
                 Q_out_R = zero_matrix(3,1)
                 Q_out_P = zero_matrix(4,1)
             else:
-                Q_out_R = sm.MatAdd(*[e[-1].Qj.blocks[0] for e in out_edges])
-                Q_out_P = sm.MatAdd(*[e[-1].Qj.blocks[1] for e in out_edges])
+                Q_out_R = sm.MatAdd(*[e[-1].Qi.blocks[0] for e in out_edges])
+                Q_out_P = sm.MatAdd(*[e[-1].Qi.blocks[1] for e in out_edges])
             
             Q_t_R = Q_in_R + Q_out_R
             Q_t_P = Q_in_P + Q_out_P
@@ -388,8 +393,8 @@ class topology(abstract_topology):
     
     def _add_node_forces(self,n,attr_dict):
         grf = self.grf
-        self.add_force(gravity_force,'%s_gravity'%n,grf,n)
-        self.add_force(centrifugal_force,'%s_centrifuge'%n,grf,n)
+        self.add_force(gravity_force,'%s_gravity'%n,n,grf)
+        self.add_force(centrifugal_force,'%s_centrifuge'%n,n,grf)
 
 
 ###############################################################################
