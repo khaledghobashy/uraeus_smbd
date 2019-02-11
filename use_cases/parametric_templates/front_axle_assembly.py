@@ -33,6 +33,6 @@ assembled.assemble_model()
 assembled.draw_topology()
 assembled.draw_interface_graph()
 
-#numerical_code = assembly_code_generator(assembled)
-#numerical_code.write_code_file()
+numerical_code = assembly_code_generator(assembled)
+numerical_code.write_code_file()
 

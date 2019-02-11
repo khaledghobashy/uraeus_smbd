@@ -15,7 +15,7 @@ template = template_based_topology('steer')
 
 template.add_body('coupler')
 template.add_body('rocker',mirrored=True)
-template.add_virtual_body('chassis')
+template.add_body('chassis',virtual=True)
 
 template.add_joint(revolute,'rocker_ch','rbr_rocker','vbs_chassis',mirrored=True)
 template.add_joint(spherical,'rc_sph','rbr_rocker','rbs_coupler')

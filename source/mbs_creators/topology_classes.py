@@ -292,10 +292,10 @@ class abstract_topology(object):
     def _assemble_forces_equations(self):
         graph = self.forces_graph
         nodes = self.nodes
-        nrows = 2*len(self.bodies)
+        nrows = 2*len(self.bodies)+2
         F_applied = sm.MutableSparseMatrix(nrows,1,None)
         for n in nodes:
-            if self._is_virtual_node(n):
+            if self._is_virtual_node(n) and n!=self.grf:
                 continue
             in_edges  = graph.in_edges([n],data='obj')
             if len(in_edges) == 0 :
@@ -315,9 +315,11 @@ class abstract_topology(object):
             
             Q_t_R = Q_in_R + Q_out_R
             Q_t_P = Q_in_P + Q_out_P
+            
             ind = self.nodes_indicies[n]
-            F_applied[ind*2] = Q_t_R
+            F_applied[ind*2]   = Q_t_R
             F_applied[ind*2+1] = Q_t_P
+            
         self.forces = F_applied
     
     def _initialize_toplogy_reqs(self):
@@ -507,6 +509,7 @@ class template_based_topology(topology):
         self.grf = 'vbs_ground'
         self.graph.add_node(self.grf,**typ_dict)
         self.nodes[self.grf]['mirr'] = self.grf
+        self.nodes[self.grf]['virtual'] = True
     
 
     @staticmethod
