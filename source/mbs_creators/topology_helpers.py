@@ -6,8 +6,10 @@ Created on Mon Feb 11 09:44:13 2019
 """
 
 import sympy as sm
-import matplotlib.pyplot as plt
+import numpy as np
 import networkx as nx
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from source.symbolic_classes.abstract_matrices import vector, Mirrored
 
@@ -91,7 +93,15 @@ class parametric_configuration(object):
         else:
             self._add_relation(relation,node,nbunch)
     
-
+    def create_inputs_dataframe(self):
+        equalities = self.input_equalities
+        indecies = [str(i.lhs) for i in equalities 
+                    if isinstance(i.lhs,sm.MatrixSymbol)]
+        indecies.sort()
+        shape = (len(indecies),4)
+        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
+        return dataframe
+    
     def draw_node_dependencies(self,n):
         edges = [e[:-1] for e in nx.edge_bfs(self.graph,n,'reverse')]
         g = self.graph.edge_subgraph(edges)
@@ -170,16 +180,20 @@ class parametric_configuration(object):
         return attr_dict
     
     def _set_base_equality(self,sym1,sym2=None):
-        t = sm.symbols('t')
         if sym1 and sym2:
             if isinstance(sym1,sm.MatrixSymbol):
                 return sm.Eq(sym2,Mirrored(sym1))
+            elif isinstance(sym1,sm.Symbol):
+                return sm.Eq(sym2,sym1)
             elif issubclass(sym1,sm.Function):
                 return sm.Eq(sym2,sym1)
         else:
             if isinstance(sym1,sm.MatrixSymbol):
                 return sm.Eq(sym1,sm.zeros(*sym1.shape))
+            elif isinstance(sym1,sm.Symbol):
+                return sm.Eq(sym1,1)
             elif issubclass(sym1,sm.Function):
+                t = sm.symbols('t')
                 return sm.Eq(sym1,sm.Lambda(t,0))
 
     def _add_point(self,name):

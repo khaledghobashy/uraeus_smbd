@@ -92,6 +92,93 @@ class abstract_generator(object):
 ###############################################################################
 ###############################################################################
 
+class configuration_code_generator(abstract_generator):
+    
+    def write_config_class(self):
+        text = '''
+                class configuration(object):
+
+                    def __init__(self):
+                        {inputs}
+                                                
+                    def _set_arguments(self):
+                        {outputs}
+                    
+                    def load_from_csv(self,csv_file):
+                        dataframe = pd.read_csv(csv_file,index_col=0)
+                        for ind in dataframe.index:
+                            shape = getattr(self,ind).shape
+                            v = np.array(dataframe.loc[ind],dtype=np.float64)
+                            v = np.resize(v,shape)
+                            setattr(self,ind,v)
+                        self._set_arguments()
+                    
+                    def eval_constants(self):
+                        
+                        {constants}
+                    
+                    @property
+                    def q(self):
+                        q = {coordinates}
+                        return q
+                    
+                    @property
+                    def qd(self):
+                        qd = {velocities}
+                        return qd
+                '''
+        
+        p = self.printer
+        indent = 8*' '
+        
+        inputs  = self.input_args
+        outputs = self.output_args
+        consts = self.edges_constants_exp
+        
+        pattern = '|'.join( self.edges_arguments_sym + self.edges_constants_sym
+                           +self.virtual_coordinates + self.gen_coordinates_sym
+                           +self.gen_velocities_sym + self.config_vars)
+        self_inserter = self._insert_string('self.')
+        
+        inputs = '\n'.join([p._print(exp) for exp in inputs])
+        inputs = re.sub(pattern,self_inserter,inputs)
+        inputs = textwrap.indent(inputs,indent).lstrip()
+        
+        outputs = '\n'.join([p._print(exp) for exp in outputs])
+        outputs = re.sub(pattern,self_inserter,outputs)
+        outputs = textwrap.indent(outputs,indent).lstrip()
+        
+        if len(consts) !=0:
+            cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
+            cse_var_txt = re.sub(pattern,self_inserter,cse_var_txt)
+            cse_exp_txt = re.sub(pattern,self_inserter,cse_exp_txt)
+            constants = '\n'.join([cse_var_txt,'',cse_exp_txt])
+            constants = textwrap.indent(constants,indent).lstrip()
+        else:
+            constants = 'pass'
+        
+        coordinates = ','.join(self.gen_coordinates_sym)
+        coordinates = re.sub(pattern,self_inserter,coordinates)
+        coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
+        coordinates = textwrap.indent(coordinates,indent).lstrip()
+        
+        velocities = ','.join(self.gen_velocities_sym)
+        velocities = re.sub(pattern,self_inserter,velocities)
+        velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
+        velocities = textwrap.indent(velocities,indent).lstrip()
+        
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = text.format(inputs  = inputs,
+                           outputs = outputs,
+                           constants = constants,
+                           coordinates = coordinates,
+                           velocities = velocities)
+        return text
+        
+###############################################################################
+###############################################################################
+
 class template_code_generator(abstract_generator):
     
     @staticmethod

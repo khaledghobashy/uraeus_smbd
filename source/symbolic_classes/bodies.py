@@ -130,7 +130,7 @@ class body(reference_frame):
     
     @property
     def arguments(self):
-        args = [self.R,self.P,self.Rd,self.Pd]
+        args = [self.R,self.P,self.Rd,self.Pd,self.mass,self.Jbar]
         return args
     @property
     def constants(self):
@@ -141,7 +141,7 @@ class body(reference_frame):
         return [self.mass,self.Jbar]
     @property
     def inertia_constants(self):
-        mass_equality = sm.Eq(self.M,self.mass*sm.Identity)
+        mass_equality = sm.Eq(self.M,self.mass*sm.Identity(3))
         return [mass_equality]
         
 
