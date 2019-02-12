@@ -606,15 +606,12 @@ class assembly(abstract_topology):
         new_virtuals = {i: self.grf for i in new_virtuals}
         self._interface_map.update(new_virtuals)
         
-
     def _initialize_interface(self):
         self._set_virtual_equalities()
-#        self.graph.add_edges_from(self.interface_map.items())
         for virtual,actual in self.interface_map.items():
-            self._contracted_nodes(virtual,actual)
+            self._replace_nodes(virtual,actual)
         self.interface_graph.remove_nodes_from(self.interface_map.keys())
     
-
     def _set_virtual_equalities(self):
         self.mapped_vir_coordinates = []
         for v,a in self.interface_map.items():
@@ -635,36 +632,18 @@ class assembly(abstract_topology):
             R_eq = sm.Eq(R_v,R_a,evaluate=False)
             P_eq = sm.Eq(P_v,P_a,evaluate=False)
             self.mapped_vir_velocities += [R_eq,P_eq]
-    
-    def _contracted_nodes1(self,virtual,actual):
-#        print(self.nodes)
-        node_data = self.nodes[actual]
-        self.graph = nx.relabel_nodes(self.graph,{virtual:actual})
-        self.nodes[actual].clear()
-        self.nodes[actual].update(node_data)
-        
-    def _contracted_nodes(self,virtual,actual):
-        u = actual
+            
+    def _replace_nodes(self,virtual,actual):
+        a = actual
         v = virtual
         H = self.graph
-        new_edges1 = [(w,u,d) for w,x,d in H.in_edges(v,data=True)]
-        new_edges2 = [(u,w,d) for x,w,d in H.out_edges(v,data=True)]
+        new_edges1 = [(w,a,d) for w,x,d in H.in_edges(v,data=True)]
+        new_edges2 = [(a,w,d) for x,w,d in H.out_edges(v,data=True)]
         H.remove_node(v)
         new_edges = new_edges1+new_edges2
         H.add_edges_from(new_edges)
         self.interface_graph.add_edges_from(new_edges)
         
-            
-    
-    def _contracted_nodes2(self,u,v):
-#        constraints_edges = self.constraints_graph.edges
-        H = self.graph
-        new_edges = [(u,w,k,d) for x,w,k,d in self.edges(v,keys=True,data=True) if w!=u]
-        H.add_edges_from(new_edges)
-        self.interface_graph.add_edges_from(new_edges)
-        print('%s replaced with %s'%(u,v))
-        print('new_edges : %s \n'%([i[:3] for i in new_edges],))
-    
     def _initialize_toplogy_reqs(self):
         self._set_constants()
         self._set_arguments()

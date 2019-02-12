@@ -28,7 +28,7 @@ soln = solver(assm)
 time_array = np.linspace(0,2*np.pi,100)
 soln.solve_kds(time_array)
 
-vertical_travel = np.array(list(map(f.TR.config.F_mcr_ver_act,time_array)))
+vertical_travel = np.array(list(map(f.TR.config.AF_mcr_ver_act,time_array)))
 
 plt.figure(figsize=(8,4))
 plt.plot(vertical_travel,soln.pos_dataframe['SU1.rbl_hub.y'])
