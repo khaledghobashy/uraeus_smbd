@@ -27,6 +27,7 @@ class abstract_topology(object):
     def __init__(self,name):
         self.name = name
         self.graph = nx.MultiDiGraph(name=name)
+        self._set_global_frame()
         self._insert_ground()
         self._edges_map = {}
         self._edges_keys_map = {}
@@ -135,7 +136,8 @@ class abstract_topology(object):
     
     def draw_constraints_topology(self):
         plt.figure(figsize=(10,6))
-        nx.draw_spring(self.constraints_graph,with_labels=True)
+        graph = nx.Graph(self.constraints_graph)
+        nx.draw(graph,with_labels=True)
         plt.show()
         
     def draw_forces_topology(self):
@@ -144,7 +146,6 @@ class abstract_topology(object):
         plt.show()
     
     def assemble_model(self):
-        self._set_global_frame()
         self._assemble_nodes()
         self._assemble_edges()
         self._remove_virtual_edges()
@@ -176,7 +177,7 @@ class abstract_topology(object):
         q_sym  = sm.MatrixSymbol(sym,self.n,1)
         q = []
         i = 0
-        for b in itertools.filterfalse(self._is_virtual_node,self.nodes):
+        for b in self.bodies:
             q_block = getattr(self.nodes[b]['obj'],sym)
             for qi in q_block.blocks:
                 s = qi.shape[0]
@@ -512,11 +513,11 @@ class template_based_topology(topology):
             variant.edges[force_edge].update({'mirr':name})
         
     def _insert_ground(self):
-        typ_dict = self._typ_attr_dict(ground)
+        typ_dict = self._typ_attr_dict(body)
         self.grf = 'vbs_ground'
         self.graph.add_node(self.grf,**typ_dict)
         self.nodes[self.grf]['mirr'] = self.grf
-        self.nodes[self.grf]['virtual'] = True
+        self._set_body_as_virtual(self.graph,self.grf)
     
 
     @staticmethod
@@ -552,23 +553,17 @@ class subsystem(abstract_topology):
 ###############################################################################
 ###############################################################################
 
-class assembly(subsystem):
+class assembly(abstract_topology):
     
     def __init__(self,name):
-        self.name = name
-        self.grf = 'ground'
+        self.name  = name
+        self.graph = nx.MultiDiGraph(name=name)
+        self.interface_graph = nx.MultiDiGraph(name=name)
         self._set_global_frame()
-        
-        self.graph = nx.MultiGraph(name=name)
-        self.interface_graph = nx.MultiGraph(name=name)
-        
+        self._insert_ground()
         self.subsystems = {}
         self._interface_map = {}
 
-        typ_attr_dict = self._typ_attr_dict(ground)
-        obj_attr_dict = self._obj_attr_dict(ground())
-        self.graph.add_node(self.grf,**typ_attr_dict,**obj_attr_dict)
-        
         
     @property
     def interface_map(self):
@@ -600,6 +595,12 @@ class assembly(subsystem):
         nx.draw_spring(self.interface_graph,with_labels=True)
         plt.show()
 
+    def _insert_ground(self):
+        typ_dict = self._typ_attr_dict(ground)
+        self.grf = 'ground'
+        self.graph.add_node(self.grf,**typ_dict)
+        self._assemble_node(self.grf)
+        
     def _update_interface_map(self,subsystem):
         new_virtuals = subsystem.virtual_bodies
         new_virtuals = {i: self.grf for i in new_virtuals}
@@ -608,11 +609,11 @@ class assembly(subsystem):
 
     def _initialize_interface(self):
         self._set_virtual_equalities()
-        self.graph.add_edges_from(self.interface_map.items())
-        for v,u in self.interface_map.items():
-            self._contracted_nodes(u,v)
-        self.graph.remove_nodes_from(self.interface_map.keys())
-        self.interface_graph.remove_nodes_from(self.interface_map.keys())
+#        self.graph.add_edges_from(self.interface_map.items())
+        for virtual,actual in self.interface_map.items():
+            self._contracted_nodes(virtual,actual)
+#        self.graph.remove_nodes_from(self.interface_map.keys())
+#        self.interface_graph.remove_nodes_from(self.interface_map.keys())
     
 
     def _set_virtual_equalities(self):
@@ -620,25 +621,38 @@ class assembly(subsystem):
         for v,a in self.interface_map.items():
             self._assemble_node(v)
             if a!= self.grf : self._assemble_node(a)
-            virtual_coordinates = self.nodes[v]['obj'].q
-            actual_coordinates  = self.nodes[a]['obj'].q
-            equality = list(map(sm.Eq,virtual_coordinates.blocks,actual_coordinates.blocks))
-            self.mapped_vir_coordinates += equality
+            R_v,P_v = self.nodes[v]['obj'].q.blocks
+            R_a,P_a = self.nodes[a]['obj'].q.blocks
+            R_eq = sm.Eq(R_v,R_a,evaluate=False)
+            P_eq = sm.Eq(P_v,P_a,evaluate=False)
+            self.mapped_vir_coordinates += [R_eq,P_eq]
         
         self.mapped_vir_velocities = []
         for v,a in self.interface_map.items():
             self._assemble_node(v)
             if a!= self.grf : self._assemble_node(a)
-            virtual_coordinates = self.nodes[v]['obj'].qd
-            actual_coordinates  = self.nodes[a]['obj'].qd
-            equality = list(map(sm.Eq,virtual_coordinates.blocks,actual_coordinates.blocks))
-            self.mapped_vir_velocities += equality
+            R_v,P_v = self.nodes[v]['obj'].qd.blocks
+            R_a,P_a = self.nodes[a]['obj'].qd.blocks
+            R_eq = sm.Eq(R_v,R_a,evaluate=False)
+            P_eq = sm.Eq(P_v,P_a,evaluate=False)
+            self.mapped_vir_velocities += [R_eq,P_eq]
     
-    def _contracted_nodes(self,u,v):
+    def _contracted_nodes(self,virtual,actual):
+#        print(self.nodes)
+        node_data = self.nodes[actual]
+        self.graph = nx.relabel_nodes(self.graph,{virtual:actual})
+        self.nodes[actual].clear()
+        self.nodes[actual].update(node_data)
+        
+    
+    def _contracted_nodes2(self,u,v):
+#        constraints_edges = self.constraints_graph.edges
         H = self.graph
-        new_edges = [(u,w,k,d) for x,w,k,d in H.edges(v,keys=True,data=True) if w!=u]
+        new_edges = [(u,w,k,d) for x,w,k,d in self.edges(v,keys=True,data=True) if w!=u]
         H.add_edges_from(new_edges)
         self.interface_graph.add_edges_from(new_edges)
+        print('%s replaced with %s'%(u,v))
+        print('new_edges : %s \n'%([i[:3] for i in new_edges],))
     
     def _initialize_toplogy_reqs(self):
         self._set_constants()

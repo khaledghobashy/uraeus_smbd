@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import use_cases.generated_templates.front_axle as f
+import use_cases.generated_templates.front_axle111 as f
 from source.solvers.python_solver import solver
 
 f.SU1.config.load_from_csv('temp_front_axle/dwb_st500_timoney.csv')
