@@ -612,8 +612,7 @@ class assembly(abstract_topology):
 #        self.graph.add_edges_from(self.interface_map.items())
         for virtual,actual in self.interface_map.items():
             self._contracted_nodes(virtual,actual)
-#        self.graph.remove_nodes_from(self.interface_map.keys())
-#        self.interface_graph.remove_nodes_from(self.interface_map.keys())
+        self.interface_graph.remove_nodes_from(self.interface_map.keys())
     
 
     def _set_virtual_equalities(self):
@@ -637,13 +636,25 @@ class assembly(abstract_topology):
             P_eq = sm.Eq(P_v,P_a,evaluate=False)
             self.mapped_vir_velocities += [R_eq,P_eq]
     
-    def _contracted_nodes(self,virtual,actual):
+    def _contracted_nodes1(self,virtual,actual):
 #        print(self.nodes)
         node_data = self.nodes[actual]
         self.graph = nx.relabel_nodes(self.graph,{virtual:actual})
         self.nodes[actual].clear()
         self.nodes[actual].update(node_data)
         
+    def _contracted_nodes(self,virtual,actual):
+        u = actual
+        v = virtual
+        H = self.graph
+        new_edges1 = [(w,u,d) for w,x,d in H.in_edges(v,data=True)]
+        new_edges2 = [(u,w,d) for x,w,d in H.out_edges(v,data=True)]
+        H.remove_node(v)
+        new_edges = new_edges1+new_edges2
+        H.add_edges_from(new_edges)
+        self.interface_graph.add_edges_from(new_edges)
+        
+            
     
     def _contracted_nodes2(self,u,v):
 #        constraints_edges = self.constraints_graph.edges
