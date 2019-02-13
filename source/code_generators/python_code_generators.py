@@ -174,6 +174,22 @@ class configuration_code_generator(abstract_generator):
         text = text.expandtabs()
         text = textwrap.dedent(text)
         text = text.format(outputs = outputs)
+        text = textwrap.indent(text,indent)
+        return text
+    
+    def write_system_class(self):
+        text = '''
+                {class_init}
+                    {class_helpers}
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        class_init = self.write_class_init()
+        class_helpers = self.write_helpers()
+                
+        text = text.format(class_init = class_init,
+                           class_helpers = class_helpers)
         return text
         
     def write_code_file(self):
@@ -182,9 +198,8 @@ class configuration_code_generator(abstract_generator):
         os.chdir(path)
         
         imports = self.write_imports()
-        class_init    = self.write_class_init()
-        class_helpers = self.write_helpers()
-        text = '\n'.join([imports,class_init,class_helpers])
+        config_class = self.write_system_class()
+        text = '\n'.join([imports,config_class])
         with open('%s.py'%self.name,'w') as file:
             file.write(text)
         
@@ -368,11 +383,17 @@ class template_code_generator(abstract_generator):
         text = textwrap.dedent(text)
         return text
     
+    def write_config_class(self):
+        config_code_gen = configuration_code_generator(self.config)
+        text = config_code_gen.write_system_class()
+        return text
+
+    
     def write_class_init(self):
         text = '''
                 class topology(object):
 
-                    def __init__(self,config,prefix=''):
+                    def __init__(self,config=configuration(),prefix=''):
                         self.t = 0.0
                         self.config = config
                         self.prefix = (prefix if prefix=='' else prefix+'.')
@@ -437,11 +458,16 @@ class template_code_generator(abstract_generator):
                     
                     {constants}
                 '''
-        indent = 8*' '
+        indent = 4*' '
         
         consts = self.edges_constants_exp
         
-        pattern = '|'.join(self.config_vars)
+        pattern_iter = itertools.chain(self.edges_arguments_sym,
+                                       self.edges_constants_sym,
+                                       self.virtual_coordinates,
+                                       self.gen_coordinates_sym,
+                                       self.config_vars)
+        pattern = '|'.join(pattern_iter)
         config_inserter = self._insert_string('config.')
         
         if len(consts) !=0:
@@ -456,6 +482,7 @@ class template_code_generator(abstract_generator):
         text = text.expandtabs()
         text = textwrap.dedent(text)
         text = text.format(constants = constants)
+        text = textwrap.indent(text,indent)
         return text
 
     def write_coordinates_setter(self):
@@ -522,8 +549,9 @@ class template_code_generator(abstract_generator):
         
         self.setup_equations()
         imports = self.write_imports()
+        base_cfg = self.write_config_class()
         system_class = self.write_system_class()
-        text = '\n'.join([imports,system_class])
+        text = '\n'.join([imports,base_cfg,system_class])
         with open('%s.py'%self.mbs.name,'w') as file:
             file.write(text)
         

@@ -66,5 +66,5 @@ config.add_relation(CR.Equal_to,'pt1_jcr_strut',['hpr_strut_mid'],True)
 config.add_relation(CR.Oriented,'ax1_jcr_strut',['hpr_strut_lca','hpr_strut_chassis'],True)
 
 config_code = configuration_code_generator(config)
-print(config_code.write_class_init())
-print(config_code.write_helpers())
+print(config_code.write_system_class())
+
