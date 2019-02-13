@@ -462,18 +462,23 @@ class template_code_generator(abstract_generator):
         
         consts = self.edges_constants_exp
         
-        pattern_iter = itertools.chain(self.edges_arguments_sym,
-                                       self.edges_constants_sym,
-                                       self.virtual_coordinates,
-                                       self.gen_coordinates_sym,
-                                       self.config_vars)
-        pattern = '|'.join(pattern_iter)
+        config_pattern_iter = itertools.chain(self.edges_arguments_sym)
+        config_pattern = '|'.join(config_pattern_iter)
         config_inserter = self._insert_string('config.')
+        
+        self_pattern_iter = itertools.chain(self.edges_constants_sym,
+                               self.virtual_coordinates,
+                               self.gen_coordinates_sym,
+                               self.config_vars)
+        self_pattern = '|'.join(self_pattern_iter)
+        self_inserter = self._insert_string('self.')
         
         if len(consts) !=0:
             cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
-            cse_var_txt = re.sub(pattern,config_inserter,cse_var_txt)
-            cse_exp_txt = re.sub(pattern,config_inserter,cse_exp_txt)
+            cse_var_txt = re.sub(config_pattern,config_inserter,cse_var_txt)
+            cse_exp_txt = re.sub(config_pattern,config_inserter,cse_exp_txt)
+            cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)
+            cse_exp_txt = re.sub(self_pattern,self_inserter,cse_exp_txt)
             constants = '\n'.join([cse_var_txt,'',cse_exp_txt])
             constants = textwrap.indent(constants,indent).lstrip()
         else:
