@@ -8,9 +8,9 @@ Created on Tue Jan 29 09:17:44 2019
 from source.code_generators.python_code_generators import assembly_code_generator
 from source.mbs_creators.topology_classes import subsystem, assembly
 
-import use_cases.parametric_templates.double_wishbone_direct_acting as dwb
-import use_cases.parametric_templates.parallel_link_steering as steer
-import use_cases.parametric_templates.front_axle_testrig as testrig
+import use_cases.parametric_templates.templates.double_wishbone_direct_acting as dwb
+import use_cases.parametric_templates.templates.parallel_link_steering as steer
+import use_cases.parametric_templates.templates.front_axle_testrig as testrig
 
 
 SU1_sym = subsystem('SU1',dwb.template)

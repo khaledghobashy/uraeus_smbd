@@ -19,8 +19,8 @@ class parametric_configuration(object):
     
     def __init__(self,mbs_instance):
         self.topology = mbs_instance
-        self.name = self.topology.name
-        self.graph = nx.DiGraph(name=self.name)    
+        self.name  = '%s_cfg'%self.topology.name
+        self.graph = nx.DiGraph(name=self.name)
    
     @property
     def arguments_symbols(self):
@@ -34,7 +34,7 @@ class parametric_configuration(object):
     def input_equalities(self):
         g = self.graph
         nodes = self.input_nodes
-        equalities = [g.nodes[i]['func'] for i,d in g.in_degree(nodes) if d == 0]
+        equalities = [g.nodes[i]['func'] for i,d in g.in_degree(nodes) if d==0]
         return equalities
     
     @property
@@ -46,7 +46,7 @@ class parametric_configuration(object):
     def output_equalities(self):
         g = self.graph
         nodes = self.output_nodes
-        equalities = [g.nodes[i]['func'] for i,d in g.out_degree(nodes) if d == 0]
+        equalities = [g.nodes[i]['func'] for i,d in g.out_degree(nodes) if d==0]
         return self.mid_equalities + equalities
     
     @property

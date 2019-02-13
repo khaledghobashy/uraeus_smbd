@@ -4,6 +4,7 @@ Created on Sun Jan  6 13:23:39 2019
 
 @author: khale
 """
+import os
 import sympy as sm
 import textwrap
 import re
@@ -40,33 +41,13 @@ class abstract_generator(object):
         self.output_args = self.config.output_equalities
         
         self.bodies = self.mbs.bodies
-        self.jac_cols = self.mbs.jac_cols #sum([e for e in self.mbs.cols],[])
-            
+        self.jac_cols = self.mbs.jac_cols
     
-    def _create_inputs_dataframe(self):
-        indecies = [str(i.lhs) for i in self.input_args if isinstance(i.lhs,sm.MatrixSymbol)]
-        indecies.sort()
-        shape = (len(indecies),4)
-        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
-        return dataframe
-    
-    def _generate_cse(self,equations,symbol):
-        p = self.printer
-        cse_symbols = sm.iterables.numbered_symbols(symbol)
-        cse = sm.cse(equations,symbols=cse_symbols,ignore=(sm.S('t'),))
-        cse_variables   = '\n'.join([p._print(exp) for exp in cse[0]])
-        cse_expressions = '\n'.join([p._print(exp) for exp in cse[1]])
-        return cse_variables, cse_expressions    
-    
-    def _setup_x_equations(self,xstring,sym='x'):
-        p = self.printer
-        equations = getattr(self.mbs,'%s_equations'%xstring)
-        cse_variables, cse_expressions = self._generate_cse(equations,sym)
-        rows,cols,data = p._print(cse_expressions).split('\n')
-        setattr(self,'%s_eq_csev'%xstring,cse_variables)
-        setattr(self,'%s_eq_rows'%xstring,rows)
-        setattr(self,'%s_eq_cols'%xstring,cols)
-        setattr(self,'%s_eq_data'%xstring,data)
+    def setup_equations(self):
+        self._setup_pos_equations()
+        self._setup_vel_equations()
+        self._setup_acc_equations()
+        self._setup_jac_equations()
     
     def _setup_pos_equations(self):
         self._setup_x_equations('pos','x')
@@ -82,18 +63,135 @@ class abstract_generator(object):
         scols = ','.join(['self.%s'%i for i in self.jac_cols])
         self.jac_eq_cols = 'np.array([%s])'%scols
 
-        
-    def setup_equations(self):
-        self._setup_pos_equations()
-        self._setup_vel_equations()
-        self._setup_acc_equations()
-        self._setup_jac_equations()
+
+    def _setup_x_equations(self,xstring,sym='x'):
+        p = self.printer
+        equations = getattr(self.mbs,'%s_equations'%xstring)
+        cse_variables, cse_expressions = self._generate_cse(equations,sym)
+        rows,cols,data = p._print(cse_expressions).split('\n')
+        setattr(self,'%s_eq_csev'%xstring,cse_variables)
+        setattr(self,'%s_eq_rows'%xstring,rows)
+        setattr(self,'%s_eq_cols'%xstring,cols)
+        setattr(self,'%s_eq_data'%xstring,data)
+    
+    def _generate_cse(self,equations,symbol):
+        p = self.printer
+        cse_symbols = sm.iterables.numbered_symbols(symbol)
+        cse = sm.cse(equations,symbols=cse_symbols,ignore=(sm.S('t'),))
+        cse_variables   = '\n'.join([p._print(exp) for exp in cse[0]])
+        cse_expressions = '\n'.join([p._print(exp) for exp in cse[1]])
+        return cse_variables, cse_expressions    
+
+    
+    def _create_inputs_dataframe(self):
+        indecies = [str(i.lhs) for i in self.input_args if isinstance(i.lhs,sm.MatrixSymbol)]
+        indecies.sort()
+        shape = (len(indecies),4)
+        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
+        return dataframe
+
+    @staticmethod
+    def _insert_string(string):
+        def inserter(x): return string + x.group(0).strip("'")
+        return inserter
 
 ###############################################################################
 ###############################################################################
 
 class configuration_code_generator(abstract_generator):
+        
+    def __init__(self,config,printer=numerical_printer()):
+        
+        self.config  = config
+        self.printer = printer
+        self.name = self.config.name
+                
+        self.config_vars = [printer._print(i) for i in self.config.arguments_symbols]
+        self.input_args  = self.config.input_equalities
+        self.output_args = self.config.output_equalities
     
+    def write_imports(self):
+        text = '''
+                import numpy as np
+                import pandas as pd
+                from source.solvers.py_numerical_functions import mirrored, centered, oriented
+
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        return text
+        
+    def write_class_init(self):
+        text = '''
+                class configuration(object):
+
+                    def __init__(self):
+                        {inputs}                       
+                '''
+        p = self.printer
+        indent = 8*' '
+        inputs  = self.input_args
+        
+        pattern = '|'.join(self.config_vars)
+        self_inserter = self._insert_string('self.')
+        
+        inputs = '\n'.join([p._print(exp) for exp in inputs])
+        inputs = re.sub(pattern,self_inserter,inputs)
+        inputs = textwrap.indent(inputs,indent).lstrip()
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        text = text.format(inputs = inputs)
+        return text
+    
+    def write_helpers(self):
+        text = '''
+                def load_from_csv(self,csv_file):
+                    dataframe = pd.read_csv(csv_file,index_col=0)
+                    for ind in dataframe.index:
+                        shape = getattr(self,ind).shape
+                        v = np.array(dataframe.loc[ind],dtype=np.float64)
+                        v = np.resize(v,shape)
+                        setattr(self,ind,v)
+                    self._set_arguments()
+                
+                def _set_arguments(self):
+                    {outputs}
+                
+                '''
+        p = self.printer
+        indent = 4*' '
+        
+        outputs = self.output_args
+        
+        pattern = '|'.join(self.config_vars)
+        self_inserter = self._insert_string('self.')
+                
+        outputs = '\n'.join([p._print(exp) for exp in outputs])
+        outputs = re.sub(pattern,self_inserter,outputs)
+        outputs = textwrap.indent(outputs,indent).lstrip()
+        
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = text.format(outputs = outputs)
+        return text
+        
+    def write_code_file(self):
+        os.chdir('..\..')
+        path = os.getcwd() + '\\generated_templates\\templates'
+        os.chdir(path)
+        
+        imports = self.write_imports()
+        class_init    = self.write_class_init()
+        class_helpers = self.write_helpers()
+        text = '\n'.join([imports,class_init,class_helpers])
+        with open('%s.py'%self.name,'w') as file:
+            file.write(text)
+        
+        inputs_dataframe = self._create_inputs_dataframe()
+        inputs_dataframe.to_csv('%s.csv'%self.name)
+
+
     def write_config_class(self):
         text = '''
                 class configuration(object):
@@ -181,10 +279,6 @@ class configuration_code_generator(abstract_generator):
 
 class template_code_generator(abstract_generator):
     
-    @staticmethod
-    def _insert_string(string):
-        def inserter(x): return string + x.group(0).strip("'")
-        return inserter
         
     def _write_x_setter(self,func_name,var='q'):
         text = '''
@@ -274,86 +368,31 @@ class template_code_generator(abstract_generator):
         text = textwrap.dedent(text)
         return text
     
-    def write_config_class(self):
+    def write_class_init(self):
         text = '''
-                class configuration(object):
+                class topology(object):
 
-                    def __init__(self):
-                        {inputs}
+                    def __init__(self,config,prefix=''):
+                        self.t = 0.0
+                        self.config = config
+                        self.prefix = (prefix if prefix=='' else prefix+'.')
                                                 
-                    def _set_arguments(self):
-                        {outputs}
-                    
-                    def load_from_csv(self,csv_file):
-                        dataframe = pd.read_csv(csv_file,index_col=0)
-                        for ind in dataframe.index:
-                            shape = getattr(self,ind).shape
-                            v = np.array(dataframe.loc[ind],dtype=np.float64)
-                            v = np.resize(v,shape)
-                            setattr(self,ind,v)
-                        self._set_arguments()
-                    
-                    def eval_constants(self):
+                        self.n = {n}
+                        self.nrows = {nve}
+                        self.ncols = 2*{nodes}
+                        self.rows = np.arange(self.nrows)
                         
-                        {constants}
-                    
-                    @property
-                    def q(self):
-                        q = {coordinates}
-                        return q
-                    
-                    @property
-                    def qd(self):
-                        qd = {velocities}
-                        return qd
+                        self.jac_rows = {jac_rows}                        
                 '''
-        
-        p = self.printer
-        indent = 8*' '
-        
-        inputs  = self.input_args
-        outputs = self.output_args
-        consts = self.edges_constants_exp
-        
-        pattern = '|'.join( self.edges_arguments_sym + self.edges_constants_sym
-                           +self.virtual_coordinates + self.gen_coordinates_sym
-                           +self.gen_velocities_sym + self.config_vars)
-        self_inserter = self._insert_string('self.')
-        
-        inputs = '\n'.join([p._print(exp) for exp in inputs])
-        inputs = re.sub(pattern,self_inserter,inputs)
-        inputs = textwrap.indent(inputs,indent).lstrip()
-        
-        outputs = '\n'.join([p._print(exp) for exp in outputs])
-        outputs = re.sub(pattern,self_inserter,outputs)
-        outputs = textwrap.indent(outputs,indent).lstrip()
-        
-        if len(consts) !=0:
-            cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
-            cse_var_txt = re.sub(pattern,self_inserter,cse_var_txt)
-            cse_exp_txt = re.sub(pattern,self_inserter,cse_exp_txt)
-            constants = '\n'.join([cse_var_txt,'',cse_exp_txt])
-            constants = textwrap.indent(constants,indent).lstrip()
-        else:
-            constants = 'pass'
-        
-        coordinates = ','.join(self.gen_coordinates_sym)
-        coordinates = re.sub(pattern,self_inserter,coordinates)
-        coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
-        coordinates = textwrap.indent(coordinates,indent).lstrip()
-        
-        velocities = ','.join(self.gen_velocities_sym)
-        velocities = re.sub(pattern,self_inserter,velocities)
-        velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
-        velocities = textwrap.indent(velocities,indent).lstrip()
-        
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(inputs  = inputs,
-                           outputs = outputs,
-                           constants = constants,
-                           coordinates = coordinates,
-                           velocities = velocities)
+        
+        text = text.format(rows = self.pos_eq_rows,
+                           jac_rows = self.jac_eq_rows,
+                           jac_cols = self.jac_eq_cols,
+                           nve = self.mbs.nve,
+                           n = self.mbs.n,
+                           nodes = len(self.mbs.nodes))
         return text
 
     def write_template_assembler(self):
@@ -390,34 +429,35 @@ class template_code_generator(abstract_generator):
                            jac_cols = self.jac_eq_cols)
         text = textwrap.indent(text,indent)
         return text
-            
-    def write_class_init(self):
+    
+    def write_constants_eval(self):
         text = '''
-                class topology(object):
-
-                    def __init__(self,config,prefix=''):
-                        self.t = 0.0
-                        self.config = config
-                        self.prefix = (prefix if prefix=='' else prefix+'.')
-                                                
-                        self.n = {n}
-                        self.nrows = {nve}
-                        self.ncols = 2*{nodes}
-                        self.rows = np.arange(self.nrows)
-                        
-                        self.jac_rows = {jac_rows}                        
+                def eval_constants(self):
+                    config = self.config
+                    
+                    {constants}
                 '''
+        indent = 8*' '
+        
+        consts = self.edges_constants_exp
+        
+        pattern = '|'.join(self.config_vars)
+        config_inserter = self._insert_string('config.')
+        
+        if len(consts) !=0:
+            cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
+            cse_var_txt = re.sub(pattern,config_inserter,cse_var_txt)
+            cse_exp_txt = re.sub(pattern,config_inserter,cse_exp_txt)
+            constants = '\n'.join([cse_var_txt,'',cse_exp_txt])
+            constants = textwrap.indent(constants,indent).lstrip()
+        else:
+            constants = 'pass'
+                
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        
-        text = text.format(rows = self.pos_eq_rows,
-                           jac_rows = self.jac_eq_rows,
-                           jac_cols = self.jac_eq_cols,
-                           nve = self.mbs.nve,
-                           n = self.mbs.n,
-                           nodes = len(self.mbs.nodes))
+        text = text.format(constants = constants)
         return text
-                
+
     def write_coordinates_setter(self):
         return self._write_x_setter('gen_coordinates','q')
     
@@ -439,7 +479,8 @@ class template_code_generator(abstract_generator):
     def write_system_class(self):
         text = '''
                 {class_init}
-                    {jac_mappings}
+                    {assembler}
+                    {constants}
                     {coord_setter}
                     {veloc_setter}
                     {eval_pos}
@@ -451,7 +492,8 @@ class template_code_generator(abstract_generator):
         text = textwrap.dedent(text)
         
         class_init = self.write_class_init()
-        jac_mappings = self.write_template_assembler()
+        assembler  = self.write_template_assembler()
+        constants  = self.write_constants_eval()
         coord_setter = self.write_coordinates_setter()
         veloc_setter = self.write_velocities_setter()
         
@@ -461,7 +503,8 @@ class template_code_generator(abstract_generator):
         eval_jac = self.write_jac_equations()
         
         text = text.format(class_init = class_init,
-                           jac_mappings = jac_mappings,
+                           assembler = assembler,
+                           constants = constants,
                            eval_pos = eval_pos,
                            eval_vel = eval_vel,
                            eval_acc = eval_acc,
@@ -473,15 +516,14 @@ class template_code_generator(abstract_generator):
     
     def write_code_file(self):
         import os
-        os.chdir('..')
-        path = os.getcwd() + '\\generated_templates'
+        os.chdir('..\..')
+        path = os.getcwd() + '\\generated_templates\\templates'
         os.chdir(path)
+        
         self.setup_equations()
         imports = self.write_imports()
-        config_class = self.write_config_class()
         system_class = self.write_system_class()
-        
-        text = '\n'.join([imports,config_class,system_class])
+        text = '\n'.join([imports,system_class])
         with open('%s.py'%self.mbs.name,'w') as file:
             file.write(text)
         
@@ -585,7 +627,9 @@ class assembly_code_generator(template_code_generator):
                 {templates_imports}
                 {subsystems}
                 '''
-        templates_imports = '\n'.join(['import %s'%i for i in self.templates])
+        import_prefix = 'from use_cases.generated_templates.templates '
+        templates_imports = '\n'.join(['%simport %s'%(import_prefix,i)
+                                        for i in self.templates])
         
         subsystems = []
         for d in self.subsystems_templates.items():
@@ -703,7 +747,7 @@ class assembly_code_generator(template_code_generator):
                     {virtuals_map}
                     
                     for sub in self.subsystems:
-                        sub.config.eval_constants()
+                        sub.eval_constants()
                 '''
         indent = 4*' '
         p = self.printer
