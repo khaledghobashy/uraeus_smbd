@@ -145,6 +145,10 @@ class abstract_topology(object):
         nx.draw_spring(self.forces_graph,with_labels=True)
         plt.show()
     
+    def set_configuration_file(self,file=None):
+#        self.cfg_file = (self.name if file is None else file)
+        self.cfg_file = file
+
     def assemble_model(self):
         self._assemble_nodes()
         self._assemble_edges()

@@ -4,16 +4,18 @@ Created on Wed Feb 13 09:56:01 2019
 
 @author: khaled.ghobashy
 """
+import os
 
 from source.symbolic_classes.abstract_matrices import Config_Relations as CR
-from source.mbs_creators.topology_helpers import parametric_configuration
 from source.code_generators.python_code_generators import configuration_code_generator
 
 from use_cases.parametric_templates.templates import double_wishbone_direct_acting as dwb
 
+#file_name = os.path.splitext(os.path.basename(__file__))[0]
+config = dwb.template.param_config
+config.name = 'dwb_simple_points'
+dwb.template.set_configuration_file(config.name)
 
-config = parametric_configuration(dwb.template)
-config.assemble_base_layer()
 
 config.add_point('ucaf',mirror=True)
 config.add_point('ucar',mirror=True)
@@ -65,6 +67,10 @@ config.add_relation(CR.Oriented,'ax2_jcr_tie_steering',['hpr_tro','hpr_tri'],Tru
 config.add_relation(CR.Equal_to,'pt1_jcr_strut',['hpr_strut_mid'],True)
 config.add_relation(CR.Oriented,'ax1_jcr_strut',['hpr_strut_lca','hpr_strut_chassis'],True)
 
-config_code = configuration_code_generator(config)
-print(config_code.write_system_class())
+
+
+if __name__ == '__main__':
+    config_code = configuration_code_generator(config)
+    config_code.write_code_file()
+
 

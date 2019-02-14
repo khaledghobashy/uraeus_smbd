@@ -5,13 +5,13 @@ Created on Tue Jan 29 08:18:17 2019
 @author: khaled.ghobashy
 """
 
-from source.symbolic_classes.abstract_matrices import Config_Relations as CR
 from source.symbolic_classes.spatial_joints import (revolute, universal, spherical,
                                                     cylinderical)
 from source.symbolic_classes.forces import internal_force
 from source.mbs_creators.topology_classes import template_based_topology
-from source.code_generators.python_code_generators import (configuration_code_generator,
-                                                           template_code_generator)
+from source.code_generators.python_code_generators import template_code_generator
+
+
 
 template = template_based_topology('dwb1')
 
@@ -37,9 +37,9 @@ template.add_joint(universal,'tie_steering','rbr_tie_rod','vbr_steer',mirrored=T
 template.add_joint(cylinderical,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
 
 template.add_force(internal_force,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
-
 template.assemble_model()
 
-numerical_code = template_code_generator(template)
-numerical_code.write_code_file()
+if __name__ == '__main__':
+    numerical_code = template_code_generator(template)
+    numerical_code.write_code_file()
 

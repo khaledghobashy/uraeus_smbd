@@ -109,13 +109,17 @@ class configuration_code_generator(abstract_generator):
         self.config_vars = [printer._print(i) for i in self.config.arguments_symbols]
         self.input_args  = self.config.input_equalities
         self.output_args = self.config.output_equalities
-    
+        
+        self.gen_coordinates_sym = [printer._print(exp.lhs) 
+        for exp in self.config.topology.mapped_gen_coordinates]
+        self.gen_velocities_sym  = [printer._print(exp.lhs) 
+        for exp in self.config.topology.mapped_gen_velocities]
+        
     def write_imports(self):
         text = '''
                 import numpy as np
                 import pandas as pd
                 from source.solvers.py_numerical_functions import mirrored, centered, oriented
-
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -146,6 +150,16 @@ class configuration_code_generator(abstract_generator):
     
     def write_helpers(self):
         text = '''
+                @property
+                def q(self):
+                    q = {coordinates}
+                    return q
+                    
+                @property
+                def qd(self):
+                    qd = {velocities}
+                    return qd
+                        
                 def load_from_csv(self,csv_file):
                     dataframe = pd.read_csv(csv_file,index_col=0)
                     for ind in dataframe.index:
@@ -171,9 +185,23 @@ class configuration_code_generator(abstract_generator):
         outputs = re.sub(pattern,self_inserter,outputs)
         outputs = textwrap.indent(outputs,indent).lstrip()
         
+        coordinates = ','.join(self.gen_coordinates_sym)
+        coordinates = re.sub(pattern,self_inserter,coordinates)
+        coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
+        coordinates = textwrap.indent(coordinates,indent).lstrip()
+        
+        velocities = ','.join(self.gen_velocities_sym)
+        velocities = re.sub(pattern,self_inserter,velocities)
+        velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
+        velocities = textwrap.indent(velocities,indent).lstrip()
+        
+
+        
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(outputs = outputs)
+        text = text.format(outputs = outputs,
+                           coordinates = coordinates,
+                           velocities = velocities)
         text = textwrap.indent(text,indent)
         return text
     
@@ -194,7 +222,7 @@ class configuration_code_generator(abstract_generator):
         
     def write_code_file(self):
         os.chdir('..\..')
-        path = os.getcwd() + '\\generated_templates\\templates'
+        path = os.getcwd() + '\\generated_templates\\configurations'
         os.chdir(path)
         
         imports = self.write_imports()
@@ -206,88 +234,6 @@ class configuration_code_generator(abstract_generator):
         inputs_dataframe = self._create_inputs_dataframe()
         inputs_dataframe.to_csv('%s.csv'%self.name)
 
-
-    def write_config_class(self):
-        text = '''
-                class configuration(object):
-
-                    def __init__(self):
-                        {inputs}
-                                                
-                    def _set_arguments(self):
-                        {outputs}
-                    
-                    def load_from_csv(self,csv_file):
-                        dataframe = pd.read_csv(csv_file,index_col=0)
-                        for ind in dataframe.index:
-                            shape = getattr(self,ind).shape
-                            v = np.array(dataframe.loc[ind],dtype=np.float64)
-                            v = np.resize(v,shape)
-                            setattr(self,ind,v)
-                        self._set_arguments()
-                    
-                    def eval_constants(self):
-                        
-                        {constants}
-                    
-                    @property
-                    def q(self):
-                        q = {coordinates}
-                        return q
-                    
-                    @property
-                    def qd(self):
-                        qd = {velocities}
-                        return qd
-                '''
-        
-        p = self.printer
-        indent = 8*' '
-        
-        inputs  = self.input_args
-        outputs = self.output_args
-        consts = self.edges_constants_exp
-        
-        pattern = '|'.join( self.edges_arguments_sym + self.edges_constants_sym
-                           +self.virtual_coordinates + self.gen_coordinates_sym
-                           +self.gen_velocities_sym + self.config_vars)
-        self_inserter = self._insert_string('self.')
-        
-        inputs = '\n'.join([p._print(exp) for exp in inputs])
-        inputs = re.sub(pattern,self_inserter,inputs)
-        inputs = textwrap.indent(inputs,indent).lstrip()
-        
-        outputs = '\n'.join([p._print(exp) for exp in outputs])
-        outputs = re.sub(pattern,self_inserter,outputs)
-        outputs = textwrap.indent(outputs,indent).lstrip()
-        
-        if len(consts) !=0:
-            cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
-            cse_var_txt = re.sub(pattern,self_inserter,cse_var_txt)
-            cse_exp_txt = re.sub(pattern,self_inserter,cse_exp_txt)
-            constants = '\n'.join([cse_var_txt,'',cse_exp_txt])
-            constants = textwrap.indent(constants,indent).lstrip()
-        else:
-            constants = 'pass'
-        
-        coordinates = ','.join(self.gen_coordinates_sym)
-        coordinates = re.sub(pattern,self_inserter,coordinates)
-        coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
-        coordinates = textwrap.indent(coordinates,indent).lstrip()
-        
-        velocities = ','.join(self.gen_velocities_sym)
-        velocities = re.sub(pattern,self_inserter,velocities)
-        velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
-        velocities = textwrap.indent(velocities,indent).lstrip()
-        
-        text = text.expandtabs()
-        text = textwrap.dedent(text)
-        text = text.format(inputs  = inputs,
-                           outputs = outputs,
-                           constants = constants,
-                           coordinates = coordinates,
-                           velocities = velocities)
-        return text
         
 ###############################################################################
 ###############################################################################
@@ -295,78 +241,6 @@ class configuration_code_generator(abstract_generator):
 class template_code_generator(abstract_generator):
     
         
-    def _write_x_setter(self,func_name,var='q'):
-        text = '''
-                def set_%s(self,%s):
-                    {equalities}
-               '''%(func_name,var)
-        
-        text = text.expandtabs()
-        text = textwrap.dedent(text)
-        
-        p = self.printer
-        indent = 4*' '
-        
-        symbolic_equality  = getattr(self,'%s_exp'%func_name)
-        
-        if len(symbolic_equality) !=0:
-            pattern = '|'.join(getattr(self,'%s_sym'%func_name))
-            self_inserter = self._insert_string('self.')
-            
-            numerical_equality = '\n'.join([p._print(i) for i in symbolic_equality])
-            numerical_equality = re.sub(pattern,self_inserter,numerical_equality)
-            numerical_equality = textwrap.indent(numerical_equality,indent).lstrip()
-        else:
-            numerical_equality = 'pass'
-        
-        text = text.format(equalities = numerical_equality)
-        text = textwrap.indent(text,indent)
-        return text
-    
-    def _write_x_equations(self,xstring):
-        text = '''
-                def eval_%s_eq(self):
-                    config = self.config
-                    t = self.t
-
-                    {cse_var_txt}
-
-                    {cse_exp_txt}
-                '''%xstring
-        text = text.expandtabs()
-        text = textwrap.dedent(text)
-        
-        indent = 4*' '
-        
-        cse_var_txt = getattr(self,'%s_eq_csev'%xstring)
-        cse_exp_txt = getattr(self,'%s_eq_data'%xstring)
-        
-        self_pattern = sum([self.virtual_coordinates,self.gen_coordinates_sym,
-                            self.gen_velocities_sym],[])
-        self_pattern = '|'.join(self_pattern)
-        self_inserter = self._insert_string('self.')
-        cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)
-        cse_exp_txt = re.sub(self_pattern,self_inserter,cse_exp_txt)
-        
-        config_pattern = sum([self.edges_arguments_sym,self.edges_constants_sym],[])
-        config_pattern = '|'.join(config_pattern)
-        config_inserter = self._insert_string('config.')
-        cse_var_txt = re.sub(config_pattern,config_inserter,cse_var_txt)
-        cse_exp_txt = re.sub(config_pattern,config_inserter,cse_exp_txt)
-        
-        cse_var_txt = textwrap.indent(cse_var_txt,indent).lstrip() 
-        cse_exp_txt = textwrap.indent(cse_exp_txt,indent).lstrip()
-        
-        cse_exp_txt = 'self.%s_eq_blocks = %s'%(xstring,cse_exp_txt.lstrip())
-        
-        text = text.format(cse_var_txt = cse_var_txt,
-                           cse_exp_txt = cse_exp_txt)
-        text = textwrap.indent(text,indent)
-        return text
-    
-    ###########################################################################
-    ###########################################################################
-
     def write_imports(self):
         text = '''
                 import numpy as np
@@ -393,7 +267,7 @@ class template_code_generator(abstract_generator):
         text = '''
                 class topology(object):
 
-                    def __init__(self,config=configuration(),prefix=''):
+                    def __init__(self,prefix='',config=configuration()):
                         self.t = 0.0
                         self.config = config
                         self.prefix = (prefix if prefix=='' else prefix+'.')
@@ -462,14 +336,13 @@ class template_code_generator(abstract_generator):
         
         consts = self.edges_constants_exp
         
-        config_pattern_iter = itertools.chain(self.edges_arguments_sym)
+        config_pattern_iter = itertools.chain(self.edges_arguments_sym,
+                               self.virtual_coordinates,
+                               self.gen_coordinates_sym)
         config_pattern = '|'.join(config_pattern_iter)
         config_inserter = self._insert_string('config.')
         
-        self_pattern_iter = itertools.chain(self.edges_constants_sym,
-                               self.virtual_coordinates,
-                               self.gen_coordinates_sym,
-                               self.config_vars)
+        self_pattern_iter = itertools.chain(self.edges_constants_sym)
         self_pattern = '|'.join(self_pattern_iter)
         self_inserter = self._insert_string('self.')
         
@@ -547,7 +420,6 @@ class template_code_generator(abstract_generator):
     
     
     def write_code_file(self):
-        import os
         os.chdir('..\..')
         path = os.getcwd() + '\\generated_templates\\templates'
         os.chdir(path)
@@ -561,7 +433,80 @@ class template_code_generator(abstract_generator):
             file.write(text)
         
         inputs_dataframe = self._create_inputs_dataframe()
-        inputs_dataframe.to_csv('%s_v1.csv'%self.mbs.name)
+        inputs_dataframe.to_csv('%s_base_cfg.csv'%self.mbs.name)
+        
+    ###########################################################################
+    ###########################################################################
+
+    def _write_x_setter(self,func_name,var='q'):
+        text = '''
+                def set_%s(self,%s):
+                    {equalities}
+               '''%(func_name,var)
+        
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        p = self.printer
+        indent = 4*' '
+        
+        symbolic_equality  = getattr(self,'%s_exp'%func_name)
+        
+        if len(symbolic_equality) !=0:
+            pattern = '|'.join(getattr(self,'%s_sym'%func_name))
+            self_inserter = self._insert_string('self.')
+            
+            numerical_equality = '\n'.join([p._print(i) for i in symbolic_equality])
+            numerical_equality = re.sub(pattern,self_inserter,numerical_equality)
+            numerical_equality = textwrap.indent(numerical_equality,indent).lstrip()
+        else:
+            numerical_equality = 'pass'
+        
+        text = text.format(equalities = numerical_equality)
+        text = textwrap.indent(text,indent)
+        return text
+    
+    def _write_x_equations(self,xstring):
+        text = '''
+                def eval_%s_eq(self):
+                    #config = self.config
+                    t = self.t
+
+                    {cse_var_txt}
+
+                    {cse_exp_txt}
+                '''%xstring
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        indent = 4*' '
+        
+        cse_var_txt = getattr(self,'%s_eq_csev'%xstring)
+        cse_exp_txt = getattr(self,'%s_eq_data'%xstring)
+        
+        self_pattern = itertools.chain(self.virtual_coordinates,self.gen_coordinates_sym,
+                            self.gen_velocities_sym,self.edges_constants_sym)
+        self_pattern = '|'.join(self_pattern)
+        self_inserter = self._insert_string('self.')
+        cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)
+        cse_exp_txt = re.sub(self_pattern,self_inserter,cse_exp_txt)
+        
+        config_pattern = self.edges_arguments_sym
+        config_pattern = '|'.join(config_pattern)
+        config_inserter = self._insert_string('config.')
+        cse_var_txt = re.sub(config_pattern,config_inserter,cse_var_txt)
+        cse_exp_txt = re.sub(config_pattern,config_inserter,cse_exp_txt)
+        
+        cse_var_txt = textwrap.indent(cse_var_txt,indent).lstrip() 
+        cse_exp_txt = textwrap.indent(cse_exp_txt,indent).lstrip()
+        
+        cse_exp_txt = 'self.%s_eq_blocks = %s'%(xstring,cse_exp_txt.lstrip())
+        
+        text = text.format(cse_var_txt = cse_var_txt,
+                           cse_exp_txt = cse_exp_txt)
+        text = textwrap.indent(text,indent)
+        return text
+    
 
 ###############################################################################
 ###############################################################################
@@ -573,12 +518,15 @@ class assembly_code_generator(template_code_generator):
         self.printer = printer
         self.name = self.mbs.name
         self.templates = []
+        self.configs = []
         self.subsystems_templates = {}
         for name,obj in self.mbs.subsystems.items():
             topology_name = obj.topology.name
-            self.subsystems_templates[name] = topology_name
+            cfg_file_name = obj.topology.cfg_file
+            self.subsystems_templates[name] = (topology_name,cfg_file_name)
             if topology_name not in self.templates:
                 self.templates.append(topology_name)
+                self.configs.append(cfg_file_name)
     
     def _write_x_setter(self,func_name,var='q'):
         text = '''
@@ -657,19 +605,23 @@ class assembly_code_generator(template_code_generator):
         text = '''
                 import numpy as np
                 
+                {configs_imports}
                 {templates_imports}
                 {subsystems}
                 '''
-        import_prefix = 'from use_cases.generated_templates.templates '
-        templates_imports = '\n'.join(['%simport %s'%(import_prefix,i)
+        tpl_import_prefix = 'from use_cases.generated_templates.templates '
+        templates_imports = '\n'.join(['%simport %s'%(tpl_import_prefix,i)
                                         for i in self.templates])
+        cfg_import_prefix = 'from use_cases.generated_templates.configurations '
+        configs_imports = '\n'.join(['%simport %s'%(cfg_import_prefix,i)
+                                        for i in self.configs if i is not None])
+        
         
         subsystems = []
-        for d in self.subsystems_templates.items():
-            sub_config, template = d
+        for subsys, topology in self.subsystems_templates.items():
+            template, config = topology
             assignment = f'''
-            {sub_config}_config = {template}.configuration()
-            {sub_config} = {template}.topology({sub_config}_config,'{sub_config}')
+            {subsys} = {template}.topology('{subsys}',{config})
             '''
             subsystems.append(assignment)
             
@@ -677,7 +629,8 @@ class assembly_code_generator(template_code_generator):
         subsystems = textwrap.dedent(subsystems)
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(templates_imports = templates_imports,
+        text = text.format(configs_imports = configs_imports,
+                           templates_imports = templates_imports,
                            subsystems = subsystems)
         return text
     
@@ -869,6 +822,9 @@ class assembly_code_generator(template_code_generator):
         return text
     
     def write_code_file(self):
+        os.chdir('..\..')
+        path = os.getcwd() + '\\generated_templates\\assemblies'
+        os.chdir(path)
         imports = self.write_imports()
         system_class = self.write_system_class()
         
