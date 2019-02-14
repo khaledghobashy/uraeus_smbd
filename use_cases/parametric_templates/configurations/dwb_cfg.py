@@ -9,7 +9,7 @@ import os
 from source.symbolic_classes.abstract_matrices import Config_Relations as CR
 from source.code_generators.python_code_generators import configuration_code_generator
 
-from use_cases.parametric_templates.templates import double_wishbone_direct_acting as dwb
+from use_cases.parametric_templates.templates.tpls import dwb1 as dwb
 
 #file_name = os.path.splitext(os.path.basename(__file__))[0]
 config = dwb.template.param_config
