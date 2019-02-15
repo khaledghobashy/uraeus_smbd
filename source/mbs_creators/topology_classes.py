@@ -4,11 +4,13 @@ Created on Tue Jan  1 11:31:35 2019
 
 @author: khale
 """
+import itertools
+import os
 
+import cloudpickle
 import sympy as sm
 import matplotlib.pyplot as plt
 import networkx as nx
-import itertools
 
 from source.symbolic_classes.abstract_matrices import (global_frame, 
                                                        reference_frame,
@@ -32,6 +34,8 @@ class abstract_topology(object):
         self._edges_map = {}
         self._edges_keys_map = {}
         self._param_config = parametric_configuration(self)
+        self.cfg_file = self._param_config.name
+        self.path = os.getcwd()
             
     @property
     def param_config(self):
@@ -156,6 +160,11 @@ class abstract_topology(object):
         self._assemble_constraints_equations()
         self._assemble_forces_equations()
         self._initialize_toplogy_reqs()
+    
+    def save(self):
+        with open('%s\\%s.stpl'%(self.path,self.name),'wb') as f:
+            cloudpickle.dump(self,f)
+
 
     def _set_global_frame(self):
         self.global_instance = global_frame(self.name)

@@ -4,8 +4,8 @@ Created on Tue Jan 29 08:18:17 2019
 
 @author: khaled.ghobashy
 """
+import os
 import pickle
-import cloudpickle
 
 from source.symbolic_classes.spatial_joints import (revolute, universal, spherical,
                                                     cylinderical)
@@ -13,9 +13,14 @@ from source.symbolic_classes.forces import internal_force
 from source.mbs_creators.topology_classes import template_based_topology
 from source.code_generators.python_code_generators import template_code_generator
 
-def main():
-    global template,numerical_code
-    
+
+def load():
+    global template
+    path = os.path.dirname(__file__)
+    with open('%s\\dwb1.stpl'%path,'rb') as f:
+        template = pickle.load(f)
+
+def create():    
     template = template_based_topology('dwb1')
     
     template.add_body('uca',mirrored=True)
@@ -42,21 +47,16 @@ def main():
     template.add_force(internal_force,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
 
     template.assemble_model()
-
-    with open('tpls.py','a') as f:
-        f.write('dwb1 = template')
-        
+    template.save()
+    
     numerical_code = template_code_generator(template)
     numerical_code.write_code_file()
     
 
 if __name__ == '__main__':
-    main()
+    create()
+else:
+    load()
     
 
-#with open('dwb1.stpl','wb') as f:
-#    cloudpickle.dump(template,f)
-#
-#with open('dwb1.stpl','rb') as f:
-#    d = pickle.load(f)
 

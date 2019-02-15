@@ -239,6 +239,11 @@ class base_vector(sm.MatrixSlice):
         self._args = (frame,sym)
         self._formated = r'{\hat{%s}_{%s}}'%(self._sym,self.frame.A)
     
+    def __getnewargs_ex__(self):
+        args = (self.frame,self._sym)
+        kwargs = {}
+        return (args, kwargs)
+    
     @property
     def name(self):
         """
@@ -587,8 +592,14 @@ class reference_frame(object):
         self._raw_name = name
         self._formated_name = (format_as if format_as is not None else name)
         self.parent = (parent if parent else self.global_frame)
-        self.A = dcm(str(name),format_as=format_as)
-             
+        self._A = dcm(str(name),format_as=format_as)
+        self._update_tree()
+    
+    def __getnewargs_ex__(self):
+        args = (self.name,)
+        kwargs = {'parent':self.parent,'format_as':self._formated_name}
+        return (args, kwargs)
+    
     def _update_tree(self):
         """
         Update the global_frame references_tree and add directed edges with
@@ -607,18 +618,22 @@ class reference_frame(object):
     @A.setter
     def A(self,value):
         self._A = value
-        self.i = base_vector(self,'i')
-        self.j = base_vector(self,'j')
-        self.k = base_vector(self,'k')
         self._update_tree()
     
     @property
     def name(self):
         return self._raw_name
     
-    def _ccode(self,expr,**kwargs):
-        return self._raw_name
-            
+    @property
+    def i(self):
+        return base_vector(self,'i')
+    @property
+    def j(self):
+        return base_vector(self,'j')
+    @property
+    def k(self):
+        return base_vector(self,'k')
+                
     def orient_along(self,v1,v2=None):
         """
         Specify the reference_frame matrix :math:`A` to be a triad that is 
@@ -658,6 +673,14 @@ class reference_frame(object):
     @property
     def free_symbols(self):
         return set()
+    
+    def _ccode(self,expr,**kwargs):
+        return self._raw_name
+
+    def _set_base_vectors(self):
+        self.i = base_vector(self,'i')
+        self.j = base_vector(self,'j')
+        self.k = base_vector(self,'k')
     
 ###############################################################################
 ###############################################################################
