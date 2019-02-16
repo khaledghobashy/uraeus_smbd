@@ -581,16 +581,17 @@ class reference_frame(object):
         exists or not, and creat one if no global_frame exists.
         """
         if not cls._is_global_set:
-            print('creating global')
+            print('creating global',name)
             global_instance = global_frame()
             cls.set_global_frame(global_instance)
         return super(reference_frame,cls).__new__(cls)
     
     
     def __init__(self, name, parent=None,format_as=None):
-        #print('Inside reference_frame()')
+#        print('Inside reference_frame()',name)
         self._raw_name = name
         self._formated_name = (format_as if format_as is not None else name)
+        self.global_frame = reference_frame.global_frame
         self.parent = (parent if parent else self.global_frame)
         self._A = dcm(str(name),format_as=format_as)
         self._update_tree()
@@ -600,6 +601,20 @@ class reference_frame(object):
         kwargs = {'parent':self.parent,'format_as':self._formated_name}
         return (args, kwargs)
     
+#    def __getstate__(self):
+#        # Copy the object's state from self.__dict__ which contains
+#        # all our instance attributes. Always use the dict.copy()
+#        # method to avoid modifying the original state.
+#        state = self.__dict__.copy()
+#        # Remove the unpicklable entries.
+#        state['global_frame_name'] = self.global_frame.name
+#        return state
+#    
+#    def __setstate__(self,state):
+#        self.__dict__.update(state)
+#        self.global_frame = global_frame(state['global_frame_name'])
+#        reference_frame.global_frame = self.global_frame
+        
     def _update_tree(self):
         """
         Update the global_frame references_tree and add directed edges with

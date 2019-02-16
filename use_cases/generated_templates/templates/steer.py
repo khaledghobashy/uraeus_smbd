@@ -1,4 +1,5 @@
 
+import os
 import numpy as np
 import scipy as sc
 import pandas as pd
@@ -11,22 +12,29 @@ from source.solvers.py_numerical_functions import mirrored, centered, oriented
 
 
 
+path = os.path.dirname(__file__)
+
 class configuration(object):
 
     def __init__(self):
+        self.R_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_rbs_coupler = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_coupler = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.m_rbs_coupler = 1
         self.Jbar_rbs_coupler = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]],dtype=np.float64)
+        self.R_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.m_rbr_rocker = 1
         self.Jbar_rbr_rocker = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]],dtype=np.float64)
+        self.ax1_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
+        self.pt1_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
         self.ax1_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
-        self.hpr_rocker_chassis = np.array([[0], [0], [0]],dtype=np.float64)
-        self.hpr_rocker_coupler = np.array([[0], [0], [0]],dtype=np.float64)                       
+        self.pt1_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
+        self.ax1_jcs_rc_cyl = np.array([[0], [0], [0]],dtype=np.float64)
+        self.pt1_jcs_rc_cyl = np.array([[0], [0], [0]],dtype=np.float64)                       
 
     
     @property
@@ -40,7 +48,8 @@ class configuration(object):
         return qd
 
     def load_from_csv(self,csv_file):
-        dataframe = pd.read_csv(csv_file,index_col=0)
+        file_path = os.path.join(path,csv_file)
+        dataframe = pd.read_csv(file_path,index_col=0)
         for ind in dataframe.index:
             shape = getattr(self,ind).shape
             v = np.array(dataframe.loc[ind],dtype=np.float64)
@@ -49,23 +58,14 @@ class configuration(object):
         self._set_arguments()
 
     def _set_arguments(self):
-        self.hpl_rocker_coupler = mirrored(self.hpr_rocker_coupler)
-        self.hpl_rocker_chassis = mirrored(self.hpr_rocker_chassis)
-        self.R_rbs_coupler = centered(self.hpr_rocker_coupler,self.hpl_rocker_coupler)
-        self.R_rbr_rocker = centered(self.hpr_rocker_chassis,self.hpr_rocker_coupler)
-        self.R_rbl_rocker = centered(self.hpl_rocker_chassis,self.hpl_rocker_coupler)
+        self.R_rbl_rocker = mirrored(self.R_rbr_rocker)
         self.P_rbl_rocker = mirrored(self.P_rbr_rocker)
         self.Rd_rbl_rocker = mirrored(self.Rd_rbr_rocker)
         self.Pd_rbl_rocker = mirrored(self.Pd_rbr_rocker)
         self.m_rbl_rocker = self.m_rbr_rocker
         self.Jbar_rbl_rocker = mirrored(self.Jbar_rbr_rocker)
-        self.ax1_jcr_rocker_ch = oriented(self.hpr_rocker_coupler,self.hpl_rocker_coupler,self.hpr_rocker_chassis)
-        self.pt1_jcr_rocker_ch = self.hpr_rocker_chassis
-        self.ax1_jcl_rocker_ch = oriented(self.hpl_rocker_coupler,self.hpr_rocker_coupler,self.hpl_rocker_chassis)
-        self.pt1_jcl_rocker_ch = self.hpl_rocker_chassis
-        self.pt1_jcs_rc_sph = self.hpr_rocker_coupler
-        self.ax1_jcs_rc_cyl = oriented(self.hpr_rocker_coupler,self.hpl_rocker_coupler,self.hpr_rocker_chassis)
-        self.pt1_jcs_rc_cyl = self.hpl_rocker_coupler
+        self.ax1_jcl_rocker_ch = mirrored(self.ax1_jcr_rocker_ch)
+        self.pt1_jcl_rocker_ch = mirrored(self.pt1_jcr_rocker_ch)
 
 
 
@@ -73,9 +73,9 @@ class configuration(object):
 
 class topology(object):
 
-    def __init__(self,prefix='',config=configuration()):
+    def __init__(self,prefix='',cfg=None):
         self.t = 0.0
-        self.config = config
+        self.config = (configuration() if cfg is None else cfg)
         self.prefix = (prefix if prefix=='' else prefix+'.')
 
         self.n = 21
@@ -163,7 +163,7 @@ class topology(object):
 
     
     def eval_pos_eq(self):
-        #config = self.config
+        config = self.config
         t = self.t
 
         x0 = self.R_rbr_rocker
@@ -191,7 +191,7 @@ class topology(object):
 
     
     def eval_vel_eq(self):
-        #config = self.config
+        config = self.config
         t = self.t
 
         v0 = np.zeros((3,1),dtype=np.float64)
@@ -201,21 +201,21 @@ class topology(object):
 
     
     def eval_acc_eq(self):
-        #config = self.config
+        config = self.config
         t = self.t
 
         a0 = self.Pd_rbr_rocker
         a1 = self.Pd_vbs_chassis
-        a2 = self.Mbar_vbs_chassis_jcr_rocker_ch[:,2:3]
-        a3 = a2.T
-        a4 = self.P_vbs_chassis
-        a5 = A(a4).T
-        a6 = self.Mbar_rbr_rocker_jcr_rocker_ch[:,0:1]
-        a7 = self.P_rbr_rocker
-        a8 = A(a7).T
-        a9 = B(a1,a2)
+        a2 = self.Mbar_rbr_rocker_jcr_rocker_ch[:,0:1]
+        a3 = self.P_rbr_rocker
+        a4 = A(a3).T
+        a5 = self.Mbar_vbs_chassis_jcr_rocker_ch[:,2:3]
+        a6 = B(a1,a5)
+        a7 = a5.T
+        a8 = self.P_vbs_chassis
+        a9 = A(a8).T
         a10 = a0.T
-        a11 = B(a4,a2)
+        a11 = B(a8,a5)
         a12 = self.Mbar_rbr_rocker_jcr_rocker_ch[:,1:2]
         a13 = self.Pd_rbs_coupler
         a14 = self.Pd_rbl_rocker
@@ -226,33 +226,33 @@ class topology(object):
         a19 = A(a18).T
         a20 = B(a1,a15)
         a21 = a14.T
-        a22 = B(a4,a15)
+        a22 = B(a8,a15)
         a23 = self.Mbar_rbl_rocker_jcl_rocker_ch[:,1:2]
-        a24 = self.Mbar_rbl_rocker_jcs_rc_cyl[:,0:1]
+        a24 = self.Mbar_rbs_coupler_jcs_rc_cyl[:,2:3]
         a25 = a24.T
-        a26 = self.Mbar_rbs_coupler_jcs_rc_cyl[:,2:3]
-        a27 = B(a13,a26)
-        a28 = a26.T
-        a29 = self.P_rbs_coupler
-        a30 = A(a29).T
-        a31 = B(a14,a24)
-        a32 = B(a18,a24).T
-        a33 = B(a29,a26)
+        a26 = self.P_rbs_coupler
+        a27 = A(a26).T
+        a28 = self.Mbar_rbl_rocker_jcs_rc_cyl[:,0:1]
+        a29 = B(a14,a28)
+        a30 = a28.T
+        a31 = B(a13,a24)
+        a32 = B(a18,a28).T
+        a33 = B(a26,a24)
         a34 = self.Mbar_rbl_rocker_jcs_rc_cyl[:,1:2]
-        a35 = a34.T
-        a36 = B(a14,a34)
+        a35 = B(a14,a34)
+        a36 = a34.T
         a37 = B(a18,a34).T
         a38 = self.ubar_rbl_rocker_jcs_rc_cyl
         a39 = self.ubar_rbs_coupler_jcs_rc_cyl
         a40 = (multi_dot([B(a14,a38),a14]) + -1*multi_dot([B(a13,a39),a13]))
-        a41 = (self.Rd_rbl_rocker + -1*self.Rd_rbs_coupler + multi_dot([B(a18,a38),a14]) + multi_dot([B(a29,a39),a13]))
-        a42 = (self.R_rbl_rocker.T + -1*self.R_rbs_coupler.T + multi_dot([a38.T,a19]) + -1*multi_dot([a39.T,a30]))
+        a41 = (self.Rd_rbl_rocker + -1*self.Rd_rbs_coupler + multi_dot([B(a18,a38),a14]) + multi_dot([B(a26,a39),a13]))
+        a42 = (self.R_rbl_rocker.T + -1*self.R_rbs_coupler.T + multi_dot([a38.T,a19]) + -1*multi_dot([a39.T,a27]))
 
-        self.acc_eq_blocks = [(multi_dot([B(a0,self.ubar_rbr_rocker_jcr_rocker_ch),a0]) + -1*multi_dot([B(a1,self.ubar_vbs_chassis_jcr_rocker_ch),a1])),(multi_dot([a3,a5,B(a0,a6),a0]) + multi_dot([a6.T,a8,a9,a1]) + 2*multi_dot([a10,B(a7,a6).T,a11,a1])),(multi_dot([a3,a5,B(a0,a12),a0]) + multi_dot([a12.T,a8,a9,a1]) + 2*multi_dot([a10,B(a7,a12).T,a11,a1])),(multi_dot([B(a0,self.ubar_rbr_rocker_jcs_rc_sph),a0]) + -1*multi_dot([B(a13,self.ubar_rbs_coupler_jcs_rc_sph),a13])),(multi_dot([B(a14,self.ubar_rbl_rocker_jcl_rocker_ch),a14]) + -1*multi_dot([B(a1,self.ubar_vbs_chassis_jcl_rocker_ch),a1])),(multi_dot([a16,a5,B(a14,a17),a14]) + multi_dot([a17.T,a19,a20,a1]) + 2*multi_dot([a21,B(a18,a17).T,a22,a1])),(multi_dot([a16,a5,B(a14,a23),a14]) + multi_dot([a23.T,a19,a20,a1]) + 2*multi_dot([a21,B(a18,a23).T,a22,a1])),(multi_dot([a25,a19,a27,a13]) + multi_dot([a28,a30,a31,a14]) + 2*multi_dot([a21,a32,a33,a13])),(multi_dot([a35,a19,a27,a13]) + multi_dot([a28,a30,a36,a14]) + 2*multi_dot([a21,a37,a33,a13])),(multi_dot([a25,a19,a40]) + 2*multi_dot([a21,a32,a41]) + multi_dot([a42,a31,a14])),(multi_dot([a35,a19,a40]) + 2*multi_dot([a21,a37,a41]) + multi_dot([a42,a36,a14])),2*(multi_dot([a13.T,a13]))**(1.0/2.0),2*(multi_dot([a10,a0]))**(1.0/2.0),2*(multi_dot([a21,a14]))**(1.0/2.0)]
+        self.acc_eq_blocks = [(multi_dot([B(a0,self.ubar_rbr_rocker_jcr_rocker_ch),a0]) + -1*multi_dot([B(a1,self.ubar_vbs_chassis_jcr_rocker_ch),a1])),(multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2*multi_dot([a10,B(a3,a2).T,a11,a1])),(multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2*multi_dot([a10,B(a3,a12).T,a11,a1])),(multi_dot([B(a0,self.ubar_rbr_rocker_jcs_rc_sph),a0]) + -1*multi_dot([B(a13,self.ubar_rbs_coupler_jcs_rc_sph),a13])),(multi_dot([B(a14,self.ubar_rbl_rocker_jcl_rocker_ch),a14]) + -1*multi_dot([B(a1,self.ubar_vbs_chassis_jcl_rocker_ch),a1])),(multi_dot([a16,a9,B(a14,a17),a14]) + multi_dot([a17.T,a19,a20,a1]) + 2*multi_dot([a21,B(a18,a17).T,a22,a1])),(multi_dot([a16,a9,B(a14,a23),a14]) + multi_dot([a23.T,a19,a20,a1]) + 2*multi_dot([a21,B(a18,a23).T,a22,a1])),(multi_dot([a25,a27,a29,a14]) + multi_dot([a30,a19,a31,a13]) + 2*multi_dot([a21,a32,a33,a13])),(multi_dot([a25,a27,a35,a14]) + multi_dot([a36,a19,a31,a13]) + 2*multi_dot([a21,a37,a33,a13])),(multi_dot([a30,a19,a40]) + 2*multi_dot([a21,a32,a41]) + multi_dot([a42,a29,a14])),(multi_dot([a36,a19,a40]) + 2*multi_dot([a21,a37,a41]) + multi_dot([a42,a35,a14])),2*(multi_dot([a13.T,a13]))**(1.0/2.0),2*(multi_dot([a10,a0]))**(1.0/2.0),2*(multi_dot([a21,a14]))**(1.0/2.0)]
 
     
     def eval_jac_eq(self):
-        #config = self.config
+        config = self.config
         t = self.t
 
         j0 = np.eye(3,dtype=np.float64)

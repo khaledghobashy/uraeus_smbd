@@ -1,9 +1,12 @@
 
+import os
 import numpy as np
 import pandas as pd
 from source.solvers.py_numerical_functions import mirrored, centered, oriented
 
 
+
+path = os.path.dirname(__file__)
 
 class configuration(object):
 
@@ -75,7 +78,8 @@ class configuration(object):
         return qd
 
     def load_from_csv(self,csv_file):
-        dataframe = pd.read_csv(csv_file,index_col=0)
+        file_path = os.path.join(path,csv_file)
+        dataframe = pd.read_csv(file_path,index_col=0)
         for ind in dataframe.index:
             shape = getattr(self,ind).shape
             v = np.array(dataframe.loc[ind],dtype=np.float64)

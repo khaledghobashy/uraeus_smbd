@@ -117,6 +117,7 @@ class configuration_code_generator(abstract_generator):
         
     def write_imports(self):
         text = '''
+                import os
                 import numpy as np
                 import pandas as pd
                 from source.solvers.py_numerical_functions import mirrored, centered, oriented
@@ -127,6 +128,8 @@ class configuration_code_generator(abstract_generator):
         
     def write_class_init(self):
         text = '''
+                path = os.path.dirname(__file__)
+                
                 class configuration(object):
 
                     def __init__(self):
@@ -161,7 +164,8 @@ class configuration_code_generator(abstract_generator):
                     return qd
                         
                 def load_from_csv(self,csv_file):
-                    dataframe = pd.read_csv(csv_file,index_col=0)
+                    file_path = os.path.join(path,csv_file)
+                    dataframe = pd.read_csv(file_path,index_col=0)
                     for ind in dataframe.index:
                         shape = getattr(self,ind).shape
                         v = np.array(dataframe.loc[ind],dtype=np.float64)
@@ -243,6 +247,7 @@ class template_code_generator(abstract_generator):
         
     def write_imports(self):
         text = '''
+                import os
                 import numpy as np
                 import scipy as sc
                 import pandas as pd
@@ -267,9 +272,9 @@ class template_code_generator(abstract_generator):
         text = '''
                 class topology(object):
 
-                    def __init__(self,prefix='',config=configuration()):
+                    def __init__(self,prefix='',cfg=None):
                         self.t = 0.0
-                        self.config = config
+                        self.config = (configuration() if cfg is None else cfg)
                         self.prefix = (prefix if prefix=='' else prefix+'.')
                                                 
                         self.n = {n}
@@ -469,7 +474,7 @@ class template_code_generator(abstract_generator):
     def _write_x_equations(self,xstring):
         text = '''
                 def eval_%s_eq(self):
-                    #config = self.config
+                    config = self.config
                     t = self.t
 
                     {cse_var_txt}
@@ -606,6 +611,7 @@ class assembly_code_generator(template_code_generator):
                 import numpy as np
                 
                 {configs_imports}
+                
                 {templates_imports}
                 {subsystems}
                 '''
@@ -620,8 +626,9 @@ class assembly_code_generator(template_code_generator):
         subsystems = []
         for subsys, topology in self.subsystems_templates.items():
             template, config = topology
+            config = ('' if config is None else ',%s.configuration()'%config)
             assignment = f'''
-            {subsys} = {template}.topology('{subsys}',{config})
+            {subsys} = {template}.topology('{subsys}'{config})
             '''
             subsystems.append(assignment)
             

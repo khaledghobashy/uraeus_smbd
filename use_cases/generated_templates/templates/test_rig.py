@@ -1,4 +1,5 @@
 
+import os
 import numpy as np
 import scipy as sc
 import pandas as pd
@@ -10,6 +11,8 @@ from source.solvers.py_numerical_functions import mirrored, centered, oriented
 
 
 
+
+path = os.path.dirname(__file__)
 
 class configuration(object):
 
@@ -33,7 +36,8 @@ class configuration(object):
         return qd
 
     def load_from_csv(self,csv_file):
-        dataframe = pd.read_csv(csv_file,index_col=0)
+        file_path = os.path.join(path,csv_file)
+        dataframe = pd.read_csv(file_path,index_col=0)
         for ind in dataframe.index:
             shape = getattr(self,ind).shape
             v = np.array(dataframe.loc[ind],dtype=np.float64)
@@ -53,9 +57,9 @@ class configuration(object):
 
 class topology(object):
 
-    def __init__(self,prefix='',config=configuration()):
+    def __init__(self,prefix='',cfg=None):
         self.t = 0.0
-        self.config = config
+        self.config = (configuration() if cfg is None else cfg)
         self.prefix = (prefix if prefix=='' else prefix+'.')
 
         self.n = 0
@@ -69,13 +73,13 @@ class topology(object):
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
-        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
-        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
         self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
         self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
         self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
+        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
         self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
+        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset
@@ -113,7 +117,7 @@ class topology(object):
 
     
     def eval_pos_eq(self):
-        #config = self.config
+        config = self.config
         t = self.t
 
         x0 = np.eye(1,dtype=np.float64)
@@ -131,7 +135,7 @@ class topology(object):
 
     
     def eval_vel_eq(self):
-        #config = self.config
+        config = self.config
         t = self.t
 
         v0 = np.eye(1,dtype=np.float64)
@@ -140,7 +144,7 @@ class topology(object):
 
     
     def eval_acc_eq(self):
-        #config = self.config
+        config = self.config
         t = self.t
 
         a0 = np.eye(1,dtype=np.float64)
@@ -173,7 +177,7 @@ class topology(object):
 
     
     def eval_jac_eq(self):
-        #config = self.config
+        config = self.config
         t = self.t
 
         j0 = np.zeros((1,4),dtype=np.float64)

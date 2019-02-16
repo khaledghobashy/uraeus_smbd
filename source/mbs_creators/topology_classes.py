@@ -15,7 +15,7 @@ import networkx as nx
 from source.symbolic_classes.abstract_matrices import (global_frame, 
                                                        reference_frame,
                                                        zero_matrix)
-from source.symbolic_classes.bodies import body, ground, virtual_body
+from source.symbolic_classes.bodies import body, ground
 from source.symbolic_classes.spatial_joints import absolute_locator
 from source.symbolic_classes.algebraic_constraints import joint_actuator
 from source.symbolic_classes.forces import generic_force, gravity_force, centrifugal_force
@@ -34,9 +34,24 @@ class abstract_topology(object):
         self._edges_map = {}
         self._edges_keys_map = {}
         self._param_config = parametric_configuration(self)
-        self.cfg_file = self._param_config.name
+        self.cfg_file = None
         self.path = os.getcwd()
-            
+        
+#    def __getstate__(self):
+#        # Copy the object's state from self.__dict__ which contains
+#        # all our instance attributes. Always use the dict.copy()
+#        # method to avoid modifying the original state.
+#        state = self.__dict__.copy()
+#        # Remove the unpicklable entries.
+##        del state['global_instance']
+#        return state
+#    
+#    def __setstate__(self,state):
+#        self.__dict__.update(state)
+#        reference_frame.global_frame = state['global_instance']
+#        print(reference_frame.global_frame.name)
+##        self._set_global_frame()
+
     @property
     def param_config(self):
         return self._param_config
@@ -149,11 +164,8 @@ class abstract_topology(object):
         nx.draw_spring(self.forces_graph,with_labels=True)
         plt.show()
     
-    def set_configuration_file(self,file=None):
-#        self.cfg_file = (self.name if file is None else file)
-        self.cfg_file = file
-
     def assemble_model(self):
+        self._set_global_frame()
         self._assemble_nodes()
         self._assemble_edges()
         self._remove_virtual_edges()
@@ -190,8 +202,10 @@ class abstract_topology(object):
         q_sym  = sm.MatrixSymbol(sym,self.n,1)
         q = []
         i = 0
-        for b in self.bodies:
-            q_block = getattr(self.nodes[b]['obj'],sym)
+        bodies = self.bodies
+        nodes  = self.nodes
+        for b in bodies:
+            q_block = getattr(nodes[b]['obj'],sym)
             for qi in q_block.blocks:
                 s = qi.shape[0]
                 q.append(sm.Eq(qi,q_sym[i:i+s,0]))
@@ -202,8 +216,9 @@ class abstract_topology(object):
         l = []
         lamda = sm.MatrixSymbol('Lambda',self.nc,1)
         i = 0
-        for e in itertools.filterfalse(self._is_virtual_edge,self.edges):
-            obj = self.edges[e]['obj']
+        edges = self.edges
+        for e in itertools.filterfalse(self._is_virtual_edge,edges):
+            obj = edges[e]['obj']
             nc = obj.nc
             eq = sm.Eq(obj.L,lamda[i:i+nc])
             l.append(eq)
@@ -312,11 +327,11 @@ class abstract_topology(object):
     
     def _assemble_forces_equations(self):
         graph = self.forces_graph
-        nodes = self.nodes
-        nrows = 2*len(self.bodies)+2
+        nodes = self.bodies
+        nrows = 2*len(nodes)
         F_applied = sm.MutableSparseMatrix(nrows,1,None)
-        for n in nodes:
-            if self._is_virtual_node(n) and n!=self.grf:
+        for i,n in enumerate(nodes):
+            if self._is_virtual_node(n):# and n!=self.grf:
                 continue
             in_edges  = graph.in_edges([n],data='obj')
             if len(in_edges) == 0 :
@@ -338,8 +353,8 @@ class abstract_topology(object):
             Q_t_P = Q_in_P + Q_out_P
             
             ind = self.nodes_indicies[n]
-            F_applied[ind*2]   = Q_t_R
-            F_applied[ind*2+1] = Q_t_P
+            F_applied[i*2]   = Q_t_R
+            F_applied[i*2+1] = Q_t_P
             
         self.forces = F_applied
     
