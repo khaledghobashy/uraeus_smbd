@@ -80,7 +80,7 @@ class abstract_generator(object):
         cse = sm.cse(equations,symbols=cse_symbols,ignore=(sm.S('t'),))
         cse_variables   = '\n'.join([p._print(exp) for exp in cse[0]])
         cse_expressions = '\n'.join([p._print(exp) for exp in cse[1]])
-        return cse_variables, cse_expressions    
+        return cse_variables, cse_expressions
 
     
     def _create_inputs_dataframe(self):

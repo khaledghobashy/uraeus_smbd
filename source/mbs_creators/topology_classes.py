@@ -173,11 +173,17 @@ class abstract_topology(object):
         self._assemble_forces_equations()
         self._initialize_toplogy_reqs()
     
+    def perform_cse(self):
+        self.pos_vars, self.pos_exp = self._generate_cse(self.pos_equations,'x')
+        self.vel_vars, self.vel_exp = self._generate_cse(self.vel_equations,'v')
+        self.acc_vars, self.acc_exp = self._generate_cse(self.acc_equations,'a')
+        self.jac_vars, self.jac_exp = self._generate_cse(self.jac_equations,'j')
+    
     def save(self):
         with open('%s\\%s.stpl'%(self.path,self.name),'wb') as f:
             cloudpickle.dump(self,f)
 
-
+    
     def _set_global_frame(self):
         self.global_instance = global_frame(self.name)
         reference_frame.set_global_frame(self.global_instance)        
@@ -352,7 +358,6 @@ class abstract_topology(object):
             Q_t_R = Q_in_R + Q_out_R
             Q_t_P = Q_in_P + Q_out_P
             
-            ind = self.nodes_indicies[n]
             F_applied[i*2]   = Q_t_R
             F_applied[i*2+1] = Q_t_P
             
@@ -370,6 +375,13 @@ class abstract_topology(object):
     def _obj_attr_dict(obj):
         attr_dict = {'obj':obj,'arguments':obj.arguments,'constants':obj.constants}
         return attr_dict
+    
+    @staticmethod
+    def _generate_cse(equations,symbol):
+        cse_symbols = sm.iterables.numbered_symbols(symbol)
+        reduced_equations = sm.cse(equations,symbols=cse_symbols,ignore=(sm.S('t'),))
+        return reduced_equations
+
             
 ###############################################################################
 ###############################################################################
@@ -616,7 +628,8 @@ class assembly(abstract_topology):
     
     def assemble_model(self):
         self._initialize_interface()
-        self._assemble_equations()
+        self._assemble_constraints_equations()
+        self._assemble_forces_equations()
         
     def draw_interface_graph(self):
         plt.figure(figsize=(10,6))
@@ -691,7 +704,7 @@ class assembly(abstract_topology):
         for e in self.interface_graph.edges:
             self._assemble_edge(e)
     
-    def _assemble_equations(self):
+    def _assemble_constraints_equations(self):
         
         nodelist    = self.nodes
         cols = 2*len(nodelist)
@@ -714,6 +727,34 @@ class assembly(abstract_topology):
         self.vel_equations = vel_rhs
         self.acc_equations = acc_rhs
         self.jac_equations = jacobian
+    
+    def _assemble_forces_equations(self):
+        node = 'ground'
+        nrows = 2
+        F_applied = sm.MutableSparseMatrix(nrows,1,None)
+        in_edges  = self.forces_graph.in_edges([node],data='obj')
+        if len(in_edges) == 0 :
+            Q_in_R = zero_matrix(3,1)
+            Q_in_P = zero_matrix(4,1)
+        else:
+            Q_in_R = sm.MatAdd(*[e[-1].Qj.blocks[0] for e in in_edges])
+            Q_in_P = sm.MatAdd(*[e[-1].Qj.blocks[1] for e in in_edges])
+        
+        out_edges = self.forces_graph.out_edges([node],data='obj')
+        if len(out_edges) == 0 :
+            Q_out_R = zero_matrix(3,1)
+            Q_out_P = zero_matrix(4,1)
+        else:
+            Q_out_R = sm.MatAdd(*[e[-1].Qi.blocks[0] for e in out_edges])
+            Q_out_P = sm.MatAdd(*[e[-1].Qi.blocks[1] for e in out_edges])
+        
+        Q_t_R = Q_in_R + Q_out_R
+        Q_t_P = Q_in_P + Q_out_P
+        
+        F_applied[0] = Q_t_R
+        F_applied[1] = Q_t_P
+        
+        self.forces = F_applied
     
 ###############################################################################
 ###############################################################################

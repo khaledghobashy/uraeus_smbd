@@ -11,6 +11,7 @@ import use_cases.parametric_templates.templates.stewart_gough_3dof as model
 
 
 def main():
+    global config
     
     name = 'stewart_points'
     config = model.template.param_config

@@ -62,8 +62,12 @@ class universal(algebraic_constraints,metaclass=joint_constructor):
     vector_equations = [spehrical_constraint(),
                         dot_product_1('i','i')]
     
-        
-
+class tripod(algebraic_constraints,metaclass=joint_constructor):
+    def_axis = 2
+    def_locs = 1
+    vector_equations = [dot_product_1('i','j'),
+                        dot_product_2('i'),
+                        dot_product_2('j')]
 
 class rotational_actuator(joint_actuator,metaclass=joint_constructor):
     def_axis = 1
@@ -79,6 +83,8 @@ class absolute_locator(absolute_actuator,metaclass=joint_constructor):
     def_axis = 0
     def_locs = 0
     vector_equations = [coordinate_constraint()]
+
+
 
 class dummy_cylinderical(algebraic_constraints,metaclass=joint_constructor):
     def_axis = 1
