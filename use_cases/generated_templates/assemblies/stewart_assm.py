@@ -1,12 +1,12 @@
 
 import numpy as np
 
-from use_cases.generated_templates.configurations import stewart_points
+from use_cases.generated_templates.configurations import stewart_mod_points
 
 from use_cases.generated_templates.templates import stewart_gough_3dof
 from use_cases.generated_templates.templates import stewart_testrig
 
-SG = stewart_gough_3dof.topology('SG',stewart_points.configuration())
+SG = stewart_gough_3dof.topology('SG',stewart_mod_points.configuration())
 
 TR = stewart_testrig.topology('TR')
 
@@ -29,7 +29,7 @@ class numerical_assembly(object):
         self.gr_jac_rows = np.array([0,0,1,1])
         self.gr_jac_cols = np.array([0,1,0,1])
 
-        self.nrows = 39
+        self.nrows = 33
         self.ncols = 16
 
         self.initialize_assembly()

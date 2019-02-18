@@ -11,12 +11,12 @@ import matplotlib.pyplot as plt
 import use_cases.generated_templates.assemblies.stewart_assm as f
 from source.solvers.python_solver import solver
 
-f.SG.config.load_from_csv('stewart_points_v5.csv')
+f.SG.config.load_from_csv('stewart_mod_points_v3.csv')
 f.TR.config.load_from_csv('stewart_testrig_base_cfg_v1.csv')
 
-f.TR.config.AF_jcs_rev_1 = lambda t : 0*np.deg2rad(50)*t
-f.TR.config.AF_jcs_rev_2 = lambda t : 0*np.deg2rad(50)*t
-f.TR.config.AF_jcs_rev_3 = lambda t : 0*np.deg2rad(50)*t
+f.TR.config.AF_jcs_rev_1 = lambda t : np.deg2rad(30)*t
+f.TR.config.AF_jcs_rev_2 = lambda t : np.deg2rad(30)*t
+f.TR.config.AF_jcs_rev_3 = lambda t : np.deg2rad(30)*t
 
 assm = f.numerical_assembly()
 assm.set_gen_coordinates(assm.q0)

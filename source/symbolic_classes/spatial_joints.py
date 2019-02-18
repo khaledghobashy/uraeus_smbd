@@ -58,7 +58,7 @@ class universal(algebraic_constraints,metaclass=joint_constructor):
                         dot_product_1('i','i')]
     
 class tripod(algebraic_constraints,metaclass=joint_constructor):
-    def_axis = 2
+    def_axis = 1
     def_locs = 1
     vector_equations = [dot_product_1('i','j'),
                         dot_product_2('i'),

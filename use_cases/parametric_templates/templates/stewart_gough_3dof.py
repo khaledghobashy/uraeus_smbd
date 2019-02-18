@@ -7,7 +7,8 @@ Created on Tue Jan 29 08:18:17 2019
 import os
 import pickle
 
-from source.symbolic_classes.spatial_joints import (revolute, universal, cylinderical)
+from source.symbolic_classes.spatial_joints import (revolute,spherical, 
+                                                    tripod, universal)
 from source.mbs_creators.topology_classes import template_based_topology
 from source.code_generators.python_code_generators import template_code_generator
 
@@ -38,13 +39,15 @@ def create():
     template.add_joint(revolute,'rev_3','vbs_ground','rbs_rocker_3')
     
     
-    template.add_joint(cylinderical,'bottom_cyl_1','rbs_rocker_1','rbs_link_1')
-    template.add_joint(cylinderical,'bottom_cyl_2','rbs_rocker_2','rbs_link_2')
-    template.add_joint(cylinderical,'bottom_cyl_3','rbs_rocker_3','rbs_link_3')
+    template.add_joint(spherical,'bottom_cyl_1','rbs_rocker_1','rbs_link_1')
+    template.add_joint(spherical,'bottom_cyl_2','rbs_rocker_2','rbs_link_2')
+    template.add_joint(spherical,'bottom_cyl_3','rbs_rocker_3','rbs_link_3')
     
     template.add_joint(universal,'upper_uni_1','rbs_link_1','rbs_table')
     template.add_joint(universal,'upper_uni_2','rbs_link_2','rbs_table')
     template.add_joint(universal,'upper_uni_3','rbs_link_3','rbs_table')
+    
+    template.add_joint(tripod,'tripod','rbs_table','vbs_ground')
 
 
     template.assemble_model()
