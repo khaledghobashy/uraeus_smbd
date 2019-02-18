@@ -240,5 +240,5 @@ class configuration(object):
         self.ax1_jcl_tie_steering = oriented(self.hpl_tri,self.hpl_tro)
         self.ax2_jcl_tie_steering = oriented(self.hpl_tro,self.hpl_tri)
         self.pt1_jcl_tie_steering = self.hpl_tri
-
+    
 

@@ -1,14 +1,12 @@
 
 import os
 import numpy as np
-import scipy as sc
 import pandas as pd
 from scipy.misc import derivative
 from numpy import cos, sin
 from numpy.linalg import multi_dot
 from source.cython_definitions.matrix_funcs import A, B, triad
-from source.solvers.py_numerical_functions import mirrored, centered, oriented
-
+from source.solvers.py_numerical_functions import mirrored             
 
 
 
@@ -18,7 +16,6 @@ class configuration(object):
 
     def __init__(self):
         self.AF_mcr_ver_act = lambda t : 0
-        self.J_mcr_ver_act = np.array([[0, 0, 0]],dtype=np.float64)
         self.ax1_jcr_rev = np.array([[0], [0], [0]],dtype=np.float64)
         self.AF_jcr_rev = lambda t : 0                       
 
@@ -45,10 +42,9 @@ class configuration(object):
 
     def _set_arguments(self):
         self.AF_mcl_ver_act = self.AF_mcr_ver_act
-        self.J_mcl_ver_act = mirrored(self.J_mcr_ver_act)
         self.ax1_jcl_rev = mirrored(self.ax1_jcr_rev)
         self.AF_jcl_rev = self.AF_jcr_rev
-
+    
 
 
 
@@ -71,11 +67,11 @@ class topology(object):
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
-        self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
-        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
-        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
         self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
+        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
         self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
+        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
+        self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset
@@ -91,6 +87,13 @@ class topology(object):
     
     def eval_constants(self):
         config = self.config
+
+#        self.F_vbr_hub_gravity = np.array([[0], [0], [9810.0*m_vbr_hub]],dtype=np.float64)
+        self.J_mcr_ver_act = np.array([[0, 0, 1]],dtype=np.float64)
+#        self.F_vbl_hub_gravity = np.array([[0], [0], [9810.0*m_vbl_hub]],dtype=np.float64)
+        self.J_mcl_ver_act = np.array([[0, 0, 1]],dtype=np.float64)
+#        self.F_vbr_upright_gravity = np.array([[0], [0], [9810.0*m_vbr_upright]],dtype=np.float64)
+#        self.F_vbl_upright_gravity = np.array([[0], [0], [9810.0*m_vbl_upright]],dtype=np.float64)
 
         c0 = triad(config.ax1_jcr_rev)
         c1 = triad(config.ax1_jcl_rev)
@@ -177,5 +180,6 @@ class topology(object):
         j12 = self.Mbar_vbl_upright_jcl_rev[:,0:1]
         j13 = A(j10).T
 
-        self.jac_eq_blocks = [j1,j0,config.J_mcr_ver_act,j0,j1,j0,config.J_mcl_ver_act,j0,j1,multi_dot([(cos(config.AF_jcr_rev(t,))*multi_dot([j5.T,j7]) + sin(config.AF_jcr_rev(t,))*-1*multi_dot([j6.T,j7])),B(j3,j2)]),j1,multi_dot([j2.T,A(j3).T,(cos(config.AF_jcr_rev(t,))*B(j4,j5) + sin(config.AF_jcr_rev(t,))*-1*B(j4,j6))]),j1,multi_dot([(cos(config.AF_jcl_rev(t,))*multi_dot([j11.T,j13]) + sin(config.AF_jcl_rev(t,))*-1*multi_dot([j12.T,j13])),B(j9,j8)]),j1,multi_dot([j8.T,A(j9).T,(cos(config.AF_jcl_rev(t,))*B(j10,j11) + sin(config.AF_jcl_rev(t,))*-1*B(j10,j12))])]
+        self.jac_eq_blocks = [j1,j0,self.J_mcr_ver_act,j0,j1,j0,self.J_mcl_ver_act,j0,j1,multi_dot([(cos(config.AF_jcr_rev(t,))*multi_dot([j5.T,j7]) + sin(config.AF_jcr_rev(t,))*-1*multi_dot([j6.T,j7])),B(j3,j2)]),j1,multi_dot([j2.T,A(j3).T,(cos(config.AF_jcr_rev(t,))*B(j4,j5) + sin(config.AF_jcr_rev(t,))*-1*B(j4,j6))]),j1,multi_dot([(cos(config.AF_jcl_rev(t,))*multi_dot([j11.T,j13]) + sin(config.AF_jcl_rev(t,))*-1*multi_dot([j12.T,j13])),B(j9,j8)]),j1,multi_dot([j8.T,A(j9).T,(cos(config.AF_jcl_rev(t,))*B(j10,j11) + sin(config.AF_jcl_rev(t,))*-1*B(j10,j12))])]
   
+    

@@ -133,7 +133,10 @@ class body(reference_frame):
         args = [self.R,self.P,self.Rd,self.Pd,self.mass,self.Jbar]
         return args
     @property
-    def constants(self):
+    def sym_constants(self):
+        return []
+    @property
+    def num_constants(self):
         return []
     
     @property

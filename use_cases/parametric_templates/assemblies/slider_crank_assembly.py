@@ -8,21 +8,19 @@ Created on Sun Feb 17 11:45:49 2019
 from source.code_generators.python_code_generators import assembly_code_generator
 from source.mbs_creators.topology_classes import subsystem, assembly
 
-import use_cases.parametric_templates.templates.stewart_gough_3dof as stewart
-import use_cases.parametric_templates.templates.stewart_gough_testrig as testrig
+import use_cases.parametric_templates.templates.slider_crank as slider
+import use_cases.parametric_templates.templates.slider_crank_testrig as testrig
 
 
-SG_sym = subsystem('SG',stewart.template)
+SG_sym = subsystem('SG',slider.template)
 TR_sym = subsystem('TR',testrig.template)
 
-assembled = assembly('stewart_assm')
+assembled = assembly('slider_crank_assm')
 
 assembled.add_subsystem(SG_sym)
 assembled.add_subsystem(TR_sym)
 
-assembled.assign_virtual_body('TR.vbs_rocker_1','SG.rbs_rocker_1')
-assembled.assign_virtual_body('TR.vbs_rocker_2','SG.rbs_rocker_2')
-assembled.assign_virtual_body('TR.vbs_rocker_3','SG.rbs_rocker_3')
+assembled.assign_virtual_body('TR.vbs_rocker','SG.rbs_rocker')
 
 assembled.assemble_model()
 assembled.draw_constraints_topology()

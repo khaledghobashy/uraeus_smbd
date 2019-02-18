@@ -6,11 +6,6 @@ Created on Tue Jan  1 11:11:10 2019
 """
 
 import sympy as sm
-
-
-from source.symbolic_classes.abstract_matrices import (reference_frame, vector,
-                                                       zero_matrix)
-
 from source.symbolic_classes.algebraic_constraints import (algebraic_constraints,
                                                            joint_constructor,
                                                            joint_actuator,

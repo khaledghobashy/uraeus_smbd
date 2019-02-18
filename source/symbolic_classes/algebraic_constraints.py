@@ -84,8 +84,11 @@ class algebraic_constraints(object):
     def arguments(self):
         return self._arguments
     @property
-    def constants(self):
-        return self._constants
+    def sym_constants(self):
+        return self._sym_constants
+    @property
+    def num_constants(self):
+        return []
     @property
     def reactions_equalities(self):
         return self._reactions_equalities
@@ -129,7 +132,7 @@ class algebraic_constraints(object):
         self._jacobian_j = []
     
     def _create_local_equalities(self):
-        self._constants = []
+        self._sym_constants = []
         
         if self.def_axis == 1:
             axis   = self.axis_1
@@ -159,7 +162,7 @@ class algebraic_constraints(object):
         elif self.def_axis == 0:
             markers_equalities = []
         else: raise NotImplementedError
-        self._constants += markers_equalities
+        self._sym_constants += markers_equalities
 
         if self.def_locs == 1:
             loc  = self.loc_1
@@ -175,7 +178,7 @@ class algebraic_constraints(object):
             uj_bar_eq = sm.Eq(self.uj_bar, loc2.express(self.body_j) - self.Rj.express(self.body_j))
             location_equalities = [ui_bar_eq,uj_bar_eq]
 
-        self._constants += location_equalities
+        self._sym_constants += location_equalities
         
     def _construct_actuation_functions(self):
         pass
@@ -194,7 +197,6 @@ class algebraic_constraints(object):
         Qi_raw_name = '%sQ_%s_%s'%format_
         Qi_frm_name = r'{%sQ^{%s}_{%s}}'%format_
         self.Qi = matrix_symbol(Qi_raw_name,7,1,Qi_frm_name)
-#        self.Qi = -self.jacobian_i.T*self.L
         
         #Joint Reaction Force acting on body_i.
         Fi_raw_name = '%sF_%s_%s'%format_
@@ -423,7 +425,6 @@ class joint_constructor(type):
         attrs['nc']  = nc
         attrs['n']  = 0
         
-#        bases = list(bases) + [abstract_mbs,]
         return super(joint_constructor, mcls).__new__(mcls, name, tuple(bases), attrs)
 
 
@@ -484,13 +485,16 @@ class absolute_actuator(actuator):
         super().__init__(name,body_i,body_j)
     
     @property
-    def arguments(self):
-        sym_jac = sm.MatrixSymbol('%sJ_%s'%(self.prefix,self.id_name),1,3)
-        return super().arguments + [sym_jac]
-
-    @property
-    def constants(self):
+    def sym_constants(self):
         return []
+    @property
+    def num_constants(self):
+        num_jac = sm.zeros(1,3)
+        num_jac[0,self.i] = 1
+        sym_jac = sm.MatrixSymbol('%sJ_%s'%(self.prefix,self.id_name),1,3)
+        eq = sm.Eq(sym_jac,num_jac)
+        return [eq]
+        
 
     
     

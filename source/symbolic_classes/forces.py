@@ -66,8 +66,11 @@ class generic_force(object):
         return args
     
     @property
-    def constants(self):
+    def sym_constants(self):
         return self.joint.constants
+    @property
+    def num_constants(self):
+        return []
         
     def _construct_force_i(self):
         bname = self.body_i.id_name
@@ -114,9 +117,11 @@ class gravity_force(generic_force):
     @property
     def arguments(self):
         return []
-
     @property
-    def constants(self):
+    def sym_constants(self):
+        return []
+    @property
+    def num_constants(self):
         gravity = sm.Eq(self.Fi,self.body_i.mass*sm.Matrix([0,0,9.81e3]))
         return [gravity]
 
@@ -141,7 +146,7 @@ class centrifugal_force(generic_force):
     def arguments(self):
         return []
     @property
-    def constants(self):
+    def sym_constants(self):
         return []
         
 ###############################################################################
@@ -190,8 +195,8 @@ class internal_force(generic_force):
         forces_args = [self.Fs,self.Fd]
         return configuration_args + forces_args
     @property
-    def constants(self):
-        return self.joint.constants[2:4]
+    def sym_constants(self):
+        return self.joint.sym_constants[2:4]
 
 ###############################################################################
 ###############################################################################

@@ -27,12 +27,13 @@ class abstract_generator(object):
         
         self.gen_coordinates_exp = self.mbs.mapped_gen_coordinates
         self.gen_velocities_exp  = self.mbs.mapped_gen_velocities
-        self.edges_constants_exp = self.mbs.constants
+        self.sym_edges_constants_exp = self.mbs.sym_constants
+        self.num_edges_constants_exp = self.mbs.num_constants
 
         self.gen_coordinates_sym = [printer._print(exp.lhs) for exp in self.gen_coordinates_exp]
         self.gen_velocities_sym  = [printer._print(exp.lhs) for exp in self.gen_velocities_exp]
         self.edges_arguments_sym = [printer._print(exp) for exp in self.mbs.edges_arguments]
-        self.edges_constants_sym = [printer._print(exp.lhs) for exp in self.edges_constants_exp]
+        self.edges_constants_sym = [printer._print(exp.lhs) for exp in self.sym_edges_constants_exp+self.num_edges_constants_exp]
                 
         self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.virtual_coordinates]
         
@@ -48,6 +49,7 @@ class abstract_generator(object):
         self._setup_vel_equations()
         self._setup_acc_equations()
         self._setup_jac_equations()
+        self._setup_frc_equations()
     
     def _setup_pos_equations(self):
         self._setup_x_equations('pos','x')
@@ -62,6 +64,9 @@ class abstract_generator(object):
         self._setup_x_equations('jac','j')
         scols = ','.join(['self.%s'%i for i in self.jac_cols])
         self.jac_eq_cols = 'np.array([%s])'%scols
+    
+    def _setup_frc_equations(self):
+        self._setup_x_equations('frc','f')
 
 
     def _setup_x_equations(self,xstring,sym='x'):
@@ -175,7 +180,7 @@ class configuration_code_generator(abstract_generator):
                 
                 def _set_arguments(self):
                     {outputs}
-                
+                    {pass_text}
                 '''
         p = self.printer
         indent = 4*' '
@@ -189,6 +194,8 @@ class configuration_code_generator(abstract_generator):
         outputs = re.sub(pattern,self_inserter,outputs)
         outputs = textwrap.indent(outputs,indent).lstrip()
         
+        pass_text = ('pass' if len(outputs)==0 else '')
+        
         coordinates = ','.join(self.gen_coordinates_sym)
         coordinates = re.sub(pattern,self_inserter,coordinates)
         coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
@@ -199,11 +206,11 @@ class configuration_code_generator(abstract_generator):
         velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
         velocities = textwrap.indent(velocities,indent).lstrip()
         
-
         
         text = text.expandtabs()
         text = textwrap.dedent(text)
         text = text.format(outputs = outputs,
+                           pass_text = pass_text,
                            coordinates = coordinates,
                            velocities = velocities)
         text = textwrap.indent(text,indent)
@@ -249,14 +256,11 @@ class template_code_generator(abstract_generator):
         text = '''
                 import os
                 import numpy as np
-                import scipy as sc
                 import pandas as pd
                 from scipy.misc import derivative
                 from numpy import cos, sin
                 from numpy.linalg import multi_dot
-                from source.cython_definitions.matrix_funcs import A, B, triad
-                from source.solvers.py_numerical_functions import mirrored, centered, oriented
-                
+                from source.cython_definitions.matrix_funcs import A, B, triad                
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -335,15 +339,18 @@ class template_code_generator(abstract_generator):
                 def eval_constants(self):
                     config = self.config
                     
-                    {constants}
+                    {num_constants}
+                    
+                    {sym_constants}
                 '''
         indent = 4*' '
+        p = self.printer
+                
+        consts = self.sym_edges_constants_exp
         
-        consts = self.edges_constants_exp
+        config_pattern_iter = itertools.chain(self.config_vars,
+                                              self.virtual_coordinates)
         
-        config_pattern_iter = itertools.chain(self.edges_arguments_sym,
-                               self.virtual_coordinates,
-                               self.gen_coordinates_sym)
         config_pattern = '|'.join(config_pattern_iter)
         config_inserter = self._insert_string('config.')
         
@@ -351,20 +358,24 @@ class template_code_generator(abstract_generator):
         self_pattern = '|'.join(self_pattern_iter)
         self_inserter = self._insert_string('self.')
         
-        if len(consts) !=0:
-            cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
-            cse_var_txt = re.sub(config_pattern,config_inserter,cse_var_txt)
-            cse_exp_txt = re.sub(config_pattern,config_inserter,cse_exp_txt)
-            cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)
-            cse_exp_txt = re.sub(self_pattern,self_inserter,cse_exp_txt)
-            constants = '\n'.join([cse_var_txt,'',cse_exp_txt])
-            constants = textwrap.indent(constants,indent).lstrip()
-        else:
-            constants = 'pass'
-                
+        cse_var_txt, cse_exp_txt = self._generate_cse(consts,'c')
+        cse_var_txt = re.sub(config_pattern,config_inserter,cse_var_txt)
+        cse_exp_txt = re.sub(config_pattern,config_inserter,cse_exp_txt)
+        cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)
+        cse_exp_txt = re.sub(self_pattern,self_inserter,cse_exp_txt)
+        sym_constants = '\n'.join([cse_var_txt,'',cse_exp_txt])
+        sym_constants = textwrap.indent(sym_constants,indent).lstrip()
+        
+        num_constants_list = self.num_edges_constants_exp
+        num_constants_text = '\n'.join((p._print(i) for i in num_constants_list))
+        num_constants_text = re.sub(config_pattern,config_inserter,num_constants_text)
+        num_constants_text = re.sub(self_pattern,self_inserter,num_constants_text)
+        num_constants_text = textwrap.indent(num_constants_text,indent).lstrip()
+
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(constants = constants)
+        text = text.format(sym_constants = sym_constants,
+                           num_constants = num_constants_text)
         text = textwrap.indent(text,indent)
         return text
 
@@ -385,6 +396,9 @@ class template_code_generator(abstract_generator):
     
     def write_jac_equations(self):
         return self._write_x_equations('jac')
+    
+    def write_forces_equations(self):
+        return self._write_x_equations('frc')
 
     def write_system_class(self):
         text = '''
@@ -397,6 +411,7 @@ class template_code_generator(abstract_generator):
                     {eval_vel}
                     {eval_acc}
                     {eval_jac}  
+                    {eval_frc}
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -411,6 +426,7 @@ class template_code_generator(abstract_generator):
         eval_vel = self.write_vel_equations()
         eval_acc = self.write_acc_equations()
         eval_jac = self.write_jac_equations()
+        eval_frc = self.write_forces_equations()
         
         text = text.format(class_init = class_init,
                            assembler = assembler,
@@ -419,6 +435,7 @@ class template_code_generator(abstract_generator):
                            eval_vel = eval_vel,
                            eval_acc = eval_acc,
                            eval_jac = eval_jac,
+                           eval_frc = '',
                            coord_setter = coord_setter,
                            veloc_setter = veloc_setter)
         return text
@@ -489,8 +506,10 @@ class template_code_generator(abstract_generator):
         cse_var_txt = getattr(self,'%s_eq_csev'%xstring)
         cse_exp_txt = getattr(self,'%s_eq_data'%xstring)
         
-        self_pattern = itertools.chain(self.virtual_coordinates,self.gen_coordinates_sym,
-                            self.gen_velocities_sym,self.edges_constants_sym)
+        self_pattern = itertools.chain(self.virtual_coordinates,
+                                       self.gen_coordinates_sym,
+                                       self.gen_velocities_sym,
+                                       self.edges_constants_sym)
         self_pattern = '|'.join(self_pattern)
         self_inserter = self._insert_string('self.')
         cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)

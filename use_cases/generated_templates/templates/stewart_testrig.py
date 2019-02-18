@@ -1,14 +1,11 @@
 
 import os
 import numpy as np
-import scipy as sc
 import pandas as pd
 from scipy.misc import derivative
 from numpy import cos, sin
 from numpy.linalg import multi_dot
-from source.cython_definitions.matrix_funcs import A, B, triad
-from source.solvers.py_numerical_functions import mirrored, centered, oriented
-
+from source.cython_definitions.matrix_funcs import A, B, triad                
 
 
 
@@ -47,7 +44,7 @@ class configuration(object):
 
     def _set_arguments(self):
     
-
+        pass
 
 
 
@@ -70,10 +67,10 @@ class topology(object):
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
+        self.vbs_rocker_3 = indicies_map[interface_map[p+'vbs_rocker_3']]
+        self.vbs_rocker_1 = indicies_map[interface_map[p+'vbs_rocker_1']]
         self.vbs_rocker_2 = indicies_map[interface_map[p+'vbs_rocker_2']]
         self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
-        self.vbs_rocker_1 = indicies_map[interface_map[p+'vbs_rocker_1']]
-        self.vbs_rocker_3 = indicies_map[interface_map[p+'vbs_rocker_3']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset
@@ -89,6 +86,10 @@ class topology(object):
     
     def eval_constants(self):
         config = self.config
+
+#        self.F_vbs_rocker_1_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_1]],dtype=np.float64)
+#        self.F_vbs_rocker_2_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_2]],dtype=np.float64)
+#        self.F_vbs_rocker_3_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_3]],dtype=np.float64)
 
         c0 = triad(config.ax1_jcs_rev_1)
         c1 = A(config.P_vbs_ground).T
@@ -190,3 +191,4 @@ class topology(object):
 
         self.jac_eq_blocks = [j0,multi_dot([(cos(config.AF_jcs_rev_1(t,))*multi_dot([j5.T,j7]) + sin(config.AF_jcs_rev_1(t,))*-1*multi_dot([j6.T,j7])),B(j2,j1)]),j0,multi_dot([j1.T,j3,(cos(config.AF_jcs_rev_1(t,))*B(j4,j5) + sin(config.AF_jcs_rev_1(t,))*-1*B(j4,j6))]),j0,multi_dot([(cos(config.AF_jcs_rev_2(t,))*multi_dot([j10.T,j12]) + sin(config.AF_jcs_rev_2(t,))*-1*multi_dot([j11.T,j12])),B(j2,j8)]),j0,multi_dot([j8.T,j3,(cos(config.AF_jcs_rev_2(t,))*B(j9,j10) + sin(config.AF_jcs_rev_2(t,))*-1*B(j9,j11))]),j0,multi_dot([(cos(config.AF_jcs_rev_3(t,))*multi_dot([j15.T,j17]) + sin(config.AF_jcs_rev_3(t,))*-1*multi_dot([j16.T,j17])),B(j2,j13)]),j0,multi_dot([j13.T,j3,(cos(config.AF_jcs_rev_3(t,))*B(j14,j15) + sin(config.AF_jcs_rev_3(t,))*-1*B(j14,j16))])]
   
+    

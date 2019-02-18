@@ -11,29 +11,23 @@ import matplotlib.pyplot as plt
 import use_cases.generated_templates.assemblies.stewart_assm as f
 from source.solvers.python_solver import solver
 
-f.SG.config.load_from_csv('dwb_bc_points_mod.csv')
-f.TR.config.load_from_csv('sus_test_rig_base_cfg_mod.csv')
+f.SG.config.load_from_csv('stewart_points_v5.csv')
+f.TR.config.load_from_csv('stewart_testrig_base_cfg_v1.csv')
 
-f.TR.config.AF_mcr_ver_act = lambda t : 25.4*np.sin(t)
-f.TR.config.AF_mcl_ver_act = lambda t : 25.4*np.sin(t)
-f.TR.config.AF_jcr_rev = lambda t : 0*np.deg2rad(360)*t
+f.TR.config.AF_jcs_rev_1 = lambda t : 0*np.deg2rad(50)*t
+f.TR.config.AF_jcs_rev_2 = lambda t : 0*np.deg2rad(50)*t
+f.TR.config.AF_jcs_rev_3 = lambda t : 0*np.deg2rad(50)*t
 
 assm = f.numerical_assembly()
 assm.set_gen_coordinates(assm.q0)
 soln = solver(assm)
 
-time_array = np.linspace(0,2*np.pi,100)
+time_array = np.linspace(0,1,250)
 soln.solve_kds(time_array)
 
-vertical_travel = np.array(list(map(f.TR.config.AF_mcr_ver_act,time_array)))
 
 plt.figure(figsize=(8,4))
-plt.plot(vertical_travel,soln.pos_dataframe['SU.rbl_hub.y'])
-plt.grid()
-plt.show()
-
-plt.figure(figsize=(8,4))
-plt.plot(vertical_travel,soln.pos_dataframe['SU.rbr_hub.y'])
+plt.plot(time_array,soln.pos_dataframe['SG.rbs_table.z'])
 plt.grid()
 plt.show()
 

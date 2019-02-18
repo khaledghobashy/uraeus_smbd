@@ -78,6 +78,9 @@ class configuration(object):
         self._set_arguments()
 
     def _set_arguments(self):
+        self.ax1_jcs_rev_1 = oriented(self.hps_bottom_1,self.hps_middle_1,self.hps_upper_1)
+        self.ax1_jcs_rev_2 = oriented(self.hps_bottom_2,self.hps_middle_2,self.hps_upper_2)
+        self.ax1_jcs_rev_3 = oriented(self.hps_bottom_3,self.hps_middle_3,self.hps_upper_3)
         self.R_rbs_table = centered(self.hps_upper_1,self.hps_upper_2,self.hps_upper_3)
         self.R_rbs_link_1 = centered(self.hps_middle_1,self.hps_upper_1)
         self.R_rbs_link_2 = centered(self.hps_middle_2,self.hps_upper_2)
@@ -85,6 +88,9 @@ class configuration(object):
         self.R_rbs_rocker_1 = centered(self.hps_bottom_1,self.hps_middle_1)
         self.R_rbs_rocker_2 = centered(self.hps_bottom_2,self.hps_middle_2)
         self.R_rbs_rocker_3 = centered(self.hps_bottom_3,self.hps_middle_3)
+        self.pt1_jcs_rev_1 = self.hps_bottom_1
+        self.pt1_jcs_rev_2 = self.hps_bottom_2
+        self.pt1_jcs_rev_3 = self.hps_bottom_3
         self.ax1_jcs_upper_uni_1 = oriented(self.hps_middle_1,self.hps_upper_1)
         self.ax2_jcs_upper_uni_1 = oriented(self.hps_upper_1,self.hps_middle_1)
         self.pt1_jcs_upper_uni_1 = self.hps_upper_1
@@ -94,20 +100,11 @@ class configuration(object):
         self.ax1_jcs_upper_uni_3 = oriented(self.hps_middle_3,self.hps_upper_3)
         self.ax2_jcs_upper_uni_3 = oriented(self.hps_upper_3,self.hps_middle_3)
         self.pt1_jcs_upper_uni_3 = self.hps_upper_3
-        self.ax1_jcs_rev_1 = oriented(self.hps_bottom_1,self.hps_middle_1,self.hps_upper_1)
-        self.pt1_jcs_rev_1 = self.hps_bottom_1
-        self.ax1_jcs_bottom_uni_1 = oriented(self.hps_middle_1,self.hps_upper_1)
-        self.ax2_jcs_bottom_uni_1 = oriented(self.hps_upper_1,self.hps_middle_1)
-        self.pt1_jcs_bottom_uni_1 = self.hps_middle_1
-        self.ax1_jcs_rev_2 = oriented(self.hps_bottom_2,self.hps_middle_2,self.hps_upper_2)
-        self.pt1_jcs_rev_2 = self.hps_bottom_2
-        self.ax1_jcs_bottom_uni_2 = oriented(self.hps_middle_2,self.hps_upper_2)
-        self.ax2_jcs_bottom_uni_2 = oriented(self.hps_upper_2,self.hps_middle_2)
-        self.pt1_jcs_bottom_uni_2 = self.hps_middle_2
-        self.ax1_jcs_rev_3 = oriented(self.hps_bottom_3,self.hps_middle_3,self.hps_upper_3)
-        self.pt1_jcs_rev_3 = self.hps_bottom_3
-        self.ax1_jcs_bottom_uni_3 = oriented(self.hps_middle_3,self.hps_upper_3)
-        self.ax2_jcs_bottom_uni_3 = oriented(self.hps_upper_3,self.hps_middle_3)
-        self.pt1_jcs_bottom_uni_3 = self.hps_middle_3
-
+        self.ax1_jcs_bottom_cyl_1 = self.ax1_jcs_rev_1
+        self.pt1_jcs_bottom_cyl_1 = self.hps_middle_1
+        self.ax1_jcs_bottom_cyl_2 = self.ax1_jcs_rev_2
+        self.pt1_jcs_bottom_cyl_2 = self.hps_middle_2
+        self.ax1_jcs_bottom_cyl_3 = self.ax1_jcs_rev_3
+        self.pt1_jcs_bottom_cyl_3 = self.hps_middle_3
+    
 

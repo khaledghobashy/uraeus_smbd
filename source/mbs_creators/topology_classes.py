@@ -148,8 +148,12 @@ class abstract_topology(object):
         return q_virtuals
     
     @property    
-    def constants(self):
-        cons = nx.get_edge_attributes(self.constraints_graph,'constants').values()
+    def sym_constants(self):
+        cons = nx.get_edge_attributes(self.graph,'sym_constants').values()
+        return sum(cons,[])
+    @property    
+    def num_constants(self):
+        cons = nx.get_edge_attributes(self.graph,'num_constants').values()
         return sum(cons,[])
 
     
@@ -361,7 +365,7 @@ class abstract_topology(object):
             F_applied[i*2]   = Q_t_R
             F_applied[i*2+1] = Q_t_P
             
-        self.forces = F_applied
+        self.frc_equations = F_applied
     
     def _initialize_toplogy_reqs(self):
         self.param_config.assemble_base_layer()
@@ -373,7 +377,10 @@ class abstract_topology(object):
         return attr_dict
     @staticmethod
     def _obj_attr_dict(obj):
-        attr_dict = {'obj':obj,'arguments':obj.arguments,'constants':obj.constants}
+        attr_dict = {'obj':obj,
+                     'arguments':obj.arguments,
+                     'sym_constants':obj.sym_constants,
+                     'num_constants':obj.num_constants}
         return attr_dict
     
     @staticmethod
@@ -684,21 +691,7 @@ class assembly(abstract_topology):
         new_edges = new_edges1+new_edges2
         H.add_edges_from(new_edges)
         self.interface_graph.add_edges_from(new_edges)
-        
-    def _initialize_toplogy_reqs(self):
-        self._set_constants()
-        self._set_arguments()
-    
-    def _set_constants(self):
-        graph = self.graph.edge_subgraph(self.interface_graph.edges)
-        cons = nx.get_edge_attributes(graph,'constants').values()
-        self.constants = sum(cons,[])
-
-    def _set_arguments(self):
-        graph = self.graph.edge_subgraph(self.interface_graph.edges)
-        edge_args = nx.get_edge_attributes(graph,'arguments').values()
-        self.arguments = sum(edge_args,[])
-    
+            
     
     def _assemble_edges(self):
         for e in self.interface_graph.edges:
@@ -754,7 +747,7 @@ class assembly(abstract_topology):
         F_applied[0] = Q_t_R
         F_applied[1] = Q_t_P
         
-        self.forces = F_applied
+        self.frc_equations = F_applied
     
 ###############################################################################
 ###############################################################################

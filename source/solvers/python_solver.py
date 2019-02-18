@@ -12,7 +12,7 @@ from scipy.sparse.linalg import spsolve
 import pandas as pd
 
 def solve(A,b):
-    x = spsolve(A,b)
+    x = np.linalg.solve(A.A,b)
     x = np.reshape(x,(x.shape[0],1))
     return x
 
@@ -110,7 +110,7 @@ class solver(object):
         
         itr=0
         while np.linalg.norm(delta_q)>1e-5:
-#            print(np.linalg.norm(delta_q))
+            print(np.linalg.norm(delta_q))
             guess = guess + delta_q
             
             self.set_gen_coordinates(guess)

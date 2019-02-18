@@ -52,18 +52,15 @@ def main():
     config.add_relation(CR.Equal_to,'pt1_jcs_rev_3',['hps_bottom_3'])
     config.add_relation(CR.Oriented,'ax1_jcs_rev_3',['hps_bottom_3','hps_middle_3','hps_upper_3'])
     
-    # Bottom Universal Joints:
-    config.add_relation(CR.Equal_to,'pt1_jcs_bottom_uni_1',['hps_middle_1'])
-    config.add_relation(CR.Oriented,'ax1_jcs_bottom_uni_1',['hps_middle_1','hps_upper_1'])
-    config.add_relation(CR.Oriented,'ax2_jcs_bottom_uni_1',['hps_upper_1','hps_middle_1'])
+    # Bottom Cylinderical Joints:
+    config.add_relation(CR.Equal_to,'pt1_jcs_bottom_cyl_1',['hps_middle_1'])
+    config.add_relation(CR.Equal_to,'ax1_jcs_bottom_cyl_1',['ax1_jcs_rev_1'])
 
-    config.add_relation(CR.Equal_to,'pt1_jcs_bottom_uni_2',['hps_middle_2'])
-    config.add_relation(CR.Oriented,'ax1_jcs_bottom_uni_2',['hps_middle_2','hps_upper_2'])
-    config.add_relation(CR.Oriented,'ax2_jcs_bottom_uni_2',['hps_upper_2','hps_middle_2'])
+    config.add_relation(CR.Equal_to,'pt1_jcs_bottom_cyl_2',['hps_middle_2'])
+    config.add_relation(CR.Equal_to,'ax1_jcs_bottom_cyl_2',['ax1_jcs_rev_2'])
 
-    config.add_relation(CR.Equal_to,'pt1_jcs_bottom_uni_3',['hps_middle_3'])
-    config.add_relation(CR.Oriented,'ax1_jcs_bottom_uni_3',['hps_middle_3','hps_upper_3'])
-    config.add_relation(CR.Oriented,'ax2_jcs_bottom_uni_3',['hps_upper_3','hps_middle_3'])
+    config.add_relation(CR.Equal_to,'pt1_jcs_bottom_cyl_3',['hps_middle_3'])
+    config.add_relation(CR.Equal_to,'ax1_jcs_bottom_cyl_3',['ax1_jcs_rev_3'])
     
     # Upper Universal Joints:
     config.add_relation(CR.Equal_to,'pt1_jcs_upper_uni_1',['hps_upper_1'])
