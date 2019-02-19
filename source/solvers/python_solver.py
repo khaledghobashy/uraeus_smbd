@@ -110,7 +110,7 @@ class solver(object):
         
         itr=0
         while np.linalg.norm(delta_q)>1e-5:
-            print(np.linalg.norm(delta_q))
+#            print(np.linalg.norm(delta_q))
             guess = guess + delta_q
             
             self.set_gen_coordinates(guess)
