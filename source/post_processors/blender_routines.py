@@ -25,11 +25,12 @@ class cylinder_mesh(object):
         self.data = {'verts':itertools.chain(c1_verts,c2_verts),'faces':faces}
     
     def _create_circle_verts(self,p):
+        p = p[:,0]
         frame = triad(self.norm)
         v1 = frame[:,0]
         v2 = frame[:,1]
         angle = np.linspace(0,2*np.pi,self.n)
-        verts = [tuple(p[:,0] + self.r*np.cos(i)*v1 + self.r*np.sin(i)*v2) for i in angle]
+        verts = [tuple(p + self.r*np.cos(i)*v1 + self.r*np.sin(i)*v2) for i in angle]
         verts.append((verts[0]))
         return verts
 
