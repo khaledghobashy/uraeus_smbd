@@ -1,6 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb 19 14:23:04 2019
+
+@author: khaled.ghobashy
+"""
+
 import bpy  
 import numpy as np
-scene = bpy.context.scene
 
 
 def clear_scene():
@@ -9,11 +15,6 @@ def clear_scene():
             bpy.context.scene.objects.active = obj
             bpy.ops.object.delete()
 
-try:
-    bpy.context.scene.objects.active = bpy.data.objects['Cube']
-    bpy.ops.object.delete()
-except KeyError:
-    pass
 
 def skew_matrix(v):
     vs = np.array([[0,-v[2,0],v[1,0]],
@@ -141,69 +142,3 @@ class cylinder_mesh(object):
         faces = [(i,i+1,i+self.n+1,i+self.n) for i in range(self.n)]
         return faces
         
-scale = 1/20        
-b1 = np.array([[ 0  ],[-430],[0]])*scale
-b2 = np.array([[ 139],[ 215],[0]])*scale
-b3 = np.array([[-139],[ 215],[0]])*scale
-
-s1 = np.array([[-100],[-430],[0]])*scale
-s2 = np.array([[ 39],[215],[0]])*scale
-s3 = np.array([[-39],[215],[0]])*scale
-
-p1 = np.array([[0   ],[-430],[430]])*scale
-p2 = np.array([[ 139],[215],[430]])*scale
-p3 = np.array([[-139],[215],[430]])*scale
-
-r = 0.5
-n = 30
-
-table = polygon_extrude('table')
-table.add_verts(p1,p2,p3)
-table.extrude(1)
-table.create()
-
-rocker_1 = cylinder_mesh('rocker_1',b1,s1,r,n)
-rocker_1.show()
-link_1 = cylinder_mesh('link_1',s1,p1,r,n)
-link_1.show()
-
-rocker_2 = cylinder_mesh('rocker_2',b2,s2,r,n)
-rocker_2.show()
-link_2 = cylinder_mesh('link_2',s2,p2,r,n)
-link_2.show()
-
-rocker_3 = cylinder_mesh('rocker_3',b3,s3,r,n)
-rocker_3.show()
-link_3 = cylinder_mesh('link_3',s3,p3,r,n)
-link_3.show()
-
-
-def set_animation():
-    objects = [table.obj,link_1.obj,link_2.obj,link_3.obj,rocker_1.obj,rocker_2.obj,rocker_3.obj]
-    with open('stewart_sim_data_v1.csv') as f:
-        for i,line in enumerate(f):
-            if i == 0: continue
-            data = line.split(",")[8:]
-            k = 0
-            for ob in objects:
-                ob.location = [float(n)*scale for n in data[k:k+3]]
-                ob.rotation_quaternion = [float(n) for n in data[k+3:k+7]]
-                ob.keyframe_insert('location', frame=i)
-                ob.keyframe_insert('rotation_quaternion', frame=i)
-                k+=7
-    bpy.context.scene.render.frame_map_old = 250
-    bpy.context.scene.render.frame_map_new = 50
-    bpy.context.scene.frame_end = bpy.context.scene.render.frame_map_new
-
-
-for area in bpy.context.screen.areas:
-    if area.type == 'VIEW_3D':
-        for region in area.regions:
-            if region.type == 'WINDOW':
-                override = {'area': area, 'region': region, 'edit_object': bpy.context.edit_object}
-                bpy.ops.view3d.view_all(override)
-
-
-set_animation()
-bpy.ops.screen.animation_play()
-
