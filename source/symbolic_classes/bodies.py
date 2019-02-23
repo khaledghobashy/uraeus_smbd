@@ -191,14 +191,57 @@ class ground(body):
     def arguments(self):
         return super().arguments + [self.P_ground]
 
+###############################################################################
+###############################################################################
 
-class virtual_body(body):
+
+class geometry(object):
+    """
+    A symbolic geometry class.
     
-    n   = 0
-    nc  = 0
-    nve = 0
+    Parameters
+    ----------
+    name : str
+        Name of the geometry object
     
-    @property
-    def arguments(self):
-        return []
+    """
+    def __init__(self,name,*args):
+        self.name = name
+        self.args = args
+
+        self.R = vector('R_%s'%name)
+        self.P = quatrenion('P_%s'%name)
+        self.m = sm.symbols('m_%s'%name)
+        self.J = matrix_symbol('J_%s'%name,3,3)
+
+
+class simple_geometry(geometry):
+    """
+    A symbolic geometry class representing simple geometries of well-known,
+    easy to calculate properties.
+    
+    Parameters
+    ----------
+    name : str
+        Name of the geometry object
+    
+    """
+    pass
+
+class composite_geometry(geometry):
+    """
+    A symbolic geometry class representing a composite geometry instance that 
+    can be composed of other simple geometries of well-known, easy to calculate
+    properties.
+    
+    Parameters
+    ----------
+    name : str
+        Name of the geometry object
+    
+    args : simple_geometry
+    
+    """
+    pass
+
 

@@ -33,57 +33,56 @@ def main():
     config.add_point('tripod')
 
     # BODIES LOCATIONS
-    config.add_relation(CR.Centered,'R_rbs_rocker_1',['hps_bottom_1','hps_middle_1'])
-    config.add_relation(CR.Centered,'R_rbs_rocker_2',['hps_bottom_2','hps_middle_2'])
-    config.add_relation(CR.Centered,'R_rbs_rocker_3',['hps_bottom_3','hps_middle_3'])
+    config.add_relation('R_rbs_rocker_1',CR.Centered,'hps_bottom_1','hps_middle_1')
+    config.add_relation('R_rbs_rocker_2',CR.Centered,'hps_bottom_2','hps_middle_2')
+    config.add_relation('R_rbs_rocker_3',CR.Centered,'hps_bottom_3','hps_middle_3')
     
-    config.add_relation(CR.Centered,'R_rbs_link_1',['hps_middle_1','hps_upper_1'])
-    config.add_relation(CR.Centered,'R_rbs_link_2',['hps_middle_2','hps_upper_2'])
-    config.add_relation(CR.Centered,'R_rbs_link_3',['hps_middle_3','hps_upper_3'])
+    config.add_relation('R_rbs_link_1',CR.Centered,'hps_middle_1','hps_upper_1')
+    config.add_relation('R_rbs_link_2',CR.Centered,'hps_middle_2','hps_upper_2')
+    config.add_relation('R_rbs_link_3',CR.Centered,'hps_middle_3','hps_upper_3')
     
-    config.add_relation(CR.Centered,'R_rbs_table',['hps_upper_1','hps_upper_2','hps_upper_3'])
+    config.add_relation('R_rbs_table',CR.Centered,'hps_upper_1','hps_upper_2','hps_upper_3')
 
     # JOINTS CONFIGURATIONS
     
     # Revolute Joints:
-    config.add_relation(CR.Equal_to,'pt1_jcs_rev_1',['hps_bottom_1'])
-    config.add_relation(CR.Oriented,'ax1_jcs_rev_1',['hps_bottom_1','hps_middle_1','hps_upper_1'])
+    config.add_relation('pt1_jcs_rev_1',CR.Equal_to,'hps_bottom_1')
+    config.add_relation('ax1_jcs_rev_1',CR.Oriented,'hps_bottom_1','hps_middle_1','hps_upper_1')
     
-    config.add_relation(CR.Equal_to,'pt1_jcs_rev_2',['hps_bottom_2'])
-    config.add_relation(CR.Oriented,'ax1_jcs_rev_2',['hps_bottom_2','hps_middle_2','hps_upper_2'])
+    config.add_relation('pt1_jcs_rev_2',CR.Equal_to,'hps_bottom_2')
+    config.add_relation('ax1_jcs_rev_2',CR.Oriented,'hps_bottom_2','hps_middle_2','hps_upper_2')
     
-    config.add_relation(CR.Equal_to,'pt1_jcs_rev_3',['hps_bottom_3'])
-    config.add_relation(CR.Oriented,'ax1_jcs_rev_3',['hps_bottom_3','hps_middle_3','hps_upper_3'])
+    config.add_relation('pt1_jcs_rev_3',CR.Equal_to,'hps_bottom_3')
+    config.add_relation('ax1_jcs_rev_3',CR.Oriented,'hps_bottom_3','hps_middle_3','hps_upper_3')
     
     # Bottom Spherical Joints:
-    config.add_relation(CR.Equal_to,'pt1_jcs_bottom_sph_1',['hps_middle_1'])
+    config.add_relation('pt1_jcs_bottom_sph_1',CR.Equal_to,'hps_middle_1')
 
-    config.add_relation(CR.Equal_to,'pt1_jcs_bottom_sph_2',['hps_middle_2'])
-    config.add_relation(CR.Equal_to,'ax1_jcs_bottom_sph_2',['ax1_jcs_bottom_sph_1'])
+    config.add_relation('pt1_jcs_bottom_sph_2',CR.Equal_to,'hps_middle_2')
+    config.add_relation('ax1_jcs_bottom_sph_2',CR.Equal_to,'ax1_jcs_bottom_sph_1')
 
-    config.add_relation(CR.Equal_to,'pt1_jcs_bottom_sph_3',['hps_middle_3'])
-    config.add_relation(CR.Equal_to,'ax1_jcs_bottom_sph_3',['ax1_jcs_bottom_sph_1'])
+    config.add_relation('pt1_jcs_bottom_sph_3',CR.Equal_to,'hps_middle_3')
+    config.add_relation('ax1_jcs_bottom_sph_3',CR.Equal_to,'ax1_jcs_bottom_sph_1')
     
     # Upper Universal Joints:
-    config.add_relation(CR.Equal_to,'pt1_jcs_upper_uni_1',['hps_upper_1'])
-    config.add_relation(CR.Oriented,'ax1_jcs_upper_uni_1',['hps_middle_1','hps_upper_1'])
-    config.add_relation(CR.Equal_to,'ax2_jcs_upper_uni_1',['ax1_jcs_bottom_sph_1'])
+    config.add_relation('pt1_jcs_upper_uni_1',CR.Equal_to,'hps_upper_1')
+    config.add_relation('ax1_jcs_upper_uni_1',CR.Oriented,'hps_middle_1','hps_upper_1')
+    config.add_relation('ax2_jcs_upper_uni_1',CR.Equal_to,'ax1_jcs_bottom_sph_1')
 
-    config.add_relation(CR.Equal_to,'pt1_jcs_upper_uni_2',['hps_upper_2'])
-    config.add_relation(CR.Oriented,'ax1_jcs_upper_uni_2',['hps_middle_2','hps_upper_2'])
-    config.add_relation(CR.Equal_to,'ax2_jcs_upper_uni_2',['ax1_jcs_bottom_sph_1'])
+    config.add_relation('pt1_jcs_upper_uni_2',CR.Equal_to,'hps_upper_2')
+    config.add_relation('ax1_jcs_upper_uni_2',CR.Oriented,'hps_middle_2','hps_upper_2')
+    config.add_relation('ax2_jcs_upper_uni_2',CR.Equal_to,'ax1_jcs_bottom_sph_1')
     
-    config.add_relation(CR.Equal_to,'pt1_jcs_upper_uni_3',['hps_upper_3'])
-    config.add_relation(CR.Oriented,'ax1_jcs_upper_uni_3',['hps_middle_3','hps_upper_3'])
-    config.add_relation(CR.Equal_to,'ax2_jcs_upper_uni_3',['ax1_jcs_bottom_sph_1'])
+    config.add_relation('pt1_jcs_upper_uni_3',CR.Equal_to,'hps_upper_3')
+    config.add_relation('ax1_jcs_upper_uni_3',CR.Oriented,'hps_middle_3','hps_upper_3')
+    config.add_relation('ax2_jcs_upper_uni_3',CR.Equal_to,'ax1_jcs_bottom_sph_1')
     
     # Upper Tripod Joint:
-    config.add_relation(CR.Equal_to,'pt1_jcs_tripod',['hps_tripod'])
-    config.add_relation(CR.Equal_to,'ax1_jcs_tripod',['ax1_jcs_bottom_sph_1'])
+    config.add_relation('pt1_jcs_tripod',CR.Equal_to,'hps_tripod')
+    config.add_relation('ax1_jcs_tripod',CR.Equal_to,'ax1_jcs_bottom_sph_1')
     
     # Testing Geometries
     config.add_geometry('cyl')
-    config.demux_node('gms_cyl','R','m','J')
     
 #    model.template.save()
 #    

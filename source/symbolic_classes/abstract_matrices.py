@@ -199,6 +199,7 @@ class Equal_to(AbstractMatrix):
     def _latex(self,expr):
         return r'{Equal_to%s}'%(self.args,)
 
+
 class Config_Relations(object):
     """
     A container class that holds the relational classes as its' attributes
