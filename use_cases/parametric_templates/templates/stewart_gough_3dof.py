@@ -39,9 +39,9 @@ def create():
     template.add_joint(revolute,'rev_3','vbs_ground','rbs_rocker_3')
     
     
-    template.add_joint(spherical,'bottom_cyl_1','rbs_rocker_1','rbs_link_1')
-    template.add_joint(spherical,'bottom_cyl_2','rbs_rocker_2','rbs_link_2')
-    template.add_joint(spherical,'bottom_cyl_3','rbs_rocker_3','rbs_link_3')
+    template.add_joint(spherical,'bottom_sph_1','rbs_rocker_1','rbs_link_1')
+    template.add_joint(spherical,'bottom_sph_2','rbs_rocker_2','rbs_link_2')
+    template.add_joint(spherical,'bottom_sph_3','rbs_rocker_3','rbs_link_3')
     
     template.add_joint(universal,'upper_uni_1','rbs_link_1','rbs_table')
     template.add_joint(universal,'upper_uni_2','rbs_link_2','rbs_table')

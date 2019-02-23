@@ -1,19 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Feb 11 09:44:13 2019
+Created on Fri Feb 22 14:17:15 2019
 
-@author: khaled.ghobashy
+@author: khale
 """
 
-import sympy as sm
-import numpy as np
 import networkx as nx
-import pandas as pd
-import matplotlib.pyplot as plt
 
-from source.symbolic_classes.abstract_matrices import vector, Mirrored
-
-###############################################################################
+class scene(object):
+    
+    def __init__(self,name,sym_config):
+        self.name = name
+        self.sym_config = sym_config
+        self.graph = nx.DiGraph(name=self.name)
+        self.bodies = self.sym_config.bodies
+        self.objects = {}
+    
+    def assign_geometry(self,body,geometry):
+        pass
+    
+    def create_geometry(self,typ,name,args,mirror=False):
+        self.objects[name]
 
 class parametric_configuration(object):
     
@@ -65,19 +72,24 @@ class parametric_configuration(object):
     
     
     def add_point(self,name,mirror=False):
-        return self._add_node(name,mirror,'hp')
-    
-    def add_vector(self,name,mirror=False):
-       return self._add_node(name,mirror,'vc')
-   
-    def add_geometry(self,name,mirror=False):
-       return self._add_node(name,mirror,'gm')
-   
-    def demux_node(self,node,*args):
+        Eq = self._set_base_equality
         graph = self.graph
-        for arg in args:
-            graph.add_node('%s.%s'%(node,arg))
-            graph.add_edge(node,'%s.%s'%(node,arg))
+        if mirror:
+            node1 = 'hpr_%s'%name
+            node2 = 'hpl_%s'%name
+            self._add_point(node1)
+            self._add_point(node2)
+            graph.nodes[node1].update({'mirr':node2,'align':'r'})
+            graph.nodes[node2].update({'mirr':node1,'align':'l'})
+            obj1 = graph.nodes[node1]['obj']
+            obj2 = graph.nodes[node2]['obj']
+            graph.nodes[node2].update({'func':Eq(obj1,obj2)})
+            graph.add_edge(node1,node2)
+        else:
+            node1 = node2 = 'hps_%s'%name
+            self._add_point(node1)
+            graph.nodes[node1]['mirr'] = node2
+
     
     def add_relation(self,relation,node,nbunch,mirror=False):
         if mirror:
@@ -170,7 +182,34 @@ class parametric_configuration(object):
                     mirr = {n:m for n,m in edges}
                     nx.set_node_attributes(self.graph,mirr,'mirr')
     
+    def _obj_attr_dict(self,obj):
+        Eq = self._set_base_equality
+        attr_dict = {'obj':obj,'mirr':None,'align':'s','func':Eq(obj),
+                     'primary':False}
+        return attr_dict
     
+    def _set_base_equality(self,sym1,sym2=None):
+        if sym1 and sym2:
+            if isinstance(sym1,sm.MatrixSymbol):
+                return sm.Eq(sym2,Mirrored(sym1))
+            elif isinstance(sym1,sm.Symbol):
+                return sm.Eq(sym2,sym1)
+            elif issubclass(sym1,sm.Function):
+                return sm.Eq(sym2,sym1)
+        else:
+            if isinstance(sym1,sm.MatrixSymbol):
+                return sm.Eq(sym1,sm.zeros(*sym1.shape))
+            elif isinstance(sym1,sm.Symbol):
+                return sm.Eq(sym1,1)
+            elif issubclass(sym1,sm.Function):
+                t = sm.symbols('t')
+                return sm.Eq(sym1,sm.Lambda(t,0))
+
+    def _add_point(self,name):
+        v = vector(name)
+        attr_dict = self._obj_attr_dict(v)
+        self.graph.add_node(name,**attr_dict)
+
     def _add_relation(self,relation,node,nbunch):
         graph = self.graph
         edges = [(i,node) for i in nbunch]
@@ -195,54 +234,8 @@ class parametric_configuration(object):
             node = e[0]
             if node not in self.input_nodes and node not in mid_layer:
                 mid_layer.append(node)
-    
-    def _add_nodes(self,name,mirror=False,sym='hp',typ=vector):
-        Eq = self._set_base_equality
-        graph = self.graph
-        if mirror:
-            node1 = '%sr_%s'%(sym,name)
-            node2 = '%sl_%s'%(sym,name)
-            self._add_node(node1,typ)
-            self._add_node(node2,typ)
-            graph.nodes[node1].update({'mirr':node2,'align':'r'})
-            graph.nodes[node2].update({'mirr':node1,'align':'l'})
-            obj1 = graph.nodes[node1]['obj']
-            obj2 = graph.nodes[node2]['obj']
-            graph.nodes[node2].update({'func':Eq(obj1,obj2)})
-            graph.add_edge(node1,node2)
-        else:
-            node1 = node2 = '%ss_%s'%(sym,name)
-            self._add_node(node1,typ)
-            graph.nodes[node1]['mirr'] = node2
-    
-    def _add_node(self,name,typ):
-        obj = typ(name)
-        attr_dict = self._obj_attr_dict(obj)
-        self.graph.add_node(name,**attr_dict)
-    
-    def _obj_attr_dict(self,obj):
-        Eq = self._set_base_equality
-        attr_dict = {'obj':obj,'mirr':None,'align':'s','func':Eq(obj),
-                     'primary':False}
-        return attr_dict
-
-    def _set_base_equality(self,sym1,sym2=None):
-        if sym1 and sym2:
-            if isinstance(sym1,sm.MatrixSymbol):
-                return sm.Eq(sym2,Mirrored(sym1))
-            elif isinstance(sym1,sm.Symbol):
-                return sm.Eq(sym2,sym1)
-            elif issubclass(sym1,sm.Function):
-                return sm.Eq(sym2,sym1)
-        else:
-            if isinstance(sym1,sm.MatrixSymbol):
-                return sm.Eq(sym1,sm.zeros(*sym1.shape))
-            elif isinstance(sym1,sm.Symbol):
-                return sm.Eq(sym1,1)
-            elif issubclass(sym1,sm.Function):
-                t = sm.symbols('t')
-                return sm.Eq(sym1,sm.Lambda(t,0))
 
     
 ###############################################################################
 ###############################################################################
+

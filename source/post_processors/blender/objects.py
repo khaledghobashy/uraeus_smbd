@@ -9,13 +9,6 @@ import bpy
 import numpy as np
 
 
-def clear_scene():
-    for obj in bpy.data.objects:
-        if obj.name != 'Lamp' or obj.name!='Camera':
-            bpy.context.scene.objects.active = obj
-            bpy.ops.object.delete()
-
-
 def skew_matrix(v):
     vs = np.array([[0,-v[2,0],v[1,0]],
                  [v[2,0],0,-v[0,0]],
@@ -75,7 +68,6 @@ class polygon_extrude(object):
         verts = side_verts + cape_verts
         self.mesh.from_pydata(verts, [], self.faces)
         self.mesh.update()
-    
     
     def _create_obj(self):
         self.obj = obj  = bpy.data.objects.new(self.name, self.mesh)
