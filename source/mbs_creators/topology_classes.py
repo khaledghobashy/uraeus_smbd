@@ -246,6 +246,9 @@ class abstract_topology(object):
         node_class = nodes[n]['class']
         body_instance = node_class(n)
         nodes[n].update(self._obj_attr_dict(body_instance))
+        if nodes[n]['virtual']:
+            nodes[n]['arguments'] = []
+            
         
     def _assemble_edge(self,e):
         nodes = self.nodes
@@ -372,8 +375,8 @@ class abstract_topology(object):
         
     @staticmethod
     def _typ_attr_dict(typ):
-        attr_dict = {'n':typ.n,'nc':typ.nc,'nve':typ.nve,'class':typ,'mirr':None,
-                    'align':'s'}
+        attr_dict = {'n':typ.n,'nc':typ.nc,'nve':typ.nve,'class':typ,
+                     'mirr':None,'align':'s','virtual':False}
         return attr_dict
     @staticmethod
     def _obj_attr_dict(obj):
@@ -458,6 +461,7 @@ class topology(abstract_topology):
 ###############################################################################
 
 class template_based_topology(topology):
+    
     
     def add_body(self,name,mirrored=False,virtual=False):
         variant = self.selected_variant

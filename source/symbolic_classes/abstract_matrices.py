@@ -197,7 +197,7 @@ class Equal_to(AbstractMatrix):
     def __init__(self,v):
         super().__init__(v)
     def _latex(self,expr):
-        return r'{Equal_to%s}'%(self.args,)
+        return r'{Equal\_to%s}'%(self.args,)
 
 
 class Config_Relations(object):

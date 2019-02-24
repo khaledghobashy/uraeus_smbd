@@ -56,7 +56,8 @@ class configuration(object):
         self.hps_upper_1 = np.array([[0], [0], [0]],dtype=np.float64)
         self.hps_upper_2 = np.array([[0], [0], [0]],dtype=np.float64)
         self.hps_upper_3 = np.array([[0], [0], [0]],dtype=np.float64)
-        self.hps_tripod = np.array([[0], [0], [0]],dtype=np.float64)                       
+        self.hps_tripod = np.array([[0], [0], [0]],dtype=np.float64)
+                       
 
     
     @property
@@ -83,7 +84,7 @@ class configuration(object):
         self.R_rbs_table = centered(self.hps_upper_1,self.hps_upper_2,self.hps_upper_3)
         self.R_rbs_link_1 = centered(self.hps_middle_1,self.hps_upper_1)
         self.R_rbs_link_2 = centered(self.hps_middle_2,self.hps_upper_2)
-        self.R_rbs_link_3 = centered(self.hps_middle_3,self.hps_upper_3)
+        self.R_rbs_link_3 = 'gms_cyl.R'
         self.R_rbs_rocker_1 = centered(self.hps_bottom_1,self.hps_middle_1)
         self.R_rbs_rocker_2 = centered(self.hps_bottom_2,self.hps_middle_2)
         self.R_rbs_rocker_3 = centered(self.hps_bottom_3,self.hps_middle_3)

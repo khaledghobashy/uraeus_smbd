@@ -5,6 +5,7 @@ Created on Fri Feb 15 14:54:31 2019
 @author: khale
 """
 from source.symbolic_classes.abstract_matrices import Config_Relations as CR
+from source.symbolic_classes.bodies import simple_geometry, composite_geometry
 from source.code_generators.python_code_generators import configuration_code_generator
 from source.mbs_creators.topology_helpers import parametric_configuration
 
@@ -83,6 +84,8 @@ def main():
     
     # Testing Geometries
     config.add_geometry('cyl')
+    config.add_relation('gms_cyl',simple_geometry,'hps_bottom_1','hps_middle_1')
+    config.add_sub_relation('R_rbs_link_3',CR.Equal_to,'gms_cyl.R')
     
 #    model.template.save()
 #    

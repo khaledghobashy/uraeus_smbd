@@ -195,7 +195,7 @@ class ground(body):
 ###############################################################################
 
 
-class geometry(object):
+class geometry(sm.Symbol):
     """
     A symbolic geometry class.
     
@@ -205,17 +205,23 @@ class geometry(object):
         Name of the geometry object
     
     """
+    def __new__(cls,name,*args):
+        return super().__new__(cls,name)
+    
     def __init__(self,name,*args):
         self.name = name
-        self.args = args
+        self._args = args
 
-        self.R = vector('R_%s'%name)
-        self.P = quatrenion('P_%s'%name)
-        self.m = sm.symbols('m_%s'%name)
-        self.J = matrix_symbol('J_%s'%name,3,3)
+        self.R = vector('%s.R'%name)
+        self.P = quatrenion('%s.P'%name)
+        self.m = sm.symbols('%s.m'%name)
+        self.J = matrix_symbol('%s.J'%name,3,3)
+        
+    def __call__(self,*args):
+        return geometry(self.name,*args)
 
 
-class simple_geometry(geometry):
+class simple_geometry(sm.Function):
     """
     A symbolic geometry class representing simple geometries of well-known,
     easy to calculate properties.
@@ -226,9 +232,13 @@ class simple_geometry(geometry):
         Name of the geometry object
     
     """
-    pass
+    
+    def _latex(self,expr):
+        name = self.__class__.__name__
+        name = '\_'.join(name.split('_'))
+        return r'%s%s'%(name,(*self.args,))
 
-class composite_geometry(geometry):
+class composite_geometry(simple_geometry):
     """
     A symbolic geometry class representing a composite geometry instance that 
     can be composed of other simple geometries of well-known, easy to calculate
@@ -239,7 +249,7 @@ class composite_geometry(geometry):
     name : str
         Name of the geometry object
     
-    args : simple_geometry
+    args : sequence of simple_geometry
     
     """
     pass
