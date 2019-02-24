@@ -295,10 +295,9 @@ class parametric_configuration(object):
                 return sm.Eq(sym1,sm.zeros(*sym1.shape))
             elif isinstance(sym1,sm.Symbol):
                 return sm.Eq(sym1,1)
-            elif type(sym1) is type:
-                if issubclass(sym1,sm.Function):
-                    t = sm.symbols('t')
-                    return sm.Eq(sym1,sm.Lambda(t,0))
+            elif issubclass(sym1,sm.Function):
+                t = sm.symbols('t')
+                return sm.Eq(sym1,sm.Lambda(t,0))
 
     @staticmethod
     def _set_mirror_equality(arg1,arg2):

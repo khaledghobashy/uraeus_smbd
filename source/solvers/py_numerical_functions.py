@@ -4,8 +4,15 @@ Created on Wed Jan  2 14:24:10 2019
 
 @author: khaled.ghobashy
 """
-
+from collections import namedtuple
 import numpy as np
+
+geometry = namedtuple('geometry',['R','P','m','J'])
+
+def simple_geometry(verts,n=30,l=5):
+    n_verts = len(verts)
+    if n_verts >2:
+        n = n_verts
 
 def mirrored(v):
     if v.shape != (3,1):

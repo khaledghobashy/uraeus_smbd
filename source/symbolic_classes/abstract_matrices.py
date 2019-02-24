@@ -193,9 +193,10 @@ class Equal_to(AbstractMatrix):
     v : vector
     
     """
-    shape = (3,1)
-    def __init__(self,v):
-        super().__init__(v)
+    def __new__(cls,arg):
+        return arg
+    def __init__(self,arg):
+        super().__init__(arg)
     def _latex(self,expr):
         return r'{Equal\_to%s}'%(self.args,)
 

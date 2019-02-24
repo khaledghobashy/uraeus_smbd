@@ -83,14 +83,49 @@ def main():
     config.add_relation('ax1_jcs_tripod',CR.Equal_to,'ax1_jcs_bottom_sph_1')
     
     # Testing Geometries
-    config.add_geometry('cyl')
-    config.add_relation('gms_cyl',simple_geometry,'hps_bottom_1','hps_middle_1')
-    config.add_sub_relation('R_rbs_link_3',CR.Equal_to,'gms_cyl.R')
+    config.add_geometry('rocker_1')
+    config.add_relation('gms_rocker_1',simple_geometry,'hps_bottom_1','hps_middle_1')
+    config.add_sub_relation('R_rbs_rocker_1',CR.Equal_to,'gms_rocker_1.R')
+    config.add_sub_relation('m_rbs_rocker_1',CR.Equal_to,'gms_rocker_1.m')
+    config.add_sub_relation('Jbar_rbs_rocker_1',CR.Equal_to,'gms_rocker_1.J')
+
+
+    config.add_geometry('rocker_2')
+    config.add_relation('gms_rocker_2',simple_geometry,'hps_bottom_2','hps_middle_2')
+    config.add_sub_relation('R_rbs_rocker_2',CR.Equal_to,'gms_rocker_2.R')
+    config.add_sub_relation('m_rbs_rocker_2',CR.Equal_to,'gms_rocker_2.m')
+    config.add_sub_relation('Jbar_rbs_rocker_2',CR.Equal_to,'gms_rocker_2.J')
+
+
+    config.add_geometry('rocker_3')
+    config.add_relation('gms_rocker_3',simple_geometry,'hps_bottom_3','hps_middle_3')
+    config.add_sub_relation('R_rbs_rocker_3',CR.Equal_to,'gms_rocker_3.R')
+    config.add_sub_relation('m_rbs_rocker_3',CR.Equal_to,'gms_rocker_3.m')
+    config.add_sub_relation('Jbar_rbs_rocker_3',CR.Equal_to,'gms_rocker_3.J')
+
+    config.add_geometry('link_1')
+    config.add_relation('gms_link_1',simple_geometry,'hps_upper_1','hps_middle_1')
+    config.add_sub_relation('R_rbs_link_1',CR.Equal_to,'gms_link_1.R')
+    config.add_sub_relation('m_rbs_link_1',CR.Equal_to,'gms_link_1.m')
+    config.add_sub_relation('Jbar_rbs_link_1',CR.Equal_to,'gms_link_1.J')
+
+
+    config.add_geometry('link_2')
+    config.add_relation('gms_link_2',simple_geometry,'hps_upper_2','hps_middle_2')
+    config.add_sub_relation('R_rbs_link_2',CR.Equal_to,'gms_link_2.R')
+    config.add_sub_relation('m_rbs_link_2',CR.Equal_to,'gms_link_2.m')
+    config.add_sub_relation('Jbar_rbs_link_2',CR.Equal_to,'gms_link_2.J')
+
+    config.add_geometry('link_3')
+    config.add_relation('gms_link_3',simple_geometry,'hps_upper_3','hps_middle_3')
+    config.add_sub_relation('R_rbs_link_3',CR.Equal_to,'gms_link_3.R')
+    config.add_sub_relation('m_rbs_link_3',CR.Equal_to,'gms_link_3.m')
+    config.add_sub_relation('Jbar_rbs_link_3',CR.Equal_to,'gms_link_3.J')
     
-#    model.template.save()
-#    
-#    config_code = configuration_code_generator(config)
-#    config_code.write_code_file()
+    model.template.save()
+    
+    config_code = configuration_code_generator(config)
+    config_code.write_code_file()
 
 
 if __name__ == '__main__':
