@@ -150,7 +150,8 @@ class numerical_printer(C99CodePrinter):
     
     def _print_Function(self,expr):
         func = expr.__class__
-        return "'%r'%s"%(func,expr.args)
+        args = [self._print(arg) for arg in expr.args]
+        return "%r%r"%(func,(*args,))
         
     def _print_transpose(self,expr):
         return '%s'%(*[self._print(i) for i in expr.args],)

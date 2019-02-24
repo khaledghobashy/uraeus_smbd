@@ -11,9 +11,81 @@ import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from source.symbolic_classes.abstract_matrices import vector, Mirrored
-from source.symbolic_classes.bodies import geometry
+from source.symbolic_classes.abstract_matrices import (vector, quatrenion,
+                                                       Mirrored, matrix_symbol)
 
+
+###############################################################################
+###############################################################################
+
+class geometry(sm.Symbol):
+    """
+    A symbolic geometry class.
+    
+    Parameters
+    ----------
+    name : str
+        Name of the geometry object
+    
+    """
+    def __new__(cls,name,*args):
+        return super().__new__(cls,name)
+    
+    def __init__(self,name,*args):
+        self.name = name
+        self._args = args
+
+        self.R = vector('%s.R'%name)
+        self.P = quatrenion('%s.P'%name)
+        self.m = sm.symbols('%s.m'%name)
+        self.J = matrix_symbol('%s.J'%name,3,3)
+        
+    def __call__(self,*args):
+        return geometry(self.name,*args)
+
+
+class simple_geometry(sm.Function):
+    """
+    A symbolic geometry class representing simple geometries of well-known,
+    easy to calculate properties.
+    
+    Parameters
+    ----------
+    name : str
+        Name of the geometry object
+    
+    """
+    
+    def _latex(self,expr):
+        name = self.__class__.__name__
+        name = '\_'.join(name.split('_'))
+        return r'%s%s'%(name,(*self.args,))
+
+class composite_geometry(simple_geometry):
+    """
+    A symbolic geometry class representing a composite geometry instance that 
+    can be composed of other simple geometries of well-known, easy to calculate
+    properties.
+    
+    Parameters
+    ----------
+    name : str
+        Name of the geometry object
+    
+    args : sequence of simple_geometry
+    
+    """
+    pass
+
+class cylinder_geometry(simple_geometry):
+    
+    def __init__(self,arg1,arg2,ro=10,ri=0):
+        self.arg1 = arg1
+        self.arg2 = arg2
+        self.ri = ri
+        self.ro = ro
+    
+###############################################################################
 ###############################################################################
 
 class parametric_configuration(object):
@@ -67,6 +139,8 @@ class parametric_configuration(object):
         self.bodies = self.topology.bodies.copy()
         self._get_topology_args()
     
+    def add_scalar(self,name):
+        return self._add_nodes(name,False,'',sm.symbols)
     
     def add_point(self,name,mirror=False):
         return self._add_nodes(name,mirror,'hp')
