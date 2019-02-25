@@ -7,6 +7,8 @@ Created on Wed Jan  2 14:24:10 2019
 from collections import namedtuple
 import numpy as np
 
+###############################################################################
+###############################################################################
 
 def skew_matrix(v):
     vs = np.array([[0,-v[2,0],v[1,0]],
@@ -36,6 +38,8 @@ def triad(v1,v2=None):
     m = np.concatenate([i,j,k],axis=1)
     return m
 
+###############################################################################
+###############################################################################
 
 def mirrored(v):
     if v.shape != (3,1):
@@ -60,10 +64,12 @@ def oriented(*args):
     v = v/np.linalg.norm(v)
     return v
 
+###############################################################################
+###############################################################################
 
 geometry = namedtuple('geometry',['R','P','m','J'])
 
-def cylinder_prism(arg1,arg2,ro=10,ri=0):
+def cylinder_geometry(arg1,arg2,ro=10,ri=0):
     v = arg2-arg1
     l = np.linalg.norm(v)
     frame = triad(v)
@@ -113,11 +119,29 @@ def triangular_prism(p1,p2,p3,thickness=10):
     # Calculating moment of inertia from the moment of area
     m = density*volume*1e-3
     J = m*np.diag([float(i) for i in [Ixc,Iyc,Izc]])
-    R = 1/3*(p1+p2+p3)+n*thickness/2
+    R = centered(p1,p2,p3)
     P = dcm2ep(frame)
     
     return geometry(R,P,m,J)
 
+
+def composite_geometry(*geometries):
+    
+    # composite body total mass as the sum of it's subcomponents
+    m = sum([i.m for i in geometries])
+    # center of mass vector relative to the origin
+    R = (1/m) * sum([g.m*g.R for g in geometries])
+    
+    J = sum([ A(g.P).dot(g.J).dot(A(g.P).T) 
+            + g.m*(np.linalg.norm(g.R-R)**2*np.eye(3)-(g.R-R).dot((g.R-R).T)) 
+            for g in geometries])
+    
+    P = np.array([[1],[0],[0],[0]])
+    
+    return geometry(R,P,m,J)
+
+###############################################################################
+###############################################################################
 
 def dcm2ep(dcm):
     ''' 

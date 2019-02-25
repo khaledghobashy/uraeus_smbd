@@ -2,7 +2,10 @@
 import os
 import numpy as np
 import pandas as pd
-from source.solvers.py_numerical_functions import mirrored, centered, oriented
+from source.solvers.py_numerical_functions import (mirrored, centered, oriented, 
+                                                   cylinder_geometry,
+                                                   composite_geometry,
+                                                   triangular_prism)
 
 
 
@@ -16,22 +19,16 @@ class configuration(object):
         self.Pd_rbs_table = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.m_rbs_table = 1
         self.Jbar_rbs_table = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]],dtype=np.float64)
-        self.P_rbs_link_1 = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_link_1 = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_link_1 = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.P_rbs_link_2 = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_link_2 = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_link_2 = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.P_rbs_link_3 = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_link_3 = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_link_3 = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.P_rbs_rocker_1 = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_rocker_1 = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_rocker_1 = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.P_rbs_rocker_2 = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_rocker_2 = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_rocker_2 = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.P_rbs_rocker_3 = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_rocker_3 = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_rocker_3 = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.ax1_jcs_bottom_sph_1 = np.array([[0], [0], [0]],dtype=np.float64)
@@ -70,29 +67,29 @@ class configuration(object):
         self._set_arguments()
 
     def _set_arguments(self):
-        self.gms_link_1 = cylinder_geometry(self.hps_upper_1,self.hps_middle_1,self.s_links_ro)
-        self.gms_link_2 = cylinder_geometry(self.hps_upper_2,self.hps_middle_2,self.s_links_ro)
-        self.gms_link_3 = cylinder_geometry(self.hps_upper_3,self.hps_middle_3,self.s_links_ro)
-        self.gms_rocker_1 = cylinder_geometry(self.hps_bottom_1,self.hps_middle_1,self.s_rockers_ro)
-        self.gms_rocker_2 = cylinder_geometry(self.hps_bottom_2,self.hps_middle_2,self.s_rockers_ro)
-        self.gms_rocker_3 = cylinder_geometry(self.hps_bottom_3,self.hps_middle_3,self.s_rockers_ro)
         self.R_rbs_table = centered(self.hps_upper_1,self.hps_upper_2,self.hps_upper_3)
         self.R_rbs_link_1 = self.gms_link_1.R
+        self.P_rbs_link_1 = self.gms_link_1.P
         self.m_rbs_link_1 = self.gms_link_1.m
         self.Jbar_rbs_link_1 = self.gms_link_1.J
         self.R_rbs_link_2 = self.gms_link_2.R
+        self.P_rbs_link_2 = self.gms_link_2.P
         self.m_rbs_link_2 = self.gms_link_2.m
         self.Jbar_rbs_link_2 = self.gms_link_2.J
         self.R_rbs_link_3 = self.gms_link_3.R
+        self.P_rbs_link_3 = self.gms_link_3.P
         self.m_rbs_link_3 = self.gms_link_3.m
         self.Jbar_rbs_link_3 = self.gms_link_3.J
         self.R_rbs_rocker_1 = self.gms_rocker_1.R
+        self.P_rbs_rocker_1 = self.gms_rocker_1.P
         self.m_rbs_rocker_1 = self.gms_rocker_1.m
         self.Jbar_rbs_rocker_1 = self.gms_rocker_1.J
         self.R_rbs_rocker_2 = self.gms_rocker_2.R
+        self.P_rbs_rocker_2 = self.gms_rocker_2.P
         self.m_rbs_rocker_2 = self.gms_rocker_2.m
         self.Jbar_rbs_rocker_2 = self.gms_rocker_2.J
         self.R_rbs_rocker_3 = self.gms_rocker_3.R
+        self.P_rbs_rocker_3 = self.gms_rocker_3.P
         self.m_rbs_rocker_3 = self.gms_rocker_3.m
         self.Jbar_rbs_rocker_3 = self.gms_rocker_3.J
         self.ax1_jcs_rev_1 = oriented(self.hps_bottom_1,self.hps_middle_1,self.hps_upper_1)

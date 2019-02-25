@@ -12,8 +12,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from source.symbolic_classes.abstract_matrices import (vector, quatrenion,
-                                                       Mirrored, matrix_symbol)
-
+                                                       Mirrored, matrix_symbol,
+                                                       Equal_to)
 
 ###############################################################################
 ###############################################################################
@@ -89,83 +89,76 @@ class cylinder_geometry(simple_geometry):
 ###############################################################################
 
 class parametric_configuration(object):
-    
-    default_equalities = {}
-    
+        
     def __init__(self,mbs_instance):
+        
         self.topology = mbs_instance
         self.name  = '%s_cfg'%self.topology.name
         self.graph = nx.DiGraph(name=self.name)
+        self.geometries_map = {}
         
-   
     @property
     def arguments_symbols(self):
         return set(nx.get_node_attributes(self.graph,'obj').values())
-    
+        
     @property
     def input_nodes(self):
-        nodes = [i for i,d in self.graph.in_degree() if d == 0]
-        return nodes
+        return self.get_input_nodes(self.graph)
     @property
     def input_equalities(self):
         g = self.graph
         nodes = self.input_nodes
-        equalities = [g.nodes[i]['func'] for i,d in g.in_degree(nodes) if d==0]
-        return equalities
+        return self.get_input_equalities(g,nodes)
     
     @property
     def output_nodes(self):
-        condition = lambda i,d : d==0 and self.graph.in_degree(i)!=0
-        nodes = [i for i,d in self.graph.out_degree() if condition(i,d)]
-        return nodes
+        return self.get_output_nodes(self.graph)
     @property
     def output_equalities(self):
         g = self.graph
         nodes = self.output_nodes
-        equalities = [g.nodes[i]['func'] for i,d in g.out_degree(nodes) if d==0]
-        return self.mid_equalities + equalities
+        equalities = self.get_output_equalities(g,nodes)
+        return self.mid_equalities(g,nodes) + equalities
+        
+    def mid_equalities(self,graph,output_nodes):
+        mid_layer = []
+        for n in output_nodes:
+            self._get_node_dependencies(n,mid_layer)
+        return [graph.nodes[n]['func'] for n in mid_layer]
     
     @property
-    def mid_equalities(self):
-        mid_layer = []
-        for n in self.output_nodes:
-            self._get_node_dependencies(n,mid_layer)
-        return [self.graph.nodes[n]['func'] for n in mid_layer]
+    def geometry_nodes(self):
+        return set(i[0] for i in self.graph.nodes(data='obj') if isinstance(i[-1],geometry))
+
 
     def assemble_base_layer(self):
         self._get_nodes_arguments()
         self._get_edges_arguments()
         nx.set_node_attributes(self.graph,True,'primary')
-        self.bodies = self.topology.bodies.copy()
+        self.bodies = {n:self.topology.nodes[n] for n in self.topology.bodies}
         self._get_topology_args()
     
     def add_scalar(self,name):
-        return self._add_nodes(name,False,'',sm.symbols)
+        self._add_nodes(name,False,'',sm.symbols)
     
     def add_point(self,name,mirror=False):
-        return self._add_nodes(name,mirror,'hp')
+        self._add_nodes(name,mirror,'hp')
     
     def add_vector(self,name,mirror=False):
-       return self._add_nodes(name,mirror,'vc')
+       self._add_nodes(name,mirror,'vc')
    
     def add_geometry(self,name,mirror=False):
-       return self._add_nodes(name,mirror,'gm',geometry)
+        self._add_nodes(name,mirror,'gm',geometry)
     
-#    def demux_node(self,node,*args):
-#        node1 = node
-#        node2 = self.graph.nodes[node]['mirr']
-#        self._demux_node(node1,*args)
-#        if node2 != node1 : self._demux_node(node2,*args)
-#    
-#    def _demux_node(self,node,*args):
-#        graph = self.graph
-#        obj = graph.nodes[node]['obj']
-#        for arg in args:
-#            attr = getattr(obj,arg)
-#            name = '%s.%s'%(node,arg)
-#            self._add_node(name,attr.__class__)
-#            self._add_relation(node,CR.Equal_to,[name])
-    
+    def assign_geometry_to_body(self,body,geo,eval_inertia=True,mirror=False):
+        b1 = body
+        g1 = geo
+        b2 = self.bodies[body]['mirr']
+        g2 = self.graph.nodes[geo]['mirr']
+        self._assign_geometry_to_body(b1,g1,eval_inertia)
+        if b1 != b2 : self._assign_geometry_to_body(b2,g2,eval_inertia)
+            
+        
     def add_relation(self,node,relation,*nbunch,mirror=False):
         if mirror:
             node1 = node
@@ -197,9 +190,13 @@ class parametric_configuration(object):
         dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
         return dataframe
     
-    def draw_node_dependencies(self,n):
+    def get_node_dependencies(self,n):
         edges = [e[:-1] for e in nx.edge_bfs(self.graph,n,'reverse')]
         g = self.graph.edge_subgraph(edges)
+        return g
+    
+    def draw_node_dependencies(self,n):
+        g = self.get_node_dependencies(n)
         plt.figure(figsize=(10,6))
         nx.draw_networkx(g,with_labels=True)
         plt.show() 
@@ -207,8 +204,15 @@ class parametric_configuration(object):
     def draw_graph(self):
         plt.figure(figsize=(10,6))
         nx.draw_circular(self.graph,with_labels=True)
-        plt.show()     
+        plt.show()
     
+    def get_geometries_graph_data(self):
+        geo_graph = self.get_node_dependencies(self.geometry_nodes)
+        input_nodes  = self.get_input_nodes(geo_graph)
+        input_equal  = self.get_input_equalities(geo_graph,input_nodes)
+        output_nodes = self.get_output_nodes(geo_graph)
+        output_equal = self.get_output_equalities(geo_graph,output_nodes)
+        return input_nodes,output_nodes
     
     
     def _get_topology_args(self):
@@ -223,11 +227,7 @@ class parametric_configuration(object):
         self._base_nodes = sum(args.values(),[])
     
     def _get_node_dependencies(self,n,mid_layer):
-        edges = reversed([e[:-1] for e in nx.edge_bfs(self.graph,n,'reverse')])
-        for e in edges:
-            node = e[0]
-            if node not in self.input_nodes and node not in mid_layer:
-                mid_layer.append(node)
+        self.get_node_deps(self.graph,n,mid_layer,self.input_nodes)
     
     def _add_nodes(self,name,mirror=False,sym='hp',typ=vector):
         Eq = self._set_base_equality
@@ -280,8 +280,18 @@ class parametric_configuration(object):
         removed_edges = list(graph.in_edges(node))
         graph.remove_edges_from(removed_edges)
         graph.add_edges_from(edges)
-
     
+    def _assign_geometry_to_body(self,body,geo,eval_inertia):
+        b = self.bodies[body]['obj']
+        R, P, m, J = [str(getattr(b,i)) for i in 'R,P,m,Jbar'.split(',')]
+        self.geometries_map[geo] = (R,P)
+        if eval_inertia:
+            self.add_sub_relation(R,Equal_to,'%s.R'%geo)
+            self.add_sub_relation(P,Equal_to,'%s.P'%geo)
+            self.add_sub_relation(J,Equal_to,'%s.J'%geo)
+            self.add_sub_relation(m,Equal_to,'%s.m'%geo)
+
+
     def _obj_attr_dict(self,obj):
         Eq = self._set_base_equality
         attr_dict = {'obj':obj,'mirr':None,'align':'s','func':Eq(obj),
@@ -373,21 +383,50 @@ class parametric_configuration(object):
                 t = sm.symbols('t')
                 return sm.Eq(sym1,sm.Lambda(t,0))
 
-    @staticmethod
-    def _set_mirror_equality(arg1,arg2):
-         return sm.Eq(arg2,Mirrored(arg1),evaluate=False)
-    @staticmethod
-    def _set_direct_equality(arg1,arg2):
-        return sm.Eq(arg2,arg1,evaluate=False)
-    @staticmethod
-    def _set_array_equality(arg1):
-        default = sm.zeros(*arg1.shape)
-        return sm.Eq(arg1,default,evaluate=False)
-    @staticmethod
-    def _set_function_equality(arg1):
-        t = sm.symbols('t')
-        return sm.Eq(arg1,sm.Lambda(t,0),evaluate=False)
+#    @staticmethod
+#    def _set_mirror_equality(arg1,arg2):
+#         return sm.Eq(arg2,Mirrored(arg1),evaluate=False)
+#    @staticmethod
+#    def _set_direct_equality(arg1,arg2):
+#        return sm.Eq(arg2,arg1,evaluate=False)
+#    @staticmethod
+#    def _set_array_equality(arg1):
+#        default = sm.zeros(*arg1.shape)
+#        return sm.Eq(arg1,default,evaluate=False)
+#    @staticmethod
+#    def _set_function_equality(arg1):
+#        t = sm.symbols('t')
+#        return sm.Eq(arg1,sm.Lambda(t,0),evaluate=False)
     
+    @staticmethod
+    def get_input_nodes(graph):
+        nodes = [i for i,d in graph.in_degree() if d == 0]
+        return nodes
+    @staticmethod
+    def get_input_equalities(graph,nodes):
+        g = graph
+        equalities = [g.nodes[i]['func'] for i,d in g.in_degree(nodes) if d==0]
+        return equalities
+    
+    @staticmethod
+    def get_output_nodes(graph):
+        condition = lambda i,d : d==0 and graph.in_degree(i)!=0
+        nodes = [i for i,d in graph.out_degree() if condition(i,d)]
+        return nodes
+    @staticmethod
+    def get_output_equalities(graph,nodes):
+        g = graph
+        equalities = [g.nodes[i]['func'] for i,d in g.out_degree(nodes) if d==0]
+        return equalities
+    
+    @staticmethod
+    def get_node_deps(graph,n,input_nodes,mid_layer):
+        edges = reversed([e[:-1] for e in nx.edge_bfs(graph,n,'reverse')])
+        for e in edges:
+            node = e[0]
+            if node not in input_nodes and node not in mid_layer:
+                mid_layer.append(node)
+
 
 ###############################################################################
 ###############################################################################

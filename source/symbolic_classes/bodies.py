@@ -109,7 +109,7 @@ class body(reference_frame):
         self.normalized_acc_equation = 2*sm.sqrt(self.Pd.T*self.Pd)
         self.normalized_jacobian = [zero_matrix(1,3), 2*self.P.T]
         
-        self.mass = sm.symbols('m_%s'%self.id_name)
+        self.m = sm.symbols('m_%s'%self.id_name)
                 
         self.M  = matrix_symbol('%sM_%s'%format_,3,3,r'{%sM_{%s}}'%format_)
         self.Jbar = matrix_symbol('%sJbar_%s'%format_,3,3,r'{%s\bar{J}_{%s}}'%format_)
@@ -130,7 +130,7 @@ class body(reference_frame):
     
     @property
     def arguments(self):
-        args = [self.R,self.P,self.Rd,self.Pd,self.mass,self.Jbar]
+        args = [self.R,self.P,self.Rd,self.Pd,self.m,self.Jbar]
         return args
     @property
     def sym_constants(self):

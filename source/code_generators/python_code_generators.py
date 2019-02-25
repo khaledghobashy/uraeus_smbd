@@ -125,7 +125,10 @@ class configuration_code_generator(abstract_generator):
                 import os
                 import numpy as np
                 import pandas as pd
-                from source.solvers.py_numerical_functions import mirrored, centered, oriented
+                from source.solvers.py_numerical_functions import (mirrored, centered, oriented, 
+                                                                   cylinder_geometry,
+                                                                   composite_geometry,
+                                                                   triangular_prism)
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
