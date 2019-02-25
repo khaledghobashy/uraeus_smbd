@@ -68,9 +68,9 @@ class topology(object):
         p = self.prefix
     
         self.vbs_rocker_2 = indicies_map[interface_map[p+'vbs_rocker_2']]
-        self.vbs_rocker_3 = indicies_map[interface_map[p+'vbs_rocker_3']]
         self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbs_rocker_1 = indicies_map[interface_map[p+'vbs_rocker_1']]
+        self.vbs_rocker_3 = indicies_map[interface_map[p+'vbs_rocker_3']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset
@@ -124,7 +124,7 @@ class topology(object):
         x5 = A(self.P_vbs_rocker_3).T
         x6 = self.Mbar_vbs_ground_jcs_rev_3[:,0:1]
 
-        self.pos_eq_blocks = [(cos(AF_jcs_rev_1('t',))*multi_dot([self.Mbar_vbs_rocker_1_jcs_rev_1[:,1:2].T,x0,x1,x2]) + sin(AF_jcs_rev_1('t',))*-1*multi_dot([self.Mbar_vbs_rocker_1_jcs_rev_1[:,0:1].T,x0,x1,x2])),(cos(AF_jcs_rev_2('t',))*multi_dot([self.Mbar_vbs_rocker_2_jcs_rev_2[:,1:2].T,x3,x1,x4]) + sin(AF_jcs_rev_2('t',))*-1*multi_dot([self.Mbar_vbs_rocker_2_jcs_rev_2[:,0:1].T,x3,x1,x4])),(cos(AF_jcs_rev_3('t',))*multi_dot([self.Mbar_vbs_rocker_3_jcs_rev_3[:,1:2].T,x5,x1,x6]) + sin(AF_jcs_rev_3('t',))*-1*multi_dot([self.Mbar_vbs_rocker_3_jcs_rev_3[:,0:1].T,x5,x1,x6]))]
+        self.pos_eq_blocks = [(cos(config.AF_jcs_rev_1(t))*multi_dot([self.Mbar_vbs_rocker_1_jcs_rev_1[:,1:2].T,x0,x1,x2]) + sin(config.AF_jcs_rev_1(t))*-1*multi_dot([self.Mbar_vbs_rocker_1_jcs_rev_1[:,0:1].T,x0,x1,x2])),(cos(config.AF_jcs_rev_2(t))*multi_dot([self.Mbar_vbs_rocker_2_jcs_rev_2[:,1:2].T,x3,x1,x4]) + sin(config.AF_jcs_rev_2(t))*-1*multi_dot([self.Mbar_vbs_rocker_2_jcs_rev_2[:,0:1].T,x3,x1,x4])),(cos(config.AF_jcs_rev_3(t))*multi_dot([self.Mbar_vbs_rocker_3_jcs_rev_3[:,1:2].T,x5,x1,x6]) + sin(config.AF_jcs_rev_3(t))*-1*multi_dot([self.Mbar_vbs_rocker_3_jcs_rev_3[:,0:1].T,x5,x1,x6]))]
 
     
     def eval_vel_eq(self):
@@ -133,7 +133,7 @@ class topology(object):
 
         v0 = np.eye(1,dtype=np.float64)
 
-        self.vel_eq_blocks = [derivative(AF_jcs_rev_1('t',t,0.1,1)*-1*v0,derivative(AF_jcs_rev_2('t',t,0.1,1)*-1*v0,derivative(AF_jcs_rev_3('t',t,0.1,1)*-1*v0]
+        self.vel_eq_blocks = [derivative(config.AF_jcs_rev_1,t,0.1,1)*-1*v0,derivative(config.AF_jcs_rev_2,t,0.1,1)*-1*v0,derivative(config.AF_jcs_rev_3,t,0.1,1)*-1*v0]
 
     
     def eval_acc_eq(self):
@@ -163,7 +163,7 @@ class topology(object):
         a20 = self.P_vbs_rocker_3
         a21 = A(a20).T
 
-        self.acc_eq_blocks = [(derivative(AF_jcs_rev_1('t',t,0.1,2)*-1*a0 + multi_dot([a1.T,a3,(cos(AF_jcs_rev_1('t',))*B(a4,a5) + sin(AF_jcs_rev_1('t',))*-1*B(a4,a6)),a4]) + multi_dot([(cos(AF_jcs_rev_1('t',))*multi_dot([a5.T,a8]) + sin(AF_jcs_rev_1('t',))*-1*multi_dot([a6.T,a8])),B(a9,a1),a9]) + 2*multi_dot([((cos(AF_jcs_rev_1('t',))*multi_dot([B(a7,a5),a4])).T + sin(AF_jcs_rev_1('t',))*-1*multi_dot([a4.T,B(a7,a6).T])),B(a2,a1),a9])),(derivative(AF_jcs_rev_2('t',t,0.1,2)*-1*a0 + multi_dot([a10.T,a3,(cos(AF_jcs_rev_2('t',))*B(a11,a12) + sin(AF_jcs_rev_2('t',))*-1*B(a11,a13)),a11]) + multi_dot([(cos(AF_jcs_rev_2('t',))*multi_dot([a12.T,a15]) + sin(AF_jcs_rev_2('t',))*-1*multi_dot([a13.T,a15])),B(a9,a10),a9]) + 2*multi_dot([((cos(AF_jcs_rev_2('t',))*multi_dot([B(a14,a12),a11])).T + sin(AF_jcs_rev_2('t',))*-1*multi_dot([a11.T,B(a14,a13).T])),B(a2,a10),a9])),(derivative(AF_jcs_rev_3('t',t,0.1,2)*-1*a0 + multi_dot([a16.T,a3,(cos(AF_jcs_rev_3('t',))*B(a17,a18) + sin(AF_jcs_rev_3('t',))*-1*B(a17,a19)),a17]) + multi_dot([(cos(AF_jcs_rev_3('t',))*multi_dot([a18.T,a21]) + sin(AF_jcs_rev_3('t',))*-1*multi_dot([a19.T,a21])),B(a9,a16),a9]) + 2*multi_dot([((cos(AF_jcs_rev_3('t',))*multi_dot([B(a20,a18),a17])).T + sin(AF_jcs_rev_3('t',))*-1*multi_dot([a17.T,B(a20,a19).T])),B(a2,a16),a9]))]
+        self.acc_eq_blocks = [(derivative(config.AF_jcs_rev_1,t,0.1,2)*-1*a0 + multi_dot([a1.T,a3,(cos(config.AF_jcs_rev_1(t))*B(a4,a5) + sin(config.AF_jcs_rev_1(t))*-1*B(a4,a6)),a4]) + multi_dot([(cos(config.AF_jcs_rev_1(t))*multi_dot([a5.T,a8]) + sin(config.AF_jcs_rev_1(t))*-1*multi_dot([a6.T,a8])),B(a9,a1),a9]) + 2*multi_dot([((cos(config.AF_jcs_rev_1(t))*multi_dot([B(a7,a5),a4])).T + sin(config.AF_jcs_rev_1(t))*-1*multi_dot([a4.T,B(a7,a6).T])),B(a2,a1),a9])),(derivative(config.AF_jcs_rev_2,t,0.1,2)*-1*a0 + multi_dot([a10.T,a3,(cos(config.AF_jcs_rev_2(t))*B(a11,a12) + sin(config.AF_jcs_rev_2(t))*-1*B(a11,a13)),a11]) + multi_dot([(cos(config.AF_jcs_rev_2(t))*multi_dot([a12.T,a15]) + sin(config.AF_jcs_rev_2(t))*-1*multi_dot([a13.T,a15])),B(a9,a10),a9]) + 2*multi_dot([((cos(config.AF_jcs_rev_2(t))*multi_dot([B(a14,a12),a11])).T + sin(config.AF_jcs_rev_2(t))*-1*multi_dot([a11.T,B(a14,a13).T])),B(a2,a10),a9])),(derivative(config.AF_jcs_rev_3,t,0.1,2)*-1*a0 + multi_dot([a16.T,a3,(cos(config.AF_jcs_rev_3(t))*B(a17,a18) + sin(config.AF_jcs_rev_3(t))*-1*B(a17,a19)),a17]) + multi_dot([(cos(config.AF_jcs_rev_3(t))*multi_dot([a18.T,a21]) + sin(config.AF_jcs_rev_3(t))*-1*multi_dot([a19.T,a21])),B(a9,a16),a9]) + 2*multi_dot([((cos(config.AF_jcs_rev_3(t))*multi_dot([B(a20,a18),a17])).T + sin(config.AF_jcs_rev_3(t))*-1*multi_dot([a17.T,B(a20,a19).T])),B(a2,a16),a9]))]
 
     
     def eval_jac_eq(self):
@@ -189,6 +189,6 @@ class topology(object):
         j16 = self.Mbar_vbs_rocker_3_jcs_rev_3[:,0:1]
         j17 = A(j14).T
 
-        self.jac_eq_blocks = [j0,multi_dot([(cos(AF_jcs_rev_1('t',))*multi_dot([j5.T,j7]) + sin(AF_jcs_rev_1('t',))*-1*multi_dot([j6.T,j7])),B(j2,j1)]),j0,multi_dot([j1.T,j3,(cos(AF_jcs_rev_1('t',))*B(j4,j5) + sin(AF_jcs_rev_1('t',))*-1*B(j4,j6))]),j0,multi_dot([(cos(AF_jcs_rev_2('t',))*multi_dot([j10.T,j12]) + sin(AF_jcs_rev_2('t',))*-1*multi_dot([j11.T,j12])),B(j2,j8)]),j0,multi_dot([j8.T,j3,(cos(AF_jcs_rev_2('t',))*B(j9,j10) + sin(AF_jcs_rev_2('t',))*-1*B(j9,j11))]),j0,multi_dot([(cos(AF_jcs_rev_3('t',))*multi_dot([j15.T,j17]) + sin(AF_jcs_rev_3('t',))*-1*multi_dot([j16.T,j17])),B(j2,j13)]),j0,multi_dot([j13.T,j3,(cos(AF_jcs_rev_3('t',))*B(j14,j15) + sin(AF_jcs_rev_3('t',))*-1*B(j14,j16))])]
+        self.jac_eq_blocks = [j0,multi_dot([(cos(config.AF_jcs_rev_1(t))*multi_dot([j5.T,j7]) + sin(config.AF_jcs_rev_1(t))*-1*multi_dot([j6.T,j7])),B(j2,j1)]),j0,multi_dot([j1.T,j3,(cos(config.AF_jcs_rev_1(t))*B(j4,j5) + sin(config.AF_jcs_rev_1(t))*-1*B(j4,j6))]),j0,multi_dot([(cos(config.AF_jcs_rev_2(t))*multi_dot([j10.T,j12]) + sin(config.AF_jcs_rev_2(t))*-1*multi_dot([j11.T,j12])),B(j2,j8)]),j0,multi_dot([j8.T,j3,(cos(config.AF_jcs_rev_2(t))*B(j9,j10) + sin(config.AF_jcs_rev_2(t))*-1*B(j9,j11))]),j0,multi_dot([(cos(config.AF_jcs_rev_3(t))*multi_dot([j15.T,j17]) + sin(config.AF_jcs_rev_3(t))*-1*multi_dot([j16.T,j17])),B(j2,j13)]),j0,multi_dot([j13.T,j3,(cos(config.AF_jcs_rev_3(t))*B(j14,j15) + sin(config.AF_jcs_rev_3(t))*-1*B(j14,j16))])]
   
     

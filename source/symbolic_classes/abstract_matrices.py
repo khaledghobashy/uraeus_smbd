@@ -273,10 +273,7 @@ class base_vector(sm.MatrixSlice):
     
     def _latex(self,expr):
         return self._formated
-    
-    def _ccode(self,expr,**kwargs):
-        return '%r[:,%s:%s]'%(self.frame.name,*self.slice)
-    
+        
     def _sympystr (self,expr):
         return '%s[:,%s]'%(self.frame.name,self.slice)
         

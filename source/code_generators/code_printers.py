@@ -28,16 +28,19 @@ class numerical_printer(C99CodePrinter):
         return '%s'%self._print(expr.args[0])
     
     def _print_matrix_symbol(self,expr):
-        return '%r'%expr._raw_name
+        return '%s'%expr._raw_name
     
     def _print_dcm(self,expr):
-        return '%r'%expr._raw_name
+        return '%s'%expr._raw_name
+    
+    def _print_base_vector(self,expr,**kwargs):
+        return '%s[:,%s:%s]'%(expr.frame.name,*expr.slice)
     
     def _print_vector(self,expr):
-        return '%r'%expr._raw_name
+        return '%s'%expr._raw_name
     
     def _print_quatrenion(self,expr):
-        return '%r'%expr._raw_name
+        return '%s'%expr._raw_name
     
     def _print_Mul(self,expr):
         return '*'.join([self._print(i) for i in expr.args])
@@ -146,19 +149,19 @@ class numerical_printer(C99CodePrinter):
         return code_block
     
     def _print_UndefinedFunction(self,expr):
-        return "'%r'"%expr
+        return '%s'%expr
     
     def _print_Function(self,expr):
-        func = expr.__class__
-        args = [self._print(arg) for arg in expr.args]
-        return "%r%r"%(func,(*args,))
+        func = expr.__class__.__name__
+        args = ','.join([self._print(arg) for arg in expr.args])
+        return '%s(%s)'%(func,args)
         
     def _print_transpose(self,expr):
         return '%s'%(*[self._print(i) for i in expr.args],)
 
     def _print_Derivative(self,expr):
-        func = expr.args[0]
-        func = self._print(func).strip(str(func.args))
+        func = expr.args[0].__class__.__name__
+#        func = self._print(func).strip(str(func.args))
         return 'derivative(%s,t,0.1,%s)'%(func,expr.args[1][1])
     
     def _print_Lambda(self, obj):
