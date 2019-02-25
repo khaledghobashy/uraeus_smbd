@@ -778,11 +778,15 @@ class assembly_code_generator(template_code_generator):
         
         def sub(x):
             l = x.group(0).split('.')
-            s = '%s.config.%s'%(*l,)
-            return s.strip("'")
+            print(l)
+            try:
+                s = '%s.config.%s'%(*l,)
+            except TypeError:
+                s = '%s'%x.group(0)
+            return s
         self_inserter = self._insert_string('self.')
         
-        virtuals_map = '\n'.join([str(p._print(i)) for i in virtuals_map])
+        virtuals_map = '\n'.join([p._print(expr) for expr in virtuals_map])
         virtuals_map = re.sub(pattern,self_inserter,virtuals_map)
         virtuals_map = re.sub(pattern1,sub,virtuals_map)
         virtuals_map = re.sub(pattern2,sub,virtuals_map)

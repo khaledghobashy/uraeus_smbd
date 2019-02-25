@@ -212,7 +212,13 @@ class parametric_configuration(object):
         input_equal  = self.get_input_equalities(geo_graph,input_nodes)
         output_nodes = self.get_output_nodes(geo_graph)
         output_equal = self.get_output_equalities(geo_graph,output_nodes)
-        return input_nodes,output_nodes
+        mid_equal = self.mid_equalities(geo_graph,output_nodes)
+        output_equal = mid_equal + output_equal
+        data = {'input_nodes':input_nodes,
+                'input_equal':input_equal,
+                'output_nodes':output_nodes,
+                'output_equal':output_equal}
+        return data
     
     
     def _get_topology_args(self):
@@ -227,7 +233,7 @@ class parametric_configuration(object):
         self._base_nodes = sum(args.values(),[])
     
     def _get_node_dependencies(self,n,mid_layer):
-        self.get_node_deps(self.graph,n,mid_layer,self.input_nodes)
+        self.get_node_deps(self.graph,n,self.input_nodes,mid_layer)
     
     def _add_nodes(self,name,mirror=False,sym='hp',typ=vector):
         Eq = self._set_base_equality

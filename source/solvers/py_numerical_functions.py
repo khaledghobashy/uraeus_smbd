@@ -186,8 +186,9 @@ def dcm2ep(dcm):
         e0 = (dcm[0,1]-dcm[1,0])/(4*e3)
         e1 = (dcm[0,2]+dcm[2,0])/(4*e3)
         e2 = (dcm[2,1]+dcm[1,2])/(4*e3)
-        
-    return np.array([e0,e1,e2,e3])
+    
+    p = np.array([[e0],[e1],[e2],[e3]])
+    return p
 
 
 def E(p):

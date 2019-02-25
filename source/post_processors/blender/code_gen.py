@@ -15,34 +15,14 @@ class scripter(object):
         
         self.config  = config
         self.printer = printer
-        
         self.name = self.config.name
-        self.graph = self.config.graph.subgraph(config.geometry_nodes).copy()
+        
+        data = config.get_geometries_graph_data()
+        self.input_args  = data['input_nodes']
+        self.input_equalities  = data['input_equal']
+        self.output_equalities = data['output_equal']
+        self.input_equalities  = data['input_equal']
                 
-        self.config_vars = [printer._print(i) for i in self.config.arguments_symbols]
-        self.input_args  = self.config.input_equalities
-        self.output_args = self.config.output_equalities
-        
-        self.gen_coordinates_sym = [printer._print(exp.lhs) 
-        for exp in self.config.topology.mapped_gen_coordinates]
-        self.gen_velocities_sym  = [printer._print(exp.lhs) 
-        for exp in self.config.topology.mapped_gen_velocities]
-    
-    def extract_geometries_graph(self):
-        pass
-    
-    def get_inputs(self):
-        g = self.graph
-        nodes = [i for i,d in g.in_degree() if d == 0]
-        equalities = [g.nodes[i]['func'] for i,d in g.in_degree(nodes) if d==0]
-        return equalities
-    
-    def mid_equalities(self):
-        mid_layer = []
-        for n in self.output_nodes:
-            self._get_node_dependencies(n,mid_layer)
-        return [self.graph.nodes[n]['func'] for n in mid_layer]
-        
     def write_imports(self):
         text = '''
                 import os
@@ -66,9 +46,9 @@ class scripter(object):
                 '''
         p = self.printer
         indent = 8*' '
-        inputs  = self.input_args
+        inputs  = self.input_equalities
         
-        pattern = '|'.join(self.config_vars)
+        pattern = '|'.join([p._print(arg) for arg in self.input_args])
         self_inserter = self._insert_string('self.')
         
         inputs = '\n'.join([p._print(exp) for exp in inputs])
@@ -100,9 +80,9 @@ class scripter(object):
         p = self.printer
         indent = 4*' '
         
-        outputs = self.output_args
+        outputs = self.output_equalities
         
-        pattern = '|'.join(self.config_vars)
+        pattern = '|'.join([p._print(arg) for arg in self.input_args])
         self_inserter = self._insert_string('self.')
                 
         outputs = '\n'.join([p._print(exp) for exp in outputs])
@@ -111,23 +91,10 @@ class scripter(object):
         
         pass_text = ('pass' if len(outputs)==0 else '')
         
-        coordinates = ','.join(self.gen_coordinates_sym)
-        coordinates = re.sub(pattern,self_inserter,coordinates)
-        coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
-        coordinates = textwrap.indent(coordinates,indent).lstrip()
-        
-        velocities = ','.join(self.gen_velocities_sym)
-        velocities = re.sub(pattern,self_inserter,velocities)
-        velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
-        velocities = textwrap.indent(velocities,indent).lstrip()
-        
-        
         text = text.expandtabs()
         text = textwrap.dedent(text)
         text = text.format(outputs = outputs,
-                           pass_text = pass_text,
-                           coordinates = coordinates,
-                           velocities = velocities)
+                           pass_text = pass_text)
         text = textwrap.indent(text,indent)
         return text
     
@@ -157,10 +124,13 @@ class scripter(object):
         with open('%s.py'%self.name,'w') as file:
             file.write(text)
         
-        inputs_dataframe = self._create_inputs_dataframe()
-        inputs_dataframe.to_csv('%s.csv'%self.name)
+#        inputs_dataframe = self._create_inputs_dataframe()
+#        inputs_dataframe.to_csv('%s.csv'%self.name)
 
-    
+    @staticmethod
+    def _insert_string(string):
+        def inserter(x): return string + x.group(0).strip("'")
+        return inserter
 ###############################################################################
 ###############################################################################
 

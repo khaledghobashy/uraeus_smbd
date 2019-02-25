@@ -87,9 +87,9 @@ class topology(object):
     def eval_constants(self):
         config = self.config
 
-        self.F_vbs_rocker_1_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_1]],dtype=np.float64)
-        self.F_vbs_rocker_2_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_2]],dtype=np.float64)
-        self.F_vbs_rocker_3_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_3]],dtype=np.float64)
+#        self.F_vbs_rocker_1_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_1]],dtype=np.float64)
+#        self.F_vbs_rocker_2_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_2]],dtype=np.float64)
+#        self.F_vbs_rocker_3_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_3]],dtype=np.float64)
 
         c0 = triad(config.ax1_jcs_rev_1)
         c1 = A(config.P_vbs_ground).T
