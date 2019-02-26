@@ -68,7 +68,6 @@ class scripter(object):
     
     def write_helpers(self):
         text = '''
-                        
                 def load_from_csv(self,csv_file):
                     file_path = os.path.join(path,csv_file)
                     dataframe = pd.read_csv(file_path,index_col=0)
@@ -77,11 +76,9 @@ class scripter(object):
                         v = np.array(dataframe.loc[ind],dtype=np.float64)
                         v = np.resize(v,shape)
                         setattr(self,ind,v)
-                    self._set_arguments()
                 
-                def _set_arguments(self):
+                def create_scene(self):
                     {outputs}
-                    {pass_text}
                 '''
         p = self.printer
         indent = 4*' '
@@ -94,13 +91,10 @@ class scripter(object):
         outputs = '\n'.join([p._print(exp) for exp in outputs])
         outputs = re.sub(pattern,self_inserter,outputs)
         outputs = textwrap.indent(outputs,indent).lstrip()
-        
-        pass_text = ('pass' if len(outputs)==0 else '')
-        
+                
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(outputs = outputs,
-                           pass_text = pass_text)
+        text = text.format(outputs = outputs)
         text = textwrap.indent(text,indent)
         return text
     
