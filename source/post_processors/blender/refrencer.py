@@ -58,10 +58,10 @@ from bpy.types import Operator
 
 from bpy.props import CollectionProperty
 
-class ImportSomeData(Operator, ImportHelper):
+class ImportScript(Operator, ImportHelper):
     """This appears in the tooltip of the operator and in the generated docs"""
     bl_idname = "import_test.some_data"  # important since its how bpy.ops.import_test.some_data is constructed
-    bl_label = "Import Some Data"
+    bl_label = "ImportScript"
     
     # ImportHelper mixin class uses this
     filename_ext = ".py"
@@ -95,16 +95,16 @@ class ImportSomeData(Operator, ImportHelper):
 
 # Only needed if you want to add into a dynamic menu
 def menu_func_import(self, context):
-    self.layout.operator(ImportSomeData.bl_idname, text="Import .py file")
+    self.layout.operator(ImportScript.bl_idname, text="Import .py file")
 
 
 def register():
-    bpy.utils.register_class(ImportSomeData)
+    bpy.utils.register_class(ImportScript)
     bpy.types.INFO_MT_file_import.append(menu_func_import)
 
 
 def unregister():
-    bpy.utils.unregister_class(ImportSomeData)
+    bpy.utils.unregister_class(ImportScript)
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
 
 
