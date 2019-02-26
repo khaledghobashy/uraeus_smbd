@@ -7,8 +7,8 @@ Created on Fri Feb 15 14:54:31 2019
 from source.symbolic_classes.abstract_matrices import Config_Relations as CR
 from source.code_generators.python_code_generators import configuration_code_generator
 from source.mbs_creators.topology_helpers import (parametric_configuration,
-                                                  simple_geometry, 
                                                   composite_geometry,
+                                                  triangular_prism, 
                                                   cylinder_geometry)
 
 import use_cases.parametric_templates.templates.stewart_gough_3dof as model
@@ -87,6 +87,11 @@ def main():
     # Testing Geometries
     config.add_scalar('links_ro')
     config.add_scalar('rockers_ro')
+    
+    config.add_geometry('table')
+    config.add_relation('gms_table',triangular_prism,'hps_upper_1','hps_upper_2','hps_upper_3','s_rockers_ro')
+    config.assign_geometry_to_body('rbs_table','gms_table')
+
     
     config.add_geometry('rocker_1')
     config.add_relation('gms_rocker_1',cylinder_geometry,'hps_bottom_1','hps_middle_1','s_rockers_ro')

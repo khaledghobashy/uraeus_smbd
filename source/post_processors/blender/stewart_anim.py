@@ -142,13 +142,6 @@ class cylinder_mesh(object):
         faces = [(i,i+1,i+self.n+1,i+self.n) for i in range(self.n)]
         return faces
 
-def arm(c1,c2):
-    verts = [v.co for v in itertools.chain(c1.obj.data.vertices,c1.obj.data.vertices)]
-    f1 = [tuple(i.vertices) for i in c1.obj.data.polygons.values()]
-    f2 = [tuple(i.vertices) for i in c2.obj.data.polygons.values()]
-    f2 = [[i+len(c1.obj.data.vertices) for i in t] for t in f2]
-    faces = f1+f2
-    return verts,faces
 
 scale = 1/20        
 b1 = np.array([[ 0  ],[-430],[0]])*scale
@@ -186,12 +179,6 @@ rocker_3.show()
 link_3 = cylinder_mesh('link_3',s3,p3,r,n)
 link_3.show()
 
-verts,faces = arm(link_1,rocker_1)
-mesh = bpy.data.meshes.new('arm')
-obj  = bpy.data.objects.new('arm', mesh)
-mesh.from_pydata(verts, [], faces)
-mesh.update()
-bpy.context.scene.objects.link(obj)
 
 def set_animation():
     objects = [table.obj,link_1.obj,link_2.obj,link_3.obj,rocker_1.obj,rocker_2.obj,rocker_3.obj]

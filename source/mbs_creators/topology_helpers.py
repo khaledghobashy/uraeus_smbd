@@ -84,6 +84,15 @@ class cylinder_geometry(simple_geometry):
         self.arg2 = arg2
         self.ri = ri
         self.ro = ro
+
+class triangular_prism(simple_geometry):
+    
+    def __init__(self,arg1,arg2,arg3,l=10):
+        self.arg1 = arg1
+        self.arg2 = arg2
+        self.arg3 = arg3
+        self.l = l
+
     
 ###############################################################################
 ###############################################################################
