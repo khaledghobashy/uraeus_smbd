@@ -49,7 +49,6 @@ class blender_scene(object):
                     value = np.resize(value,(3,1))*self.scale
                     setattr(self,attr,value)
 
-
     def load_anim_data(self,csv_file):
         with open(csv_file, newline='') as csvfile:
             content = csv.reader(csvfile)
@@ -68,7 +67,7 @@ class blender_scene(object):
                 obj.keyframe_insert('rotation_quaternion', frame=i)
 
         bpy.context.scene.render.frame_map_old = i+1
-        bpy.context.scene.render.frame_map_new = 50
+        bpy.context.scene.render.frame_map_new = 25
         bpy.context.scene.frame_end = bpy.context.scene.render.frame_map_new
 
     def create_scene(self):
@@ -81,7 +80,6 @@ class blender_scene(object):
         self.gms_table = triangular_prism(self.hps_upper_1,self.hps_upper_2,self.hps_upper_3,self.s_rockers_ro)
 
 blend = blender_scene('SG.')
-blend.get_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\stewart_points_v3.csv')
+blend.get_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\stewart_points_mod1.csv')
 blend.create_scene()
-blend.load_anim_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\simulations\stewart_sim_data_v1.csv')
-
+blend.load_anim_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\simulations\stewart_sim_data_temp.csv')

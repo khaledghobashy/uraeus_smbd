@@ -90,7 +90,6 @@ class scripter(object):
                                 value = np.array(row[1:],dtype=np.float64)
                                 value = np.resize(value,(3,1))*self.scale
                                 setattr(self,attr,value)
-                                
                     
                 def load_anim_data(self,csv_file):
                     with open(csv_file, newline='') as csvfile:

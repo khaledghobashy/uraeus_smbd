@@ -9,6 +9,11 @@ from source.symbolic_classes.abstract_matrices import Config_Relations as CR
 from source.code_generators.python_code_generators import configuration_code_generator
 
 import use_cases.parametric_templates.templates.double_wishbone_direct_acting as model
+from source.mbs_creators.topology_helpers import (parametric_configuration,
+                                                  composite_geometry,
+                                                  triangular_prism, 
+                                                  cylinder_geometry)
+
 
 def main():
     
@@ -67,10 +72,52 @@ def main():
     config.add_relation(CR.Equal_to,'pt1_jcr_strut',['hpr_strut_mid'],True)
     config.add_relation(CR.Oriented,'ax1_jcr_strut',['hpr_strut_lca','hpr_strut_chassis'],True)
     
-    config.topology.save()
+#    config.topology.save()
+#    
+#    config_code = configuration_code_generator(config)
+#    config_code.write_code_file()
+    
+    # Adding Geometries
+    config.add_scalar('links_ro')
+    config.add_scalar('thickness')
+    
+    config.add_geometry('uca',mirror=True)
+    config.add_relation('gms_uca',triangular_prism,'hpr','hps_upper_2','hps_upper_3','s_rockers_ro')
+    config.assign_geometry_to_body('rbs_table','gms_table')
+
+    config.add_geometry('rocker_1')
+    config.add_relation('gms_rocker_1',cylinder_geometry,'hps_bottom_1','hps_middle_1','s_rockers_ro')
+    config.assign_geometry_to_body('rbs_rocker_1','gms_rocker_1')
+
+    config.add_geometry('rocker_2')
+    config.add_relation('gms_rocker_2',cylinder_geometry,'hps_bottom_2','hps_middle_2','s_rockers_ro')
+    config.assign_geometry_to_body('rbs_rocker_2','gms_rocker_2')
+
+    config.add_geometry('rocker_3')
+    config.add_relation('gms_rocker_3',cylinder_geometry,'hps_bottom_3','hps_middle_3','s_rockers_ro')
+    config.assign_geometry_to_body('rbs_rocker_3','gms_rocker_3')
+
+    config.add_geometry('link_1')
+    config.add_relation('gms_link_1',cylinder_geometry,'hps_upper_1','hps_middle_1','s_links_ro')
+    config.assign_geometry_to_body('rbs_link_1','gms_link_1')
+
+    config.add_geometry('link_2')
+    config.add_relation('gms_link_2',cylinder_geometry,'hps_upper_2','hps_middle_2','s_links_ro')
+    config.assign_geometry_to_body('rbs_link_2','gms_link_2')
+
+    config.add_geometry('link_3')
+    config.add_relation('gms_link_3',cylinder_geometry,'hps_upper_3','hps_middle_3','s_links_ro')
+    config.assign_geometry_to_body('rbs_link_3','gms_link_3')
+        
+    model.template.save()
     
     config_code = configuration_code_generator(config)
     config_code.write_code_file()
+    
+    from source.post_processors.blender.scripter import scripter
+    geo_code = scripter(config)
+    geo_code.write_code_file()
+
 
 
 if __name__ == '__main__':

@@ -92,7 +92,6 @@ def main():
     config.add_relation('gms_table',triangular_prism,'hps_upper_1','hps_upper_2','hps_upper_3','s_rockers_ro')
     config.assign_geometry_to_body('rbs_table','gms_table')
 
-    
     config.add_geometry('rocker_1')
     config.add_relation('gms_rocker_1',cylinder_geometry,'hps_bottom_1','hps_middle_1','s_rockers_ro')
     config.assign_geometry_to_body('rbs_rocker_1','gms_rocker_1')
@@ -116,13 +115,7 @@ def main():
     config.add_geometry('link_3')
     config.add_relation('gms_link_3',cylinder_geometry,'hps_upper_3','hps_middle_3','s_links_ro')
     config.assign_geometry_to_body('rbs_link_3','gms_link_3')
-    
-#    config.add_geometry('link_3')
-#    config.add_relation('gms_link_3',cylinder_geometry,'hps_upper_3','hps_middle_3','s_links_ro')
-#    config.add_sub_relation('R_rbs_link_3',CR.Equal_to,'gms_link_3.R')
-#    config.add_sub_relation('m_rbs_link_3',CR.Equal_to,'gms_link_3.m')
-#    config.add_sub_relation('Jbar_rbs_link_3',CR.Equal_to,'gms_link_3.J')
-    
+        
     model.template.save()
     
     config_code = configuration_code_generator(config)

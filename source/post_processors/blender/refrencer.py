@@ -1,35 +1,4 @@
 
-#import sys
-#import os
-#
-#from tkinter import Tk
-#from tkinter.filedialog import askopenfilename
-#
-#def openfile_dialog():
-#    
-#    root = Tk()  # we don't want a full GUI, so keep the root window from appearing
-#    filename = askopenfilename() # show an "Open" dialog box and return the path to the selected file
-#    root.withdraw()
-#    return filename
-#
-#def get_path():
-#    full_path = openfile_dialog().split('/')
-#    path2pkg = []
-#    imports = []
-#    d = full_path.index('asurt_cdt_symbolic')
-#    path2pkg = full_path[0:d+1]
-#    imports  = full_path[d+1:]
-#    file = imports[-1].split('.')[0]
-#    del imports[-1]
-#    path2pkg_str = os.path.join(*path2pkg)
-#    imports_str  = '.'.join(imports)
-#    sys.path.append(r'%s'%path2pkg_str)
-#    print('from %s import %s'%(imports_str,file))
-#
-#
-#get_path()        
-
-
 import bpy
 import os
 import sys

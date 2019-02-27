@@ -23,7 +23,6 @@ class cylinder_geometry(object):
         self.norm = self.axis/np.linalg.norm(self.axis)
         self.create_obj()
             
-    
     def create_obj(self):
         self._create_data()
         verts = self.data['verts']
@@ -71,21 +70,13 @@ class triangular_prism(object):
         self.l = l        
         self.create()
             
-        
     def create(self):
         self._create_verts()
         self._create_faces()
         self._extrude()
         self._create_mesh()
         self._create_obj()
-
-    def _extrude(self):
-        v = self._get_normal() * self.l/2
-        self.top_verts = [i+v for i in self._verts]
-        self.bot_verts = [i-v for i in self._verts]
-        self.top_verts = [tuple(i[:,0]) for i in self.top_verts]
-        self.bot_verts = [tuple(i[:,0]) for i in self.bot_verts]
-
+        
     def _create_verts(self):
         self._verts = [self.p1,self.p2,self.p3]
         self.n = len(self._verts)+1
@@ -96,6 +87,13 @@ class triangular_prism(object):
         bot_face = tuple(range(self.n,2*self.n,1))
         side_faces = [(i,i+1,i+self.n+1,i+self.n) for i in range(self.n-1)]
         self.faces = [top_face,bot_face] + side_faces
+
+    def _extrude(self):
+        v = self._get_normal() * self.l/2
+        self.top_verts = [i+v for i in self._verts]
+        self.bot_verts = [i-v for i in self._verts]
+        self.top_verts = [tuple(i[:,0]) for i in self.top_verts]
+        self.bot_verts = [tuple(i[:,0]) for i in self.bot_verts]
         
     def _create_mesh(self):
         self.mesh = bpy.data.meshes.new('%s_mesh'%self.name)
