@@ -24,13 +24,16 @@ class scripter(object):
         self.input_equalities  = data['input_equal']
         self.output_equalities = data['output_equal']
         self.geometries_map = data['geometries_map']
+        
+        equalities = itertools.chain(self.input_equalities,self.output_equalities)
+        self.args_str = [printer._print(expr.lhs) for expr in equalities]
                 
     def write_imports(self):
         text = '''
-                import os
                 import csv
                 import numpy as np
                 import bpy
+                from source.solvers.py_numerical_functions import centered
                 from source.post_processors.blender.objects import (cylinder_geometry,
                                                                     composite_geometry,
                                                                     triangular_prism)
@@ -120,7 +123,7 @@ class scripter(object):
         
         outputs = self.output_equalities
         
-        pattern_items = itertools.chain(self.input_args,self.output_args)
+        pattern_items = self.args_str #itertools.chain(self.input_args,self.output_args)
         pattern = '|'.join([p._print(arg) for arg in pattern_items])
         self_inserter = self._insert_string('self.')
                 

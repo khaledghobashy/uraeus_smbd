@@ -15,10 +15,12 @@ f.SU.config.load_from_csv('dwb_st500_axletech.csv')
 f.ST.config.load_from_csv('steer_st500_axletech.csv')
 f.TR.config.load_from_csv('test_rig_v1_mod.csv')
 
-f.TR.config.AF_jcs_steer_gear = lambda t : np.deg2rad(15)*np.sin(t)
+f.TR.config.AF_jcs_steer_gear = lambda t : 0*np.deg2rad(15)*np.sin(t)
 f.TR.config.AF_mcr_ver_act = lambda t : 170*np.sin(t)
 f.TR.config.AF_mcl_ver_act = lambda t : 170*np.sin(t)
 f.TR.config.AF_jcr_rev = lambda t : np.deg2rad(360)*t
+f.TR.config.AF_jcl_rev = lambda t : -np.deg2rad(360)*t
+
 
 assm = f.numerical_assembly()
 assm.set_gen_coordinates(assm.q0)
@@ -39,3 +41,4 @@ plt.plot(time_array,soln.pos_dataframe['ST.rbr_rocker.y'])
 plt.grid()
 plt.show()
 
+soln.pos_dataframe.to_csv('sim_dwb_st500_axletech_temp.csv',index=True)

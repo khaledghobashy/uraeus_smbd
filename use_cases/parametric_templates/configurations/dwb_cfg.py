@@ -18,7 +18,8 @@ from source.mbs_creators.topology_helpers import (parametric_configuration,
 def main():
     
     name = 'dwb_simple_points'
-    config = model.template.param_config
+    config = parametric_configuration(model.template)
+    config.assemble_base_layer()
     config.name = name
     model.template.cfg_file = name
     
@@ -35,42 +36,42 @@ def main():
     config.add_point('strut_mid',mirror=True)
     config.add_point('wc',mirror=True)
     
-    config.add_relation(CR.Centered,'hpr_strut_mid',['hpr_strut_chassis','hpr_strut_lca'],True)
+    config.add_relation('hpr_strut_mid',CR.Centered,'hpr_strut_chassis','hpr_strut_lca',mirror=True)
     
-    config.add_relation(CR.Centered,'R_rbr_uca',['hpr_ucao','hpr_ucaf','hpr_ucar'],True)
-    config.add_relation(CR.Centered,'R_rbr_lca',['hpr_lcao','hpr_lcaf','hpr_lcar'],True)
-    config.add_relation(CR.Centered,'R_rbr_upright',['hpr_ucao','hpr_lcao','hpr_wc'],True)
-    config.add_relation(CR.Centered,'R_rbr_upper_strut',['hpr_strut_chassis','hpr_strut_mid'],True)
-    config.add_relation(CR.Centered,'R_rbr_lower_strut',['hpr_strut_lca','hpr_strut_mid'],True)
-    config.add_relation(CR.Centered,'R_rbr_tie_rod',['hpr_tro','hpr_tri'],True)
-    config.add_relation(CR.Centered,'R_rbr_hub',['hpr_wc','R_rbr_upright'],True)
+    config.add_relation('R_rbr_uca',CR.Centered,'hpr_ucao','hpr_ucaf','hpr_ucar',mirror=True)
+    config.add_relation('R_rbr_lca',CR.Centered,'hpr_lcao','hpr_lcaf','hpr_lcar',mirror=True)
+    config.add_relation('R_rbr_upright',CR.Centered,'hpr_ucao','hpr_lcao','hpr_wc',mirror=True)
+    config.add_relation('R_rbr_upper_strut',CR.Centered,'hpr_strut_chassis','hpr_strut_mid',mirror=True)
+    config.add_relation('R_rbr_lower_strut',CR.Centered,'hpr_strut_lca','hpr_strut_mid',mirror=True)
+    config.add_relation('R_rbr_tie_rod',CR.Centered,'hpr_tro','hpr_tri',mirror=True)
+    config.add_relation('R_rbr_hub',CR.Centered,'hpr_wc','R_rbr_upright',mirror=True)
     
-    config.add_relation(CR.Equal_to,'pt1_jcr_uca_upright',['hpr_ucao'],True)
-    config.add_relation(CR.Equal_to,'pt1_jcr_lca_upright',['hpr_lcao'],True)
-    config.add_relation(CR.Equal_to,'pt1_jcr_tie_upright',['hpr_tro'],True)
+    config.add_relation('pt1_jcr_uca_upright',CR.Equal_to,'hpr_ucao',mirror=True)
+    config.add_relation('pt1_jcr_lca_upright',CR.Equal_to,'hpr_lcao',mirror=True)
+    config.add_relation('pt1_jcr_tie_upright',CR.Equal_to,'hpr_tro',mirror=True)
     
-    config.add_relation(CR.Centered,'pt1_jcr_uca_chassis',['hpr_ucaf','hpr_ucar'],True)
-    config.add_relation(CR.Oriented,'ax1_jcr_uca_chassis',['hpr_ucaf','hpr_ucar'],True)
+    config.add_relation('pt1_jcr_uca_chassis',CR.Centered,'hpr_ucaf','hpr_ucar',mirror=True)
+    config.add_relation('ax1_jcr_uca_chassis',CR.Oriented,'hpr_ucaf','hpr_ucar',mirror=True)
     
-    config.add_relation(CR.Centered,'pt1_jcr_lca_chassis',['hpr_lcaf','hpr_lcar'],True)
-    config.add_relation(CR.Oriented,'ax1_jcr_lca_chassis',['hpr_lcaf','hpr_lcar'],True)
+    config.add_relation('pt1_jcr_lca_chassis',CR.Centered,'hpr_lcaf','hpr_lcar',mirror=True)
+    config.add_relation('ax1_jcr_lca_chassis',CR.Oriented,'hpr_lcaf','hpr_lcar',mirror=True)
     
-    config.add_relation(CR.Equal_to,'pt1_jcr_hub_bearing',['hpr_wc'],True)
+    config.add_relation('pt1_jcr_hub_bearing',CR.Equal_to,'hpr_wc',mirror=True)
     
-    config.add_relation(CR.Equal_to,'pt1_jcr_strut_chassis',['hpr_strut_chassis'],True)
-    config.add_relation(CR.Oriented,'ax1_jcr_strut_chassis',['hpr_strut_chassis','hpr_strut_lca'],True)
-    config.add_relation(CR.Oriented,'ax2_jcr_strut_chassis',['hpr_strut_lca','hpr_strut_chassis'],True)
+    config.add_relation('pt1_jcr_strut_chassis',CR.Equal_to,'hpr_strut_chassis',mirror=True)
+    config.add_relation('ax1_jcr_strut_chassis',CR.Oriented,'hpr_strut_chassis','hpr_strut_lca',mirror=True)
+    config.add_relation('ax2_jcr_strut_chassis',CR.Oriented,'hpr_strut_lca','hpr_strut_chassis',mirror=True)
     
-    config.add_relation(CR.Equal_to,'pt1_jcr_strut_lca',['hpr_strut_lca'],True)
-    config.add_relation(CR.Oriented,'ax1_jcr_strut_lca',['hpr_strut_chassis','hpr_strut_lca'],True)
-    config.add_relation(CR.Oriented,'ax2_jcr_strut_lca',['hpr_strut_lca','hpr_strut_chassis'],True)
+    config.add_relation('pt1_jcr_strut_lca',CR.Equal_to,'hpr_strut_lca',mirror=True)
+    config.add_relation('ax1_jcr_strut_lca',CR.Oriented,'hpr_strut_chassis','hpr_strut_lca',mirror=True)
+    config.add_relation('ax2_jcr_strut_lca',CR.Oriented,'hpr_strut_lca','hpr_strut_chassis',mirror=True)
     
-    config.add_relation(CR.Equal_to,'pt1_jcr_tie_steering',['hpr_tri'],True)
-    config.add_relation(CR.Oriented,'ax1_jcr_tie_steering',['hpr_tri','hpr_tro'],True)
-    config.add_relation(CR.Oriented,'ax2_jcr_tie_steering',['hpr_tro','hpr_tri'],True)
+    config.add_relation('pt1_jcr_tie_steering',CR.Equal_to,'hpr_tri',mirror=True)
+    config.add_relation('ax1_jcr_tie_steering',CR.Oriented,'hpr_tri','hpr_tro',mirror=True)
+    config.add_relation('ax2_jcr_tie_steering',CR.Oriented,'hpr_tro','hpr_tri',mirror=True)
     
-    config.add_relation(CR.Equal_to,'pt1_jcr_strut',['hpr_strut_mid'],True)
-    config.add_relation(CR.Oriented,'ax1_jcr_strut',['hpr_strut_lca','hpr_strut_chassis'],True)
+    config.add_relation('pt1_jcr_strut',CR.Equal_to,'hpr_strut_mid',mirror=True)
+    config.add_relation('ax1_jcr_strut',CR.Oriented,'hpr_strut_lca','hpr_strut_chassis',mirror=True)
     
 #    config.topology.save()
 #    
@@ -79,40 +80,39 @@ def main():
     
     # Adding Geometries
     config.add_scalar('links_ro')
+    config.add_scalar('strut_outer')
+    config.add_scalar('strut_inner')
     config.add_scalar('thickness')
+    config.add_scalar('tire_radius')
     
     config.add_geometry('uca',mirror=True)
-    config.add_relation('gms_uca',triangular_prism,'hpr','hps_upper_2','hps_upper_3','s_rockers_ro')
-    config.assign_geometry_to_body('rbs_table','gms_table')
-
-    config.add_geometry('rocker_1')
-    config.add_relation('gms_rocker_1',cylinder_geometry,'hps_bottom_1','hps_middle_1','s_rockers_ro')
-    config.assign_geometry_to_body('rbs_rocker_1','gms_rocker_1')
-
-    config.add_geometry('rocker_2')
-    config.add_relation('gms_rocker_2',cylinder_geometry,'hps_bottom_2','hps_middle_2','s_rockers_ro')
-    config.assign_geometry_to_body('rbs_rocker_2','gms_rocker_2')
-
-    config.add_geometry('rocker_3')
-    config.add_relation('gms_rocker_3',cylinder_geometry,'hps_bottom_3','hps_middle_3','s_rockers_ro')
-    config.assign_geometry_to_body('rbs_rocker_3','gms_rocker_3')
-
-    config.add_geometry('link_1')
-    config.add_relation('gms_link_1',cylinder_geometry,'hps_upper_1','hps_middle_1','s_links_ro')
-    config.assign_geometry_to_body('rbs_link_1','gms_link_1')
-
-    config.add_geometry('link_2')
-    config.add_relation('gms_link_2',cylinder_geometry,'hps_upper_2','hps_middle_2','s_links_ro')
-    config.assign_geometry_to_body('rbs_link_2','gms_link_2')
-
-    config.add_geometry('link_3')
-    config.add_relation('gms_link_3',cylinder_geometry,'hps_upper_3','hps_middle_3','s_links_ro')
-    config.assign_geometry_to_body('rbs_link_3','gms_link_3')
-        
-    model.template.save()
+    config.add_relation('gmr_uca',triangular_prism,'hpr_ucaf','hpr_ucar','hpr_ucao','s_thickness')
+    config.assign_geometry_to_body('rbr_uca','gmr_uca')
     
-    config_code = configuration_code_generator(config)
-    config_code.write_code_file()
+    config.add_geometry('lca',mirror=True)
+    config.add_relation('gmr_lca',triangular_prism,'hpr_lcaf','hpr_lcar','hpr_lcao','s_thickness')
+    config.assign_geometry_to_body('rbr_lca','gmr_lca')
+    
+    config.add_geometry('upright',mirror=True)
+    config.add_relation('gmr_upright',triangular_prism,'hpr_ucao','hpr_wc','hpr_lcao','s_thickness')
+    config.assign_geometry_to_body('rbr_upright','gmr_upright')
+
+    config.add_geometry('upper_strut',mirror=True)
+    config.add_relation('gmr_upper_strut',cylinder_geometry,'hpr_strut_chassis','hpr_strut_mid','s_strut_outer')
+    config.assign_geometry_to_body('rbr_upper_strut','gmr_upper_strut')
+
+    config.add_geometry('lower_strut',mirror=True)
+    config.add_relation('gmr_lower_strut',cylinder_geometry,'hpr_strut_mid','hpr_strut_lca','s_strut_inner')
+    config.assign_geometry_to_body('rbr_lower_strut','gmr_lower_strut')
+    
+    config.add_geometry('tie_rod',mirror=True)
+    config.add_relation('gmr_tie_rod',cylinder_geometry,'hpr_tri','hpr_tro','s_links_ro')
+    config.assign_geometry_to_body('rbr_tie_rod','gmr_tie_rod')
+    
+    config.add_geometry('tire',mirror=True)
+    config.add_relation('gmr_tire',cylinder_geometry,'hpr_wc','R_rbr_upright','s_tire_radius')
+    config.assign_geometry_to_body('rbr_hub','gmr_tire')
+        
     
     from source.post_processors.blender.scripter import scripter
     geo_code = scripter(config)
