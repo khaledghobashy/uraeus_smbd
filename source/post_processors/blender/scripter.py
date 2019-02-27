@@ -41,11 +41,6 @@ class scripter(object):
         
     def write_class_init(self):
         text = '''
-                full_path = os.path.dirname(__file__).split('/')
-                path2pkg = []
-                d = full_path.index('asurt_cdt_symbolic')
-                path2pkg = full_path[0:d+1]
-                
                 try:
                     bpy.context.scene.objects.active = bpy.data.objects['Cube']
                     bpy.ops.object.delete()
@@ -93,7 +88,7 @@ class scripter(object):
                             attr = row[0]
                             if attr in self._inputs:
                                 value = np.array(row[1:],dtype=np.float64)
-                                value = np.resize(value,(3,1))
+                                value = np.resize(value,(3,1))*self.scale
                                 setattr(self,attr,value)
                                 
                     
