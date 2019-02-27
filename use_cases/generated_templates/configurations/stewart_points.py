@@ -14,11 +14,8 @@ path = os.path.dirname(__file__)
 class configuration(object):
 
     def __init__(self):
-        self.P_rbs_table = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_table = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_table = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.m_rbs_table = 1
-        self.Jbar_rbs_table = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]],dtype=np.float64)
         self.Rd_rbs_link_1 = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_link_1 = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_link_2 = np.array([[0], [0], [0]],dtype=np.float64)
@@ -67,13 +64,17 @@ class configuration(object):
         self._set_arguments()
 
     def _set_arguments(self):
+        self.gms_table = triangular_prism(self.hps_upper_1,self.hps_upper_2,self.hps_upper_3,self.s_rockers_ro)
         self.gms_link_1 = cylinder_geometry(self.hps_upper_1,self.hps_middle_1,self.s_links_ro)
         self.gms_link_2 = cylinder_geometry(self.hps_upper_2,self.hps_middle_2,self.s_links_ro)
         self.gms_link_3 = cylinder_geometry(self.hps_upper_3,self.hps_middle_3,self.s_links_ro)
         self.gms_rocker_1 = cylinder_geometry(self.hps_bottom_1,self.hps_middle_1,self.s_rockers_ro)
         self.gms_rocker_2 = cylinder_geometry(self.hps_bottom_2,self.hps_middle_2,self.s_rockers_ro)
         self.gms_rocker_3 = cylinder_geometry(self.hps_bottom_3,self.hps_middle_3,self.s_rockers_ro)
-        self.R_rbs_table = centered(self.hps_upper_1,self.hps_upper_2,self.hps_upper_3)
+        self.R_rbs_table = self.gms_table.R
+        self.P_rbs_table = self.gms_table.P
+        self.m_rbs_table = self.gms_table.m
+        self.Jbar_rbs_table = self.gms_table.J
         self.R_rbs_link_1 = self.gms_link_1.R
         self.P_rbs_link_1 = self.gms_link_1.P
         self.m_rbs_link_1 = self.gms_link_1.m

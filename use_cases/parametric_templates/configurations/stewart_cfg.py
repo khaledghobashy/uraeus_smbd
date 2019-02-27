@@ -128,7 +128,7 @@ def main():
     config_code = configuration_code_generator(config)
     config_code.write_code_file()
     
-    from source.post_processors.blender.code_gen import scripter
+    from source.post_processors.blender.scripter import scripter
     geo_code = scripter(config)
     geo_code.write_code_file()
 

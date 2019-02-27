@@ -7,6 +7,7 @@ Created on Fri Feb 22 14:17:15 2019
 import os
 import re
 import textwrap
+import itertools
 from source.code_generators.code_printers import numerical_printer
 
 class scripter(object):
@@ -18,15 +19,18 @@ class scripter(object):
         self.name = self.config.name
         
         data = config.get_geometries_graph_data()
-        self.input_args  = data['input_nodes']
+        self.input_args   = data['input_nodes']
+        self.output_args  = data['output_nodes']
         self.input_equalities  = data['input_equal']
         self.output_equalities = data['output_equal']
-        self.input_equalities  = data['input_equal']
+        self.geometries_map = data['geometries_map']
                 
     def write_imports(self):
         text = '''
                 import os
+                import csv
                 import numpy as np
+                import bpy
                 from source.post_processors.blender.objects import (cylinder_geometry,
                                                                     composite_geometry,
                                                                     triangular_prism)
@@ -37,7 +41,10 @@ class scripter(object):
         
     def write_class_init(self):
         text = '''
-                path = os.path.dirname(__file__)
+                full_path = os.path.dirname(__file__).split('/')
+                path2pkg = []
+                d = full_path.index('asurt_cdt_symbolic')
+                path2pkg = full_path[0:d+1]
                 
                 try:
                     bpy.context.scene.objects.active = bpy.data.objects['Cube']
@@ -47,8 +54,15 @@ class scripter(object):
 
                 class blender_scene(object):
 
-                    def __init__(self):
-                        {inputs}                       
+                    def __init__(self,prefix=''):
+                        self.prefix = prefix
+                        scale = 1/20
+                        self.scale = scale
+                        
+                        {inputs}
+                        
+                        self._inputs = {inputs_attr}
+                        self.geometries = {outputs}
                 '''
         p = self.printer
         indent = 8*' '
@@ -57,26 +71,53 @@ class scripter(object):
         pattern = '|'.join([p._print(arg) for arg in self.input_args])
         self_inserter = self._insert_string('self.')
         
-        inputs = '\n'.join([p._print(exp) for exp in inputs])
+        inputs = '*scale\n'.join([p._print(exp) for exp in inputs])
         inputs = re.sub(pattern,self_inserter,inputs)
         inputs = textwrap.indent(inputs,indent).lstrip()
+                
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
-        text = text.format(inputs = inputs)
+        text = text.format(inputs = inputs,
+                           inputs_attr = self.input_args,
+                           outputs = self.geometries_map)
         return text
     
     def write_helpers(self):
         text = '''
-                def load_from_csv(self,csv_file):
-                    file_path = os.path.join(path,csv_file)
-                    dataframe = pd.read_csv(file_path,index_col=0)
-                    for ind in dataframe.index:
-                        shape = getattr(self,ind).shape
-                        v = np.array(dataframe.loc[ind],dtype=np.float64)
-                        v = np.resize(v,shape)
-                        setattr(self,ind,v)
-                
+                def get_data(self,csv_file):
+                    with open(csv_file, newline='') as csvfile:
+                        content = csv.reader(csvfile)
+                        next(content)
+                        for row in content:
+                            attr = row[0]
+                            if attr in self._inputs:
+                                value = np.array(row[1:],dtype=np.float64)
+                                value = np.resize(value,(3,1))
+                                setattr(self,attr,value)
+                                
+                    
+                def load_anim_data(self,csv_file):
+                    with open(csv_file, newline='') as csvfile:
+                        content = csv.reader(csvfile)
+                        keys = {{k:i for i,k in enumerate(next(content)[1:])}}
+                        arr = np.array(list(content))[:,1:]
+                        arr = np.array(arr,dtype=np.float64)
+                    
+                    scale = self.scale
+                    for i,row in enumerate(arr):
+                        for g,b in self.geometries.items():
+                            k = keys['%s%s.x'%(self.prefix,b)]
+                            obj = getattr(self,g).obj
+                            obj.location = [float(n)*scale for n in row[k:k+3]]
+                            obj.rotation_quaternion = [float(n) for n in row[k+3:k+7]]
+                            obj.keyframe_insert('location', frame=i)
+                            obj.keyframe_insert('rotation_quaternion', frame=i)
+                    
+                    bpy.context.scene.render.frame_map_old = i+1
+                    bpy.context.scene.render.frame_map_new = 50
+                    bpy.context.scene.frame_end = bpy.context.scene.render.frame_map_new
+                        
                 def create_scene(self):
                     {outputs}
                 '''
@@ -85,7 +126,8 @@ class scripter(object):
         
         outputs = self.output_equalities
         
-        pattern = '|'.join([p._print(arg) for arg in self.input_args])
+        pattern_items = itertools.chain(self.input_args,self.output_args)
+        pattern = '|'.join([p._print(arg) for arg in pattern_items])
         self_inserter = self._insert_string('self.')
                 
         outputs = '\n'.join([p._print(exp) for exp in outputs])
@@ -115,7 +157,7 @@ class scripter(object):
         
     def write_code_file(self):
         os.chdir('..\..')
-        path = os.getcwd() + '\\generated_templates\\blender_scripts'
+        path = os.getcwd() + r'\generated_templates\blender_scripts'
         os.chdir(path)
         
         imports = self.write_imports()
@@ -124,8 +166,6 @@ class scripter(object):
         with open('%s.py'%self.name,'w') as file:
             file.write(text)
         
-#        inputs_dataframe = self._create_inputs_dataframe()
-#        inputs_dataframe.to_csv('%s.csv'%self.name)
 
     @staticmethod
     def _insert_string(string):

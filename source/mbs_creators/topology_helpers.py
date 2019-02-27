@@ -226,7 +226,8 @@ class parametric_configuration(object):
         data = {'input_nodes':input_nodes,
                 'input_equal':input_equal,
                 'output_nodes':output_nodes,
-                'output_equal':output_equal}
+                'output_equal':output_equal,
+                'geometries_map':self.geometries_map}
         return data
     
     
@@ -299,7 +300,7 @@ class parametric_configuration(object):
     def _assign_geometry_to_body(self,body,geo,eval_inertia):
         b = self.bodies[body]['obj']
         R, P, m, J = [str(getattr(b,i)) for i in 'R,P,m,Jbar'.split(',')]
-        self.geometries_map[geo] = (R,P)
+        self.geometries_map[geo] = body
         if eval_inertia:
             self.add_sub_relation(R,Equal_to,'%s.R'%geo)
             self.add_sub_relation(P,Equal_to,'%s.P'%geo)

@@ -7,82 +7,8 @@ Created on Tue Feb 19 14:23:04 2019
 
 import bpy  
 import numpy as np
+from source.solvers.py_numerical_functions import triad
 
-def skew_matrix(v):
-    vs = np.array([[0,-v[2,0],v[1,0]],
-                 [v[2,0],0,-v[0,0]],
-                 [-v[1,0],v[0,0],0]])
-    return vs
-
-def orthogonal_vector(v):
-    dummy = np.ones((3,1))
-    i = np.argmax(np.abs(v))
-    dummy[i] = 0
-    m = np.linalg.multi_dot([skew_matrix(v),dummy])
-    return m
-
-def triad(v1):
-    k = v1/np.linalg.norm(v1)
-    i = orthogonal_vector(k)
-    i = i/np.linalg.norm(i)
-    j = np.linalg.multi_dot([skew_matrix(k),i])
-    j = j/np.linalg.norm(j)
-    m = np.concatenate([i,j,k],axis=1)
-    return m
-
-
-class asbtract_geometry(object):
-    
-    def __init__(self,*args):
-        self.mesh = bpy.data.meshes.new('%s_mesh'%self.name)
-        self._create_obj()
-            
-    def add_verts(self,*verts):
-        self._verts = list(verts)
-        self._verts.append(verts[0])
-        self.n = len(verts)+1
-    
-    def extrude(self,l):
-        v = self._get_normal() * l/2
-        self.top_verts = [i+v for i in self._verts]
-        self.bot_verts = [i-v for i in self._verts]
-        self.top_verts = [tuple(i[:,0]) for i in self.top_verts]
-        self.bot_verts = [tuple(i[:,0]) for i in self.bot_verts]
-    
-    def create(self):
-        bpy.context.scene.objects.link(self.obj)
-        self._set_faces()
-        self._update_mesh()
-
-    def _set_faces(self):
-        top_face = tuple(range(self.n-1))
-        bot_face = tuple(range(self.n,2*self.n,1))
-        side_faces = [(i,i+1,i+self.n+1,i+self.n) for i in range(self.n-1)]
-        self.faces = [top_face,bot_face] + side_faces
-        
-    def _update_mesh(self):
-        side_verts = self.top_verts + self.bot_verts
-        cape_verts = self.top_verts[:-1] + self.bot_verts[:-1]
-        verts = side_verts + cape_verts
-        self.mesh.from_pydata(verts, [], self.faces)
-        self.mesh.update()
-    
-    def _create_obj(self):
-        self.obj = obj  = bpy.data.objects.new(self.name, self.mesh)
-        obj.rotation_mode = 'QUATERNION'
-        obj.select = True
-        bpy.context.scene.objects.active = obj
-        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
-
-    def _get_normal(self):
-        verts = self._verts
-        a1 = verts[1] - verts[0]
-        a2 = verts[2] - verts[0]
-        v = np.cross(a2,a1,axisa=0,axisb=0)
-        v = np.reshape(v,(3,1))
-        v = v/np.linalg.norm(v)
-        return abs(v)
-    
     
 class cylinder_geometry(object):
     
@@ -113,6 +39,7 @@ class cylinder_geometry(object):
         obj.select = True
         bpy.context.scene.objects.active = obj
         bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
+        obj.select = False
         
     def _create_data(self):
         c1_verts = self._create_circle_verts(self.p1)
@@ -142,36 +69,36 @@ class triangular_prism(object):
         self.p2 = p2
         self.p3 = p3
         self.l = l        
-        self.mesh = bpy.data.meshes.new('%s_mesh'%self.name)
-        self._create_obj()
-        self.add_verts()
-        self.extrude()
         self.create()
             
-    def add_verts(self):
-        self._verts = [self.p1,self.p2,self.p3]
-        self.n = len(self._verts)+1
-        self._verts.append(self.p1)
-    
-    def extrude(self):
+        
+    def create(self):
+        self._create_verts()
+        self._create_faces()
+        self._extrude()
+        self._create_mesh()
+        self._create_obj()
+
+    def _extrude(self):
         v = self._get_normal() * self.l/2
         self.top_verts = [i+v for i in self._verts]
         self.bot_verts = [i-v for i in self._verts]
         self.top_verts = [tuple(i[:,0]) for i in self.top_verts]
         self.bot_verts = [tuple(i[:,0]) for i in self.bot_verts]
-    
-    def create(self):
-        bpy.context.scene.objects.link(self.obj)
-        self._set_faces()
-        self._update_mesh()
 
-    def _set_faces(self):
+    def _create_verts(self):
+        self._verts = [self.p1,self.p2,self.p3]
+        self.n = len(self._verts)+1
+        self._verts.append(self.p1)
+
+    def _create_faces(self):
         top_face = tuple(range(self.n-1))
         bot_face = tuple(range(self.n,2*self.n,1))
         side_faces = [(i,i+1,i+self.n+1,i+self.n) for i in range(self.n-1)]
         self.faces = [top_face,bot_face] + side_faces
         
-    def _update_mesh(self):
+    def _create_mesh(self):
+        self.mesh = bpy.data.meshes.new('%s_mesh'%self.name)
         side_verts = self.top_verts + self.bot_verts
         cape_verts = self.top_verts[:-1] + self.bot_verts[:-1]
         verts = side_verts + cape_verts
@@ -180,10 +107,11 @@ class triangular_prism(object):
     
     def _create_obj(self):
         self.obj = obj  = bpy.data.objects.new(self.name, self.mesh)
+        bpy.context.scene.objects.link(self.obj)
         obj.rotation_mode = 'QUATERNION'
         obj.select = True
         bpy.context.scene.objects.active = obj
-        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
+        bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
 
     def _get_normal(self):
         verts = self._verts
