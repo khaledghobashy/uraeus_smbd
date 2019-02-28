@@ -8,13 +8,6 @@ from source.post_processors.blender.objects import (cylinder_geometry,
                                                     triangular_prism)
 
 
-
-try:
-    bpy.context.scene.objects.active = bpy.data.objects['Cube']
-    bpy.ops.object.delete()
-except KeyError:
-    pass
-
 class blender_scene(object):
 
     def __init__(self,prefix=''):
@@ -40,7 +33,7 @@ class blender_scene(object):
         self.hpr_strut_rocker = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hpr_tro = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.s_links_ro = 0.3
-        self.hpr_ucaf = np.array([[0], [0], [0]],dtype=np.float64)
+        self.hpr_ucaf = np.array([[0], [0], [0]],dtype=np.float64)*scale
 
         self._inputs = ['s_strut_inner', 'hpr_pushrod_uca', 'hpr_ucao', 's_strut_outer', 'hpr_lcaf', 's_tire_radius', 'hpr_lcao', 'hpr_tri', 'hpr_wc', 'hpr_ucar', 'hpr_strut_chassis', 'hpr_lcar', 's_thickness', 'hpr_pushrod_rocker', 'hpr_rocker_chassis', 'hpr_strut_rocker', 'hpr_tro', 's_links_ro', 'hpr_ucaf']
         self.geometries = {'gmr_uca': 'rbr_uca', 'gml_uca': 'rbl_uca', 'gmr_lca': 'rbr_lca', 'gml_lca': 'rbl_lca', 'gmr_rocker': 'rbr_rocker', 'gml_rocker': 'rbl_rocker', 'gmr_upright': 'rbr_upright', 'gml_upright': 'rbl_upright', 'gmr_upper_strut': 'rbr_upper_strut', 'gml_upper_strut': 'rbl_upper_strut', 'gmr_lower_strut': 'rbr_lower_strut', 'gml_lower_strut': 'rbl_lower_strut', 'gmr_tie_rod': 'rbr_tie_rod', 'gml_tie_rod': 'rbl_tie_rod', 'gmr_pushrod': 'rbr_pushrod', 'gml_pushrod': 'rbl_pushrod', 'gmr_tire': 'rbr_hub', 'gml_tire': 'rbl_hub'}
@@ -128,6 +121,9 @@ class blender_scene(object):
                         bpy.ops.view3d.view_all(override)                    
 
 blend = blender_scene('SU.')
-blend.get_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\dwb_bc_points_asurt17.csv')
-blend.create_scene()
-blend.load_anim_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\simulations\sim_asurt17.csv')
+def create_scene():
+    blend.get_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\dwb_bc_points_asurt17.csv')
+    blend.create_scene()
+    blend.load_anim_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\simulations\sim_asurt17.csv')
+
+#create_scene()
