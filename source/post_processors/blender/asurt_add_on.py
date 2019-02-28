@@ -96,3 +96,60 @@ if __name__ == "__main__":
     register()
     bpy.ops.import_test.some_data('INVOKE_DEFAULT')
 
+
+'''
+import bpy
+from bpy.props import StringProperty, BoolProperty, EnumProperty
+
+
+class HelloWorldPanel(bpy.types.Panel):
+    """Creates a Panel in the Object properties window"""
+    bl_label = "Hello World Panel"
+    bl_idname = "OBJECT_PT_hello"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+    
+    def draw(self, context):
+        layout = self.layout
+
+        obj = context.object
+
+        row = layout.row()
+        row.label(text="Hello world!", icon='WORLD_DATA')
+
+        row = layout.row()
+        row.label(text="Active object is: " + obj.name)
+        row = layout.row()
+        row.prop(obj, "name")
+
+        row = layout.row()
+        row.operator("mesh.primitive_cube_add")
+        
+        row = layout.row()
+        row.operator("bpy.ops.buttons.file_browse")
+        row.prop(context.scene, 'conf_path')
+        row.
+        
+
+
+def register():
+    bpy.utils.register_class(HelloWorldPanel)
+    bpy.types.Scene.conf_path = bpy.props.StringProperty \
+      (
+      name = "Root Path",
+      default = "",
+      description = "Define the root path of the project",
+      subtype = 'FILE_PATH'
+      )
+
+
+def unregister():
+    bpy.utils.unregister_class(HelloWorldPanel)
+    del bpy.types.Scene.conf_path
+
+
+if __name__ == "__main__":
+    register()
+
+'''
