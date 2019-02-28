@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import use_cases.generated_templates.assemblies.front_axle as f
 from source.solvers.python_solver import solver
 
-f.SU.config.load_from_csv('dwb_st500_axletech.csv')
+f.SU.config.load_from_csv('dwb_st500_axletech_2.csv')
 f.ST.config.load_from_csv('steer_st500_axletech.csv')
 f.TR.config.load_from_csv('test_rig_v1_mod.csv')
 

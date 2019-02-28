@@ -22,6 +22,12 @@ class cylinder_geometry(object):
         self.axis = self.p2 - self.p1
         self.norm = self.axis/np.linalg.norm(self.axis)
         self.create_obj()
+    
+    @property
+    def R(self):
+        arr = np.array(self.obj.location)
+        arr = np.reshape(arr,(3,1))
+        return arr
             
     def create_obj(self):
         self._create_data()
@@ -69,7 +75,13 @@ class triangular_prism(object):
         self.p3 = p3
         self.l = l        
         self.create()
-            
+    
+    @property
+    def R(self):
+        arr = np.array(self.obj.location)
+        arr = np.reshape(arr,(3,1))
+        return arr
+
     def create(self):
         self._create_verts()
         self._create_faces()
@@ -110,6 +122,7 @@ class triangular_prism(object):
         obj.select = True
         bpy.context.scene.objects.active = obj
         bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
+        obj.select = False
 
     def _get_normal(self):
         verts = self._verts

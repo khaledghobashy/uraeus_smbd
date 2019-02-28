@@ -33,7 +33,7 @@ class scripter(object):
                 import csv
                 import numpy as np
                 import bpy
-                from source.solvers.py_numerical_functions import centered
+                from source.solvers.py_numerical_functions import centered, mirrored
                 from source.post_processors.blender.objects import (cylinder_geometry,
                                                                     composite_geometry,
                                                                     triangular_prism)
@@ -112,18 +112,29 @@ class scripter(object):
                             obj.keyframe_insert('rotation_quaternion', frame=i)
                     
                     bpy.context.scene.render.frame_map_old = i+1
-                    bpy.context.scene.render.frame_map_new = 50
+                    bpy.context.scene.render.frame_map_new = 24*2
                     bpy.context.scene.frame_end = bpy.context.scene.render.frame_map_new
                         
                 def create_scene(self):
                     {outputs}
+                    
+                    self.setup_VIEW_3D()
+                    
+                @staticmethod
+                def setup_VIEW_3D():
+                    for area in bpy.context.screen.areas:
+                        if area.type == 'VIEW_3D':
+                            for region in area.regions:
+                                if region.type == 'WINDOW':
+                                    override = {{'area': area, 'region': region, 'edit_object': bpy.context.edit_object}}
+                                    bpy.ops.view3d.view_all(override)                    
                 '''
         p = self.printer
         indent = 4*' '
         
         outputs = self.output_equalities
         
-        pattern_items = self.args_str #itertools.chain(self.input_args,self.output_args)
+        pattern_items = self.args_str
         pattern = '|'.join([p._print(arg) for arg in pattern_items])
         self_inserter = self._insert_string('self.')
                 

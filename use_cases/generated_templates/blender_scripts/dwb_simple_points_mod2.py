@@ -22,21 +22,21 @@ class blender_scene(object):
         scale = 1/20
         self.scale = scale
 
-        self.s_strut_inner = 1.5
+        self.s_strut_inner = 1*scale
         self.hpr_ucao = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.s_strut_outer = 3
+        self.s_strut_outer = 1*scale
         self.hpr_strut_lca = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hpr_lcaf = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.s_tire_radius = 20
+        self.s_tire_radius = 1*scale
         self.hpr_lcao = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hpr_tri = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hpr_wc = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hpr_ucar = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hpr_strut_chassis = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hpr_lcar = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.s_thickness = 1
+        self.s_thickness = 1*scale
         self.hpr_tro = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.s_links_ro = 1
+        self.s_links_ro = 1*scale
         self.hpr_ucaf = np.array([[0], [0], [0]],dtype=np.float64)
 
         self._inputs = ['s_strut_inner', 'hpr_ucao', 's_strut_outer', 'hpr_strut_lca', 'hpr_lcaf', 's_tire_radius', 'hpr_lcao', 'hpr_tri', 'hpr_wc', 'hpr_ucar', 'hpr_strut_chassis', 'hpr_lcar', 's_thickness', 'hpr_tro', 's_links_ro', 'hpr_ucaf']
@@ -89,10 +89,10 @@ class blender_scene(object):
         self.hpl_strut_chassis = mirrored(self.hpr_strut_chassis)
         self.hpl_strut_mid = centered(self.hpl_strut_chassis,self.hpl_strut_lca)
         self.gmr_upright = triangular_prism(self.hpr_ucao,self.hpr_wc,self.hpr_lcao,self.s_thickness)
-        self.R_rbr_upright = self.gmr_upright.R
+        self.R_rbr_upright = centered(self.hpr_ucao,self.hpr_wc,self.hpr_lcao)
         self.hpl_wc = mirrored(self.hpr_wc)
         self.gml_upright = triangular_prism(self.hpl_ucao,self.hpl_wc,self.hpl_lcao,self.s_thickness)
-        self.R_rbl_upright = self.gml_upright.R
+        self.R_rbl_upright = mirrored(self.R_rbr_upright)
         self.gml_uca = triangular_prism(self.hpl_ucaf,self.hpl_ucar,self.hpl_ucao,self.s_thickness)
         self.gml_tie_rod = cylinder_geometry(self.hpl_tri,self.hpl_tro,self.s_links_ro)
         self.gmr_uca = triangular_prism(self.hpr_ucaf,self.hpr_ucar,self.hpr_ucao,self.s_thickness)
@@ -105,17 +105,6 @@ class blender_scene(object):
         self.gmr_tire = cylinder_geometry(self.hpr_wc,self.R_rbr_upright,self.s_tire_radius)
         self.gml_lower_strut = cylinder_geometry(self.hpl_strut_mid,self.hpl_strut_lca,self.s_strut_inner)
         self.gml_tire = cylinder_geometry(self.hpl_wc,self.R_rbl_upright,self.s_tire_radius)
-
-        self.setup_VIEW_3D()
-
-    @staticmethod
-    def setup_VIEW_3D():
-        for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                for region in area.regions:
-                    if region.type == 'WINDOW':
-                        override = {'area': area, 'region': region, 'edit_object': bpy.context.edit_object}
-                        bpy.ops.view3d.view_all(override)                    
 
 blend = blender_scene('SU.')
 blend.get_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\dwb_st500_axletech_2.csv')
