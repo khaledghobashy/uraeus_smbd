@@ -122,8 +122,12 @@ class blender_scene(object):
 
 blend = blender_scene('SU.')
 def create_scene():
-    blend.get_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\dwb_bc_points_asurt17.csv')
+    conf_data = bpy.data.scenes["Scene"].cfg_path
+    anim_data = bpy.data.scenes["Scene"].sim_path
+    blend.get_data(conf_data)
+#    blend.get_data(r'E:\Main\asurt_cdt_symbolic\use_cases\generated_templates\configurations\dwb_bc_points_asurt17.csv')
     blend.create_scene()
-    blend.load_anim_data(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\simulations\sim_asurt17.csv')
+    blend.load_anim_data(anim_data)
+#    blend.load_anim_data(r'E:\Main\asurt_cdt_symbolic\use_cases\simulations\sim_asurt17.csv')
 
-#create_scene()
+create_scene()
