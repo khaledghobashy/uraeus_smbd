@@ -70,19 +70,19 @@ def register():
     
     bpy.types.Scene.scpt_path = bpy.props.StringProperty \
       (name = "Script File",
-      default = "",
+      default = "%s//use_cases//generated_templates//blender_scripts//test.py"%asurt_path,
       description = "Define the script file of the system.",
       subtype = 'FILE_PATH')
     
     bpy.types.Scene.cfg_path = bpy.props.StringProperty \
       (name = "Config. Data",
-      default = "",
+      default = "%s//use_cases//generated_templates//configurations//test.py"%asurt_path,
       description = "Define the config. file of the system.",
       subtype = 'FILE_PATH')
       
     bpy.types.Scene.sim_path = bpy.props.StringProperty \
       (name = "Simulation Data",
-      default = "",
+      default = "%s//use_cases//simulations//sim_asurt17.csv"%asurt_path,
       description = "Define the simulation results file of the system.",
       subtype = 'FILE_PATH')
       
