@@ -127,7 +127,7 @@ class scripter(object):
                             for region in area.regions:
                                 if region.type == 'WINDOW':
                                     override = {{'area': area, 'region': region, 'edit_object': bpy.context.edit_object}}
-                                    bpy.ops.view3d.view_all(override)                    
+                                    bpy.ops.view3d.view_all(override)
                 '''
         p = self.printer
         indent = 4*' '
@@ -148,6 +148,21 @@ class scripter(object):
         text = textwrap.indent(text,indent)
         return text
     
+    def write_scene_creator(self):
+        text = '''
+                def create_scene(prefix=''):
+                    conf_data = bpy.data.scenes["Scene"].cfg_path
+                    anim_data = bpy.data.scenes["Scene"].sim_path
+                    blend = blender_scene(prefix)
+                    blend.get_data(conf_data)
+                    blend.create_scene()
+                    blend.load_anim_data(anim_data)
+               '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+                        
+        return text
+    
     def write_system_class(self):
         text = '''
                 {class_init}
@@ -165,12 +180,13 @@ class scripter(object):
         
     def write_code_file(self):
         os.chdir('..\..')
-        path = os.getcwd() + r'\generated_templates\blender_scripts'
+        path = os.getcwd() + r'\generated_templates\blender\gen_scripts'
         os.chdir(path)
         
         imports = self.write_imports()
         config_class = self.write_system_class()
-        text = '\n'.join([imports,config_class])
+        scene_creator = self.write_scene_creator()
+        text = '\n'.join([imports,config_class,scene_creator])
         with open('%s.py'%self.name,'w') as file:
             file.write(text)
         

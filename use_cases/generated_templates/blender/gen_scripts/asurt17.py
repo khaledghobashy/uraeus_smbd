@@ -120,14 +120,13 @@ class blender_scene(object):
                         override = {'area': area, 'region': region, 'edit_object': bpy.context.edit_object}
                         bpy.ops.view3d.view_all(override)                    
 
-blend = blender_scene('SU.')
-def create_scene():
+
+def create_scene(prefix=''):
     conf_data = bpy.data.scenes["Scene"].cfg_path
     anim_data = bpy.data.scenes["Scene"].sim_path
+    blend = blender_scene(prefix)
     blend.get_data(conf_data)
-#    blend.get_data(r'E:\Main\asurt_cdt_symbolic\use_cases\generated_templates\configurations\dwb_bc_points_asurt17.csv')
     blend.create_scene()
     blend.load_anim_data(anim_data)
-#    blend.load_anim_data(r'E:\Main\asurt_cdt_symbolic\use_cases\simulations\sim_asurt17.csv')
 
-create_scene()
+create_scene('SU.')

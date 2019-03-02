@@ -8,17 +8,17 @@ bl_info = {
     }
 
 import sys
+import os
+import bpy
+from bpy.types import Panel
+
 
 #asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic'
 asurt_path = 'E:\\Main\\asurt_cdt_symbolic'
 if asurt_path not in sys.path:
     sys.path.append(asurt_path)
 
-import bpy
-from bpy.types import Panel
 
-
-#Panels http://www.blender.org/api/blender_py...
 class ASURT_Panel(Panel):
     bl_space_type =  'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -29,60 +29,113 @@ class ASURT_Panel(Panel):
     def draw(self, context):
         layout = self.layout
         
-        row = layout.row()
-        row.operator("bpy.ops.buttons.file_browse")
-        row.prop(context.scene, 'scpt_path')
+        split = layout.split()        
+        col = split.column(align=True)
+        col.label(text="Blender Script:")
+        col.operator("bpy.ops.buttons.file_browse")
+        col.prop(context.scene, 'scpt_path')
         
-        row = layout.row()
-        row.operator("bpy.ops.buttons.file_browse")
-        row.prop(context.scene, 'cfg_path')
+        split = layout.split()
+        col = split.column(align=True)
+        col.label(text="Configuration Data:")
+        col.operator("bpy.ops.buttons.file_browse")
+        col.prop(context.scene, 'cfg_path')
         
-        row = layout.row()
-        row.operator("bpy.ops.buttons.file_browse")
-        row.prop(context.scene, 'sim_path')
+        split = layout.split()
+        col = split.column(align=True)
+        col.label(text="Simulation Data:")
+        col.operator("bpy.ops.buttons.file_browse")
+        col.prop(context.scene, 'sim_path')
         
+        layout.label(text="")
         row = layout.row()
         row.operator("object.run_script")
+        
+        row = layout.row()
+        row.operator("scene.clear")
+        
+        row = layout.row()
+        row.operator("scene.reset_fields")
         
 
 class runScript(bpy.types.Operator):
     """Tooltip"""
-    # was bl_idname = "object.run_script" - is now:
     bl_idname = "object.run_script"
     bl_label = "Load Files"
+
+    @classmethod
+    def poll(cls, context):
+        scene_vars = ['scpt_path','cfg_path','sim_path']
+        files = [os.path.splitext(getattr(context.scene,i))[-1] for i in scene_vars]
+        print(files)
+        cond = ['.py','.csv','.csv'] == files
+        return cond
+
+    def execute(self, context):
+        script = bpy.data.scenes["Scene"].scpt_path
+        bpy.ops.script.python_file_run(filepath=script)
+        return {'FINISHED'}
+
+class clear_scene(bpy.types.Operator):
+    """Tooltip"""
+    bl_idname = "scene.clear"
+    bl_label = "Clear Scene"
 
     @classmethod
     def poll(cls, context):
         return context.active_object is not None
 
     def execute(self, context):
-        bpy.ops.script.python_file_run(filepath=bpy.data.scenes["Scene"].scpt_path)
-        try:
-            bpy.context.scene.objects.active = bpy.data.objects['Cube']
-            bpy.ops.object.delete()
-        except KeyError:
-            pass
+        objects = [o.name for o in context.scene.objects]
+        for obj in objects:
+            try:
+                bpy.data.objects[obj].select = True
+                context.scene.objects.active = bpy.data.objects[obj]
+                bpy.ops.object.delete()
+            except KeyError:
+                pass
+        return {'FINISHED'}
 
-        return {'FINISHED'}        
+class reset_fields(bpy.types.Operator):
+    """Tooltip"""
+    bl_idname = "scene.reset_fields"
+    bl_label = "Clear Fields"
+
+    @classmethod
+    def poll(cls, context):
+        scene_vars = ['scpt_path','cfg_path','sim_path']
+        files = [os.path.isfile(getattr(context.scene,i)) for i in scene_vars]
+        print(files)
+        cond = False not in files
+        return cond
+
+    def execute(self, context):
+        scene_vars = ['scpt_path','cfg_path','sim_path']
+        for n in scene_vars:
+            path = getattr(context.scene,n)
+            path = os.path.dirname(path)
+            path = os.path.join(path,'')
+            setattr(context.scene,n,path)
+        return {'FINISHED'}
 
 def register():
     bpy.utils.register_module(__name__)
     
     bpy.types.Scene.scpt_path = bpy.props.StringProperty \
-      (name = "Script File",
-      default = "%s//use_cases//generated_templates//blender_scripts//test.py"%asurt_path,
+      (name = "",
+      default = "%s//use_cases//generated_templates//blender//gen_scripts//"%asurt_path,
       description = "Define the script file of the system.",
       subtype = 'FILE_PATH')
     
     bpy.types.Scene.cfg_path = bpy.props.StringProperty \
-      (name = "Config. Data",
-      default = "%s//use_cases//generated_templates//configurations//test.py"%asurt_path,
+      (name = "",
+      default = "%s//use_cases//generated_templates//configurations//"%asurt_path,
       description = "Define the config. file of the system.",
       subtype = 'FILE_PATH')
       
     bpy.types.Scene.sim_path = bpy.props.StringProperty \
-      (name = "Simulation Data",
-      default = "%s//use_cases//simulations//sim_asurt17.csv"%asurt_path,
+      (name = "",
+      default = "%s//use_cases//simulations//"%asurt_path,
       description = "Define the simulation results file of the system.",
       subtype = 'FILE_PATH')
       
@@ -99,3 +152,4 @@ if __name__ == "__main__":
     register()
 
 print("Loaded ASURT-CDT")
+
