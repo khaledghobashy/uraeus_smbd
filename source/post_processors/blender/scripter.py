@@ -44,12 +44,6 @@ class scripter(object):
         
     def write_class_init(self):
         text = '''
-                try:
-                    bpy.context.scene.objects.active = bpy.data.objects['Cube']
-                    bpy.ops.object.delete()
-                except KeyError:
-                    pass
-
                 class blender_scene(object):
 
                     def __init__(self,prefix=''):
@@ -84,6 +78,7 @@ class scripter(object):
     def write_helpers(self):
         text = '''
                 def get_data(self,csv_file):
+                    self.cfg_file = csv_file
                     with open(csv_file, newline='') as csvfile:
                         content = csv.reader(csvfile)
                         next(content)
@@ -102,7 +97,7 @@ class scripter(object):
                         arr = np.array(arr,dtype=np.float64)
                     
                     scale = self.scale
-                    for i,row in enumerate(arr):
+                    for i,row in enumerate(arr,1):
                         for g,b in self.geometries.items():
                             k = keys['%s%s.x'%(self.prefix,b)]
                             obj = getattr(self,g).obj
@@ -148,20 +143,6 @@ class scripter(object):
         text = textwrap.indent(text,indent)
         return text
     
-    def write_scene_creator(self):
-        text = '''
-                def create_scene(prefix=''):
-                    conf_data = bpy.data.scenes["Scene"].cfg_path
-                    anim_data = bpy.data.scenes["Scene"].sim_path
-                    blend = blender_scene(prefix)
-                    blend.get_data(conf_data)
-                    blend.create_scene()
-                    blend.load_anim_data(anim_data)
-               '''
-        text = text.expandtabs()
-        text = textwrap.dedent(text)
-                        
-        return text
     
     def write_system_class(self):
         text = '''
@@ -185,8 +166,7 @@ class scripter(object):
         
         imports = self.write_imports()
         config_class = self.write_system_class()
-        scene_creator = self.write_scene_creator()
-        text = '\n'.join([imports,config_class,scene_creator])
+        text = '\n'.join([imports,config_class])
         with open('%s.py'%self.name,'w') as file:
             file.write(text)
         

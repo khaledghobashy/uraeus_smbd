@@ -778,7 +778,6 @@ class assembly_code_generator(template_code_generator):
         
         def sub(x):
             l = x.group(0).split('.')
-            print(l)
             try:
                 s = '%s.config.%s'%(*l,)
             except TypeError:
