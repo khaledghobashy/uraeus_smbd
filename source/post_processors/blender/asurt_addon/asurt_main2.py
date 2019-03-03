@@ -1,5 +1,5 @@
 bl_info = {
-    "name": "ASURTCDT",
+    "name": "ASURT-CDT",
     "author": "Khaled Ghobashy",
     "version": (1, 0, 0),
     "blender": (2, 7, 9),
@@ -24,14 +24,15 @@ if asurt_path not in sys.path:
 loaded_models = {}
 loaded_instances = {}
 
+###############################################################################
 class ASURT_Panel(Panel):
     bl_space_type =  'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_context = "objectmode"
     bl_category = "ASURT"
     
-######################################################################
-class Save_Load(ASURT_Panel):
+###############################################################################
+class SaveOpen(ASURT_Panel):
     bl_label = "Tools"
 
     def draw(self, context):
@@ -50,6 +51,69 @@ class Save_Load(ASURT_Panel):
         col.operator("bpy.ops.buttons.file_browse")
         col.prop(context.scene, 'blmbs_path')
         col.operator("object.save_blmbs")
+
+###############################################################################
+class SceneControls(ASURT_Panel):
+    bl_label = "Scene Controls"
+
+    def draw(self, context):
+        layout = self.layout
+        
+        split = layout.split()
+        col = split.column(align=True)
+        col.label(text="Load Simulation Data:")
+        col.operator("bpy.ops.buttons.file_browse")
+        col.prop(context.scene, 'sim_path')
+        col.operator("object.load_mbssim")
+        
+        layout.label(text="Animation Controls")
+        screen = context.screen
+        row = layout.row(align=True)
+        row.operator("screen.frame_jump", text="", icon='REW').end = False
+        row.operator("screen.keyframe_jump", text="", icon='PREV_KEYFRAME').next = False
+        if not screen.is_animation_playing:
+            row.operator("screen.animation_play", text="", icon='PLAY_REVERSE').reverse = True
+            row.operator("screen.animation_play", text="", icon='PLAY')
+        else:
+            sub = row.row(align=True)
+            sub.scale_x = 2.0
+            sub.operator("screen.animation_play", text="", icon='PAUSE')
+        row.operator("screen.keyframe_jump", text="", icon='NEXT_KEYFRAME').next = True
+        row.operator("screen.frame_jump", text="", icon='FF').end = True
+        
+        row = layout.row()
+        row.operator("scene.clear")
+
+###############################################################################
+
+class ConstructNew(ASURT_Panel):
+    bl_label = "Construct New Model"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        
+        split = layout.split()        
+        col = split.column(align=True)
+        col.label(text="Blender Script:")
+        col.operator("bpy.ops.buttons.file_browse")
+        col.prop(context.scene, 'scpt_path')
+        
+        split = layout.split()
+        col = split.column(align=True)
+        col.label(text="Configuration Data:")
+        col.operator("bpy.ops.buttons.file_browse")
+        col.prop(context.scene, 'cfg_path')
+        
+        row = layout.row()
+        row.prop(context.scene, 'subsys_id')
+        
+        row = layout.row()
+        row.operator("object.load_mbsmodel")
+        
+###############################################################################
+###############################################################################
+###############################################################################
 
 class blmbs_saver(bpy.types.Operator):
     """Save Assembled Model From a Script"""
@@ -84,6 +148,7 @@ class blmbs_saver(bpy.types.Operator):
         with open('%s.blmbs'%name,'wb') as f:
             pickle.dump(data,f)
 
+###############################################################################
 class blmbs_opener(bpy.types.Operator):
     """Save Assembled Model From a Script"""
     bl_idname = "object.open_blmbs"
@@ -113,80 +178,7 @@ class blmbs_opener(bpy.types.Operator):
             data = pickle.load(f)
         return data
         
-######################################################################
-
-class Adding_Models(ASURT_Panel):
-    bl_label = "Adding Models"
-
-    def draw(self, context):
-        layout = self.layout
-        
-        split = layout.split()        
-        col = split.column(align=True)
-        col.label(text="Blender Script:")
-        col.operator("bpy.ops.buttons.file_browse")
-        col.prop(context.scene, 'scpt_path')
-        
-        split = layout.split()
-        col = split.column(align=True)
-        col.label(text="Configuration Data:")
-        col.operator("bpy.ops.buttons.file_browse")
-        col.prop(context.scene, 'cfg_path')
-        
-        row = layout.row()
-        row.prop(context.scene, 'subsys_id')
-        
-        row = layout.row()
-        row.operator("object.load_mbsmodel")
-        
-######################################################################
-        
-class ImportSimData(ASURT_Panel):
-    bl_label = "Simulation Data"
-
-    def draw(self, context):
-        layout = self.layout
-        
-        split = layout.split()
-        col = split.column(align=True)
-        col.label(text="Simulation Data:")
-        col.operator("bpy.ops.buttons.file_browse")
-        col.prop(context.scene, 'sim_path')
-        
-        row = layout.row()
-        row.operator("object.load_mbssim")
-        
-######################################################################
-        
-class SceneControls(ASURT_Panel):
-    bl_label = "Scene Controls"
-
-    def draw(self, context):
-        layout = self.layout
-        
-        layout.label(text="Animation Controls")
-        screen = context.screen
-        scene = context.scene
-        row = layout.row(align=True)
-        row.operator("screen.frame_jump", text="", icon='REW').end = False
-        row.operator("screen.keyframe_jump", text="", icon='PREV_KEYFRAME').next = False
-        if not screen.is_animation_playing:
-            row.operator("screen.animation_play", text="", icon='PLAY_REVERSE').reverse = True
-            row.operator("screen.animation_play", text="", icon='PLAY')
-        else:
-            sub = row.row(align=True)
-            sub.scale_x = 2.0
-            sub.operator("screen.animation_play", text="", icon='PAUSE')
-        row.operator("screen.keyframe_jump", text="", icon='NEXT_KEYFRAME').next = True
-        row.operator("screen.frame_jump", text="", icon='FF').end = True
-        
-        row = layout.row()
-        row.operator("scene.clear")
-
-######################################################################
-######################################################################
-######################################################################
-
+###############################################################################
 class model_loader(bpy.types.Operator):
     """Tooltip"""
     bl_idname = "object.load_mbsmodel"
@@ -233,7 +225,7 @@ class model_loader(bpy.types.Operator):
         script_path = bpy.data.scenes["Scene"].scpt_path
         loaded_instances[prefix] = (blend,script_path)
 
-######################################################################
+###############################################################################
 class sim_loader(bpy.types.Operator):
     """Tooltip"""
     bl_idname = "object.load_mbssim"
@@ -252,7 +244,7 @@ class sim_loader(bpy.types.Operator):
             b[0].load_anim_data(sim_data)
         return {'FINISHED'}
     
-######################################################################
+###############################################################################
 class clear_scene(bpy.types.Operator):
     """Tooltip"""
     bl_idname = "scene.clear"
@@ -273,8 +265,7 @@ class clear_scene(bpy.types.Operator):
                 pass
         return {'FINISHED'}
 
-######################################################################
-
+###############################################################################
 class reset_fields(bpy.types.Operator):
     """Tooltip"""
     bl_idname = "scene.reset_fields"
@@ -338,11 +329,14 @@ def register():
       
       
 def unregister():
+    global loaded_instances, loaded_models
     bpy.utils.unregister_module(__name__)
     del bpy.types.Scene.scpt_path
     del bpy.types.Scene.cfg_path
     del bpy.types.Scene.sim_path
     del bpy.types.Scene.blmbs_path
+    del loaded_instances
+    del loaded_models
     
 
 if __name__ == "__main__":

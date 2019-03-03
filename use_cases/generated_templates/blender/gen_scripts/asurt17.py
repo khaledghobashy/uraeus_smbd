@@ -119,14 +119,3 @@ class blender_scene(object):
                     if region.type == 'WINDOW':
                         override = {'area': area, 'region': region, 'edit_object': bpy.context.edit_object}
                         bpy.ops.view3d.view_all(override)                    
-
-
-def create_scene(prefix=''):
-    conf_data = bpy.data.scenes["Scene"].cfg_path
-    anim_data = bpy.data.scenes["Scene"].sim_path
-    blend = blender_scene(prefix)
-    blend.get_data(conf_data)
-    blend.create_scene()
-    blend.load_anim_data(anim_data)
-
-create_scene('SU.')
