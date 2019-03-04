@@ -29,33 +29,19 @@ class abstract_topology(object):
     def __init__(self,name):
         self.name = name
         self.graph = nx.MultiDiGraph(name=name)
-        self._set_global_frame()
-        self._insert_ground()
         self._edges_map = {}
         self._edges_keys_map = {}
+
+        self._insert_ground()
+        self._set_global_frame()
         self._param_config = parametric_configuration(self)
         self.cfg_file = None
         self.path = os.getcwd()
         
-#    def __getstate__(self):
-#        # Copy the object's state from self.__dict__ which contains
-#        # all our instance attributes. Always use the dict.copy()
-#        # method to avoid modifying the original state.
-#        state = self.__dict__.copy()
-#        # Remove the unpicklable entries.
-##        del state['global_instance']
-#        return state
-#    
-#    def __setstate__(self,state):
-#        self.__dict__.update(state)
-#        reference_frame.global_frame = state['global_instance']
-#        print(reference_frame.global_frame.name)
-##        self._set_global_frame()
 
     @property
     def param_config(self):
         return self._param_config
-        
     @property
     def selected_variant(self):
         return self.graph
@@ -65,6 +51,7 @@ class abstract_topology(object):
     @property
     def edges(self):
         return self.selected_variant.edges
+    
     
     @property
     def constraints_graph(self):
@@ -107,28 +94,30 @@ class abstract_topology(object):
         return edges_index
 
     @property
-    def nodes_arguments(self):
-        args = nx.get_node_attributes(self.graph,'arguments').values()
-        return sum(args,[])
-    @property
-    def edges_arguments(self):
-        args = nx.get_edge_attributes(self.graph,'arguments').values()
-        return sum(args,[])
-    
-    @property
     def n(self):
-        n = sum([node[-1] for node in self.nodes(data='n')])
-        return n
+        return self._get_attr('n')
     @property
     def nc(self):
-        nc_nodes = sum([node[-1] for node in self.nodes(data='nc')])
-        nc_edges = sum([edge[-1] for edge in self.edges(data='nc')])
-        return nc_nodes + nc_edges
+        return self._get_attr('nc')
     @property
     def nve(self):
-        nve_nodes = sum([node[-1] for node in self.nodes(data='nve')])
-        nve_edges = sum([edge[-1] for edge in self.edges(data='nve')])
-        return nve_nodes + nve_edges
+        return self._get_attr('nve')
+    
+    @property
+    def arguments_symbols(self):
+        return self._get_attr('arguments_symbols')
+    @property
+    def runtime_symbols(self):
+        return self._get_attr('runtime_symbols')
+    @property
+    def constants_symbols(self):
+        return self._get_attr('constants_symbols')
+    @property
+    def constants_symbolic_expr(self):
+        return self._get_attr('constants_symbolic_expr')
+    @property
+    def constants_numeric_expr(self):
+        return self._get_attr('constants_numeric_expr')
     
     @property
     def mapped_gen_coordinates(self):
@@ -137,24 +126,19 @@ class abstract_topology(object):
     def mapped_gen_velocities(self):
         return self._coordinates_mapper('qd')
     @property
+    def mapped_gen_accelerations(self):
+        return self._coordinates_mapper('qdd')
+    @property
     def mapped_lagrange_multipliers(self):
         return self._lagrange_multipliers_mapper()
     @property
     def virtual_coordinates(self):
         q_virtuals = []
+        nodes = self.nodes
         for n in self.virtual_bodies:
-            obj = self.nodes[n]['obj']
+            obj = nodes[n]['obj']
             q_virtuals += [obj.R,obj.P,obj.Rd,obj.Pd]
         return q_virtuals
-    
-    @property    
-    def sym_constants(self):
-        cons = nx.get_edge_attributes(self.graph,'sym_constants').values()
-        return sum(cons,[])
-    @property    
-    def num_constants(self):
-        cons = nx.get_edge_attributes(self.graph,'num_constants').values()
-        return sum(cons,[])
 
     
     def draw_constraints_topology(self):
@@ -187,7 +171,16 @@ class abstract_topology(object):
         with open('%s\\%s.stpl'%(self.path,self.name),'wb') as f:
             cloudpickle.dump(self,f)
 
-    
+    def _get_attr(self,name):
+        graph = self.graph
+        nodes_attr = nx.get_node_attributes(graph,name).values()
+        edges_attr = nx.get_edge_attributes(graph,name).values()
+        container  = itertools.chain(nodes_attr,edges_attr)
+        try:
+            return sum(container)
+        except TypeError:
+            return sum(container,[])
+
     def _set_global_frame(self):
         self.global_instance = global_frame(self.name)
         reference_frame.set_global_frame(self.global_instance)        
@@ -247,7 +240,7 @@ class abstract_topology(object):
         body_instance = node_class(n)
         nodes[n].update(self._obj_attr_dict(body_instance))
         if nodes[n]['virtual']:
-            nodes[n]['arguments'] = []
+            nodes[n]['arguments_symbols'] = []
             
         
     def _assemble_edge(self,e):
@@ -344,7 +337,7 @@ class abstract_topology(object):
         nrows = 2*len(nodes)
         F_applied = sm.MutableSparseMatrix(nrows,1,None)
         for i,n in enumerate(nodes):
-            if self._is_virtual_node(n):# and n!=self.grf:
+            if self._is_virtual_node(n):
                 continue
             in_edges  = graph.in_edges([n],data='obj')
             if len(in_edges) == 0 :
@@ -381,9 +374,11 @@ class abstract_topology(object):
     @staticmethod
     def _obj_attr_dict(obj):
         attr_dict = {'obj':obj,
-                     'arguments':obj.arguments,
-                     'sym_constants':obj.sym_constants,
-                     'num_constants':obj.num_constants}
+                     'arguments_symbols':obj.arguments_symbols,
+                     'runtime_symbols':obj.runtime_symbols,
+                     'constants_symbolic_expr':obj.constants_symbolic_expr,
+                     'constants_numeric_expr':obj.constants_numeric_expr,
+                     'constants_symbols':obj.constants_symbols}
         return attr_dict
     
     @staticmethod
@@ -404,7 +399,7 @@ class topology(abstract_topology):
         if name not in variant.nodes():
             attr_dict = self._typ_attr_dict(body)
             variant.add_node(name,**attr_dict)
-            self._add_node_forces(name,attr_dict)
+            self._add_node_forces(name)
     
     def add_joint(self,typ,name,body_i,body_j):
         assert body_i and body_j in self.nodes , 'bodies do not exist!'
@@ -451,7 +446,7 @@ class topology(abstract_topology):
             self._edges_map[name] = (*edge,key)
             self._edges_keys_map[name] = key
     
-    def _add_node_forces(self,n,attr_dict):
+    def _add_node_forces(self,n):
         grf = self.grf
         self.add_force(gravity_force,'%s_gravity'%n,n,grf)
         self.add_force(centrifugal_force,'%s_centrifuge'%n,n,grf)
@@ -473,14 +468,14 @@ class template_based_topology(topology):
             variant.nodes[node1].update({'mirr':node2,'align':'r'})
             variant.nodes[node2].update({'mirr':node1,'align':'l'})
             if virtual:
-                self._set_body_as_virtual(variant,node1)
-                self._set_body_as_virtual(variant,node2)
+                self._set_body_as_virtual(node1)
+                self._set_body_as_virtual(node2)
         else:
             node1 = node2 = ('vbs_%s'%name if virtual else 'rbs_%s'%name)
             super().add_body(node1)
             variant.nodes[node1]['mirr'] = node2
             if virtual:
-                self._set_body_as_virtual(variant,node1)
+                self._set_body_as_virtual(node1)
         
         
     def add_joint(self,typ,name,body_i,body_j,mirrored=False,virtual=False):
@@ -497,15 +492,15 @@ class template_based_topology(topology):
             variant.edges[joint_edge1].update({'mirr':name2,'align':'r'})
             variant.edges[joint_edge2].update({'mirr':name1,'align':'l'})
             if virtual:
-                self._set_joint_as_virtual(variant,joint_edge1)
-                self._set_joint_as_virtual(variant,joint_edge2)
+                self._set_joint_as_virtual(joint_edge1)
+                self._set_joint_as_virtual(joint_edge2)
         else:
             name = 'jcs_%s'%name
             super().add_joint(typ,name,body_i,body_j)
             joint_edge = self._edges_map[name]
             variant.edges[joint_edge].update({'mirr':name})
             if virtual:
-                self._set_joint_as_virtual(variant,joint_edge)
+                self._set_joint_as_virtual(joint_edge)
     
     def add_joint_actuator(self,typ,name,joint_name,mirrored=False):
         variant = self.selected_variant
@@ -568,18 +563,31 @@ class template_based_topology(topology):
         self.grf = 'vbs_ground'
         self.graph.add_node(self.grf,**typ_dict)
         self.nodes[self.grf]['mirr'] = self.grf
-        self._set_body_as_virtual(self.graph,self.grf)
+        self._set_body_as_virtual(self.grf)
     
 
-    @staticmethod
-    def _set_joint_as_virtual(variant,edge):
+    
+    def _set_joint_as_virtual(self,edge):
+        variant = self.selected_variant
         d = {'nc':0,'nve':0,'virtual':True}
         variant.edges[edge].update(d)
-    @staticmethod
-    def _set_body_as_virtual(variant,node):
+    
+    def _set_body_as_virtual(self,node):
+        variant = self.selected_variant
         d = {'n':0,'nc':0,'nve':0,'virtual':True}
         variant.nodes[node].update(d)
-                
+        try:
+            variant.remove_edge(*self._edges_map['fas_%s_gravity'%node])
+            variant.remove_edge(*self._edges_map['fas_%s_centrifuge'%node])
+            del self._edges_map['fas_%s_gravity'%node]
+            del self._edges_map['fas_%s_centrifuge'%node]
+            del self._edges_keys_map['fas_%s_gravity'%node]
+            del self._edges_keys_map['fas_%s_centrifuge'%node]
+        except KeyError:
+            pass
+    
+    
+
 ###############################################################################
 ###############################################################################
 

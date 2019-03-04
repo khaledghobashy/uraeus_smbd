@@ -4,7 +4,7 @@ Created on Tue Jan  1 10:57:47 2019
 
 @author: khale
 """
-
+import itertools
 import sympy as sm
 
 from source.symbolic_classes.abstract_matrices import (reference_frame, vector, 
@@ -94,9 +94,13 @@ class body(reference_frame):
         format_ = (self.prefix,self.id_name)
         
         self.R  = vector('%sR_%s'%format_, format_as=r'{%sR_{%s}}'%format_)
-        self.Rd = vector('%sRd_%s'%format_, format_as=r'{%s\dot{R}_{%s}}'%format_)
         self.P  = quatrenion('%sP_%s'%format_, format_as=r'{%sP_{%s}}'%format_)
+        
+        self.Rd = vector('%sRd_%s'%format_, format_as=r'{%s\dot{R}_{%s}}'%format_)
         self.Pd = quatrenion('%sPd_%s'%format_, format_as=r'{%s\dot{P}_{%s}}'%format_)
+        
+        self.Rdd = vector('%sRdd_%s'%format_, format_as=r'{%s\ddot{R}_{%s}}'%format_)
+        self.Pdd = quatrenion('%sPdd_%s'%format_, format_as=r'{%s\ddot{P}_{%s}}'%format_)
         
         #print('Generating DCM')
         self.A = A(self.P)
@@ -113,7 +117,8 @@ class body(reference_frame):
                 
         self.M  = matrix_symbol('%sM_%s'%format_,3,3,r'{%sM_{%s}}'%format_)
         self.Jbar = matrix_symbol('%sJbar_%s'%format_,3,3,r'{%s\bar{J}_{%s}}'%format_)
-        self.J  = 4*G(self.P).T*self.Jbar*G(self.P)
+        self.J = matrix_symbol('%sJ_%s'%format_,3,3,r'{%s{J}_{%s}}'%format_)
+        self.J = 4*G(self.P).T*self.Jbar*G(self.P)
         
         #print('Exiting Body \n')
     
@@ -127,25 +132,28 @@ class body(reference_frame):
     @property
     def qd(self):
         return sm.BlockMatrix([[self.Rd],[self.Pd]])
-    
     @property
-    def arguments(self):
-        args = [self.R,self.P,self.Rd,self.Pd,self.m,self.Jbar]
-        return args
+    def qdd(self):
+        return sm.BlockMatrix([[self.Rdd],[self.Pdd]])
+        
     @property
-    def sym_constants(self):
-        return []
+    def arguments_symbols(self):
+        return [self.R,self.P,self.Rd,self.Pd,self.Rdd,self.Pdd,self.m,self.Jbar]
     @property
-    def num_constants(self):
-        return []
-    
+    def runtime_symbols(self):
+        return [self.R,self.P,self.Rd,self.Pd,self.Rdd,self.Pdd]
     @property
-    def inertia_arguments(self):
-        return [self.mass,self.Jbar]
-    @property
-    def inertia_constants(self):
-        mass_equality = sm.Eq(self.M,self.mass*sm.Identity(3))
+    def constants_symbolic_expr(self):
+        mass_equality = sm.Eq(self.M,self.m*sm.Identity(3))
         return [mass_equality]
+    @property
+    def constants_numeric_expr(self):
+        return []
+    @property
+    def constants_symbols(self):
+        constants_expr = itertools.chain(self.constants_symbolic_expr,
+                                         self.constants_numeric_expr)
+        return [expr.lhs for expr in constants_expr]
         
 
 

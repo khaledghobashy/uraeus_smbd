@@ -1,5 +1,5 @@
 bl_info = {
-    "name": "ASURTCDT",
+    "name": "ASURT-CDT",
     "author": "Khaled Ghobashy",
     "version": (1, 0, 0),
     "blender": (2, 7, 9),
@@ -9,22 +9,86 @@ bl_info = {
 
 import sys
 import os
+import pickle
 import bpy
+import importlib
 from bpy.types import Panel
 
 
-#asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic'
-asurt_path = 'E:\\Main\\asurt_cdt_symbolic'
+asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic'
+#asurt_path = 'E:\\Main\\asurt_cdt_symbolic'
 if asurt_path not in sys.path:
     sys.path.append(asurt_path)
+    
 
+loaded_models = {}
+loaded_instances = {}
 
+###############################################################################
 class ASURT_Panel(Panel):
     bl_space_type =  'VIEW_3D'
     bl_region_type = 'TOOLS'
-    bl_label = "System Files"  
     bl_context = "objectmode"
     bl_category = "ASURT"
+    
+###############################################################################
+class SaveOpen(ASURT_Panel):
+    bl_label = "Tools"
+
+    def draw(self, context):
+        layout = self.layout
+        
+        layout.label(text="Open")
+        split = layout.split()
+        col = split.column(align=True)
+        col.operator("bpy.ops.buttons.file_browse")
+        col.prop(context.scene, 'blmbs_path')
+        col.operator("object.open_blmbs")
+        
+        layout.label(text="SAVE")
+        split = layout.split()
+        col = split.column(align=True)
+        col.operator("bpy.ops.buttons.file_browse")
+        col.prop(context.scene, 'blmbs_path')
+        col.operator("object.save_blmbs")
+
+###############################################################################
+class SceneControls(ASURT_Panel):
+    bl_label = "Scene Controls"
+
+    def draw(self, context):
+        layout = self.layout
+        
+        split = layout.split()
+        col = split.column(align=True)
+        col.label(text="Load Simulation Data:")
+        col.operator("bpy.ops.buttons.file_browse")
+        col.prop(context.scene, 'sim_path')
+        col.operator("object.load_mbssim")
+        
+        layout.label(text="Animation Controls")
+        screen = context.screen
+        row = layout.row(align=True)
+        row.operator("screen.frame_jump", text="", icon='REW').end = False
+        row.operator("screen.keyframe_jump", text="", icon='PREV_KEYFRAME').next = False
+        if not screen.is_animation_playing:
+            row.operator("screen.animation_play", text="", icon='PLAY_REVERSE').reverse = True
+            row.operator("screen.animation_play", text="", icon='PLAY')
+        else:
+            sub = row.row(align=True)
+            sub.scale_x = 2.0
+            sub.operator("screen.animation_play", text="", icon='PAUSE')
+        row.operator("screen.keyframe_jump", text="", icon='NEXT_KEYFRAME').next = True
+        row.operator("screen.frame_jump", text="", icon='FF').end = True
+        
+        row = layout.row()
+        row.operator("scene.clear")
+
+###############################################################################
+
+class ConstructNew(ASURT_Panel):
+    bl_label = "Construct New Model"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -41,41 +105,146 @@ class ASURT_Panel(Panel):
         col.operator("bpy.ops.buttons.file_browse")
         col.prop(context.scene, 'cfg_path')
         
-        split = layout.split()
-        col = split.column(align=True)
-        col.label(text="Simulation Data:")
-        col.operator("bpy.ops.buttons.file_browse")
-        col.prop(context.scene, 'sim_path')
-        
-        layout.label(text="")
         row = layout.row()
-        row.operator("object.run_script")
+        row.prop(context.scene, 'subsys_id')
         
         row = layout.row()
-        row.operator("scene.clear")
+        row.operator("object.load_mbsmodel")
         
-        row = layout.row()
-        row.operator("scene.reset_fields")
-        
+###############################################################################
+###############################################################################
+###############################################################################
 
-class runScript(bpy.types.Operator):
-    """Tooltip"""
-    bl_idname = "object.run_script"
-    bl_label = "Load Files"
+class blmbs_saver(bpy.types.Operator):
+    """Save Assembled Model From a Script"""
+    bl_idname = "object.save_blmbs"
+    bl_label = "Save Scene"
 
     @classmethod
     def poll(cls, context):
-        scene_vars = ['scpt_path','cfg_path','sim_path']
-        files = [os.path.splitext(getattr(context.scene,i))[-1] for i in scene_vars]
-        print(files)
-        cond = ['.py','.csv','.csv'] == files
+        file_name = os.path.basename(context.scene.blmbs_path)
+        cond = file_name.isidentifier() and len(loaded_instances)!=0
         return cond
 
     def execute(self, context):
-        script = bpy.data.scenes["Scene"].scpt_path
-        bpy.ops.script.python_file_run(filepath=script)
+        data = {}
+        for name,b in loaded_instances.items():
+            sub_data = {}
+            instance, script = b
+            sub_data['prefix'] = instance.prefix
+            sub_data['config'] = instance.cfg_file
+            sub_data['script'] = script
+            data[name] = sub_data
+            
+        self.save_model(data)
+        print('\nSAVING DATA')
+        print(data)
         return {'FINISHED'}
+    
+    @staticmethod
+    def save_model(data):
+        name = bpy.data.scenes["Scene"].blmbs_path
+        print(name)
+        with open('%s.blmbs'%name,'wb') as f:
+            pickle.dump(data,f)
 
+###############################################################################
+class blmbs_opener(bpy.types.Operator):
+    """Save Assembled Model From a Script"""
+    bl_idname = "object.open_blmbs"
+    bl_label = "Open Scene"
+
+    @classmethod
+    def poll(cls, context):
+        file = os.path.splitext(context.scene.blmbs_path)[-1]
+        cond = '.blmbs' == file
+        return cond
+
+    def execute(self, context):
+        file = bpy.data.scenes["Scene"].blmbs_path
+        data = self.open_model(file)
+        print(data)
+        for sub in data:
+            sub_data = data[sub]
+            bpy.data.scenes["Scene"].cfg_path  = sub_data['config']
+            bpy.data.scenes["Scene"].subsys_id = sub_data['prefix']
+            bpy.data.scenes["Scene"].scpt_path = sub_data['script']
+            bpy.ops.object.load_mbsmodel()
+        return {'FINISHED'}
+    
+    @staticmethod
+    def open_model(name):
+        with open(name,'rb') as f:
+            data = pickle.load(f)
+        return data
+        
+###############################################################################
+class model_loader(bpy.types.Operator):
+    """Tooltip"""
+    bl_idname = "object.load_mbsmodel"
+    bl_label = "Insert Model"
+
+    @classmethod
+    def poll(cls, context):
+        scene_vars = ['scpt_path','cfg_path']
+        files = [os.path.splitext(getattr(context.scene,i))[-1] for i in scene_vars]
+        cond = ['.py','.csv'] == files
+        return cond
+
+    def execute(self, context):
+        print("Reading Blender Script...")
+        script_path = bpy.data.scenes["Scene"].scpt_path
+        config_data = bpy.data.scenes["Scene"].cfg_path
+        prefix = bpy.data.scenes["Scene"].subsys_id
+        
+        script_name = os.path.basename(script_path)
+        script_name = os.path.splitext(script_name)[0]
+        script_path_l = script_path.split(os.path.sep)
+        d = script_path_l.index('asurt_cdt_symbolic')
+        imports  = script_path_l[d+1:]        
+        del imports[-1]
+        imports_str  = '.'.join(imports)
+        if script_name in loaded_models:
+            print('Reloading Module %s'%script_name)
+            importlib.reload(loaded_models[script_name])
+        else:
+            exec('from %s import %s'%(imports_str,script_name))
+            loaded_models[script_name] = eval(script_name)
+        
+        model = loaded_models[script_name]
+        self.create_scene(model,config_data,prefix)
+        print('\nLoaded Model : %s, with Subsystem_ID (%s)'%(script_name,'ST.'))
+        bpy.ops.scene.reset_fields()
+        return {'FINISHED'}
+    
+    @staticmethod
+    def create_scene(model,config_data,prefix=''):
+        blend = model.blender_scene(prefix)
+        blend.get_data(config_data)
+        blend.create_scene()
+        script_path = bpy.data.scenes["Scene"].scpt_path
+        loaded_instances[prefix] = (blend,script_path)
+
+###############################################################################
+class sim_loader(bpy.types.Operator):
+    """Tooltip"""
+    bl_idname = "object.load_mbssim"
+    bl_label = "Load Data"
+
+    @classmethod
+    def poll(cls, context):
+        scene_vars = ['sim_path']
+        files = [os.path.splitext(getattr(context.scene,i))[-1] for i in scene_vars]
+        cond = ['.csv'] == files
+        return cond
+
+    def execute(self, context):
+        sim_data = bpy.data.scenes["Scene"].sim_path
+        for b in loaded_instances.values():
+            b[0].load_anim_data(sim_data)
+        return {'FINISHED'}
+    
+###############################################################################
 class clear_scene(bpy.types.Operator):
     """Tooltip"""
     bl_idname = "scene.clear"
@@ -96,30 +265,48 @@ class clear_scene(bpy.types.Operator):
                 pass
         return {'FINISHED'}
 
+###############################################################################
 class reset_fields(bpy.types.Operator):
     """Tooltip"""
     bl_idname = "scene.reset_fields"
     bl_label = "Clear Fields"
+    
+    fields = ['scpt_path','cfg_path','subsys_id']
 
     @classmethod
     def poll(cls, context):
-        scene_vars = ['scpt_path','cfg_path','sim_path']
+        scene_vars = cls.fields[:-1]
         files = [os.path.isfile(getattr(context.scene,i)) for i in scene_vars]
-        print(files)
+        files.append(scene_vars[-1] !='')
         cond = False not in files
         return cond
 
     def execute(self, context):
-        scene_vars = ['scpt_path','cfg_path','sim_path']
+        scene_vars = self.fields
         for n in scene_vars:
             path = getattr(context.scene,n)
             path = os.path.dirname(path)
             path = os.path.join(path,'')
             setattr(context.scene,n,path)
         return {'FINISHED'}
+    
+######################################################################
+######################################################################
+######################################################################
 
 def register():
     bpy.utils.register_module(__name__)
+    
+    bpy.types.Scene.subsys_id = bpy.props.StringProperty \
+      (name = "SUB_ID",
+      description = "Enter the SubSystem ID used in the Assembly.",
+      default = '')
+      
+    bpy.types.Scene.blmbs_path = bpy.props.StringProperty \
+      (name = "",
+      default = "%s//use_cases//generated_templates//blender//saved_scripts//"%asurt_path,
+      description = "Browse for the script file of the model.",
+      subtype = 'FILE_PATH')
     
     bpy.types.Scene.scpt_path = bpy.props.StringProperty \
       (name = "",
@@ -142,10 +329,14 @@ def register():
       
       
 def unregister():
+    global loaded_instances, loaded_models
     bpy.utils.unregister_module(__name__)
     del bpy.types.Scene.scpt_path
     del bpy.types.Scene.cfg_path
     del bpy.types.Scene.sim_path
+    del bpy.types.Scene.blmbs_path
+    del loaded_instances
+    del loaded_models
     
 
 if __name__ == "__main__":

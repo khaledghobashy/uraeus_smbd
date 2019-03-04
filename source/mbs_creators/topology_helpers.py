@@ -109,6 +109,13 @@ class parametric_configuration(object):
     @property
     def arguments_symbols(self):
         return set(nx.get_node_attributes(self.graph,'obj').values())
+    
+    @property
+    def primary_arguments(self):
+        graph = self.graph
+        cond = lambda n : graph.nodes[n]['primary']
+        args = filter(cond,graph.nodes)
+        return set(args)
         
     @property
     def input_nodes(self):
@@ -233,10 +240,10 @@ class parametric_configuration(object):
     
     def _get_topology_args(self):
         args = {}
-        nodes_args = dict(self.topology.nodes(data='arguments'))
+        nodes_args = dict(self.topology.nodes(data='arguments_symbols'))
         nodes_args = {n:arg for n,arg in nodes_args.items()}
         edges = self.topology.edges
-        edges_args = {e:edges[e]['arguments'] for e in edges}
+        edges_args = {e:edges[e]['arguments_symbols'] for e in edges}
         args.update(nodes_args)
         args.update(edges_args)
         self._base_args = args
@@ -328,14 +335,14 @@ class parametric_configuration(object):
 
         for n in filtered_nodes:
             m      = t_nodes[n]['mirr']
-            args_n = t_nodes[n]['arguments']
+            args_n = t_nodes[n]['arguments_symbols']
             nodes_args_n = [(str(i),{'func':Eq(i),'obj':i}) for i in args_n]
             if m == n:
                 graph.add_nodes_from(nodes_args_n)
                 mirr = {i[0]:i[0] for i in nodes_args_n}
                 nx.set_node_attributes(self.graph,mirr,'mirr')
             else:
-                args_m = t_nodes[m]['arguments']
+                args_m = t_nodes[m]['arguments_symbols']
                 args_c = zip(args_n,args_m)
                 nodes_args_m = [(str(m),{'func':Eq(n,m),'obj':m}) for n,m in args_c]
                 graph.add_nodes_from(nodes_args_n+nodes_args_m)
@@ -361,7 +368,7 @@ class parametric_configuration(object):
         for e in filtered_edges:
             n = t_edges[e]['name']
             m = t_edges[e]['mirr']
-            args_n = t_edges[e]['arguments']
+            args_n = t_edges[e]['arguments_symbols']
             nodes_args_n = [(str(i),{'func':Eq(i),'obj':i}) for i in args_n]
             if m == n:
                 graph.add_nodes_from(nodes_args_n)
@@ -369,7 +376,7 @@ class parametric_configuration(object):
                 nx.set_node_attributes(self.graph,mirr,'mirr')
             else:
                 e2 = self.topology._edges_map[m]
-                args_m = t_edges[e2]['arguments']
+                args_m = t_edges[e2]['arguments_symbols']
                 args_c = zip(args_n,args_m)
                 nodes_args_m = [(str(m),{'func':Eq(n,m),'obj':m}) for n,m in args_c]
                 graph.add_nodes_from(nodes_args_n+nodes_args_m)

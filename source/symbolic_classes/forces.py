@@ -5,11 +5,11 @@ Created on Thu Feb  7 08:43:54 2019
 @author: khaled.ghobashy
 """
 
+import itertools
 import sympy as sm
-from source.symbolic_classes.abstract_matrices import (reference_frame,
-                                                       global_frame,vector, G, 
-                                                       Skew, Force, Moment,
-                                                       zero_matrix, matrix_symbol)
+from source.symbolic_classes.abstract_matrices import (vector, G, Skew,
+                                                       zero_matrix, 
+                                                       matrix_symbol)
 from source.symbolic_classes.helper_funcs import body_setter, name_setter
 from source.symbolic_classes.spatial_joints import dummy_cylinderical
 
@@ -58,19 +58,42 @@ class generic_force(object):
     def Qj(self):
         return sm.BlockMatrix([[self.Fj], [self.Tj_e]])
     
+#    @property
+#    def arguments(self):
+#        config_args = self.joint.arguments
+#        forces_inputs = [self.Fi,self.Ti,self.Fj,self.Tj]
+#        args = config_args + forces_inputs
+#        return args
+#    
+#    @property
+#    def sym_constants(self):
+#        return self.joint.constants
+#    @property
+#    def num_constants(self):
+#        return []
+    
     @property
-    def arguments(self):
-        config_args = self.joint.arguments
+    def arguments_symbols(self):
+        config_args = self.joint.arguments_symbols
         forces_inputs = [self.Fi,self.Ti,self.Fj,self.Tj]
         args = config_args + forces_inputs
         return args
-    
     @property
-    def sym_constants(self):
-        return self.joint.constants
-    @property
-    def num_constants(self):
+    def runtime_symbols(self):
         return []
+    @property
+    def constants_symbolic_expr(self):
+        return self.joint.constants_symbolic_expr
+    @property
+    def constants_numeric_expr(self):
+        return []
+    @property
+    def constants_symbols(self):
+        constants_expr = itertools.chain(self.constants_symbolic_expr,
+                                         self.constants_numeric_expr)
+        return [expr.lhs for expr in constants_expr]
+
+
         
     def _construct_force_i(self):
         bname = self.body_i.id_name
@@ -115,13 +138,13 @@ class gravity_force(generic_force):
         return sm.BlockMatrix([[zero_matrix(3,1)], [zero_matrix(4,1)]])
     
     @property
-    def arguments(self):
+    def arguments_symbols(self):
         return []
     @property
-    def sym_constants(self):
+    def constants_symbolic_expr(self):
         return []
     @property
-    def num_constants(self):
+    def constants_numeric_expr(self):
         gravity = sm.Eq(self.Fi,self.body_i.m*sm.Matrix([0,0,9.81e3]))
         return [gravity]
 
@@ -143,10 +166,10 @@ class centrifugal_force(generic_force):
         return sm.BlockMatrix([[zero_matrix(3,1)], [zero_matrix(4,1)]])
     
     @property
-    def arguments(self):
+    def arguments_symbols(self):
         return []
     @property
-    def sym_constants(self):
+    def constants_symbolic_expr(self):
         return []
         
 ###############################################################################
@@ -164,9 +187,9 @@ class internal_force(generic_force):
         self.Fd = sm.Function('Fd_%s'%name)#('dv')
         self.Fa = sm.Function('Fa_%s'%name)#('dv')
         
-        self.Ts = sm.Function('Ts_%s'%name)#('dx')
-        self.Td = sm.Function('Td_%s'%name)#('dv')
-        self.Ta = sm.Function('Ta_%s'%name)#('dv')
+        self.Ts = sm.Function('Ts_%s'%name)
+        self.Td = sm.Function('Td_%s'%name)
+        self.Ta = sm.Function('Ta_%s'%name)
                 
     @property
     def Qi(self):
@@ -190,13 +213,13 @@ class internal_force(generic_force):
         return force_vector
     
     @property
-    def arguments(self):
-        configuration_args = self.joint.arguments[1:3]
-        forces_args = [self.Fs,self.Fd]
+    def arguments_symbols(self):
+        configuration_args = self.joint.arguments_symbols[1:3]
+        forces_args = [self.Fs,self.Fd,self.LF]
         return configuration_args + forces_args
     @property
-    def sym_constants(self):
-        return self.joint.sym_constants[2:4]
+    def constants_symbolic_expr(self):
+        return self.joint.constants_symbolic_expr[2:4]
 
 ###############################################################################
 ###############################################################################

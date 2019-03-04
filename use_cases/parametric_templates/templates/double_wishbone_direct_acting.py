@@ -24,6 +24,7 @@ def load():
 
 def create():
     global template
+    global numerical_code
     
     template = template_based_topology(topology_name)
     

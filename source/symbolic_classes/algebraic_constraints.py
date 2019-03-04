@@ -5,6 +5,7 @@ Created on Tue Jan  1 11:06:05 2019
 @author: khale
 """
 
+import itertools
 import sympy as sm
 from source.symbolic_classes.abstract_matrices import (reference_frame,vector, zero_matrix, 
                                                        B, E, matrix_symbol, Skew)
@@ -79,19 +80,29 @@ class algebraic_constraints(object):
     @property
     def jacobian_j(self):
         return sm.BlockMatrix(self._jacobian_j)
-    
-    @property
-    def arguments(self):
-        return self._arguments
-    @property
-    def sym_constants(self):
-        return self._sym_constants
-    @property
-    def num_constants(self):
-        return []
+        
     @property
     def reactions_equalities(self):
         return self._reactions_equalities
+    
+    @property
+    def arguments_symbols(self):
+        return self._arguments
+    @property
+    def runtime_symbols(self):
+        return []
+    @property
+    def constants_symbolic_expr(self):
+        return self._sym_constants
+    @property
+    def constants_numeric_expr(self):
+        return []
+    @property
+    def constants_symbols(self):
+        constants_expr = itertools.chain(self.constants_symbolic_expr,
+                                         self.constants_numeric_expr)
+        return [expr.lhs for expr in constants_expr]
+
     
     
     def _create_joint_def_axis(self,i):
