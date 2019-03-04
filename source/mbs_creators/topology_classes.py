@@ -241,6 +241,9 @@ class abstract_topology(object):
         nodes[n].update(self._obj_attr_dict(body_instance))
         if nodes[n]['virtual']:
             nodes[n]['arguments_symbols'] = []
+            nodes[n]['arguments_symbols'] = []
+            nodes[n]['constants_symbols'] = []
+            nodes[n]['constants_symbolic_expr'] = []
             
         
     def _assemble_edge(self,e):

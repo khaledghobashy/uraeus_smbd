@@ -528,8 +528,8 @@ class template_code_generator(abstract_generator):
         cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)
         cse_exp_txt = re.sub(self_pattern,self_inserter,cse_exp_txt)
         
-        config_pattern = itertools.chain(self.arguments_symbols)
-        config_pattern = '|'.join([r'\w*(?<!.)%s'%i for i in config_pattern if i not in self.constants_symbols])
+        config_pattern = self.primary_arguments - set(self.runtime_symbols)  #\w*(?<!.)
+        config_pattern = '|'.join([r'%s'%i for i in config_pattern])
         config_inserter = self._insert_string('config.')
         cse_var_txt = re.sub(config_pattern,config_inserter,cse_var_txt)
         cse_exp_txt = re.sub(config_pattern,config_inserter,cse_exp_txt)
