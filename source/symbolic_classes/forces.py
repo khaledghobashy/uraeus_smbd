@@ -58,20 +58,6 @@ class generic_force(object):
     def Qj(self):
         return sm.BlockMatrix([[self.Fj], [self.Tj_e]])
     
-#    @property
-#    def arguments(self):
-#        config_args = self.joint.arguments
-#        forces_inputs = [self.Fi,self.Ti,self.Fj,self.Tj]
-#        args = config_args + forces_inputs
-#        return args
-#    
-#    @property
-#    def sym_constants(self):
-#        return self.joint.constants
-#    @property
-#    def num_constants(self):
-#        return []
-    
     @property
     def arguments_symbols(self):
         config_args = self.joint.arguments_symbols
@@ -215,7 +201,7 @@ class internal_force(generic_force):
     @property
     def arguments_symbols(self):
         configuration_args = self.joint.arguments_symbols[1:3]
-        forces_args = [self.Fs,self.Fd,self.LF]
+        forces_args = [self.Fs,self.Fd,self.LF,self.Ti,self.Tj]
         return configuration_args + forces_args
     @property
     def constants_symbolic_expr(self):

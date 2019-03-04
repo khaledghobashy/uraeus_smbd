@@ -48,6 +48,8 @@ Rdd_rbr_tie_rod,0.0,0.0,0.0,0.0
 Rdd_rbr_uca,0.0,0.0,0.0,0.0
 Rdd_rbr_upper_strut,0.0,0.0,0.0,0.0
 Rdd_rbr_upright,0.0,0.0,0.0,0.0
+T_rbr_lower_strut_far_strut,0.0,0.0,0.0,0.0
+T_rbr_upper_strut_far_strut,0.0,0.0,0.0,0.0
 ax1_jcr_hub_bearing,0.0,0.0,0.0,0.0
 ax1_jcr_lca_chassis,0.0,0.0,0.0,0.0
 ax1_jcr_lca_upright,0.0,0.0,0.0,0.0
