@@ -83,6 +83,8 @@ def cylinder_geometry(arg1,arg2,ro=10,ri=0):
     R = centered(arg1,arg2)
     P = dcm2ep(frame)
     J = np.diag([Jxx,Jyy,Jzz])
+    
+    J = A(P).dot(J).dot(A(P).T)
     P = np.array([[1],[0],[0],[0]],dtype=np.float64)
     
     return geometry(R,P,m,J)
@@ -122,6 +124,8 @@ def triangular_prism(p1,p2,p3,thickness=10):
     J = m*np.diag([float(i) for i in [Ixc,Iyc,Izc]])
     R = centered(p1,p2,p3)
     P = dcm2ep(frame)
+    
+    J = A(P).dot(J).dot(A(P).T)
     P = np.array([[1],[0],[0],[0]],dtype=np.float64)
     
     return geometry(R,P,m,J)

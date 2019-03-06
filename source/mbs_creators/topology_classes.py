@@ -769,11 +769,10 @@ class assembly(abstract_topology):
         self.jac_equations = jacobian
     
     def _assemble_mass_matrix(self):
-        nodes  = self.nodes
-        n = 2
-        matrix = sm.MutableSparseMatrix(n,n,None)
-        mass_matricies = [nodes['ground']['obj'].M,nodes['ground']['obj'].J]
-        for i,m in enumerate(mass_matricies): matrix[i,i] = m
+        ground_obj  = self.nodes['ground']['obj']
+        matrix = sm.MutableSparseMatrix(2,2,None)
+        matrix[0,0] = ground_obj.M
+        matrix[1,1] = ground_obj.J
         self.mass_equations = matrix
 
     
