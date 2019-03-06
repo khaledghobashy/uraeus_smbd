@@ -91,6 +91,14 @@ class solver(object):
         data = self.model.acc_eq_blocks
         mat = self.assemble_equations(data)
         return mat
+    
+    def eval_mass_eq(self):
+        self.model.eval_mass_eq()
+        data = self.model.mass_eq_blocks
+        n = self.model.ncols
+        rows = cols = np.arange(n)
+        mat = scipy_matrix_assembler(data,rows,cols,(n,n))
+        return mat
         
     def eval_jac_eq(self):
         self.model.eval_jac_eq()

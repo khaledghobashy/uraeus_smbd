@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.misc import derivative
 from numpy import cos, sin
 from numpy.linalg import multi_dot
-from source.cython_definitions.matrix_funcs import A, B, triad
+from source.cython_definitions.matrix_funcs import A, B, G, E, triad
 from source.solvers.py_numerical_functions import mirrored
 
 
@@ -69,12 +69,12 @@ class topology(object):
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
-        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
-        self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
-        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
-        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
-        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
         self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
+        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
+        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
+        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
+        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
+        self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
         self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
@@ -112,6 +112,10 @@ class topology(object):
 
     
     def set_gen_velocities(self,qd):
+        pass
+
+    
+    def set_gen_accelerations(self,qdd):
         pass
 
     
@@ -203,3 +207,11 @@ class topology(object):
         self.jac_eq_blocks = [j1,j0,self.J_mcr_ver_act,j0,j1,j0,self.J_mcl_ver_act,j0,j1,multi_dot([(cos(config.AF_jcr_rev(t))*multi_dot([j5.T,j7]) + sin(config.AF_jcr_rev(t))*-1*multi_dot([j6.T,j7])),B(j3,j2)]),j1,multi_dot([j2.T,A(j3).T,(cos(config.AF_jcr_rev(t))*B(j4,j5) + sin(config.AF_jcr_rev(t))*-1*B(j4,j6))]),j1,multi_dot([(cos(config.AF_jcl_rev(t))*multi_dot([j11.T,j13]) + sin(config.AF_jcl_rev(t))*-1*multi_dot([j12.T,j13])),B(j9,j8)]),j1,multi_dot([j8.T,A(j9).T,(cos(config.AF_jcl_rev(t))*B(j10,j11) + sin(config.AF_jcl_rev(t))*-1*B(j10,j12))]),j1,multi_dot([j14.T,A(j15).T,(cos(config.AF_jcs_steer_gear(t))*B(j16,j17) + sin(config.AF_jcs_steer_gear(t))*-1*B(j16,j18))]),j1,multi_dot([(cos(config.AF_jcs_steer_gear(t))*multi_dot([j17.T,j19]) + sin(config.AF_jcs_steer_gear(t))*-1*multi_dot([j18.T,j19])),B(j15,j14)])]
   
     
+    def eval_frc_eq(self):
+        config = self.config
+        t = self.t
+
+    
+
+        self.frc_eq_blocks = []
+

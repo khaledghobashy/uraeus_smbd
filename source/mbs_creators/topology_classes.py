@@ -159,6 +159,7 @@ class abstract_topology(object):
         self._remove_virtual_edges()
         self._assemble_constraints_equations()
         self._assemble_forces_equations()
+        self._assemble_mass_matrix()
         self._initialize_toplogy_reqs()
     
     def perform_cse(self):
@@ -332,7 +333,17 @@ class abstract_topology(object):
         ind_b    = {v:k for k,v in node_index.items()}
         cols_ind = [i[1] for i in self.jac_equations.row_list()]
         self.jac_cols = [(ind_b[i//2]+'*2' if i%2==0 else ind_b[i//2]+'*2+1') for i in cols_ind]
-
+        
+    def _assemble_mass_matrix(self):
+        nodes  = self.nodes
+        bodies = self.bodies
+        n = 2*len(bodies)
+        matrix = sm.MutableSparseMatrix(n,n,None)
+        mass_matricies = [[nodes[i]['obj'].M,nodes[i]['obj'].J] for i in bodies]
+        mass_matricies = sum(mass_matricies,[])
+#        self.mass_equations = sm.BlockDiagMatrix(*self.mass_matricies)
+        for i,m in enumerate(mass_matricies): matrix[i,i] = m
+        self.mass_equations = matrix
     
     def _assemble_forces_equations(self):
         graph = self.forces_graph

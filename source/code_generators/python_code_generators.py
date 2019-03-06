@@ -56,6 +56,7 @@ class abstract_generator(object):
         self._setup_acc_equations()
         self._setup_jac_equations()
         self._setup_frc_equations()
+        self._setup_mass_equations()
     
     def _setup_pos_equations(self):
         self._setup_x_equations('pos','x')
@@ -73,6 +74,9 @@ class abstract_generator(object):
     
     def _setup_frc_equations(self):
         self._setup_x_equations('frc','f')
+        
+    def _setup_mass_equations(self):
+        self._setup_x_equations('mass','m')
 
 
     def _setup_x_equations(self,xstring,sym='x'):
@@ -269,7 +273,7 @@ class template_code_generator(abstract_generator):
                 from scipy.misc import derivative
                 from numpy import cos, sin
                 from numpy.linalg import multi_dot
-                from source.cython_definitions.matrix_funcs import A, B, G, E, triad
+                from source.cython_definitions.matrix_funcs import A, B, G, E, triad, skew
                 from source.solvers.py_numerical_functions import mirrored
                 '''
         text = text.expandtabs()
@@ -411,6 +415,9 @@ class template_code_generator(abstract_generator):
     
     def write_forces_equations(self):
         return self._write_x_equations('frc')
+    
+    def write_mass_equations(self):
+        return self._write_x_equations('mass')
 
     def write_system_class(self):
         text = '''
@@ -423,7 +430,8 @@ class template_code_generator(abstract_generator):
                     {eval_pos}
                     {eval_vel}
                     {eval_acc}
-                    {eval_jac}  
+                    {eval_jac}
+                    {eval_mass}
                     {eval_frc}
                 '''
         text = text.expandtabs()
@@ -441,6 +449,7 @@ class template_code_generator(abstract_generator):
         eval_acc = self.write_acc_equations()
         eval_jac = self.write_jac_equations()
         eval_frc = self.write_forces_equations()
+        eval_mass = self.write_mass_equations()
         
         text = text.format(class_init = class_init,
                            assembler = assembler,
@@ -450,6 +459,7 @@ class template_code_generator(abstract_generator):
                            eval_acc = eval_acc,
                            eval_jac = eval_jac,
                            eval_frc = eval_frc,
+                           eval_mass = eval_mass,
                            coord_setter = coord_setter,
                            veloc_setter = veloc_setter,
                            accel_setter = accel_setter)
@@ -822,6 +832,7 @@ class assembly_code_generator(template_code_generator):
     
     def write_jac_equations(self):
         return self._write_x_equations('jac')
+    
     
     def write_system_class(self):
         text = '''

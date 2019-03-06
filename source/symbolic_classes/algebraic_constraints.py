@@ -466,8 +466,8 @@ class actuator(algebraic_constraints):
         return sm.BlockMatrix([sm.Identity(1)*self._acc_level_equations[0] - sm.Identity(1)*self._acc_function])
     
     @property
-    def arguments(self):
-        return super().arguments + [self.act_func]
+    def arguments_symbols(self):
+        return super().arguments_symbols + [self.act_func]
 
 ###############################################################################
 ###############################################################################
@@ -496,10 +496,10 @@ class absolute_actuator(actuator):
         super().__init__(name,body_i,body_j)
     
     @property
-    def sym_constants(self):
+    def constants_symbolic_expr(self):
         return []
     @property
-    def num_constants(self):
+    def constants_numeric_expr(self):
         num_jac = sm.zeros(1,3)
         num_jac[0,self.i] = 1
         sym_jac = sm.MatrixSymbol('%sJ_%s'%(self.prefix,self.id_name),1,3)

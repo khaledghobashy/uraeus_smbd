@@ -84,7 +84,6 @@ class body(reference_frame):
     def __init__(self,name):
         self._name = name
         super().__init__(name)
-        #print('Inside body()')
         
         splited_name = name.split('.')
         self.id_name = ''.join(splited_name[-1])
@@ -102,25 +101,22 @@ class body(reference_frame):
         self.Rdd = vector('%sRdd_%s'%format_, format_as=r'{%s\ddot{R}_{%s}}'%format_)
         self.Pdd = quatrenion('%sPdd_%s'%format_, format_as=r'{%s\ddot{P}_{%s}}'%format_)
         
-        #print('Generating DCM')
         self.A = A(self.P)
         self.G = G(self.P)
         self.E = E(self.P)
                 
-        #print('Generating Normalized Equations')
         self.normalized_pos_equation = sm.sqrt(self.P.T*self.P)-sm.Identity(1)
         self.normalized_vel_equation = zero_matrix(1,1)
         self.normalized_acc_equation = 2*sm.sqrt(self.Pd.T*self.Pd)
         self.normalized_jacobian = [zero_matrix(1,3), 2*self.P.T]
-        
+                        
+#        self.M  = matrix_symbol('%sM_%s'%format_,3,3,r'{%sM_{%s}}'%format_)
+#        self.J = matrix_symbol('%sJ_%s'%format_,3,3,r'{%s{J}_{%s}}'%format_)
         self.m = sm.symbols('m_%s'%self.id_name)
-                
-        self.M  = matrix_symbol('%sM_%s'%format_,3,3,r'{%sM_{%s}}'%format_)
+        self.M = self.m*sm.Identity(3)
         self.Jbar = matrix_symbol('%sJbar_%s'%format_,3,3,r'{%s\bar{J}_{%s}}'%format_)
-        self.J = matrix_symbol('%sJ_%s'%format_,3,3,r'{%s{J}_{%s}}'%format_)
         self.J = 4*G(self.P).T*self.Jbar*G(self.P)
         
-        #print('Exiting Body \n')
     
     @property
     def name(self):
@@ -144,8 +140,7 @@ class body(reference_frame):
         return [self.R,self.P,self.Rd,self.Pd,self.Rdd,self.Pdd]
     @property
     def constants_symbolic_expr(self):
-        mass_equality = sm.Eq(self.M,self.m*sm.Identity(3))
-        return [mass_equality]
+        return []
     @property
     def constants_numeric_expr(self):
         return []
