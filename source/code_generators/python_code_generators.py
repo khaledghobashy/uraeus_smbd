@@ -300,7 +300,8 @@ class template_code_generator(abstract_generator):
                         self.config = (configuration() if cfg is None else cfg)
                         self.prefix = (prefix if prefix=='' else prefix+'.')
                                                 
-                        self.n = {n}
+                        self.n  = {n}
+                        self.nc = {nc}
                         self.nrows = {nve}
                         self.ncols = 2*{nodes}
                         self.rows = np.arange(self.nrows)
@@ -315,6 +316,7 @@ class template_code_generator(abstract_generator):
                            jac_cols = self.jac_eq_cols,
                            nve = self.mbs.nve,
                            n = self.mbs.n,
+                           nc = self.mbs.nc,
                            nodes = len(self.mbs.nodes))
         return text
 
@@ -429,9 +431,13 @@ class template_code_generator(abstract_generator):
     
     def write_reactions_equations(self):
         text = '''
-                def eval_reactions_equations(self):
-
+                def eval_reactions_eq(self):
+                    config  = self.config
+                    t = self.t
+                    
                     {equations_text}
+                    
+                    self.reactions = {results_dict}
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -449,12 +455,19 @@ class template_code_generator(abstract_generator):
         self_pattern = '|'.join(self_pattern)
         self_inserter = self._insert_string('self.')
         equations_text = re.sub(self_pattern,self_inserter,equations_text)
+        
+        config_pattern = self.primary_arguments - set(self.runtime_symbols)
+        config_pattern = '|'.join([r'%s'%i for i in config_pattern])
+        config_inserter = self._insert_string('config.')
+        equations_text = re.sub(config_pattern,config_inserter,equations_text)
                 
         equations_text = textwrap.indent(equations_text,indent).lstrip() 
         
-#        cse_exp_txt = 'self.%s_eq_blocks = %s'%(xstring,cse_exp_txt.lstrip())
+        results_dict = ','.join(['%r:self.%s'%(i,i) for i in self.joint_reactions_sym])
+        results_dict = '{%s}'%results_dict
         
-        text = text.format(equations_text = equations_text)
+        text = text.format(equations_text = equations_text,
+                           results_dict = results_dict)
         text = textwrap.indent(text,indent)
         return text
 
@@ -672,6 +685,9 @@ class assembly_code_generator(template_code_generator):
                         self.P_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
                         self.Pg_ground = np.array([[1],[0],[0],[0]],dtype=np.float64)
                         
+                        self.M_ground = np.eye(3,dtype=np.float64)
+                        self.J_ground = np.eye(4,dtype=np.float64)
+                        
                         self.gr_rows = np.array([0,1])
                         self.gr_jac_rows = np.array([0,0,1,1])
                         self.gr_jac_cols = np.array([0,1,0,1])
@@ -796,10 +812,26 @@ class assembly_code_generator(template_code_generator):
         return self._write_x_setter('velocities','qd')
     
     def write_accelerations_setter(self):
-        return self._write_x_setter('gen_accelerations','qdd')
+        return self._write_x_setter('accelerations','qdd')
     
     def write_lagrange_setter(self):
-        return self._write_x_setter('lagrange_multipliers','Lambda')
+        func_name = 'lagrange_multipliers'
+        var = 'Lambda'
+        text = '''
+                def set_{func_name}(self,{var}):
+                    offset = 7
+                    for sub in self.subsystems:
+                        l = {var}[offset:sub.nc+offset]
+                        sub.set_{func_name}(l)
+                        offset += sub.nc
+               '''
+        indent = 4*' '
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = text.format(func_name = func_name,
+                           var = var)
+        text = textwrap.indent(text,indent)
+        return text
         
     def write_pos_equations(self):
         return self._write_x_equations('pos')
@@ -820,12 +852,13 @@ class assembly_code_generator(template_code_generator):
         return self._write_x_equations('mass')
     
     def write_reactions_equations(self):
-        func_name = 'reactions_equations'
+        func_name = 'reactions'
         text = '''
                 def eval_{func_name}_eq(self):
                     
                     for sub in self.subsystems:
                         sub.eval_{func_name}_eq()
+                    self.reactions = [s.reactions for s in self.subsystems]
                 '''
         indent = 4*' '
         text = text.expandtabs()

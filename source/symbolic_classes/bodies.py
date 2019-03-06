@@ -110,8 +110,6 @@ class body(reference_frame):
         self.normalized_acc_equation = 2*sm.sqrt(self.Pd.T*self.Pd)
         self.normalized_jacobian = [zero_matrix(1,3), 2*self.P.T]
                         
-#        self.M  = matrix_symbol('%sM_%s'%format_,3,3,r'{%sM_{%s}}'%format_)
-#        self.J = matrix_symbol('%sJ_%s'%format_,3,3,r'{%s{J}_{%s}}'%format_)
         self.m = sm.symbols('m_%s'%self.id_name)
         self.M = self.m*sm.Identity(3)
         self.Jbar = matrix_symbol('%sJbar_%s'%format_,3,3,r'{%s\bar{J}_{%s}}'%format_)
@@ -182,7 +180,10 @@ class ground(body):
     def __init__(self,*args):
         name = 'ground'
         super().__init__(name)
+        format_ = (self.prefix,self.id_name)
         self.P_ground = quatrenion('Pg_%s'%self.name,format_as=r'{Pg_{%s}}'%self.name)
+        self.M  = matrix_symbol('%sM_%s'%format_,3,3,r'{%sM_{%s}}'%format_)
+        self.J = matrix_symbol('%sJ_%s'%format_,3,3,r'{%s{J}_{%s}}'%format_)
         
         self.normalized_pos_equation = sm.BlockMatrix([[self.R], [self.P-self.P_ground]])
         self.normalized_vel_equation = sm.BlockMatrix([[zero_matrix(3,1)],[zero_matrix(4,1)]])
@@ -192,7 +193,12 @@ class ground(body):
     
     @property
     def arguments_symbols(self):
-        return super().arguments_symbols + [self.P_ground]
+        return super().arguments_symbols + [self.P_ground,self.M,self.J]
+    
+    @property
+    def constants_numeric_expr(self):
+        return []
+
 
 ###############################################################################
 ###############################################################################

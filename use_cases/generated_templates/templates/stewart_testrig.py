@@ -57,7 +57,8 @@ class topology(object):
         self.config = (configuration() if cfg is None else cfg)
         self.prefix = (prefix if prefix=='' else prefix+'.')
 
-        self.n = 0
+        self.n  = 0
+        self.nc = 3
         self.nrows = 3
         self.ncols = 2*4
         self.rows = np.arange(self.nrows)
@@ -219,18 +220,22 @@ class topology(object):
         self.frc_eq_blocks = []
 
     
-    def eval_reactions_equations(self):
+    def eval_reactions_eq(self):
+        config  = self.config
+        t = self.t
 
-        Q_vbs_rocker_1_jcs_rev_1 = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(AF_jcs_rev_1(t))*B(self.P_vbs_rocker_1,self.Mbar_vbs_rocker_1_jcs_rev_1[:,0:1]).T + (cos(AF_jcs_rev_1(t))*B(self.P_vbs_rocker_1,self.Mbar_vbs_rocker_1_jcs_rev_1[:,1:2])).T),A(self.P_vbs_ground),self.Mbar_vbs_ground_jcs_rev_1[:,0:1]])]]),self.L_jcs_rev_1])
+        Q_vbs_rocker_1_jcs_rev_1 = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(config.AF_jcs_rev_1(t))*B(self.P_vbs_rocker_1,self.Mbar_vbs_rocker_1_jcs_rev_1[:,0:1]).T + (cos(config.AF_jcs_rev_1(t))*B(self.P_vbs_rocker_1,self.Mbar_vbs_rocker_1_jcs_rev_1[:,1:2])).T),A(self.P_vbs_ground),self.Mbar_vbs_ground_jcs_rev_1[:,0:1]])]]),self.L_jcs_rev_1])
         self.F_vbs_rocker_1_jcs_rev_1 = Q_vbs_rocker_1_jcs_rev_1[0:3,0:1]
         Te_vbs_rocker_1_jcs_rev_1 = Q_vbs_rocker_1_jcs_rev_1[3:7,0:1]
-        self.T_vbs_rocker_1_jcs_rev_1 = (-1*multi_dot([skew(multi_dot([A(self.P_vbs_rocker_1),ubar_vbs_rocker_1_jcs_rev_1])),self.F_vbs_rocker_1_jcs_rev_1]) + 0.5*multi_dot([E(self.P_vbs_rocker_1),Te_vbs_rocker_1_jcs_rev_1]))
-        Q_vbs_rocker_2_jcs_rev_2 = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(AF_jcs_rev_2(t))*B(self.P_vbs_rocker_2,self.Mbar_vbs_rocker_2_jcs_rev_2[:,0:1]).T + (cos(AF_jcs_rev_2(t))*B(self.P_vbs_rocker_2,self.Mbar_vbs_rocker_2_jcs_rev_2[:,1:2])).T),A(self.P_vbs_ground),self.Mbar_vbs_ground_jcs_rev_2[:,0:1]])]]),self.L_jcs_rev_2])
+        self.T_vbs_rocker_1_jcs_rev_1 = 0.5*multi_dot([E(self.P_vbs_rocker_1),Te_vbs_rocker_1_jcs_rev_1])
+        Q_vbs_rocker_2_jcs_rev_2 = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(config.AF_jcs_rev_2(t))*B(self.P_vbs_rocker_2,self.Mbar_vbs_rocker_2_jcs_rev_2[:,0:1]).T + (cos(config.AF_jcs_rev_2(t))*B(self.P_vbs_rocker_2,self.Mbar_vbs_rocker_2_jcs_rev_2[:,1:2])).T),A(self.P_vbs_ground),self.Mbar_vbs_ground_jcs_rev_2[:,0:1]])]]),self.L_jcs_rev_2])
         self.F_vbs_rocker_2_jcs_rev_2 = Q_vbs_rocker_2_jcs_rev_2[0:3,0:1]
         Te_vbs_rocker_2_jcs_rev_2 = Q_vbs_rocker_2_jcs_rev_2[3:7,0:1]
-        self.T_vbs_rocker_2_jcs_rev_2 = (-1*multi_dot([skew(multi_dot([A(self.P_vbs_rocker_2),ubar_vbs_rocker_2_jcs_rev_2])),self.F_vbs_rocker_2_jcs_rev_2]) + 0.5*multi_dot([E(self.P_vbs_rocker_2),Te_vbs_rocker_2_jcs_rev_2]))
-        Q_vbs_rocker_3_jcs_rev_3 = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(AF_jcs_rev_3(t))*B(self.P_vbs_rocker_3,self.Mbar_vbs_rocker_3_jcs_rev_3[:,0:1]).T + (cos(AF_jcs_rev_3(t))*B(self.P_vbs_rocker_3,self.Mbar_vbs_rocker_3_jcs_rev_3[:,1:2])).T),A(self.P_vbs_ground),self.Mbar_vbs_ground_jcs_rev_3[:,0:1]])]]),self.L_jcs_rev_3])
+        self.T_vbs_rocker_2_jcs_rev_2 = 0.5*multi_dot([E(self.P_vbs_rocker_2),Te_vbs_rocker_2_jcs_rev_2])
+        Q_vbs_rocker_3_jcs_rev_3 = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(config.AF_jcs_rev_3(t))*B(self.P_vbs_rocker_3,self.Mbar_vbs_rocker_3_jcs_rev_3[:,0:1]).T + (cos(config.AF_jcs_rev_3(t))*B(self.P_vbs_rocker_3,self.Mbar_vbs_rocker_3_jcs_rev_3[:,1:2])).T),A(self.P_vbs_ground),self.Mbar_vbs_ground_jcs_rev_3[:,0:1]])]]),self.L_jcs_rev_3])
         self.F_vbs_rocker_3_jcs_rev_3 = Q_vbs_rocker_3_jcs_rev_3[0:3,0:1]
         Te_vbs_rocker_3_jcs_rev_3 = Q_vbs_rocker_3_jcs_rev_3[3:7,0:1]
-        self.T_vbs_rocker_3_jcs_rev_3 = (-1*multi_dot([skew(multi_dot([A(self.P_vbs_rocker_3),ubar_vbs_rocker_3_jcs_rev_3])),self.F_vbs_rocker_3_jcs_rev_3]) + 0.5*multi_dot([E(self.P_vbs_rocker_3),Te_vbs_rocker_3_jcs_rev_3]))
+        self.T_vbs_rocker_3_jcs_rev_3 = 0.5*multi_dot([E(self.P_vbs_rocker_3),Te_vbs_rocker_3_jcs_rev_3])
+
+        self.reactions = {'F_vbs_rocker_1_jcs_rev_1':self.F_vbs_rocker_1_jcs_rev_1,'T_vbs_rocker_1_jcs_rev_1':self.T_vbs_rocker_1_jcs_rev_1,'F_vbs_rocker_2_jcs_rev_2':self.F_vbs_rocker_2_jcs_rev_2,'T_vbs_rocker_2_jcs_rev_2':self.T_vbs_rocker_2_jcs_rev_2,'F_vbs_rocker_3_jcs_rev_3':self.F_vbs_rocker_3_jcs_rev_3,'T_vbs_rocker_3_jcs_rev_3':self.T_vbs_rocker_3_jcs_rev_3}
 

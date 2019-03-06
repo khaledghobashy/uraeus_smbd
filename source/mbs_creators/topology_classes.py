@@ -672,6 +672,7 @@ class assembly(abstract_topology):
         self._initialize_interface()
         self._assemble_constraints_equations()
         self._assemble_forces_equations()
+        self._assemble_mass_matrix()
         
     def draw_interface_graph(self):
         plt.figure(figsize=(10,6))
@@ -715,6 +716,17 @@ class assembly(abstract_topology):
             R_eq = sm.Eq(R_v,R_a,evaluate=False)
             P_eq = sm.Eq(P_v,P_a,evaluate=False)
             self.mapped_vir_velocities += [R_eq,P_eq]
+        
+        self.mapped_vir_accelerations = []
+        for v,a in self.interface_map.items():
+            self._assemble_node(v)
+            if a!= self.grf : self._assemble_node(a)
+            R_v,P_v = self.nodes[v]['obj'].qdd.blocks
+            R_a,P_a = self.nodes[a]['obj'].qdd.blocks
+            R_eq = sm.Eq(R_v,R_a,evaluate=False)
+            P_eq = sm.Eq(P_v,P_a,evaluate=False)
+            self.mapped_vir_accelerations += [R_eq,P_eq]
+
             
     def _replace_nodes(self,virtual,actual):
         a = actual
@@ -755,6 +767,15 @@ class assembly(abstract_topology):
         self.vel_equations = vel_rhs
         self.acc_equations = acc_rhs
         self.jac_equations = jacobian
+    
+    def _assemble_mass_matrix(self):
+        nodes  = self.nodes
+        n = 2
+        matrix = sm.MutableSparseMatrix(n,n,None)
+        mass_matricies = [nodes['ground']['obj'].M,nodes['ground']['obj'].J]
+        for i,m in enumerate(mass_matricies): matrix[i,i] = m
+        self.mass_equations = matrix
+
     
     def _assemble_forces_equations(self):
         node = 'ground'

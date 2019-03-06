@@ -474,6 +474,16 @@ class actuator(algebraic_constraints):
     @property
     def arguments_symbols(self):
         return super().arguments_symbols + [self.act_func]
+    
+    def _create_reactions_equalities(self):
+        self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e
+        jacobian_i = self.jacobian_i
+        Qi_eq = sm.Eq(self.Qi,-jacobian_i.T*self.L)
+        Fi_eq = sm.Eq(self.Fi,self.Qi[0:3,0])
+        Ti_e_eq = sm.Eq(self.Ti_e,self.Qi[3:7,0])
+        Ti_eq = sm.Eq(self.Ti,self.Ti_eq)
+        self._reactions_equalities = [Qi_eq,Fi_eq,Ti_e_eq,Ti_eq]
+
 
 ###############################################################################
 ###############################################################################
@@ -488,7 +498,7 @@ class joint_actuator(actuator):
             self._name = name
         else:
             super().__init__(name)
-
+    
 ###############################################################################
 ###############################################################################
 

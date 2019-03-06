@@ -74,6 +74,9 @@ class solver(object):
     def set_gen_velocities(self,qd):
         self.model.set_gen_velocities(qd)
     
+    def set_gen_accelerations(self,qdd):
+        self.model.set_gen_accelerations(qdd)
+    
     def eval_pos_eq(self):
         self.model.eval_pos_eq()
         data = self.model.pos_eq_blocks
@@ -189,14 +192,19 @@ class solver(object):
         lamda = solve(jac,-rhs)
         return lamda
     
-    def _eval_joints_reactions(self,i):
+    def _eval_reactions_eq(self,i):
         lamda = self._eval_lagrange_multipliers(i)
         self.model.set_lagrange_multipliers(lamda)
-        self.model.eval_joints_reactions()
+        self.model.eval_reactions_eq()
+        self.reactions[i] = self.model.reactions
     
-    def eval_joints_reactions(self):
-        pass            
-        
+    def eval_reactions_eq(self):
+        self.reactions = {}
+        for i in range(len(self._acc_history)):            
+            self.set_gen_coordinates(self._pos_history[i])
+            self.set_gen_velocities(self._vel_history[i])
+            self.set_gen_accelerations(self._acc_history[i])
+            self._eval_reactions_eq(i)
     
     def save_data(self,data,filename):
         pass

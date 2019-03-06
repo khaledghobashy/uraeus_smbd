@@ -25,6 +25,9 @@ class numerical_assembly(object):
         self.P_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
         self.Pg_ground = np.array([[1],[0],[0],[0]],dtype=np.float64)
 
+        self.M_ground = np.eye(3,dtype=np.float64)
+        self.J_ground = np.eye(4,dtype=np.float64)
+
         self.gr_rows = np.array([0,1])
         self.gr_jac_rows = np.array([0,0,1,1])
         self.gr_jac_cols = np.array([0,1,0,1])
@@ -132,6 +135,35 @@ class numerical_assembly(object):
         TR.Pd_vbs_ground = self.Pd_ground
 
     
+    def set_gen_accelerations(self,qdd):
+        self.Rdd_ground = qdd[0:3,0:1]
+        self.Pdd_ground = qdd[3:7,0:1]
+        offset = 7
+        for sub in self.subsystems:
+            qs = qdd[offset:sub.n+offset]
+            sub.set_gen_accelerations(qs)
+            offset += sub.n
+
+        SG.Rdd_vbs_ground = self.Rdd_ground
+        SG.Pdd_vbs_ground = self.Pdd_ground
+        TR.Rdd_vbs_rocker_1 = SG.Rdd_rbs_rocker_1
+        TR.Pdd_vbs_rocker_1 = SG.Pdd_rbs_rocker_1
+        TR.Rdd_vbs_rocker_2 = SG.Rdd_rbs_rocker_2
+        TR.Pdd_vbs_rocker_2 = SG.Pdd_rbs_rocker_2
+        TR.Rdd_vbs_rocker_3 = SG.Rdd_rbs_rocker_3
+        TR.Pdd_vbs_rocker_3 = SG.Pdd_rbs_rocker_3
+        TR.Rdd_vbs_ground = self.Rdd_ground
+        TR.Pdd_vbs_ground = self.Pdd_ground
+
+    
+    def set_lagrange_multipliers(self,Lambda):
+        offset = 7
+        for sub in self.subsystems:
+            l = Lambda[offset:sub.nc+offset]
+            sub.set_lagrange_multipliers(l)
+            offset += sub.nc
+
+    
     def eval_pos_eq(self):
 
         pos_ground_eq_blocks = [self.R_ground,(-1*self.Pg_ground + self.P_ground)]
@@ -170,4 +202,30 @@ class numerical_assembly(object):
             sub.eval_jac_eq()
         self.jac_eq_blocks = sum([s.jac_eq_blocks for s in self.subsystems],[])
         self.jac_eq_blocks += jac_ground_eq_blocks
-  
+
+    
+    def eval_mass_eq(self):
+
+        mass_ground_eq_blocks = [self.M_ground,self.J_ground]
+
+        for sub in self.subsystems:
+            sub.eval_mass_eq()
+        self.mass_eq_blocks = sum([s.mass_eq_blocks for s in self.subsystems],[])
+        self.mass_eq_blocks += mass_ground_eq_blocks
+
+    
+    def eval_frc_eq(self):
+
+        frc_ground_eq_blocks = [np.zeros((3,1),dtype=np.float64),np.zeros((4,1),dtype=np.float64)]
+
+        for sub in self.subsystems:
+            sub.eval_frc_eq()
+        self.frc_eq_blocks = sum([s.frc_eq_blocks for s in self.subsystems],[])
+        self.frc_eq_blocks += frc_ground_eq_blocks
+
+    
+    def eval_reactions_eq(self):
+
+        for sub in self.subsystems:
+            sub.eval_reactions_eq()
+        self.reactions = [s.reactions for s in self.subsystems]

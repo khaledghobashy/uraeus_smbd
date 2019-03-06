@@ -22,7 +22,7 @@ assm = f.numerical_assembly()
 assm.set_gen_coordinates(assm.q0)
 soln = solver(assm)
 
-time_array = np.linspace(0,1,150)
+time_array = np.linspace(0,0.5,50)
 soln.solve_kds(time_array)
 
 
@@ -31,4 +31,6 @@ plt.plot(time_array,soln.pos_dataframe['SG.rbs_table.z'])
 plt.grid()
 plt.show()
 
-soln.pos_dataframe.to_csv('stewart_sim_data_temp.csv',index=True)
+#soln.pos_dataframe.to_csv('stewart_sim_data_temp.csv',index=True)
+
+soln.eval_reactions_eq()
