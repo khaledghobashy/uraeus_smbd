@@ -855,10 +855,11 @@ class assembly_code_generator(template_code_generator):
         func_name = 'reactions'
         text = '''
                 def eval_{func_name}_eq(self):
-                    
+                    self.reactions = {}
                     for sub in self.subsystems:
-                        sub.eval_{func_name}_eq()
-                    self.reactions = [s.reactions for s in self.subsystems]
+                        sub.eval_reactions_eq()
+                        for k,v in sub.reactions :
+                            self.reactions['%s.%s'%(sub.prefix,k)] = v
                 '''
         indent = 4*' '
         text = text.expandtabs()

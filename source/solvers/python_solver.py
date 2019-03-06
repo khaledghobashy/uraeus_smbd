@@ -49,6 +49,7 @@ class solver(object):
         for name in sorted_coordinates.values():
             self.coordinates_indicies += ['%s.%s'%(name,i) 
             for i in ['x','y','z','e0','e1','e2','e3']]
+        
     
     def creat_results_dataframes(self):
         self.pos_dataframe = pd.DataFrame(
@@ -196,7 +197,6 @@ class solver(object):
         lamda = self._eval_lagrange_multipliers(i)
         self.model.set_lagrange_multipliers(lamda)
         self.model.eval_reactions_eq()
-        self.reactions[i] = self.model.reactions
     
     def eval_reactions_eq(self):
         self.reactions = {}
@@ -205,6 +205,18 @@ class solver(object):
             self.set_gen_velocities(self._vel_history[i])
             self.set_gen_accelerations(self._acc_history[i])
             self._eval_reactions_eq(i)
+            self.reactions[i] = self.model.reactions
+        
+        self.values = {i:np.concatenate(list(v.values())) for i,v in self.reactions.items()}
+        
+        self.reactions_indicies = []
+        for name in self.reactions[0].keys():
+            self.reactions_indicies += ['%s.%s'%(name,i) 
+            for i in ['x','y','z']]
+        self.reactions_dataframe = pd.DataFrame(
+                data = np.concatenate(list(self.values.values()),1).T,
+                columns = self.reactions_indicies)
+        
     
     def save_data(self,data,filename):
         pass

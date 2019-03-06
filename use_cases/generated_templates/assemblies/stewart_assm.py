@@ -225,7 +225,9 @@ class numerical_assembly(object):
 
     
     def eval_reactions_eq(self):
-
+        self.reactions = {}
         for sub in self.subsystems:
             sub.eval_reactions_eq()
-        self.reactions = [s.reactions for s in self.subsystems]
+            for k,v in sub.reactions.items():
+                self.reactions['%s%s'%(sub.prefix,k)] = v
+            
