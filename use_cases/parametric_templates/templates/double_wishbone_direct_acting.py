@@ -28,7 +28,7 @@ def create():
     
     template = template_based_topology(topology_name)
     
-    # Defining System Bodies
+    # Adding System Bodies
     template.add_body('uca',mirrored=True)
     template.add_body('lca',mirrored=True)
     template.add_body('upright',mirrored=True)
@@ -39,7 +39,7 @@ def create():
     template.add_body('steer',mirrored=True,virtual=True)
     template.add_body('chassis',virtual=True)
     
-    # Defining System Joints
+    # Adding System Joints
     template.add_joint(spherical,'uca_upright','rbr_uca','rbr_upright',mirrored=True)
     template.add_joint(spherical,'lca_upright','rbr_lca','rbr_upright',mirrored=True)
     template.add_joint(spherical,'tie_upright','rbr_tie_rod','rbr_upright',mirrored=True)
@@ -51,10 +51,12 @@ def create():
     template.add_joint(universal,'tie_steering','rbr_tie_rod','vbr_steer',mirrored=True)
     template.add_joint(cylinderical,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
 
-    # Defining System Forces
-    template.add_force(internal_force,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
+    # Adding System Forces
+#    template.add_force(internal_force,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
 
     template.assemble_model()
+    template.draw_constraints_topology()
+    print(template.runtime_symbols,'\n')
     template.save()
     
     numerical_code = template_code_generator(template)

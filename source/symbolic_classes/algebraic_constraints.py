@@ -86,6 +86,10 @@ class algebraic_constraints(object):
         return self._reactions_equalities
     
     @property
+    def reactions_symbols(self):
+        return [self.Fi,self.Ti]
+    
+    @property
     def arguments_symbols(self):
         return self._arguments
     @property
@@ -223,11 +227,13 @@ class algebraic_constraints(object):
         Ti_raw_name = '%sT_%s_%s'%format_
         Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
         self.Ti = matrix_symbol(Ti_raw_name,3,1,Ti_frm_name)
-        
         self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e - Skew(self.ui)*self.Fi
         
+        
     def _create_reactions_equalities(self):
-        Qi_eq = sm.Eq(self.Qi,-self.jacobian_i.T*self.L)
+#        jacobian_i = sm.MutableSparseMatrix(2,self.nve,[*self.jacobian_i.blocks])
+        jacobian_i = self.jacobian_i
+        Qi_eq = sm.Eq(self.Qi,-jacobian_i.T*self.L)
         Fi_eq = sm.Eq(self.Fi,self.Qi[0:3,0])
         Ti_e_eq = sm.Eq(self.Ti_e,self.Qi[3:7,0])
         Ti_eq = sm.Eq(self.Ti,self.Ti_eq)

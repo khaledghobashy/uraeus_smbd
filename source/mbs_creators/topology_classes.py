@@ -140,6 +140,15 @@ class abstract_topology(object):
             q_virtuals += [obj.R,obj.P,obj.Rd,obj.Pd]
         return q_virtuals
 
+    @property
+    def reactions_equalities(self):
+        eq = [self.edges[e]['obj'].reactions_equalities for e in self.constraints_graph.edges]
+        return sum(eq,[])
+    
+    @property
+    def reactions_symbols(self):
+        eq = [self.edges[e]['obj'].reactions_symbols for e in self.constraints_graph.edges]
+        return sum(eq,[])
     
     def draw_constraints_topology(self):
         plt.figure(figsize=(10,6))
@@ -180,6 +189,7 @@ class abstract_topology(object):
         try:
             return sum(container)
         except TypeError:
+            container  = itertools.chain(nodes_attr,edges_attr)
             return sum(container,[])
 
     def _set_global_frame(self):
@@ -220,7 +230,7 @@ class abstract_topology(object):
         l = []
         lamda = sm.MatrixSymbol('Lambda',self.nc,1)
         i = 0
-        edges = self.edges
+        edges = self.constraints_graph.edges
         for e in itertools.filterfalse(self._is_virtual_edge,edges):
             obj = edges[e]['obj']
             nc = obj.nc
@@ -241,7 +251,6 @@ class abstract_topology(object):
         body_instance = node_class(n)
         nodes[n].update(self._obj_attr_dict(body_instance))
         if nodes[n]['virtual']:
-            nodes[n]['arguments_symbols'] = []
             nodes[n]['arguments_symbols'] = []
             nodes[n]['constants_symbols'] = []
             nodes[n]['constants_symbolic_expr'] = []
@@ -272,7 +281,7 @@ class abstract_topology(object):
 
     def _assemble_constraints_equations(self):
         
-        edges    = self.edges
+        edges    = self.constraints_graph.edges
         nodes    = self.nodes
         node_index  = self.nodes_indicies
 
@@ -283,10 +292,10 @@ class abstract_topology(object):
         vel_rhs   = sm.MutableSparseMatrix(nve,1,None)
         acc_rhs   = sm.MutableSparseMatrix(nve,1,None)
         jacobian  = sm.MutableSparseMatrix(nve,cols,None)
-        
+                
         row_ind = 0
         for e in edges:
-            if self._is_virtual_edge(e) or self._is_force_edge(e):
+            if self._is_virtual_edge(e):
                 continue
             eo  = edges[e]['obj']
             u,v = e[:-1]

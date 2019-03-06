@@ -91,6 +91,14 @@ class solver(object):
         data = self.model.acc_eq_blocks
         mat = self.assemble_equations(data)
         return mat
+            
+    def eval_jac_eq(self):
+        self.model.eval_jac_eq()
+        rows = self.model.jac_rows
+        cols = self.model.jac_cols
+        data = self.model.jac_eq_blocks
+        mat = scipy_matrix_assembler(data,rows,cols,self.jac_shape)
+        return mat
     
     def eval_mass_eq(self):
         self.model.eval_mass_eq()
@@ -99,13 +107,11 @@ class solver(object):
         rows = cols = np.arange(n)
         mat = scipy_matrix_assembler(data,rows,cols,(n,n))
         return mat
-        
-    def eval_jac_eq(self):
-        self.model.eval_jac_eq()
-        rows = self.model.jac_rows
-        cols = self.model.jac_cols
-        data = self.model.jac_eq_blocks
-        mat = scipy_matrix_assembler(data,rows,cols,self.jac_shape)
+    
+    def eval_frc_eq(self):
+        self.model.eval_frc_eq()
+        data = self.model.frc_eq_blocks
+        mat = self.assemble_equations(data)
         return mat
     
         
@@ -171,6 +177,26 @@ class solver(object):
             i+=1
         
         self.creat_results_dataframes()
+        
+    
+    def _eval_lagrange_multipliers(self,i):
+        applied_forces = self.eval_frc_eq()
+        mass_matrix = self.eval_mass_eq()
+        qdd = self._acc_history[i]
+        inertia_forces = mass_matrix.dot(qdd)
+        rhs = applied_forces - inertia_forces
+        jac = self.eval_jac_eq()
+        lamda = solve(jac,-rhs)
+        return lamda
+    
+    def _eval_joints_reactions(self,i):
+        lamda = self._eval_lagrange_multipliers(i)
+        self.model.set_lagrange_multipliers(lamda)
+        self.model.eval_joints_reactions()
+    
+    def eval_joints_reactions(self):
+        pass            
+        
     
     def save_data(self,data,filename):
         pass

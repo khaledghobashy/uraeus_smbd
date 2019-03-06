@@ -191,8 +191,8 @@ class ground(body):
                                                    [zero_matrix(4,3),sm.Identity(4)]])
     
     @property
-    def arguments(self):
-        return super().arguments + [self.P_ground]
+    def arguments_symbols(self):
+        return super().arguments_symbols + [self.P_ground]
 
 ###############################################################################
 ###############################################################################

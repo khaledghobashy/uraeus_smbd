@@ -5,7 +5,8 @@ import pandas as pd
 from scipy.misc import derivative
 from numpy import cos, sin
 from numpy.linalg import multi_dot
-from source.cython_definitions.matrix_funcs import A, B, triad                
+from source.cython_definitions.matrix_funcs import A, B, G, E, triad, skew_matrix as skew
+from source.solvers.py_numerical_functions import mirrored
 
 
 
@@ -67,10 +68,10 @@ class topology(object):
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
-        self.vbs_rocker_2 = indicies_map[interface_map[p+'vbs_rocker_2']]
-        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbs_rocker_1 = indicies_map[interface_map[p+'vbs_rocker_1']]
+        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbs_rocker_3 = indicies_map[interface_map[p+'vbs_rocker_3']]
+        self.vbs_rocker_2 = indicies_map[interface_map[p+'vbs_rocker_2']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset
@@ -87,9 +88,7 @@ class topology(object):
     def eval_constants(self):
         config = self.config
 
-#        self.F_vbs_rocker_1_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_1]],dtype=np.float64)
-#        self.F_vbs_rocker_2_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_2]],dtype=np.float64)
-#        self.F_vbs_rocker_3_gravity = np.array([[0], [0], [9810.0*m_vbs_rocker_3]],dtype=np.float64)
+    
 
         c0 = triad(config.ax1_jcs_rev_1)
         c1 = A(config.P_vbs_ground).T
@@ -110,6 +109,16 @@ class topology(object):
     
     def set_gen_velocities(self,qd):
         pass
+
+    
+    def set_gen_accelerations(self,qdd):
+        pass
+
+    
+    def set_lagrange_multipliers(self,Lambda):
+        self.L_jcs_rev_1 = Lambda[0:1,0:1]
+        self.L_jcs_rev_2 = Lambda[1:2,0:1]
+        self.L_jcs_rev_3 = Lambda[2:3,0:1]
 
     
     def eval_pos_eq(self):
@@ -190,5 +199,38 @@ class topology(object):
         j17 = A(j14).T
 
         self.jac_eq_blocks = [j0,multi_dot([(cos(config.AF_jcs_rev_1(t))*multi_dot([j5.T,j7]) + sin(config.AF_jcs_rev_1(t))*-1*multi_dot([j6.T,j7])),B(j2,j1)]),j0,multi_dot([j1.T,j3,(cos(config.AF_jcs_rev_1(t))*B(j4,j5) + sin(config.AF_jcs_rev_1(t))*-1*B(j4,j6))]),j0,multi_dot([(cos(config.AF_jcs_rev_2(t))*multi_dot([j10.T,j12]) + sin(config.AF_jcs_rev_2(t))*-1*multi_dot([j11.T,j12])),B(j2,j8)]),j0,multi_dot([j8.T,j3,(cos(config.AF_jcs_rev_2(t))*B(j9,j10) + sin(config.AF_jcs_rev_2(t))*-1*B(j9,j11))]),j0,multi_dot([(cos(config.AF_jcs_rev_3(t))*multi_dot([j15.T,j17]) + sin(config.AF_jcs_rev_3(t))*-1*multi_dot([j16.T,j17])),B(j2,j13)]),j0,multi_dot([j13.T,j3,(cos(config.AF_jcs_rev_3(t))*B(j14,j15) + sin(config.AF_jcs_rev_3(t))*-1*B(j14,j16))])]
-  
+
     
+    def eval_mass_eq(self):
+        config = self.config
+        t = self.t
+
+    
+
+        self.mass_eq_blocks = []
+
+    
+    def eval_frc_eq(self):
+        config = self.config
+        t = self.t
+
+    
+
+        self.frc_eq_blocks = []
+
+    
+    def eval_reactions_equations(self):
+
+        Q_vbs_rocker_1_jcs_rev_1 = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(AF_jcs_rev_1(t))*B(self.P_vbs_rocker_1,self.Mbar_vbs_rocker_1_jcs_rev_1[:,0:1]).T + (cos(AF_jcs_rev_1(t))*B(self.P_vbs_rocker_1,self.Mbar_vbs_rocker_1_jcs_rev_1[:,1:2])).T),A(self.P_vbs_ground),self.Mbar_vbs_ground_jcs_rev_1[:,0:1]])]]),self.L_jcs_rev_1])
+        self.F_vbs_rocker_1_jcs_rev_1 = Q_vbs_rocker_1_jcs_rev_1[0:3,0:1]
+        Te_vbs_rocker_1_jcs_rev_1 = Q_vbs_rocker_1_jcs_rev_1[3:7,0:1]
+        self.T_vbs_rocker_1_jcs_rev_1 = (-1*multi_dot([skew(multi_dot([A(self.P_vbs_rocker_1),ubar_vbs_rocker_1_jcs_rev_1])),self.F_vbs_rocker_1_jcs_rev_1]) + 0.5*multi_dot([E(self.P_vbs_rocker_1),Te_vbs_rocker_1_jcs_rev_1]))
+        Q_vbs_rocker_2_jcs_rev_2 = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(AF_jcs_rev_2(t))*B(self.P_vbs_rocker_2,self.Mbar_vbs_rocker_2_jcs_rev_2[:,0:1]).T + (cos(AF_jcs_rev_2(t))*B(self.P_vbs_rocker_2,self.Mbar_vbs_rocker_2_jcs_rev_2[:,1:2])).T),A(self.P_vbs_ground),self.Mbar_vbs_ground_jcs_rev_2[:,0:1]])]]),self.L_jcs_rev_2])
+        self.F_vbs_rocker_2_jcs_rev_2 = Q_vbs_rocker_2_jcs_rev_2[0:3,0:1]
+        Te_vbs_rocker_2_jcs_rev_2 = Q_vbs_rocker_2_jcs_rev_2[3:7,0:1]
+        self.T_vbs_rocker_2_jcs_rev_2 = (-1*multi_dot([skew(multi_dot([A(self.P_vbs_rocker_2),ubar_vbs_rocker_2_jcs_rev_2])),self.F_vbs_rocker_2_jcs_rev_2]) + 0.5*multi_dot([E(self.P_vbs_rocker_2),Te_vbs_rocker_2_jcs_rev_2]))
+        Q_vbs_rocker_3_jcs_rev_3 = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(AF_jcs_rev_3(t))*B(self.P_vbs_rocker_3,self.Mbar_vbs_rocker_3_jcs_rev_3[:,0:1]).T + (cos(AF_jcs_rev_3(t))*B(self.P_vbs_rocker_3,self.Mbar_vbs_rocker_3_jcs_rev_3[:,1:2])).T),A(self.P_vbs_ground),self.Mbar_vbs_ground_jcs_rev_3[:,0:1]])]]),self.L_jcs_rev_3])
+        self.F_vbs_rocker_3_jcs_rev_3 = Q_vbs_rocker_3_jcs_rev_3[0:3,0:1]
+        Te_vbs_rocker_3_jcs_rev_3 = Q_vbs_rocker_3_jcs_rev_3[3:7,0:1]
+        self.T_vbs_rocker_3_jcs_rev_3 = (-1*multi_dot([skew(multi_dot([A(self.P_vbs_rocker_3),ubar_vbs_rocker_3_jcs_rev_3])),self.F_vbs_rocker_3_jcs_rev_3]) + 0.5*multi_dot([E(self.P_vbs_rocker_3),Te_vbs_rocker_3_jcs_rev_3]))
+

@@ -40,6 +40,11 @@ class abstract_generator(object):
         self.gen_accelerations_exp  = self.mbs.mapped_gen_accelerations
         self.gen_accelerations_sym  = [printer._print(exp.lhs) for exp in self.gen_accelerations_exp]
         
+        self.lagrange_multipliers_exp  = self.mbs.mapped_lagrange_multipliers
+        self.lagrange_multipliers_sym  = [printer._print(exp.lhs) for exp in self.lagrange_multipliers_exp]
+
+        self.joint_reactions_sym = [printer._print(exp) for exp in self.mbs.reactions_symbols]
+
         self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.virtual_coordinates]
         
         self.config_vars = [printer._print(i) for i in self.mbs.param_config.arguments_symbols]
@@ -273,7 +278,7 @@ class template_code_generator(abstract_generator):
                 from scipy.misc import derivative
                 from numpy import cos, sin
                 from numpy.linalg import multi_dot
-                from source.cython_definitions.matrix_funcs import A, B, G, E, triad, skew
+                from source.cython_definitions.matrix_funcs import A, B, G, E, triad, skew_matrix as skew
                 from source.solvers.py_numerical_functions import mirrored
                 '''
         text = text.expandtabs()
@@ -400,6 +405,9 @@ class template_code_generator(abstract_generator):
     
     def write_accelerations_setter(self):
         return self._write_x_setter('gen_accelerations','qdd')
+    
+    def write_lagrange_setter(self):
+        return self._write_x_setter('lagrange_multipliers','Lambda')
         
     def write_pos_equations(self):
         return self._write_x_equations('pos')
@@ -418,6 +426,38 @@ class template_code_generator(abstract_generator):
     
     def write_mass_equations(self):
         return self._write_x_equations('mass')
+    
+    def write_reactions_equations(self):
+        text = '''
+                def eval_reactions_equations(self):
+
+                    {equations_text}
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        indent = 4*' '
+        p = self.printer
+        
+        equations = self.mbs.reactions_equalities
+        equations_text = '\n'.join([p._print(expr) for expr in equations])
+        
+        self_pattern = itertools.chain(self.runtime_symbols,
+                                       self.constants_symbols,
+                                       self.joint_reactions_sym,
+                                       self.lagrange_multipliers_sym)
+        self_pattern = '|'.join(self_pattern)
+        self_inserter = self._insert_string('self.')
+        equations_text = re.sub(self_pattern,self_inserter,equations_text)
+                
+        equations_text = textwrap.indent(equations_text,indent).lstrip() 
+        
+#        cse_exp_txt = 'self.%s_eq_blocks = %s'%(xstring,cse_exp_txt.lstrip())
+        
+        text = text.format(equations_text = equations_text)
+        text = textwrap.indent(text,indent)
+        return text
+
 
     def write_system_class(self):
         text = '''
@@ -427,12 +467,14 @@ class template_code_generator(abstract_generator):
                     {coord_setter}
                     {veloc_setter}
                     {accel_setter}
+                    {lagrg_setter}
                     {eval_pos}
                     {eval_vel}
                     {eval_acc}
                     {eval_jac}
                     {eval_mass}
                     {eval_frc}
+                    {eval_rct}
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -443,6 +485,7 @@ class template_code_generator(abstract_generator):
         coord_setter = self.write_coordinates_setter()
         veloc_setter = self.write_velocities_setter()
         accel_setter = self.write_accelerations_setter()
+        lagrg_setter = self.write_lagrange_setter()
         
         eval_pos = self.write_pos_equations()
         eval_vel = self.write_vel_equations()
@@ -450,6 +493,7 @@ class template_code_generator(abstract_generator):
         eval_jac = self.write_jac_equations()
         eval_frc = self.write_forces_equations()
         eval_mass = self.write_mass_equations()
+        eval_rct = self.write_reactions_equations()
         
         text = text.format(class_init = class_init,
                            assembler = assembler,
@@ -459,10 +503,12 @@ class template_code_generator(abstract_generator):
                            eval_acc = eval_acc,
                            eval_jac = eval_jac,
                            eval_frc = eval_frc,
+                           eval_rct = eval_rct,
                            eval_mass = eval_mass,
                            coord_setter = coord_setter,
                            veloc_setter = veloc_setter,
-                           accel_setter = accel_setter)
+                           accel_setter = accel_setter,
+                           lagrg_setter = lagrg_setter)
         return text
     
     
@@ -575,78 +621,6 @@ class assembly_code_generator(template_code_generator):
                 self.templates.append(topology_name)
                 self.configs.append(cfg_file_name)
     
-    def _write_x_setter(self,func_name,var='q'):
-        text = '''
-                def set_gen_{func_name}(self,{var}):
-                    {ground_map}
-                    offset = 7
-                    for sub in self.subsystems:
-                        qs = {var}[offset:sub.n+offset]
-                        sub.set_gen_{func_name}(qs)
-                        offset += sub.n
-                        
-                    {virtuals_map}
-               '''
-        indent = 4*' '
-        p = self.printer
-        text = text.expandtabs()
-        text = textwrap.dedent(text)
-        
-        self_inserter = self._insert_string('self.')
-        
-        ground_map = getattr(self.mbs,'mapped_gen_%s'%func_name)[0:2]
-        pattern = '|'.join([p._print(i.lhs) for i in ground_map])
-        ground_map = '\n'.join([p._print(i) for i in ground_map])
-        ground_map = re.sub(pattern,self_inserter,ground_map)
-        ground_map = textwrap.indent(ground_map,indent).lstrip()
-        
-        virtuals_map = getattr(self.mbs,'mapped_vir_%s'%func_name)
-        pattern1 = '|'.join([p._print(i.lhs) for i in virtuals_map])
-        pattern2 = '|'.join([p._print(i.rhs) for i in virtuals_map])
-        sub = self._insert_string('')
-        virtuals_map = '\n'.join([str(p._print(i)) for i in virtuals_map])
-        virtuals_map = re.sub(pattern,self_inserter,virtuals_map)
-        virtuals_map = re.sub(pattern1,sub,virtuals_map)
-        virtuals_map = re.sub(pattern2,sub,virtuals_map)
-        virtuals_map = textwrap.indent(virtuals_map,indent).lstrip()
-                
-        text = text.format(func_name = func_name,
-                           var = var,
-                           ground_map = ground_map,
-                           virtuals_map = virtuals_map)
-        text = textwrap.indent(text,indent)
-        return text
-    
-    def _write_x_equations(self,func_name):
-        text = '''
-                def eval_{func_name}_eq(self):
-
-                    {ground_data}
-                    
-                    for sub in self.subsystems:
-                        sub.eval_{func_name}_eq()
-                    self.{func_name}_eq_blocks = sum([s.{func_name}_eq_blocks for s in self.subsystems],[])
-                    self.{func_name}_eq_blocks += {func_name}_ground_eq_blocks
-                '''
-        indent = 4*' '
-        p = self.printer
-        text = text.expandtabs()
-        text = textwrap.dedent(text)
-        
-        matrix = p._print(getattr(self.mbs,'%s_equations'%func_name)).split('\n')
-        rows,cols,ground_data = matrix
-        
-        pattern = '|'.join([p._print(i) for i in self.mbs.nodes['ground']['arguments']])
-        self_inserter = self._insert_string('self.')
-        ground_data = re.sub(pattern,self_inserter,ground_data)
-                
-        ground_data = textwrap.indent(ground_data,indent).lstrip()
-        ground_data = '%s_ground_eq_blocks = %s'%(func_name,ground_data.lstrip())
-        
-        text = text.format(func_name = func_name,
-                           ground_data = ground_data)
-        text = textwrap.indent(text,indent)
-        return text
     
     def write_imports(self):
         text = '''
@@ -820,6 +794,12 @@ class assembly_code_generator(template_code_generator):
     
     def write_velocities_setter(self):
         return self._write_x_setter('velocities','qd')
+    
+    def write_accelerations_setter(self):
+        return self._write_x_setter('gen_accelerations','qdd')
+    
+    def write_lagrange_setter(self):
+        return self._write_x_setter('lagrange_multipliers','Lambda')
         
     def write_pos_equations(self):
         return self._write_x_equations('pos')
@@ -833,6 +813,28 @@ class assembly_code_generator(template_code_generator):
     def write_jac_equations(self):
         return self._write_x_equations('jac')
     
+    def write_forces_equations(self):
+        return self._write_x_equations('frc')
+    
+    def write_mass_equations(self):
+        return self._write_x_equations('mass')
+    
+    def write_reactions_equations(self):
+        func_name = 'reactions_equations'
+        text = '''
+                def eval_{func_name}_eq(self):
+                    
+                    for sub in self.subsystems:
+                        sub.eval_{func_name}_eq()
+                '''
+        indent = 4*' '
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        text = text.format(func_name = func_name)
+        text = textwrap.indent(text,indent)
+        return text
+    
     
     def write_system_class(self):
         text = '''
@@ -842,10 +844,15 @@ class assembly_code_generator(template_code_generator):
                     {constants}
                     {coord_setter}
                     {veloc_setter}
+                    {accel_setter}
+                    {lagrg_setter}
                     {eval_pos}
                     {eval_vel}
                     {eval_acc}
-                    {eval_jac}  
+                    {eval_jac}
+                    {eval_mass}
+                    {eval_frc}
+                    {eval_rct}
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -856,11 +863,16 @@ class assembly_code_generator(template_code_generator):
         constants = self.write_constants_evaluator()
         coord_setter = self.write_coordinates_setter()
         veloc_setter = self.write_velocities_setter()
+        accel_setter = self.write_accelerations_setter()
+        lagrg_setter = self.write_lagrange_setter()
         
         eval_pos = self.write_pos_equations()
         eval_vel = self.write_vel_equations()
         eval_acc = self.write_acc_equations()
         eval_jac = self.write_jac_equations()
+        eval_frc = self.write_forces_equations()
+        eval_mass = self.write_mass_equations()
+        eval_rct = self.write_reactions_equations()
         
         text = text.format(class_init = class_init,
                            class_helpers = class_helpers,
@@ -870,8 +882,13 @@ class assembly_code_generator(template_code_generator):
                            eval_vel = eval_vel,
                            eval_acc = eval_acc,
                            eval_jac = eval_jac,
+                           eval_frc = eval_frc,
+                           eval_rct = eval_rct,
+                           eval_mass = eval_mass,
                            coord_setter = coord_setter,
-                           veloc_setter = veloc_setter)
+                           veloc_setter = veloc_setter,
+                           accel_setter = accel_setter,
+                           lagrg_setter = lagrg_setter)
         return text
     
     def write_code_file(self):
@@ -885,3 +902,77 @@ class assembly_code_generator(template_code_generator):
         with open('%s.py'%self.mbs.name,'w') as file:
             file.write(text)
 
+    ###########################################################################
+    def _write_x_setter(self,func_name,var='q'):
+        text = '''
+                def set_gen_{func_name}(self,{var}):
+                    {ground_map}
+                    offset = 7
+                    for sub in self.subsystems:
+                        qs = {var}[offset:sub.n+offset]
+                        sub.set_gen_{func_name}(qs)
+                        offset += sub.n
+                        
+                    {virtuals_map}
+               '''
+        indent = 4*' '
+        p = self.printer
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        self_inserter = self._insert_string('self.')
+        
+        ground_map = getattr(self.mbs,'mapped_gen_%s'%func_name)[0:2]
+        pattern = '|'.join([p._print(i.lhs) for i in ground_map])
+        ground_map = '\n'.join([p._print(i) for i in ground_map])
+        ground_map = re.sub(pattern,self_inserter,ground_map)
+        ground_map = textwrap.indent(ground_map,indent).lstrip()
+        
+        virtuals_map = getattr(self.mbs,'mapped_vir_%s'%func_name)
+        pattern1 = '|'.join([p._print(i.lhs) for i in virtuals_map])
+        pattern2 = '|'.join([p._print(i.rhs) for i in virtuals_map])
+        sub = self._insert_string('')
+        virtuals_map = '\n'.join([str(p._print(i)) for i in virtuals_map])
+        virtuals_map = re.sub(pattern,self_inserter,virtuals_map)
+        virtuals_map = re.sub(pattern1,sub,virtuals_map)
+        virtuals_map = re.sub(pattern2,sub,virtuals_map)
+        virtuals_map = textwrap.indent(virtuals_map,indent).lstrip()
+                
+        text = text.format(func_name = func_name,
+                           var = var,
+                           ground_map = ground_map,
+                           virtuals_map = virtuals_map)
+        text = textwrap.indent(text,indent)
+        return text
+    
+    def _write_x_equations(self,func_name):
+        text = '''
+                def eval_{func_name}_eq(self):
+
+                    {ground_data}
+                    
+                    for sub in self.subsystems:
+                        sub.eval_{func_name}_eq()
+                    self.{func_name}_eq_blocks = sum([s.{func_name}_eq_blocks for s in self.subsystems],[])
+                    self.{func_name}_eq_blocks += {func_name}_ground_eq_blocks
+                '''
+        indent = 4*' '
+        p = self.printer
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        matrix = p._print(getattr(self.mbs,'%s_equations'%func_name)).split('\n')
+        rows,cols,ground_data = matrix
+        
+        pattern = '|'.join([p._print(i) for i in self.mbs.nodes['ground']['arguments_symbols']])
+        self_inserter = self._insert_string('self.')
+        ground_data = re.sub(pattern,self_inserter,ground_data)
+                
+        ground_data = textwrap.indent(ground_data,indent).lstrip()
+        ground_data = '%s_ground_eq_blocks = %s'%(func_name,ground_data.lstrip())
+        
+        text = text.format(func_name = func_name,
+                           ground_data = ground_data)
+        text = textwrap.indent(text,indent)
+        return text
+    
