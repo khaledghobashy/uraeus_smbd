@@ -16,8 +16,12 @@ class configuration(object):
     def __init__(self):
         self.Rd_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_coupler = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rdd_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
+        self.Pdd_rbs_coupler = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rdd_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
+        self.Pdd_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.ax1_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_rocker_chassis = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_rocker_coupler = np.array([[0], [0], [0]],dtype=np.float64)
@@ -63,6 +67,8 @@ class configuration(object):
         self.P_rbl_rocker = self.gml_rocker.P
         self.Rd_rbl_rocker = mirrored(self.Rd_rbr_rocker)
         self.Pd_rbl_rocker = mirrored(self.Pd_rbr_rocker)
+        self.Rdd_rbl_rocker = mirrored(self.Rdd_rbr_rocker)
+        self.Pdd_rbl_rocker = mirrored(self.Pdd_rbr_rocker)
         self.m_rbl_rocker = self.gml_rocker.m
         self.Jbar_rbl_rocker = self.gml_rocker.J
         self.ax1_jcr_rocker_ch = oriented(self.hpr_rocker_coupler,self.hpl_rocker_coupler,self.hpr_rocker_chassis)

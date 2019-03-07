@@ -190,7 +190,7 @@ class solver(object):
         inertia_forces = mass_matrix.dot(qdd)
         rhs = applied_forces - inertia_forces
         jac = self.eval_jac_eq()
-        lamda = solve(jac,-rhs)
+        lamda = solve(jac.T,-rhs)
         return lamda
     
     def _eval_reactions_eq(self,i):

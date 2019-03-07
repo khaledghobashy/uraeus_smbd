@@ -52,11 +52,10 @@ def create():
     template.add_joint(cylinderical,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
 
     # Adding System Forces
-#    template.add_force(internal_force,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
+    template.add_force(internal_force,'strut','rbr_upper_strut','rbr_lower_strut',mirrored=True)
 
     template.assemble_model()
     template.draw_constraints_topology()
-    print(template.runtime_symbols,'\n')
     template.save()
     
     numerical_code = template_code_generator(template)

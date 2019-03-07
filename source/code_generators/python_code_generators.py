@@ -306,10 +306,15 @@ class template_code_generator(abstract_generator):
                         self.ncols = 2*{nodes}
                         self.rows = np.arange(self.nrows)
                         
-                        self.jac_rows = {jac_rows}                        
+                        self.jac_rows = {jac_rows}
+                        self.joints_reactions_indicies = {reactions}
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
+        
+        reactions = ','.join(['%r'%i for i in self.joint_reactions_sym])
+        reactions = '[%s]'%reactions
+
         
         text = text.format(rows = self.pos_eq_rows,
                            jac_rows = self.jac_eq_rows,
@@ -317,7 +322,8 @@ class template_code_generator(abstract_generator):
                            nve = self.mbs.nve,
                            n = self.mbs.n,
                            nc = self.mbs.nc,
-                           nodes = len(self.mbs.nodes))
+                           nodes = len(self.mbs.nodes),
+                           reactions = reactions)
         return text
 
     def write_template_assembler(self):
@@ -437,7 +443,7 @@ class template_code_generator(abstract_generator):
                     
                     {equations_text}
                     
-                    self.reactions = {results_dict}
+                    self.reactions = {reactions}
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -463,11 +469,11 @@ class template_code_generator(abstract_generator):
                 
         equations_text = textwrap.indent(equations_text,indent).lstrip() 
         
-        results_dict = ','.join(['%r:self.%s'%(i,i) for i in self.joint_reactions_sym])
-        results_dict = '{%s}'%results_dict
+        reactions = ','.join(['%r:self.%s'%(i,i) for i in self.joint_reactions_sym])
+        reactions = '{%s}'%reactions
         
         text = text.format(equations_text = equations_text,
-                           results_dict = results_dict)
+                           reactions = reactions)
         text = textwrap.indent(text,indent)
         return text
 
@@ -855,11 +861,11 @@ class assembly_code_generator(template_code_generator):
         func_name = 'reactions'
         text = '''
                 def eval_{func_name}_eq(self):
-                    self.reactions = {}
+                    self.reactions = {{}}
                     for sub in self.subsystems:
                         sub.eval_reactions_eq()
-                        for k,v in sub.reactions :
-                            self.reactions['%s.%s'%(sub.prefix,k)] = v
+                        for k,v in sub.reactions.items():
+                            self.reactions['%s%s'%(sub.prefix,k)] = v
                 '''
         indent = 4*' '
         text = text.expandtabs()

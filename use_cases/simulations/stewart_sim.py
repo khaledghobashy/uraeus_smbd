@@ -46,6 +46,7 @@ plt.show()
 
 soln.pos_dataframe.to_csv('stewart_sim_data_temp.csv',index=True)
 
+# Solving For Joints Reactions
 soln.eval_reactions_eq()
 
 plt.figure(figsize=(8,4))

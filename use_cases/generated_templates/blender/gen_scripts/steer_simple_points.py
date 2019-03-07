@@ -8,6 +8,7 @@ from source.post_processors.blender.objects import (cylinder_geometry,
                                                     triangular_prism)
 
 
+
 class blender_scene(object):
 
     def __init__(self,prefix=''):
@@ -15,11 +16,11 @@ class blender_scene(object):
         scale = 1/20
         self.scale = scale
 
+        self.hpr_rocker_chassis = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hpr_rocker_coupler = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.s_links_ro = 1
-        self.hpr_rocker_chassis = np.array([[0], [0], [0]],dtype=np.float64)
 
-        self._inputs = ['hpr_rocker_coupler', 's_links_ro', 'hpr_rocker_chassis']
+        self._inputs = ['hpr_rocker_chassis', 'hpr_rocker_coupler', 's_links_ro']
         self.geometries = {'gmr_rocker': 'rbr_rocker', 'gml_rocker': 'rbl_rocker', 'gms_coupler': 'rbs_coupler'}
 
     
@@ -60,8 +61,8 @@ class blender_scene(object):
         self.hpl_rocker_coupler = mirrored(self.hpr_rocker_coupler)
         self.hpl_rocker_chassis = mirrored(self.hpr_rocker_chassis)
         self.gmr_rocker = cylinder_geometry(self.hpr_rocker_chassis,self.hpr_rocker_coupler,self.s_links_ro)
-        self.gms_coupler = cylinder_geometry(self.hpr_rocker_coupler,self.hpl_rocker_coupler,self.s_links_ro)
         self.gml_rocker = cylinder_geometry(self.hpl_rocker_chassis,self.hpl_rocker_coupler,self.s_links_ro)
+        self.gms_coupler = cylinder_geometry(self.hpr_rocker_coupler,self.hpl_rocker_coupler,self.s_links_ro)
 
         self.setup_VIEW_3D()
 
@@ -74,4 +75,3 @@ class blender_scene(object):
                         override = {'area': area, 'region': region, 'edit_object': bpy.context.edit_object}
                         bpy.ops.view3d.view_all(override)
 
-    

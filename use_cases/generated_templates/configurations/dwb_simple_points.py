@@ -16,18 +16,32 @@ class configuration(object):
     def __init__(self):
         self.Rd_rbr_uca = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbr_uca = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rdd_rbr_uca = np.array([[0], [0], [0]],dtype=np.float64)
+        self.Pdd_rbr_uca = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbr_lca = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbr_lca = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rdd_rbr_lca = np.array([[0], [0], [0]],dtype=np.float64)
+        self.Pdd_rbr_lca = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbr_upright = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbr_upright = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rdd_rbr_upright = np.array([[0], [0], [0]],dtype=np.float64)
+        self.Pdd_rbr_upright = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbr_upper_strut = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbr_upper_strut = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rdd_rbr_upper_strut = np.array([[0], [0], [0]],dtype=np.float64)
+        self.Pdd_rbr_upper_strut = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbr_lower_strut = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbr_lower_strut = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rdd_rbr_lower_strut = np.array([[0], [0], [0]],dtype=np.float64)
+        self.Pdd_rbr_lower_strut = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbr_tie_rod = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbr_tie_rod = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rdd_rbr_tie_rod = np.array([[0], [0], [0]],dtype=np.float64)
+        self.Pdd_rbr_tie_rod = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbr_hub = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbr_hub = np.array([[0], [0], [0], [0]],dtype=np.float64)
+        self.Rdd_rbr_hub = np.array([[0], [0], [0]],dtype=np.float64)
+        self.Pdd_rbr_hub = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.ax1_jcr_uca_upright = np.array([[0], [0], [0]],dtype=np.float64)
         self.ax1_jcr_lca_upright = np.array([[0], [0], [0]],dtype=np.float64)
         self.ax1_jcr_hub_bearing = np.array([[0], [0], [0]],dtype=np.float64)
@@ -35,6 +49,9 @@ class configuration(object):
         self.pt2_far_strut = np.array([[0], [0], [0]],dtype=np.float64)
         self.Fs_far_strut = lambda t : 0
         self.Fd_far_strut = lambda t : 0
+        self.far_strut_FL = np.array([[0]],dtype=np.float64)
+        self.T_rbr_upper_strut_far_strut = np.array([[0], [0], [0]],dtype=np.float64)
+        self.T_rbr_lower_strut_far_strut = np.array([[0], [0], [0]],dtype=np.float64)
         self.ax1_jcr_tie_upright = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_ucaf = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_ucar = np.array([[0], [0], [0]],dtype=np.float64)
@@ -47,10 +64,10 @@ class configuration(object):
         self.hpr_strut_chassis = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_strut_lca = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_wc = np.array([[0], [0], [0]],dtype=np.float64)
-        self.s_links_ro = 1
-        self.s_strut_outer = 1
-        self.s_strut_inner = 1
-        self.s_thickness = 1
+        self.s_links_ro = 20
+        self.s_strut_outer = 50
+        self.s_strut_inner = 40
+        self.s_thickness = 15
         self.s_tire_radius = 1                       
 
     
@@ -112,6 +129,8 @@ class configuration(object):
         self.P_rbl_uca = self.gml_uca.P
         self.Rd_rbl_uca = mirrored(self.Rd_rbr_uca)
         self.Pd_rbl_uca = mirrored(self.Pd_rbr_uca)
+        self.Rdd_rbl_uca = mirrored(self.Rdd_rbr_uca)
+        self.Pdd_rbl_uca = mirrored(self.Pdd_rbr_uca)
         self.m_rbl_uca = self.gml_uca.m
         self.Jbar_rbl_uca = self.gml_uca.J
         self.R_rbr_lca = self.gmr_lca.R
@@ -122,6 +141,8 @@ class configuration(object):
         self.P_rbl_lca = self.gml_lca.P
         self.Rd_rbl_lca = mirrored(self.Rd_rbr_lca)
         self.Pd_rbl_lca = mirrored(self.Pd_rbr_lca)
+        self.Rdd_rbl_lca = mirrored(self.Rdd_rbr_lca)
+        self.Pdd_rbl_lca = mirrored(self.Pdd_rbr_lca)
         self.m_rbl_lca = self.gml_lca.m
         self.Jbar_rbl_lca = self.gml_lca.J
         self.P_rbr_upright = self.gmr_upright.P
@@ -130,6 +151,8 @@ class configuration(object):
         self.P_rbl_upright = self.gml_upright.P
         self.Rd_rbl_upright = mirrored(self.Rd_rbr_upright)
         self.Pd_rbl_upright = mirrored(self.Pd_rbr_upright)
+        self.Rdd_rbl_upright = mirrored(self.Rdd_rbr_upright)
+        self.Pdd_rbl_upright = mirrored(self.Pdd_rbr_upright)
         self.m_rbl_upright = self.gml_upright.m
         self.Jbar_rbl_upright = self.gml_upright.J
         self.R_rbr_upper_strut = self.gmr_upper_strut.R
@@ -140,6 +163,8 @@ class configuration(object):
         self.P_rbl_upper_strut = self.gml_upper_strut.P
         self.Rd_rbl_upper_strut = mirrored(self.Rd_rbr_upper_strut)
         self.Pd_rbl_upper_strut = mirrored(self.Pd_rbr_upper_strut)
+        self.Rdd_rbl_upper_strut = mirrored(self.Rdd_rbr_upper_strut)
+        self.Pdd_rbl_upper_strut = mirrored(self.Pdd_rbr_upper_strut)
         self.m_rbl_upper_strut = self.gml_upper_strut.m
         self.Jbar_rbl_upper_strut = self.gml_upper_strut.J
         self.R_rbr_lower_strut = self.gmr_lower_strut.R
@@ -150,6 +175,8 @@ class configuration(object):
         self.P_rbl_lower_strut = self.gml_lower_strut.P
         self.Rd_rbl_lower_strut = mirrored(self.Rd_rbr_lower_strut)
         self.Pd_rbl_lower_strut = mirrored(self.Pd_rbr_lower_strut)
+        self.Rdd_rbl_lower_strut = mirrored(self.Rdd_rbr_lower_strut)
+        self.Pdd_rbl_lower_strut = mirrored(self.Pdd_rbr_lower_strut)
         self.m_rbl_lower_strut = self.gml_lower_strut.m
         self.Jbar_rbl_lower_strut = self.gml_lower_strut.J
         self.R_rbr_tie_rod = self.gmr_tie_rod.R
@@ -160,6 +187,8 @@ class configuration(object):
         self.P_rbl_tie_rod = self.gml_tie_rod.P
         self.Rd_rbl_tie_rod = mirrored(self.Rd_rbr_tie_rod)
         self.Pd_rbl_tie_rod = mirrored(self.Pd_rbr_tie_rod)
+        self.Rdd_rbl_tie_rod = mirrored(self.Rdd_rbr_tie_rod)
+        self.Pdd_rbl_tie_rod = mirrored(self.Pdd_rbr_tie_rod)
         self.m_rbl_tie_rod = self.gml_tie_rod.m
         self.Jbar_rbl_tie_rod = self.gml_tie_rod.J
         self.R_rbr_hub = self.gmr_tire.R
@@ -170,6 +199,8 @@ class configuration(object):
         self.P_rbl_hub = self.gml_tire.P
         self.Rd_rbl_hub = mirrored(self.Rd_rbr_hub)
         self.Pd_rbl_hub = mirrored(self.Pd_rbr_hub)
+        self.Rdd_rbl_hub = mirrored(self.Rdd_rbr_hub)
+        self.Pdd_rbl_hub = mirrored(self.Pdd_rbr_hub)
         self.m_rbl_hub = self.gml_tire.m
         self.Jbar_rbl_hub = self.gml_tire.J
         self.pt1_jcr_uca_upright = self.hpr_ucao
@@ -203,6 +234,9 @@ class configuration(object):
         self.pt2_fal_strut = mirrored(self.pt2_far_strut)
         self.Fs_fal_strut = self.Fs_far_strut
         self.Fd_fal_strut = self.Fd_far_strut
+        self.fal_strut_FL = mirrored(self.far_strut_FL)
+        self.T_rbl_upper_strut_fal_strut = mirrored(self.T_rbr_upper_strut_far_strut)
+        self.T_rbl_lower_strut_fal_strut = mirrored(self.T_rbr_lower_strut_far_strut)
         self.ax1_jcr_strut_lca = oriented(self.hpr_strut_chassis,self.hpr_strut_lca)
         self.ax2_jcr_strut_lca = oriented(self.hpr_strut_lca,self.hpr_strut_chassis)
         self.pt1_jcr_strut_lca = self.hpr_strut_lca

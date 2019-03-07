@@ -28,5 +28,5 @@ hpr_ucaf,-121,294,140,0
 hpr_ucao,6.5,777,152,0
 hpr_ucar,121,294,140,0
 hpr_wc,0,1032,0,0
-pt1_far_strut,0,0,0,0
-pt2_far_strut,0,0,0,0
+pt1_far_strut,-160,530,639,0
+pt2_far_strut,-160,590,-96,0
