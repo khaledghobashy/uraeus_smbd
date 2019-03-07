@@ -63,16 +63,17 @@ class topology(object):
         self.ncols = 2*4
         self.rows = np.arange(self.nrows)
 
-        self.jac_rows = np.array([0,0,0,0,1,1,1,1,2,2,2,2])                        
+        self.jac_rows = np.array([0,0,0,0,1,1,1,1,2,2,2,2])
+        self.joints_reactions_indicies = ['F_vbs_rocker_1_jcs_rev_1','T_vbs_rocker_1_jcs_rev_1','F_vbs_rocker_2_jcs_rev_2','T_vbs_rocker_2_jcs_rev_2','F_vbs_rocker_3_jcs_rev_3','T_vbs_rocker_3_jcs_rev_3']
 
     
     def _set_mapping(self,indicies_map,interface_map):
         p = self.prefix
     
-        self.vbs_rocker_1 = indicies_map[interface_map[p+'vbs_rocker_1']]
-        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbs_rocker_3 = indicies_map[interface_map[p+'vbs_rocker_3']]
         self.vbs_rocker_2 = indicies_map[interface_map[p+'vbs_rocker_2']]
+        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
+        self.vbs_rocker_1 = indicies_map[interface_map[p+'vbs_rocker_1']]
 
     def assemble_template(self,indicies_map,interface_map,rows_offset):
         self.rows_offset = rows_offset

@@ -10,8 +10,9 @@
 #### What is Computational Dynamics?
 Computational Dynamics is a rapidly developing field that brings together applied mathematics (especially numerical analysis), computer science, and scientific or engineering applications. Multibody Dynamics can be considered as a sub-field of computational dynamics.
 #### What is the problem to be solved?
-The primary interest in multibody dynamics is to analyze the system behavior for given inputs. In analogy with control systems; a multi-body system can be thought as a **_system_** subjected to some **_inputs_** producing some **_outputs_** which are dependent on both the system and the inputs characteristics. These three parts of the problem are dependent on the analyst end goal of the analysis and simulation. 
+The primary interest in multibody dynamics is to analyze the system behavior for given inputs. In analogy with control systems; a multi-body system can be thought as a **_system_** subjected to some **_inputs_** producing some **_outputs_**. These three parts of the problem are dependent on the analyst end goal of the analysis and simulation. 
 #### How is the system physics abstracted mathematically and computationally?
 To keep it as simple as possible. An unconstrained body in space is normally defined using six generalized coordinates defining its location and orientation. For example, a system of 10 bodies will require 60 unknown generalized coordinates to be fully defined which in turn requires 60 independent algebraic equations to be solved for these generalized coordinates. These equations are constructed form the joints existing in the system.
 
 ### Approach
+

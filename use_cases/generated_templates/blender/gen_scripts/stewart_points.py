@@ -17,18 +17,18 @@ class blender_scene(object):
         self.scale = scale
 
         self.hps_middle_2 = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.s_links_ro = 1*scale
-        self.hps_middle_1 = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.hps_bottom_3 = np.array([[0], [0], [0]],dtype=np.float64)*scale
+        self.hps_upper_1 = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hps_bottom_1 = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.hps_bottom_2 = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hps_middle_3 = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.hps_upper_2 = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.s_rockers_ro = 1*scale
         self.hps_upper_3 = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.hps_upper_1 = np.array([[0], [0], [0]],dtype=np.float64)
+        self.s_links_ro = 1*scale
+        self.hps_bottom_2 = np.array([[0], [0], [0]],dtype=np.float64)*scale
+        self.hps_upper_2 = np.array([[0], [0], [0]],dtype=np.float64)*scale
+        self.hps_bottom_3 = np.array([[0], [0], [0]],dtype=np.float64)*scale
+        self.s_rockers_ro = 1*scale
+        self.hps_middle_1 = np.array([[0], [0], [0]],dtype=np.float64)
 
-        self._inputs = ['hps_middle_2', 's_links_ro', 'hps_middle_1', 'hps_bottom_3', 'hps_bottom_1', 'hps_bottom_2', 'hps_middle_3', 'hps_upper_2', 's_rockers_ro', 'hps_upper_3', 'hps_upper_1']
+        self._inputs = ['hps_middle_2', 'hps_upper_1', 'hps_bottom_1', 'hps_middle_3', 'hps_upper_3', 's_links_ro', 'hps_bottom_2', 'hps_upper_2', 'hps_bottom_3', 's_rockers_ro', 'hps_middle_1']
         self.geometries = {'gms_table': 'rbs_table', 'gms_rocker_1': 'rbs_rocker_1', 'gms_rocker_2': 'rbs_rocker_2', 'gms_rocker_3': 'rbs_rocker_3', 'gms_link_1': 'rbs_link_1', 'gms_link_2': 'rbs_link_2', 'gms_link_3': 'rbs_link_3'}
 
     
@@ -66,13 +66,13 @@ class blender_scene(object):
         bpy.context.scene.frame_end = bpy.context.scene.render.frame_map_new
 
     def create_scene(self):
-        self.gms_table = triangular_prism(self.hps_upper_1,self.hps_upper_2,self.hps_upper_3,self.s_rockers_ro)
-        self.gms_rocker_2 = cylinder_geometry(self.hps_bottom_2,self.hps_middle_2,self.s_rockers_ro)
-        self.gms_link_3 = cylinder_geometry(self.hps_upper_3,self.hps_middle_3,self.s_links_ro)
-        self.gms_link_1 = cylinder_geometry(self.hps_upper_1,self.hps_middle_1,self.s_links_ro)
         self.gms_rocker_3 = cylinder_geometry(self.hps_bottom_3,self.hps_middle_3,self.s_rockers_ro)
+        self.gms_link_3 = cylinder_geometry(self.hps_upper_3,self.hps_middle_3,self.s_links_ro)
+        self.gms_table = triangular_prism(self.hps_upper_1,self.hps_upper_2,self.hps_upper_3,self.s_rockers_ro)
         self.gms_link_2 = cylinder_geometry(self.hps_upper_2,self.hps_middle_2,self.s_links_ro)
         self.gms_rocker_1 = cylinder_geometry(self.hps_bottom_1,self.hps_middle_1,self.s_rockers_ro)
+        self.gms_link_1 = cylinder_geometry(self.hps_upper_1,self.hps_middle_1,self.s_links_ro)
+        self.gms_rocker_2 = cylinder_geometry(self.hps_bottom_2,self.hps_middle_2,self.s_rockers_ro)
 
         self.setup_VIEW_3D()
 

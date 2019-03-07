@@ -987,7 +987,8 @@ class topology(object):
         f50 = G(self.Pd_rbr_hub)
         f51 = G(self.Pd_rbl_hub)
         
-#        print(f41)
+#        print(f37)
+#        print((config.fal_strut_FL + -1*f37),(config.far_strut_FL + -1*f18),'\n')
 
         self.frc_eq_blocks = [self.F_rbr_uca_gravity,8*multi_dot([f0.T,config.Jbar_rbr_uca,f0,self.P_rbr_uca]),self.F_rbl_uca_gravity,8*multi_dot([f1.T,config.Jbar_rbl_uca,f1,self.P_rbl_uca]),self.F_rbr_lca_gravity,8*multi_dot([f2.T,config.Jbar_rbr_lca,f2,self.P_rbr_lca]),self.F_rbl_lca_gravity,8*multi_dot([f3.T,config.Jbar_rbl_lca,f3,self.P_rbl_lca]),self.F_rbr_upright_gravity,8*multi_dot([f4.T,config.Jbar_rbr_upright,f4,self.P_rbr_upright]),self.F_rbl_upright_gravity,8*multi_dot([f5.T,config.Jbar_rbl_upright,f5,self.P_rbl_upright]),(self.F_rbr_upper_strut_gravity + f23),(8*multi_dot([f24.T,config.Jbar_rbr_upper_strut,f24,f9]) + 2*multi_dot([G(f9).T,(config.T_rbr_upper_strut_far_strut + f22*multi_dot([skew(f15).T,f17,f19]))])),(self.F_rbl_upper_strut_gravity + f42),(8*multi_dot([f43.T,config.Jbar_rbl_upper_strut,f43,f28]) + 2*multi_dot([G(f28).T,(config.T_rbl_upper_strut_fal_strut + f41*multi_dot([skew(f34).T,f36,f38]))])),(self.F_rbr_lower_strut_gravity + f44 + -1*f23),(f45 + 8*multi_dot([f46.T,config.Jbar_rbr_lower_strut,f46,f12]) + 2*multi_dot([G(f12).T,(config.T_rbr_lower_strut_far_strut + -1*f22*multi_dot([skew(f16).T,f17,f19]))])),(self.F_rbl_lower_strut_gravity + f44 + -1*f42),(f45 + 8*multi_dot([f47.T,config.Jbar_rbl_lower_strut,f47,f31]) + 2*multi_dot([G(f31).T,(config.T_rbl_lower_strut_fal_strut + -1*f41*multi_dot([skew(f35).T,f36,f38]))])),self.F_rbr_tie_rod_gravity,8*multi_dot([f48.T,config.Jbar_rbr_tie_rod,f48,self.P_rbr_tie_rod]),self.F_rbl_tie_rod_gravity,8*multi_dot([f49.T,config.Jbar_rbl_tie_rod,f49,self.P_rbl_tie_rod]),self.F_rbr_hub_gravity,8*multi_dot([f50.T,config.Jbar_rbr_hub,f50,self.P_rbr_hub]),self.F_rbl_hub_gravity,8*multi_dot([f51.T,config.Jbar_rbl_hub,f51,self.P_rbl_hub])]
 

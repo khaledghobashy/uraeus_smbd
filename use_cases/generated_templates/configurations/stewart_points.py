@@ -53,8 +53,8 @@ class configuration(object):
         self.hps_upper_2 = np.array([[0], [0], [0]],dtype=np.float64)
         self.hps_upper_3 = np.array([[0], [0], [0]],dtype=np.float64)
         self.hps_tripod = np.array([[0], [0], [0]],dtype=np.float64)
-        self.s_links_ro = 25
-        self.s_rockers_ro = 25                       
+        self.s_links_ro = 1
+        self.s_rockers_ro = 1                       
 
     
     @property
