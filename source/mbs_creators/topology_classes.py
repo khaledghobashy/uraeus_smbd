@@ -95,29 +95,29 @@ class abstract_topology(object):
 
     @property
     def n(self):
-        return self._get_attr('n')
+        return self._get_topology_attr('n')
     @property
     def nc(self):
-        return self._get_attr('nc')
+        return self._get_topology_attr('nc')
     @property
     def nve(self):
-        return self._get_attr('nve')
+        return self._get_topology_attr('nve')
     
     @property
     def arguments_symbols(self):
-        return self._get_attr('arguments_symbols')
+        return self._get_topology_attr('arguments_symbols')
     @property
     def runtime_symbols(self):
-        return self._get_attr('runtime_symbols')
+        return self._get_topology_attr('runtime_symbols')
     @property
     def constants_symbols(self):
-        return self._get_attr('constants_symbols')
+        return self._get_topology_attr('constants_symbols')
     @property
     def constants_symbolic_expr(self):
-        return self._get_attr('constants_symbolic_expr')
+        return self._get_topology_attr('constants_symbolic_expr')
     @property
     def constants_numeric_expr(self):
-        return self._get_attr('constants_numeric_expr')
+        return self._get_topology_attr('constants_numeric_expr')
     
     @property
     def mapped_gen_coordinates(self):
@@ -181,7 +181,8 @@ class abstract_topology(object):
         with open('%s\\%s.stpl'%(self.path,self.name),'wb') as f:
             cloudpickle.dump(self,f)
 
-    def _get_attr(self,name):
+
+    def _get_topology_attr(self,name):
         graph = self.graph
         nodes_attr = nx.get_node_attributes(graph,name).values()
         edges_attr = nx.get_edge_attributes(graph,name).values()
@@ -203,10 +204,11 @@ class abstract_topology(object):
     
     def _is_force_edge(self,e):
         return issubclass(self.edges[e]['class'],generic_force)
-    
+
     def _is_virtual_node(self,n):
         virtual_flag = self.nodes[n].get('virtual',False)
         return virtual_flag
+
     def _is_virtual_edge(self,e):
         virtual_flag = self.edges[e].get('virtual',False)
         return virtual_flag
@@ -609,8 +611,6 @@ class template_based_topology(topology):
         except KeyError:
             pass
     
-    
-
 ###############################################################################
 ###############################################################################
 
@@ -625,7 +625,7 @@ class subsystem(abstract_topology):
         self._virtual_bodies = []
     
     def _relable(self):
-        def label(x): return self.name+'.'+ x
+        def label(x): return '%s.%s'%(self.name, x)
         labels_map = {i:label(i) for i in self.topology.nodes}
         self.graph = nx.relabel_nodes(self.graph,labels_map)
         mirr_maped = {k:label(v) for k,v in self.nodes(data='mirr')}
@@ -678,6 +678,7 @@ class assembly(abstract_topology):
         plt.figure(figsize=(10,6))
         nx.draw_spring(self.interface_graph,with_labels=True)
         plt.show()
+
 
     def _insert_ground(self):
         typ_dict = self._typ_attr_dict(ground)
