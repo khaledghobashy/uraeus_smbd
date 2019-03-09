@@ -27,13 +27,35 @@ The tool achieves this by making heavy use the [NetworkX](https://networkx.githu
 
 The combination of both, NetworkX and SymPy, provides the tool with a very simple, easy-to-use and convenient interface for the process of model creation and topology design, where the user only focuses on the validity of the system topology in hand as he thinks only in terms of the topological components - bodies, joints, actuators and forces-, without the burden of frequent numerical inputs for each component, or how the actual system is configured in space. In short, the tool divide the typical model creation process in halves, the system topology design and the system configuration assignment.
 
-`The tool adopts the *"programming to an interface instead of an implementation"* methodology which abstracts`
+#### Code Generation and Model Simulation
 
-#### Code Generation
+The process of performing actual simulations on the created model requires the generation of a valid numerical and computational code of the created model. This is done by taking in the symbolic model and create a valid code files written in the desired programming language with the desired programming paradigm and structure. Currently, the tool provides a *Python Code Generator* that generates an object oriented python code of the symbolic multibody system that can be used to perform the desired simulations.
 
-The process of performing actual simulations on the created model requires the generation of a valid numerical and computational code of the created model. This is done by taking in the created symbolic model and create a valid code files written in the desired programming language with the desired programming paradigm and structure. For now, The tool provides a Python Code Generator that generate an object oriented code structure of the symbolic multibody system
+#### Conclusion
 
-#### Model Simulation
+Several benefits of the adopted approach can be stated here, but the major theme here is the flexibility and modularity, in both software usage and software development. These can be summarized as follows:
+
+- The distinction between the topology design phase and the configuration assignment phase, which gives proper focus for each at its' own.
+- Natural adoption of the template-based modeling theme that emerges from the use of network-graphs to represent the system, which allows convenient assemblage of several graphs to form a new system. 
+- Uncoupled simulation environment, where the symbolic equations generated form the designed topology is free to be written in any programming language with any desired numerical libraries.
+
+------
 
 
 
+### Features 
+
+Currently, the tool provides the following:
+
+- Creation of template-based multibody systems using minimal API via python scripting.
+- Convenient creation of complex assemblies.
+- Convenient visualization of the system topology as a network graph.
+- View the system's symbolic equations in a natural mathematical format using Latex printing.
+- Creation of symbolic configuration files to facilitate the process of numerical configuration data entry.
+- Optimization of the system equations by performing common sub-expressions elimination.
+- A python code-generator that creates an object-oriented code structure of the symbolic systems.
+- A python solver that can be used to solve for *Kinematically Driven Systems  (KDS)* using the NumPy and SciPy libraries for numerical evaluation.
+- A [blender](https://www.blender.org/) code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
+  *"Requires installation of blender. It's free and open-source"*
+- A blender add-on that can be easily added to blender to facilitate the visualization process of the simulated systems.
+- A modular development environment that adopts the *"programming to an interface instead of an implementation"* concept, resulting in a flexible, loosely-coupled code structure, specially for the creation of other code-generators. 
