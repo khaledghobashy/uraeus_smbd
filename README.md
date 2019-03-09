@@ -3,9 +3,40 @@
 **ASU Racing Team - Computational Dynamics Tool**
 
 ## Description
-**asurt_cdt** is a python package developed for the creation, simulation and visualization of multibody systems. Those are systems that consist of various interconnected bodies, such as ground vehicles, space structures, robotics and industrial mechanisms. The analysis of such systems leads to highly nonlinear mathematical formulations that requires the use of advanced numerical, and computational methods.
+**asurt_cdt** is a python package developed for the creation, simulation and visualization of multibody systems. Those are systems that consist of various interconnected bodies, such as ground vehicles, space structures, robotics and industrial mechanisms, where their analysis leads to highly nonlinear mathematical formulations that require the use of advanced numerical, and computational methods.
 
-### Background
+### Features 
+
+Currently, the tool provides the following features:
+
+- Creation of template-based multibody systems using minimal API via python scripting.
+
+- Convenient creation of complex multibody assemblies.
+
+- Convenient visualization of the system topology as a network graph.
+
+- Viewing the system's symbolic equations in a natural mathematical format using Latex printing.
+
+- Creation of symbolic configuration files to facilitate the process of numerical configuration data entry.
+
+- Optimization of the system equations by performing common sub-expressions elimination.
+
+- A python code-generator that creates an object-oriented code structure of the symbolic systems.
+
+- A python solver that can be used to solve for *Kinematically Driven Systems* -systems driven by motion actuators- using the NumPy and SciPy libraries for numerical evaluation.
+
+- A [blender](https://www.blender.org/) code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
+  *"Requires installation of blender. It's free and open-source"*
+
+- A blender add-on that can be easily added to blender to facilitate the visualization process of the simulated systems.
+
+- A modular development environment that adopts the *"programming to an interface instead of an implementation"* concept, resulting in a flexible, loosely-coupled code structure, specially for the creation of other code-generators. 
+
+  ------
+
+  
+
+## Background
 #### What is Computational Dynamics?
 Computational Dynamics is a rapidly developing field that brings together applied mathematics (especially numerical analysis), computer science, and scientific or engineering applications. Multibody Dynamics can be considered as a sub-field of computational dynamics.
 #### What is the problem to be solved?
@@ -39,23 +70,3 @@ Several benefits of the adopted approach can be stated here, but the major theme
 - Natural adoption of the template-based modeling theme that emerges from the use of network-graphs to represent the system, which allows convenient assemblage of several graphs to form a new system. 
 - Uncoupled simulation environment, where the symbolic equations generated form the designed topology is free to be written in any programming language with any desired numerical libraries.
 
-------
-
-
-
-### Features 
-
-Currently, the tool provides the following:
-
-- Creation of template-based multibody systems using minimal API via python scripting.
-- Convenient creation of complex assemblies.
-- Convenient visualization of the system topology as a network graph.
-- View the system's symbolic equations in a natural mathematical format using Latex printing.
-- Creation of symbolic configuration files to facilitate the process of numerical configuration data entry.
-- Optimization of the system equations by performing common sub-expressions elimination.
-- A python code-generator that creates an object-oriented code structure of the symbolic systems.
-- A python solver that can be used to solve for *Kinematically Driven Systems  (KDS)* using the NumPy and SciPy libraries for numerical evaluation.
-- A [blender](https://www.blender.org/) code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
-  *"Requires installation of blender. It's free and open-source"*
-- A blender add-on that can be easily added to blender to facilitate the visualization process of the simulated systems.
-- A modular development environment that adopts the *"programming to an interface instead of an implementation"* concept, resulting in a flexible, loosely-coupled code structure, specially for the creation of other code-generators. 
