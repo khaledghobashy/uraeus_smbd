@@ -16,7 +16,7 @@ class blender_scene(object):
         scale = 1/20
         self.scale = scale
 
-        self.s_links_ro = 10*scale
+        self.s_links_ro = 20*scale
         self.hps_coupler_rocker = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hps_rev_rocker = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hps_coupler_crank = np.array([[0], [0], [0]],dtype=np.float64)*scale
