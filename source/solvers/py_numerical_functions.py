@@ -9,6 +9,33 @@ import numpy as np
 
 ###############################################################################
 ###############################################################################
+#class lookup_table(object):
+#    import pandas as pd
+#    from scipy.interpolate import interp1d
+#    import matplotlib.pyplot as plt
+#
+#    def __init__(self,name):
+#        self.name = name
+#        
+#    def read_csv(self,csv_file):
+#        self.data = pd.read_csv(csv_file,header=None,names=['x','y'])
+#        self.x = self.data.x
+#        self.y = self.data.y
+#    
+#    def draw(self):
+#        plt.figure(figsize=(10,6))
+#        plt.plot(self.x,self.y)
+#        plt.legend()
+#        plt.grid()
+#        plt.show()
+#    
+#    def get_interpolator(self):
+#        self.interp = f = interp1d(self.x,self.y,kind='cubic')
+#        return f
+        
+
+###############################################################################
+###############################################################################
 
 def skew_matrix(v):
     vs = np.array([[0,-v[2,0],v[1,0]],
