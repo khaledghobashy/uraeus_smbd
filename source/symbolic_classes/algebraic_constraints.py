@@ -63,7 +63,7 @@ class algebraic_constraints(object):
         return self.Ri + self.ui - self.Rj - self.uj
     @property
     def dijd(self):
-        return self.Rdi + self.Bui*self.Pdi - self.Rdj + self.Buj*self.Pdj
+        return self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj
     
     @property
     def pos_level_equations(self):
@@ -231,7 +231,6 @@ class algebraic_constraints(object):
         
         
     def _create_reactions_equalities(self):
-#        jacobian_i = sm.MutableSparseMatrix(2,self.nve,[*self.jacobian_i.blocks])
         jacobian_i = self.jacobian_i
         Qi_eq = sm.Eq(self.Qi,-jacobian_i.T*self.L)
         Fi_eq = sm.Eq(self.Fi,self.Qi[0:3,0])
@@ -330,11 +329,9 @@ class dot_product_2(object):
         v_bar = getattr(obj.mi_bar,v)
         v = v_bar.express()
         dij = obj.dij
-        Rdi = obj.Rdi
-        Rdj = obj.Rdj
         Pdi = obj.Pdi
         Pdj = obj.Pdj
-        dijd = Rdi + obj.Bui*Pdi - Rdj + obj.Buj*Pdj
+        dijd = obj.dijd
         
         pos_level_equation = v.T*dij
         vel_level_equation = zero_matrix(1,1)

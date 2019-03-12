@@ -12,7 +12,11 @@ from source.symbolic_classes.spatial_joints import (revolute,spherical,
 from source.mbs_creators.topology_classes import template_based_topology
 from source.code_generators.python_code_generators import template_code_generator
 
-
+'''
+array([[  4.62811840e+08,   1.06627320e+05,   4.66877330e+07],
+       [  1.06627320e+05,   1.01388000e+09,   2.31185260e+04],
+       [  4.66877330e+07,   2.31185260e+04,   1.11623380e+09]])
+'''
 topology_name = 'stewart_gough_3dof'
 
 def load():

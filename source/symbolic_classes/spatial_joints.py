@@ -71,7 +71,13 @@ class rotational_actuator(joint_actuator,metaclass=joint_constructor):
     
     @property
     def pos_level_equations(self):
-        return sm.BlockMatrix(self._pos_level_equations)
+        return sm.BlockMatrix([sm.Identity(1)*self._pos_level_equations[0]])
+    @property
+    def vel_level_equations(self):
+        return sm.BlockMatrix([sm.Identity(1)*self._vel_level_equations[0] - sm.Identity(1)*self._vel_function])
+    @property
+    def acc_level_equations(self):
+        return sm.BlockMatrix([sm.Identity(1)*self._acc_level_equations[0] - sm.Identity(1)*self._acc_function])
 
 
 class absolute_locator(absolute_actuator,metaclass=joint_constructor):

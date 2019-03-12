@@ -136,7 +136,6 @@ class solver(object):
             delta_q = solve(A,-b)
             
             if itr%5==0 and itr!=0:
-#                print("Updating Jacobian \n")
                 A = self.eval_jac_eq()
                 delta_q = solve(A,-b)
             if itr>50:
@@ -164,7 +163,9 @@ class solver(object):
             progress_bar(len(time_array)-1,i)
             self.set_time(t)
 
-            g = self._pos_history[i] + self._vel_history[i]*dt  + 0.5*self._acc_history[i]*(dt**2)
+            g =   self._pos_history[i] \
+                + self._vel_history[i]*dt \
+                + 0.5*self._acc_history[i]*(dt**2)
             
             self.newton_raphson(g)
             self._pos_history[i+1] = self.pos

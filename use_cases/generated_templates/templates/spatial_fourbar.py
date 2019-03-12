@@ -251,14 +251,14 @@ class topology(object):
         a14 = self.Mbar_rbs_crank_jcs_rev_crank[:,1:2]
         a15 = self.Mbar_rbs_crank_jcs_rev_crank[:,0:1]
         a16 = self.Pd_rbs_rocker
-        a17 = self.Mbar_vbs_ground_jcs_rev_rocker[:,2:3]
-        a18 = a17.T
-        a19 = self.Mbar_rbs_rocker_jcs_rev_rocker[:,0:1]
-        a20 = self.P_rbs_rocker
-        a21 = A(a20).T
-        a22 = B(a1,a17)
+        a17 = self.Mbar_rbs_rocker_jcs_rev_rocker[:,0:1]
+        a18 = self.P_rbs_rocker
+        a19 = A(a18).T
+        a20 = self.Mbar_vbs_ground_jcs_rev_rocker[:,2:3]
+        a21 = B(a1,a20)
+        a22 = a20.T
         a23 = a16.T
-        a24 = B(a8,a17)
+        a24 = B(a8,a20)
         a25 = self.Mbar_rbs_rocker_jcs_rev_rocker[:,1:2]
         a26 = self.Pd_rbs_coupler
         a27 = self.Mbar_rbs_coupler_jcs_uni_coupler_rocker[:,0:1]
@@ -266,7 +266,7 @@ class topology(object):
         a29 = self.Mbar_rbs_rocker_jcs_uni_coupler_rocker[:,0:1]
         a30 = a26.T
 
-        self.acc_eq_blocks = [(multi_dot([B(a0,self.ubar_rbs_crank_jcs_rev_crank),a0]) + -1*multi_dot([B(a1,self.ubar_vbs_ground_jcs_rev_crank),a1])),(multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2*multi_dot([a10,B(a3,a2).T,a11,a1])),(multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2*multi_dot([a10,B(a3,a12).T,a11,a1])),(-1*derivative(config.AF_jcs_rev_crank,t,0.1,2)*np.eye(1,dtype=np.float64) + multi_dot([a13.T,a9,(cos(config.AF_jcs_rev_crank(t))*B(a0,a14) + sin(config.AF_jcs_rev_crank(t))*-1*B(a0,a15)),a0]) + multi_dot([(cos(config.AF_jcs_rev_crank(t))*multi_dot([a14.T,a4]) + sin(config.AF_jcs_rev_crank(t))*-1*multi_dot([a15.T,a4])),B(a1,a13),a1]) + 2*multi_dot([((cos(config.AF_jcs_rev_crank(t))*multi_dot([B(a3,a14),a0])).T + sin(config.AF_jcs_rev_crank(t))*-1*multi_dot([a10,B(a3,a15).T])),B(a8,a13),a1])),(multi_dot([B(a16,self.ubar_rbs_rocker_jcs_rev_rocker),a16]) + -1*multi_dot([B(a1,self.ubar_vbs_ground_jcs_rev_rocker),a1])),(multi_dot([a18,a9,B(a16,a19),a16]) + multi_dot([a19.T,a21,a22,a1]) + 2*multi_dot([a23,B(a20,a19).T,a24,a1])),(multi_dot([a18,a9,B(a16,a25),a16]) + multi_dot([a25.T,a21,a22,a1]) + 2*multi_dot([a23,B(a20,a25).T,a24,a1])),(multi_dot([B(a26,self.ubar_rbs_coupler_jcs_sph_coupler_crank),a26]) + -1*multi_dot([B(a0,self.ubar_rbs_crank_jcs_sph_coupler_crank),a0])),(multi_dot([B(a26,self.ubar_rbs_coupler_jcs_uni_coupler_rocker),a26]) + -1*multi_dot([B(a16,self.ubar_rbs_rocker_jcs_uni_coupler_rocker),a16])),(multi_dot([a27.T,A(a28).T,B(a16,a29),a16]) + multi_dot([a29.T,a21,B(a26,a27),a26]) + 2*multi_dot([a30,B(a28,a27).T,B(a20,a29),a16])),2*(multi_dot([a10,a0]))**(1.0/2.0),2*(multi_dot([a23,a16]))**(1.0/2.0),2*(multi_dot([a30,a26]))**(1.0/2.0)]
+        self.acc_eq_blocks = [(multi_dot([B(a0,self.ubar_rbs_crank_jcs_rev_crank),a0]) + -1*multi_dot([B(a1,self.ubar_vbs_ground_jcs_rev_crank),a1])),(multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2*multi_dot([a10,B(a3,a2).T,a11,a1])),(multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2*multi_dot([a10,B(a3,a12).T,a11,a1])),(-1*derivative(config.AF_jcs_rev_crank,t,0.1,2)*np.eye(1,dtype=np.float64) + -1*(multi_dot([a13.T,a9,(cos(config.AF_jcs_rev_crank(t))*B(a0,a14) + sin(config.AF_jcs_rev_crank(t))*-1*B(a0,a15)),a0]) + multi_dot([(cos(config.AF_jcs_rev_crank(t))*multi_dot([a14.T,a4]) + sin(config.AF_jcs_rev_crank(t))*-1*multi_dot([a15.T,a4])),B(a1,a13),a1]) + 2*multi_dot([((cos(config.AF_jcs_rev_crank(t))*multi_dot([B(a3,a14),a0])).T + sin(config.AF_jcs_rev_crank(t))*-1*multi_dot([a10,B(a3,a15).T])),B(a8,a13),a1]))),(multi_dot([B(a16,self.ubar_rbs_rocker_jcs_rev_rocker),a16]) + -1*multi_dot([B(a1,self.ubar_vbs_ground_jcs_rev_rocker),a1])),(multi_dot([a17.T,a19,a21,a1]) + multi_dot([a22,a9,B(a16,a17),a16]) + 2*multi_dot([a23,B(a18,a17).T,a24,a1])),(multi_dot([a25.T,a19,a21,a1]) + multi_dot([a22,a9,B(a16,a25),a16]) + 2*multi_dot([a23,B(a18,a25).T,a24,a1])),(multi_dot([B(a26,self.ubar_rbs_coupler_jcs_sph_coupler_crank),a26]) + -1*multi_dot([B(a0,self.ubar_rbs_crank_jcs_sph_coupler_crank),a0])),(multi_dot([B(a26,self.ubar_rbs_coupler_jcs_uni_coupler_rocker),a26]) + -1*multi_dot([B(a16,self.ubar_rbs_rocker_jcs_uni_coupler_rocker),a16])),(multi_dot([a27.T,A(a28).T,B(a16,a29),a16]) + multi_dot([a29.T,a19,B(a26,a27),a26]) + 2*multi_dot([a30,B(a28,a27).T,B(a18,a29),a16])),2*(multi_dot([a10,a0]))**(1.0/2.0),2*(multi_dot([a23,a16]))**(1.0/2.0),2*(multi_dot([a30,a26]))**(1.0/2.0)]
 
     
     def eval_jac_eq(self):
