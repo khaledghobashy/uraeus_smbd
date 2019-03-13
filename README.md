@@ -9,7 +9,18 @@ A multibody system is hereby defined as *a finite number of material bodies conn
 
 ### Audience and Fields of Application
 
+Initially, the main targeted audience was the **Formula Student** community. The motive was *encouraging a deeper understanding of the modeling processes and the underlying theories used in other commercial software packages*, which is a way of giving back to the community, and supporting the concept of *"knowledge share"* adopted there by exposing it to the open-source community as well.
 
+Currently, the tool aims to serve a wider domain of users with different usage goals and different backgrounds, such as students, academic researchers and industry professionals.
+
+Fields of application include any domain that deals with the study of interconnected bodies, such as:
+
+- Ground Vehicles' Systems.
+- Construction Equipment.
+- Industrial Mechanisms.
+- Robotics.
+- Biomechanics.
+- .. etc.
 
 ### Features 
 
@@ -31,7 +42,7 @@ Currently, the tool provides:
 
 #### 3D Visualization
 
-*"Requires the installation of  [blender](https://www.blender.org/). It is free and open source."*
+*"Requires the installation of  [blender](https://www.blender.org/). It is free and open-source."*
 
 - A blender code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
 - A blender add-on that can be easily added to blender's GUI, to facilitate the visualization process of the simulated systems.
@@ -39,7 +50,7 @@ Currently, the tool provides:
 #### Development Environment
 
 - Easy construction of new, user-defined joints and actuators.
-- A modular development environment that adopts the *"programming to an interface instead of an implementation"* concept, resulting in a flexible, loosely-coupled code structure, specially for the creation of other code-generators. 
+- A modular development environment that adopts the *"programming to an interface instead of an implementation"* concept, resulting in a flexible, loosely-coupled code structure. 
 
 ------
 
@@ -78,4 +89,22 @@ Several benefits of the adopted approach can be stated here, but the major theme
 - The distinction between the topology design phase and the configuration assignment phase, which gives proper focus for each at its' own.
 - Natural adoption of the template-based modeling theme that emerges from the use of network-graphs to represent the system, which allows convenient assemblage of several graphs to form a new system. 
 - Uncoupled simulation environment, where the symbolic equations generated form the designed topology is free to be written in any programming language with any desired numerical libraries.
+
+## Installation
+
+### Cloning
+
+*TBD ...*
+
+## Usage Example
+
+*TBD ...*
+
+## Implementation Details
+
+*TBD ...*
+
+## License
+
+*TBD ...*
 

@@ -23,7 +23,6 @@ def main():
     config = parametric_configuration(model.template)
     config.assemble_base_layer()
     config.name = name
-    model.template.cfg_file = name
     
     # Adding Points
     config.add_point('ucaf',mirror=True)
@@ -114,7 +113,6 @@ def main():
     config.add_relation('gmr_tire',cylinder_geometry,'hpr_wc','R_rbr_upright','s_tire_radius',mirror=True)
     config.assign_geometry_to_body('rbr_hub','gmr_tire',mirror=True)
         
-    config.topology.save()
     
     config_code = configuration_code_generator(config)
     config_code.write_code_file()

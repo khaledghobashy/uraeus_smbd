@@ -64,10 +64,10 @@ class configuration(object):
         self.hpr_strut_chassis = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_strut_lca = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_wc = np.array([[0], [0], [0]],dtype=np.float64)
-        self.s_links_ro = 20
-        self.s_strut_outer = 50
-        self.s_strut_inner = 40
-        self.s_thickness = 15
+        self.s_links_ro = 1
+        self.s_strut_outer = 1
+        self.s_strut_inner = 1
+        self.s_thickness = 1
         self.s_tire_radius = 1                       
 
     

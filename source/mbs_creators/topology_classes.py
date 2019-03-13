@@ -35,7 +35,6 @@ class abstract_topology(object):
         self._insert_ground()
         self._set_global_frame()
         self._param_config = parametric_configuration(self)
-        self.cfg_file = None
         self.path = os.getcwd()
         
 

@@ -18,9 +18,8 @@ def main():
     
     name = 'spatial_fourbar_cfg'
     config = parametric_configuration(model.template)
-    config.assemble_base_layer()
     config.name = name
-    model.template.cfg_file = name
+    config.assemble_base_layer()
     
     config.add_point('rev_crank')
     config.add_point('rev_rocker')
@@ -52,9 +51,7 @@ def main():
     config.add_relation('gms_coupler',cylinder_geometry,'hps_coupler_crank','hps_coupler_rocker','s_links_ro')
     config.assign_geometry_to_body('rbs_coupler','gms_coupler')
     
-    # Saving Topology and Writing Code
-    config.topology.save()
-    
+    # Writing Code Files
     config_code = configuration_code_generator(config)
     config_code.write_code_file()
 

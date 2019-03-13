@@ -1,11 +1,10 @@
 
 import numpy as np
 
-from use_cases.generated_templates.configurations import spatial_fourbar_cfg
-
 from use_cases.generated_templates.templates import spatial_fourbar
 
-FB = spatial_fourbar.topology('FB',spatial_fourbar_cfg.configuration())
+
+FB = spatial_fourbar.topology('FB')
 
 
 

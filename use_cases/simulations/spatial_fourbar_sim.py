@@ -7,16 +7,19 @@ Created on Mon Mar 11 12:47:07 2019
 import numpy as np
 import matplotlib.pyplot as plt
 
-import use_cases.generated_templates.assemblies.spatial_fourbar_assm as f
 from source.solvers.python_solver import solver
 
-f.FB.config.load_from_csv('spatial_fourbar_mod.csv')
+import use_cases.generated_templates.assemblies.spatial_fourbar_assm as assm
+from use_cases.generated_templates.configurations import spatial_fourbar
 
-f.FB.config.AF_jcs_rev_crank = lambda t: -np.pi*t
+assm.FB.config = spatial_fourbar.configuration()
+assm.FB.config.load_from_csv('spatial_fourbar_mod.csv')
 
-assm = f.numerical_assembly()
-assm.set_gen_coordinates(assm.q0)
-soln = solver(assm)
+assm.FB.config.AF_jcs_rev_crank = lambda t: -np.pi*t
+
+assembled = assm.numerical_assembly()
+assembled.set_gen_coordinates(assembled.q0)
+soln = solver(assembled)
 
 time_array = np.linspace(0, 2*np.pi, 200)
 soln.solve_kds(time_array)

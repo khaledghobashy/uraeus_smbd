@@ -295,11 +295,11 @@ class template_code_generator(abstract_generator):
         text = '''
                 class topology(object):
 
-                    def __init__(self,prefix='',cfg=None):
+                    def __init__(self,prefix=''):
                         self.t = 0.0
-                        self.config = (configuration() if cfg is None else cfg)
                         self.prefix = (prefix if prefix=='' else prefix+'.')
-                                                
+                        self.config = None
+
                         self.n  = {n}
                         self.nc = {nc}
                         self.nrows = {nve}
@@ -627,43 +627,35 @@ class assembly_code_generator(template_code_generator):
     
     def __init__(self,multibody_system,printer=numerical_printer()):
         self.mbs  = multibody_system
-        self.printer = printer
         self.name = self.mbs.name
+        self.printer = printer
+        
         self.templates = []
-        self.configs = []
         self.subsystems_templates = {}
-        for name,obj in self.mbs.subsystems.items():
-            topology_name = obj.topology.name
-            cfg_file_name = obj.topology.cfg_file
-            self.subsystems_templates[name] = (topology_name,cfg_file_name)
+        
+        for sub_name,template in self.mbs.subsystems.items():
+            topology_name = template.topology.name
+            self.subsystems_templates[sub_name] = topology_name
             if topology_name not in self.templates:
                 self.templates.append(topology_name)
-                self.configs.append(cfg_file_name)
     
     
     def write_imports(self):
         text = '''
                 import numpy as np
-                
-                {configs_imports}
-                
+                                
                 {templates_imports}
+                
                 {subsystems}
                 '''
-        tpl_import_prefix = 'from use_cases.generated_templates.templates '
-        templates_imports = '\n'.join(['%simport %s'%(tpl_import_prefix,i)
+        tpl_import_prefix = 'from use_cases.generated_templates.templates'
+        templates_imports = '\n'.join(['%s import %s'%(tpl_import_prefix,i)
                                         for i in self.templates])
-        cfg_import_prefix = 'from use_cases.generated_templates.configurations '
-        configs_imports = '\n'.join(['%simport %s'%(cfg_import_prefix,i)
-                                        for i in self.configs if i is not None])
-        
         
         subsystems = []
-        for subsys, topology in self.subsystems_templates.items():
-            template, config = topology
-            config = ('' if config is None else ',%s.configuration()'%config)
+        for subsys, template in self.subsystems_templates.items():
             assignment = f'''
-            {subsys} = {template}.topology('{subsys}'{config})
+            {subsys} = {template}.topology('{subsys}')
             '''
             subsystems.append(assignment)
             
@@ -671,8 +663,7 @@ class assembly_code_generator(template_code_generator):
         subsystems = textwrap.dedent(subsystems)
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(configs_imports = configs_imports,
-                           templates_imports = templates_imports,
+        text = text.format(templates_imports = templates_imports,
                            subsystems = subsystems)
         return text
     
