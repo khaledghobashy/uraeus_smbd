@@ -11,7 +11,7 @@ from source.symbolic_classes.abstract_matrices import (vector, G, Skew,
                                                        zero_matrix, 
                                                        matrix_symbol)
 from source.symbolic_classes.helper_funcs import body_setter, name_setter
-from source.symbolic_classes.spatial_joints import dummy_cylinderical
+from source.symbolic_classes.joints import dummy_cylinderical
 
 
 class generic_force(object):

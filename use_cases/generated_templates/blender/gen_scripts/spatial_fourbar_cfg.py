@@ -2,7 +2,7 @@
 import csv
 import numpy as np
 import bpy
-from source.solvers.py_numerical_functions import centered, mirrored
+from source.post_processors.blender.helpers import centered, mirrored
 from source.post_processors.blender.objects import (cylinder_geometry,
                                                     composite_geometry,
                                                     triangular_prism)
@@ -16,13 +16,13 @@ class blender_scene(object):
         scale = 1/20
         self.scale = scale
 
-        self.hps_coupler_rocker = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.s_links_ro = 1*scale
         self.hps_rev_rocker = np.array([[0], [0], [0]],dtype=np.float64)*scale
+        self.hps_coupler_crank = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hps_rev_crank = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.hps_coupler_crank = np.array([[0], [0], [0]],dtype=np.float64)
+        self.hps_coupler_rocker = np.array([[0], [0], [0]],dtype=np.float64)*scale
+        self.s_links_ro = 1
 
-        self._inputs = ['hps_coupler_rocker', 's_links_ro', 'hps_rev_rocker', 'hps_rev_crank', 'hps_coupler_crank']
+        self._inputs = ['hps_rev_rocker', 'hps_coupler_crank', 'hps_rev_crank', 'hps_coupler_rocker', 's_links_ro']
         self.geometries = {'gms_rocker': 'rbs_rocker', 'gms_crank': 'rbs_crank', 'gms_coupler': 'rbs_coupler'}
 
     

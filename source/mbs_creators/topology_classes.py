@@ -16,7 +16,7 @@ from source.symbolic_classes.abstract_matrices import (global_frame,
                                                        reference_frame,
                                                        zero_matrix)
 from source.symbolic_classes.bodies import body, ground
-from source.symbolic_classes.spatial_joints import absolute_locator
+from source.symbolic_classes.joints import absolute_locator
 from source.symbolic_classes.algebraic_constraints import joint_actuator
 from source.symbolic_classes.forces import generic_force, gravity_force, centrifugal_force
 

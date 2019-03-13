@@ -7,9 +7,39 @@ Created on Tue Feb 19 14:23:04 2019
 
 import bpy  
 import numpy as np
-from source.solvers.py_numerical_functions import triad
 
+###############################################################################
+###############################################################################
+def skew_matrix(v):
+    vs = np.array([[0,-v[2,0],v[1,0]],
+                 [v[2,0],0,-v[0,0]],
+                 [-v[1,0],v[0,0],0]])
+    return vs
+
+def orthogonal_vector(v):
+    dummy = np.ones((3,1))
+    i = np.argmax(np.abs(v))
+    dummy[i] = 0
+    m = np.linalg.multi_dot([skew_matrix(v),dummy])
+    return m
+
+def triad(v1,v2=None):
+    k = v1/np.linalg.norm(v1)
     
+    if v2 is not None:
+        i = v2/np.linalg.norm(v2)
+    else:
+        i = orthogonal_vector(k)
+        i = i/np.linalg.norm(i)
+    
+    j = np.linalg.multi_dot([skew_matrix(k),i])
+    j = j/np.linalg.norm(j)
+    
+    m = np.concatenate([i,j,k],axis=1)
+    return m
+###############################################################################
+###############################################################################
+
 class cylinder_geometry(object):
     
     def __init__(self,arg1,arg2,ro=10,ri=0):

@@ -33,7 +33,7 @@ class scripter(object):
                 import csv
                 import numpy as np
                 import bpy
-                from source.solvers.py_numerical_functions import centered, mirrored
+                from source.post_processors.blender.helpers import centered, mirrored
                 from source.post_processors.blender.objects import (cylinder_geometry,
                                                                     composite_geometry,
                                                                     triangular_prism)

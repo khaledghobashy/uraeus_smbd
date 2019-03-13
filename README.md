@@ -3,38 +3,47 @@
 **ASU Racing Team - Computational Dynamics Tool**
 
 ## Description
-**asurt_cdt** is a python package developed for the creation, simulation and visualization of multibody systems. Those are systems that consist of various interconnected bodies, such as ground vehicles, space structures, robotics and industrial mechanisms, where their analysis leads to highly nonlinear mathematical formulations that require the use of advanced numerical, and computational methods.
+**asurt_cdt** is a python package developed for the creation, simulation and visualization of multibody systems.
+
+A multibody system is hereby defined as *a finite number of material bodies connected in an arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies*. Practitioners of multibody dynamics study the generation and solution of the equations governing the motion of such systems [1].
+
+### Audience and Fields of Application
+
+
 
 ### Features 
 
-Currently, the tool provides the following features:
+Currently, the tool provides:
 
-- Creation of template-based multibody systems using minimal API via python scripting.
+#### Symbolic Model Creation
 
-- Convenient creation of complex multibody assemblies.
-
+- Creation of template-based and stand-alone multibody systems using minimal API via python scripting.
+- Convenient and easy creation of complex multibody assemblies.
 - Convenient visualization of the system topology as a network graph.
-
 - Viewing the system's symbolic equations in a natural mathematical format using Latex printing.
-
+- Optimization of the system equations by performing common sub-expressions elimination.
 - Creation of symbolic configuration files to facilitate the process of numerical configuration data entry.
 
-- Optimization of the system equations by performing common sub-expressions elimination.
+#### Numerical Code Generation and Model Simulation
 
 - A python code-generator that creates an object-oriented code structure of the symbolic systems.
-
 - A python solver that can be used to solve for *Kinematically Driven Systems* -systems driven by motion actuators- using the NumPy and SciPy libraries for numerical evaluation.
 
-- A [blender](https://www.blender.org/) code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
-  *"Requires installation of blender. It's free and open-source"*
+#### 3D Visualization
 
-- A blender add-on that can be easily added to blender to facilitate the visualization process of the simulated systems.
+*"Requires the installation of  [blender](https://www.blender.org/). It is free and open source."*
 
+- A blender code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
+- A blender add-on that can be easily added to blender's GUI, to facilitate the visualization process of the simulated systems.
+
+#### Development Environment
+
+- Easy construction of new, user-defined joints and actuators.
 - A modular development environment that adopts the *"programming to an interface instead of an implementation"* concept, resulting in a flexible, loosely-coupled code structure, specially for the creation of other code-generators. 
 
-  ------
+------
 
-  
+
 
 ## Background
 #### What is Computational Dynamics?

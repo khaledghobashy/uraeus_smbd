@@ -7,7 +7,7 @@ Created on Tue Jan 29 08:18:17 2019
 import os
 import pickle
 
-from source.symbolic_classes.spatial_joints import (revolute, universal, spherical,
+from source.symbolic_classes.joints import (revolute, universal, spherical,
                                                     cylinderical)
 from source.symbolic_classes.forces import internal_force
 from source.mbs_creators.topology_classes import template_based_topology

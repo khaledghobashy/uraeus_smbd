@@ -8,12 +8,6 @@ Created on Mon Mar 11 11:23:45 2019
 import os
 import pickle
 
-from source.symbolic_classes.spatial_joints import (revolute, universal, spherical,
-                                                    rotational_actuator)
-from source.mbs_creators.topology_classes import template_based_topology
-from source.code_generators.python_code_generators import template_code_generator
-
-
 topology_name = 'spatial_fourbar'
 
 def load():
@@ -23,6 +17,11 @@ def load():
         template = pickle.load(f)
 
 def create():
+    from source.symbolic_classes.joints import (revolute, universal, spherical,
+                                                    rotational_actuator)
+    from source.mbs_creators.topology_classes import template_based_topology
+    from source.code_generators.python_code_generators import template_code_generator
+
     global template
     global numerical_code
     
