@@ -8,8 +8,6 @@ import os
 import sympy as sm
 import textwrap
 import re
-import pandas as pd
-import numpy as np
 import itertools
 from source.code_generators.code_printers import numerical_printer
 
@@ -102,14 +100,6 @@ class abstract_generator(object):
         cse_expressions = '\n'.join([p._print(exp) for exp in cse[1]])
         return cse_variables, cse_expressions
 
-    
-    def _create_inputs_dataframe(self):
-        indecies = [str(i.lhs) for i in self.input_args if isinstance(i.lhs,sm.MatrixSymbol)]
-        indecies.sort()
-        shape = (len(indecies),4)
-        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
-        return dataframe
-
     @staticmethod
     def _insert_string(string):
         def inserter(x): return string + x.group(0)
@@ -137,7 +127,6 @@ class configuration_code_generator(abstract_generator):
         
     def write_imports(self):
         text = '''
-                import os
                 import numpy as np
                 import pandas as pd
                 from source.solvers.py_numerical_functions import (mirrored, centered, oriented, 
@@ -150,9 +139,7 @@ class configuration_code_generator(abstract_generator):
         return text
         
     def write_class_init(self):
-        text = '''
-                path = os.path.dirname(__file__)
-                
+        text = '''                
                 class configuration(object):
 
                     def __init__(self):
@@ -187,13 +174,16 @@ class configuration_code_generator(abstract_generator):
                     return qd
                                         
                 def load_from_csv(self,csv_file):
-                    file_path = os.path.join(path,csv_file)
-                    dataframe = pd.read_csv(file_path,index_col=0)
+                    dataframe = pd.read_csv(csv_file,index_col=0)
                     for ind in dataframe.index:
-                        shape = getattr(self,ind).shape
-                        v = np.array(dataframe.loc[ind],dtype=np.float64)
-                        v = np.resize(v,shape)
-                        setattr(self,ind,v)
+                        if isinstance(np.ndarray):
+                            shape = getattr(self,ind).shape
+                            v = np.array(dataframe.loc[ind],dtype=np.float64)
+                            v = np.resize(v,shape)
+                            setattr(self,ind,v)
+                        else:
+                            v = dataframe.loc[ind]
+                            setattr(self,ind,v)
                     self._set_arguments()
                 
                 def _set_arguments(self):
@@ -260,8 +250,8 @@ class configuration_code_generator(abstract_generator):
         with open('%s.py'%self.name,'w') as file:
             file.write(text)
         
-        inputs_dataframe = self._create_inputs_dataframe()
-        inputs_dataframe.to_csv('%s.csv'%self.name)
+        inputs_dataframe = self.config.create_inputs_dataframe()
+        inputs_dataframe.to_csv('csv_files\\%s.csv'%self.name)
 
         
 ###############################################################################
@@ -272,14 +262,11 @@ class template_code_generator(abstract_generator):
         
     def write_imports(self):
         text = '''
-                import os
                 import numpy as np
-                import pandas as pd
                 from scipy.misc import derivative
                 from numpy import cos, sin
                 from numpy.linalg import multi_dot
                 from source.cython_definitions.matrix_funcs import A, B, G, E, triad, skew_matrix as skew
-                from source.solvers.py_numerical_functions import mirrored
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -538,15 +525,11 @@ class template_code_generator(abstract_generator):
         
         self.setup_equations()
         imports = self.write_imports()
-        base_cfg = self.write_config_class()
         system_class = self.write_system_class()
-        text = '\n'.join([imports,base_cfg,system_class])
+        text = '\n'.join([imports,system_class])
         with open('%s.py'%self.mbs.name,'w') as file:
             file.write(text)
-        
-        inputs_dataframe = self._create_inputs_dataframe()
-        inputs_dataframe.to_csv('%s_base_cfg.csv'%self.mbs.name)
-        
+                
     ###########################################################################
     ###########################################################################
 
@@ -603,7 +586,7 @@ class template_code_generator(abstract_generator):
         cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)
         cse_exp_txt = re.sub(self_pattern,self_inserter,cse_exp_txt)
         
-        config_pattern = self.primary_arguments - set(self.runtime_symbols)  #\w*(?<!.)
+        config_pattern = self.primary_arguments - set(self.runtime_symbols)
         config_pattern = '|'.join([r'%s'%i for i in config_pattern])
         config_inserter = self._insert_string('config.')
         cse_var_txt = re.sub(config_pattern,config_inserter,cse_var_txt)

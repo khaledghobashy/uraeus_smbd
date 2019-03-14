@@ -34,7 +34,7 @@ class abstract_topology(object):
 
         self._insert_ground()
         self._set_global_frame()
-        self._param_config = parametric_configuration(self)
+        self._param_config = parametric_configuration('%s_bcfg'%name,self)
         self.path = os.getcwd()
         
 
@@ -175,6 +175,7 @@ class abstract_topology(object):
         self.vel_vars, self.vel_exp = self._generate_cse(self.vel_equations,'v')
         self.acc_vars, self.acc_exp = self._generate_cse(self.acc_equations,'a')
         self.jac_vars, self.jac_exp = self._generate_cse(self.jac_equations,'j')
+        self.frc_vars, self.frc_exp = self._generate_cse(self.frc_equations,'f')
     
     def save(self):
         with open('%s\\%s.stpl'%(self.path,self.name),'wb') as f:

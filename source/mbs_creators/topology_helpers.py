@@ -99,10 +99,10 @@ class triangular_prism(simple_geometry):
 
 class parametric_configuration(object):
         
-    def __init__(self,mbs_instance):
+    def __init__(self,name,mbs_instance):
         
+        self.name  = name
         self.topology = mbs_instance
-        self.name  = '%s_cfg'%self.topology.name
         self.graph = nx.DiGraph(name=self.name)
         self.geometries_map = {}
         
@@ -197,14 +197,6 @@ class parametric_configuration(object):
         else:
             self._add_sub_relation(node,relation,*nbunch)
     
-    def create_inputs_dataframe(self):
-        equalities = self.input_equalities
-        indecies = [str(i.lhs) for i in equalities 
-                    if isinstance(i.lhs,sm.MatrixSymbol)]
-        indecies.sort()
-        shape = (len(indecies),4)
-        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
-        return dataframe
     
     def get_node_dependencies(self,n):
         edges = [e[:-1] for e in nx.edge_bfs(self.graph,n,'reverse')]
@@ -237,6 +229,17 @@ class parametric_configuration(object):
                 'geometries_map':self.geometries_map}
         return data
     
+    def create_inputs_dataframe(self):
+        nodes  = self.graph.nodes
+        inputs = self.input_nodes
+        condition = lambda i:  isinstance(nodes[i]['obj'], sm.MatrixSymbol)\
+                            or isinstance(nodes[i]['obj'], sm.Symbol)
+        indecies = list(filter(condition,inputs))
+        indecies.sort()
+        shape = (len(indecies),4)
+        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
+        return dataframe
+
     
     def _get_topology_args(self):
         args = {}
@@ -405,7 +408,7 @@ class parametric_configuration(object):
             elif issubclass(sym1,sm.Function):
                 t = sm.symbols('t')
                 return sm.Eq(sym1,sm.Lambda(t,0))
-
+    
 #    @staticmethod
 #    def _set_mirror_equality(arg1,arg2):
 #         return sm.Eq(arg2,Mirrored(arg1),evaluate=False)

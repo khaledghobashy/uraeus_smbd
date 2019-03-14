@@ -12,6 +12,7 @@ from source.symbolic_classes.joints import (revolute, universal, spherical,
 from source.symbolic_classes.forces import internal_force
 from source.mbs_creators.topology_classes import template_based_topology
 from source.code_generators.python_code_generators import template_code_generator
+from source.code_generators.python_code_generators import configuration_code_generator
 
 
 topology_name = 'dwb'
@@ -60,6 +61,9 @@ def create():
     
     numerical_code = template_code_generator(template)
     numerical_code.write_code_file()
+    
+    config_code = configuration_code_generator(template.param_config)
+    config_code.write_code_file()
     
 
 if __name__ == '__main__':

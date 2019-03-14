@@ -21,7 +21,7 @@ def progress_bar(steps,i):
     length=(100*(1+i)//(4*steps))
     percentage=100*(1+i)//steps
     sys.stdout.write("Progress: ")
-    sys.stdout.write("[%-25s] %d%% of %s steps." % ('='*length,percentage, steps+1))
+    sys.stdout.write("[%-25s] %d%%, (%s/%s) steps." % ('='*length,percentage,i, steps+1))
     sys.stdout.flush()
 
 def scipy_matrix_assembler(data,rows,cols,shape):
