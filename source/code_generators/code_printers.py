@@ -145,7 +145,7 @@ class numerical_printer(C99CodePrinter):
         rows_print = 'np.array([' + ','.join([self._print(i) for i in rows]) + '])'
         cols_print = 'np.array([' + ','.join([self._print(i) for i in cols]) + '])'
         data_print = '[' + ','.join([self._print(i) for i in data]) + ']'
-        code_block = '\n'.join([self._print(i) for i in [rows_print,cols_print,data_print]])
+        code_block = '\n'.join([rows_print,cols_print,data_print])
         return code_block
     
     def _print_UndefinedFunction(self,expr):

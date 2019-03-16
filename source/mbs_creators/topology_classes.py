@@ -168,14 +168,16 @@ class abstract_topology(object):
         self._assemble_constraints_equations()
         self._assemble_forces_equations()
         self._assemble_mass_matrix()
+        self._perform_cse()
         self._initialize_toplogy_reqs()
     
     def perform_cse(self):
-        self.pos_vars, self.pos_exp = self._generate_cse(self.pos_equations,'x')
-        self.vel_vars, self.vel_exp = self._generate_cse(self.vel_equations,'v')
-        self.acc_vars, self.acc_exp = self._generate_cse(self.acc_equations,'a')
-        self.jac_vars, self.jac_exp = self._generate_cse(self.jac_equations,'j')
-        self.frc_vars, self.frc_exp = self._generate_cse(self.frc_equations,'f')
+        self.pos_rep, self.pos_exp = self._generate_cse(self.pos_equations,'x')
+        self.vel_rep, self.vel_exp = self._generate_cse(self.vel_equations,'v')
+        self.acc_rep, self.acc_exp = self._generate_cse(self.acc_equations,'a')
+        self.jac_rep, self.jac_exp = self._generate_cse(self.jac_equations,'j')
+        self.frc_rep, self.frc_exp = self._generate_cse(self.frc_equations,'f')
+        self.mass_rep, self.mass_exp = self._generate_cse(self.mass_equations,'m')
     
     def save(self):
         with open('%s\\%s.stpl'%(self.path,self.name),'wb') as f:
@@ -340,11 +342,7 @@ class abstract_topology(object):
         self.vel_equations = vel_rhs
         self.acc_equations = acc_rhs
         self.jac_equations = jacobian
-        
-        ind_b    = {v:k for k,v in node_index.items()}
-        cols_ind = [i[1] for i in self.jac_equations.row_list()]
-        self.jac_cols = [(ind_b[i//2]+'*2' if i%2==0 else ind_b[i//2]+'*2+1') for i in cols_ind]
-        
+                
     def _assemble_mass_matrix(self):
         nodes  = self.nodes
         bodies = self.bodies

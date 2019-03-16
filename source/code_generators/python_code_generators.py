@@ -5,17 +5,44 @@ Created on Sun Jan  6 13:23:39 2019
 @author: khale
 """
 import os
-import sympy as sm
-import textwrap
 import re
+import textwrap
 import itertools
 from source.code_generators.code_printers import numerical_printer
 
 class abstract_generator(object):
+    """
+    A python code-generator class that generates numerical code with an OOP
+    structure.
     
-    def __init__(self,multibody_system,printer=numerical_printer()):
+    Parameters
+    ----------
+    mbs : topology
+        An instance of a topology class.
+    
+    Methods
+    -------
+    write_code_file()
+        Write the structured code-files in a .py file format. These code-files
+        are saved in the corresponding sub-directory in the //generated_templates
+        directory.
         
-        self.mbs     = multibody_system
+    Notes
+    -----
+    This generator structures the numerical code of the system as follows:
+        - Creating a 'model_name'.py file that is designed  be used as an 
+          imported  module. The file is saved in a sub-directory inside the
+          'generated_templates' directory.
+        - This module contains one class only, the 'topology' class.
+        - This class provides the interface to be used either directly by the 
+          python_solver or indirectly by the assembly class that assembles 
+          several 'topology' classes together.
+
+    """
+    
+    def __init__(self,mbs,printer=numerical_printer()):
+        
+        self.mbs     = mbs
         self.config  = self.mbs.param_config
         self.printer = printer
         
@@ -27,7 +54,6 @@ class abstract_generator(object):
         
         self.constants_symbolic_expr = self.mbs.constants_symbolic_expr
         self.constants_numeric_expr  = self.mbs.constants_numeric_expr
-        
         
         self.gen_coordinates_exp = self.mbs.mapped_gen_coordinates
         self.gen_coordinates_sym = [printer._print(exp.lhs) for exp in self.gen_coordinates_exp]
@@ -44,61 +70,32 @@ class abstract_generator(object):
         self.joint_reactions_sym = [printer._print(exp) for exp in self.mbs.reactions_symbols]
 
         self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.virtual_coordinates]
-        
-        self.config_vars = [printer._print(i) for i in self.mbs.param_config.arguments_symbols]
-        self.input_args  = self.config.input_equalities
-        self.output_args = self.config.output_equalities
-        
+                
         self.bodies = self.mbs.bodies
-        self.jac_cols = self.mbs.jac_cols
+        
+#        ind_body = {v:k for k,v in self.mbs.nodes_indicies.items()}
+#        cols_ind = [i[1] for i in self.jac_equations.row_list()]
+#        self.jac_cols = [(ind_body[i//2]+'*2' if i%2==0 else ind_body[i//2]+'*2+1') for i in cols_ind]
         
     
-    def setup_equations(self):
-        self._setup_pos_equations()
-        self._setup_vel_equations()
-        self._setup_acc_equations()
-        self._setup_jac_equations()
-        self._setup_frc_equations()
-        self._setup_mass_equations()
-    
-    def _setup_pos_equations(self):
-        self._setup_x_equations('pos','x')
-    
-    def _setup_vel_equations(self):
-        self._setup_x_equations('vel','v')
-    
-    def _setup_acc_equations(self):
-        self._setup_x_equations('acc','a')
+    def _setup_x_equations(self,eq_initial):
+        printer = self.printer
         
-    def _setup_jac_equations(self):
-        self._setup_x_equations('jac','j')
-        scols = ','.join(['self.%s'%i for i in self.jac_cols])
-        self.jac_eq_cols = 'np.array([%s])'%scols
-    
-    def _setup_frc_equations(self):
-        self._setup_x_equations('frc','f')
+        # Geting the optimized equations' vector/matrix from the topology class.
+        # The expected format is two lists [replacements] and [expressions].
+        cse_rep_list = getattr(self.mbs,'%s_rep'%eq_initial)
+        cse_exp_list = getattr(self.mbs,'%s_exp'%eq_initial)
+        # Extracting the vector/matrix from the returned expressions list.
+        cse_exp = cse_exp_list[0]
         
-    def _setup_mass_equations(self):
-        self._setup_x_equations('mass','m')
-
-
-    def _setup_x_equations(self,xstring,sym='x'):
-        p = self.printer
-        equations = getattr(self.mbs,'%s_equations'%xstring)
-        cse_variables, cse_expressions = self._generate_cse(equations,sym)
-        rows,cols,data = p._print(cse_expressions).split('\n')
-        setattr(self,'%s_eq_csev'%xstring,cse_variables)
-        setattr(self,'%s_eq_rows'%xstring,rows)
-        setattr(self,'%s_eq_cols'%xstring,cols)
-        setattr(self,'%s_eq_data'%xstring,data)
-    
-    def _generate_cse(self,equations,symbol):
-        p = self.printer
-        cse_symbols = sm.iterables.numbered_symbols(symbol)
-        cse = sm.cse(equations,symbols=cse_symbols,ignore=(sm.S('t'),))
-        cse_variables   = '\n'.join([p._print(exp) for exp in cse[0]])
-        cse_expressions = '\n'.join([p._print(exp) for exp in cse[1]])
-        return cse_variables, cse_expressions
+        # Breaking down the vector/matrix into three lists, [rows], [cols] and 
+        # [data]
+        data_blocks_lst = [v for i,j,v in cse_exp.row_list()]
+        data_blocks_txt = printer._print(data_blocks_lst)
+        cse_rep_txt = [printer._print(exp) for exp in cse_rep_list]
+        setattr(self,'%s_eq_cse_rep'%eq_initial,cse_rep_txt)
+        setattr(self,'%s_eq_data_blocks'%eq_initial,data_blocks_txt)
+        
 
     @staticmethod
     def _insert_string(string):
@@ -303,12 +300,11 @@ class template_code_generator(abstract_generator):
         reactions = '[%s]'%reactions
 
         
-        text = text.format(rows = self.pos_eq_rows,
-                           jac_rows = self.jac_eq_rows,
-                           jac_cols = self.jac_eq_cols,
-                           nve = self.mbs.nve,
+        text = text.format(jac_rows = '',#self.jac_eq_rows,
+                           jac_cols = '',#self.jac_eq_cols,
                            n = self.mbs.n,
                            nc = self.mbs.nc,
+                           nve = self.mbs.nve,
                            nodes = len(self.mbs.nodes),
                            reactions = reactions)
         return text
@@ -344,7 +340,7 @@ class template_code_generator(abstract_generator):
         
         text = text.format(maped = nodes,
                            virtuals = virtuals,
-                           jac_cols = self.jac_eq_cols)
+                           jac_cols = '')#self.jac_eq_cols)
         text = textwrap.indent(text,indent)
         return text
     
@@ -487,7 +483,7 @@ class template_code_generator(abstract_generator):
         
         class_init = self.write_class_init()
         assembler  = self.write_template_assembler()
-        constants  = self.write_constants_eval()
+#        constants  = self.write_constants_eval()
         coord_setter = self.write_coordinates_setter()
         veloc_setter = self.write_velocities_setter()
         accel_setter = self.write_accelerations_setter()
@@ -503,7 +499,7 @@ class template_code_generator(abstract_generator):
         
         text = text.format(class_init = class_init,
                            assembler = assembler,
-                           constants = constants,
+                           constants = '',
                            eval_pos = eval_pos,
                            eval_vel = eval_vel,
                            eval_acc = eval_acc,
@@ -523,7 +519,6 @@ class template_code_generator(abstract_generator):
         path = os.getcwd() + '\\generated_templates\\templates'
         os.chdir(path)
         
-        self.setup_equations()
         imports = self.write_imports()
         system_class = self.write_system_class()
         text = '\n'.join([imports,system_class])
@@ -561,44 +556,67 @@ class template_code_generator(abstract_generator):
         text = textwrap.indent(text,indent)
         return text
     
-    def _write_x_equations(self,xstring):
+    def _write_x_equations(self,eq_initial):
         text = '''
-                def eval_%s_eq(self):
+                def eval_{eq_initial}_eq(self):
                     config = self.config
                     t = self.t
 
-                    {cse_var_txt}
+                    {replacements}
 
-                    {cse_exp_txt}
-                '''%xstring
+                    self.{eq_initial}_eq_blocks = [{expressions}]
+                '''
+        
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
+        printer = self.printer
         indent = 4*' '
+                
+        # Geting the optimized equations' vector/matrix from the topology class.
+        # The expected format is two lists [replacements] and [expressions].
+        replacements_list = getattr(self.mbs,'%s_rep'%eq_initial)
+        expressions_list  = getattr(self.mbs,'%s_exp'%eq_initial)
+        # Extracting the vector/matrix from the returned expressions list.
+        vector_expr = expressions_list[0]
         
-        cse_var_txt = getattr(self,'%s_eq_csev'%xstring)
-        cse_exp_txt = getattr(self,'%s_eq_data'%xstring)
+        # Extract the numerical format of the replacements and expressions into
+        # a list of string expressions.
+        num_repl_list = [printer._print(exp) for exp in replacements_list]
+        num_expr_list = [printer._print(exp) for exp in vector_expr]
         
+        # Joining the extracted strings to form a valid text block.
+        num_repl_text = '\n'.join(num_repl_list)
+        num_expr_text = ',\n'.join(num_expr_list)
+
+        # Creating a regex pattern of strings that represents the variables
+        # which need to be perfixed by a 'self.' to be referenced correctly.
         self_pattern = itertools.chain(self.runtime_symbols,
                                        self.constants_symbols)
         self_pattern = '|'.join(self_pattern)
-        self_inserter = self._insert_string('self.')
-        cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)
-        cse_exp_txt = re.sub(self_pattern,self_inserter,cse_exp_txt)
         
+        # Creating a regex pattern of strings that represents the variables
+        # which need to be perfixed by a 'config.' to be referenced correctly.
         config_pattern = self.primary_arguments - set(self.runtime_symbols)
         config_pattern = '|'.join([r'%s'%i for i in config_pattern])
+        
+        # Performing the regex substitution with 'self.'.
+        self_inserter = self._insert_string('self.')
+        num_repl_text = re.sub(self_pattern,self_inserter,num_repl_text)
+        num_expr_text = re.sub(self_pattern,self_inserter,num_expr_text)
+        
+        # Performing the regex substitution with 'config.'.
         config_inserter = self._insert_string('config.')
-        cse_var_txt = re.sub(config_pattern,config_inserter,cse_var_txt)
-        cse_exp_txt = re.sub(config_pattern,config_inserter,cse_exp_txt)
+        num_repl_text = re.sub(config_pattern,config_inserter,num_repl_text)
+        num_expr_text = re.sub(config_pattern,config_inserter,num_expr_text)
         
-        cse_var_txt = textwrap.indent(cse_var_txt,indent).lstrip() 
-        cse_exp_txt = textwrap.indent(cse_exp_txt,indent).lstrip()
-        
-        cse_exp_txt = 'self.%s_eq_blocks = %s'%(xstring,cse_exp_txt.lstrip())
-        
-        text = text.format(cse_var_txt = cse_var_txt,
-                           cse_exp_txt = cse_exp_txt)
+        # Indenting the text block for propper class and function indentation.
+        num_repl_text = textwrap.indent(num_repl_text,indent).lstrip() 
+        num_expr_text = textwrap.indent(num_expr_text,indent).lstrip()
+                
+        text = text.format(eq_initial  = eq_initial,
+                           replacements = num_repl_text,
+                           expressions  = num_expr_text)
         text = textwrap.indent(text,indent)
         return text
     
