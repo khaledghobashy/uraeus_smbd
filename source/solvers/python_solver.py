@@ -54,15 +54,14 @@ class solver(object):
     def set_time_array(self,duration,spacing):
         self.time_array, self.step_size = np.linspace(0,duration,spacing,retstep=True)
     
-    def save_results(self,data,filename):
-        pass
+    def save_results(self,filename):
+        self.pos_dataframe.to_csv('results_csv//%s.csv'%filename, index=True)
         
     def solve_kds(self, run_id, save=False):
         time_array = self.time_array
         dt = self.step_size
         
         A = self._eval_jac_eq()
-        
         vel_rhs = self._eval_vel_eq()
         v0 = solve(A,-vel_rhs)
         self._set_gen_velocities(v0)
@@ -97,7 +96,7 @@ class solver(object):
         self._creat_results_dataframes()
         if save:
             filename = run_id
-            self.pos_dataframe.to_csv('results_csv//%s.csv'%filename, index=True)
+            self.save_results(filename)
 
         
     def _creat_results_dataframes(self):
