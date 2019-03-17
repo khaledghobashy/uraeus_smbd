@@ -21,7 +21,7 @@ def progress_bar(steps,i):
     length=(100*(1+i)//(4*steps))
     percentage=100*(1+i)//steps
     sys.stdout.write("Progress: ")
-    sys.stdout.write("[%-25s] %d%%, (%s/%s) steps." % ('='*length,percentage,i, steps+1))
+    sys.stdout.write("[%-25s] %d%%, (%s/%s) steps." % ('='*length,percentage,i+1, steps+1))
     sys.stdout.flush()
 
 def scipy_matrix_assembler(data,rows,cols,shape):
@@ -34,9 +34,9 @@ class solver(object):
     def __init__(self,model):
         self.model = model
         
-        self.nrows = model.nrows
-        self.ncols = model.ncols
-        self.jac_shape = (self.nrows,self.ncols)
+        self._nrows = model.nrows
+        self._ncols = model.ncols
+        self._jac_shape = (self._nrows,self._ncols)
         
         model.set_initial_states()
                 
@@ -45,66 +45,107 @@ class solver(object):
         self._acc_history = {}
         
         sorted_coordinates = {v:k for k,v in self.model.indicies_map.items()}
-        self.coordinates_indicies = []
+        self._coordinates_indicies = []
         for name in sorted_coordinates.values():
-            self.coordinates_indicies += ['%s.%s'%(name,i) 
+            self._coordinates_indicies += ['%s.%s'%(name,i) 
             for i in ['x','y','z','e0','e1','e2','e3']]
-        
     
-    def creat_results_dataframes(self):
+    def set_time_array(self,duration,spacing):
+        self.time_array = np.linspace(0,duration,spacing,retstep=True)
+        
+    def solve_kds(self,run_id='',save=False):
+        time_array, dt = self.time_array
+        
+        A = self._eval_jac_eq()
+        
+        vel_rhs = self._eval_vel_eq()
+        v0 = solve(A,-vel_rhs)
+        self._set_gen_velocities(v0)
+        self._vel_history[0] = v0
+        
+        acc_rhs = self._eval_acc_eq()
+        self._acc_history[0] = solve(A,-acc_rhs)
+        
+        print('\nRunning System Kinematic Analysis:')
+        for i,t in enumerate(time_array[1:]):
+            progress_bar(len(time_array)-1,i)
+            self._set_time(t)
+
+            g =   self._pos_history[i] \
+                + self._vel_history[i]*dt \
+                + 0.5*self._acc_history[i]*(dt**2)
+            
+            self.newton_raphson(g)
+            self._pos_history[i+1] = self.pos
+            A = self._eval_jac_eq()
+            
+            vel_rhs = self._eval_vel_eq()
+            vi = solve(A,-vel_rhs)
+            self._set_gen_velocities(vi)
+            self._vel_history[i+1] = vi
+
+            acc_rhs = self._eval_acc_eq()
+            self._acc_history[i+1] = solve(A,-acc_rhs)
+            
+            i+=1
+        
+        self._creat_results_dataframes()
+
+        
+    def _creat_results_dataframes(self):
         self.pos_dataframe = pd.DataFrame(
                 data = np.concatenate(list(self._pos_history.values()),1).T,
-                columns = self.coordinates_indicies)
+                columns = self._coordinates_indicies)
         self.vel_dataframe = pd.DataFrame(
                 data = np.concatenate(list(self._vel_history.values()),1).T,
-                columns = self.coordinates_indicies)
+                columns = self._coordinates_indicies)
         self.acc_dataframe = pd.DataFrame(
                 data = np.concatenate(list(self._acc_history.values()),1).T,
-                columns = self.coordinates_indicies)
+                columns = self._coordinates_indicies)
     
-    def assemble_equations(self,data):
+    def _assemble_equations(self,data):
         mat = np.concatenate(data)
         return mat
     
-    def set_time(self,t):
+    def _set_time(self,t):
         self.model.t = t
     
-    def set_gen_coordinates(self,q):
+    def _set_gen_coordinates(self,q):
         self.model.set_gen_coordinates(q)
     
-    def set_gen_velocities(self,qd):
+    def _set_gen_velocities(self,qd):
         self.model.set_gen_velocities(qd)
     
-    def set_gen_accelerations(self,qdd):
+    def _set_gen_accelerations(self,qdd):
         self.model.set_gen_accelerations(qdd)
     
-    def eval_pos_eq(self):
+    def _eval_pos_eq(self):
         self.model.eval_pos_eq()
         data = self.model.pos_eq_blocks
-        mat = self.assemble_equations(data)
+        mat = self._assemble_equations(data)
         return mat
         
-    def eval_vel_eq(self):
+    def _eval_vel_eq(self):
         self.model.eval_vel_eq()
         data = self.model.vel_eq_blocks
-        mat = self.assemble_equations(data)
+        mat = self._assemble_equations(data)
         return mat
         
-    def eval_acc_eq(self):
+    def _eval_acc_eq(self):
         self.model.eval_acc_eq()
         data = self.model.acc_eq_blocks
-        mat = self.assemble_equations(data)
+        mat = self._assemble_equations(data)
         return mat
             
-    def eval_jac_eq(self):
+    def _eval_jac_eq(self):
         self.model.eval_jac_eq()
         rows = self.model.jac_rows
         cols = self.model.jac_cols
         data = self.model.jac_eq_blocks
-        mat = scipy_matrix_assembler(data,rows,cols,self.jac_shape)
+        mat = scipy_matrix_assembler(data,rows,cols,self._jac_shape)
         return mat
     
-    def eval_mass_eq(self):
+    def _eval_mass_eq(self):
         self.model.eval_mass_eq()
         data = self.model.mass_eq_blocks
         n = self.model.ncols
@@ -112,18 +153,18 @@ class solver(object):
         mat = scipy_matrix_assembler(data,rows,cols,(n,n))
         return mat
     
-    def eval_frc_eq(self):
+    def _eval_frc_eq(self):
         self.model.eval_frc_eq()
         data = self.model.frc_eq_blocks
-        mat = self.assemble_equations(data)
+        mat = self._assemble_equations(data)
         return mat
     
         
     def newton_raphson(self,guess):
-        self.set_gen_coordinates(guess)
+        self._set_gen_coordinates(guess)
         
-        A = self.eval_jac_eq()
-        b = self.eval_pos_eq()
+        A = self._eval_jac_eq()
+        b = self._eval_pos_eq()
         delta_q = solve(A,-b)
         
         itr=0
@@ -131,12 +172,12 @@ class solver(object):
 #            print(np.linalg.norm(delta_q))
             guess = guess + delta_q
             
-            self.set_gen_coordinates(guess)
-            b = self.eval_pos_eq()
+            self._set_gen_coordinates(guess)
+            b = self._eval_pos_eq()
             delta_q = solve(A,-b)
             
             if itr%5==0 and itr!=0:
-                A = self.eval_jac_eq()
+                A = self._eval_jac_eq()
                 delta_q = solve(A,-b)
             if itr>50:
                 print("Iterations exceded \n")
@@ -145,52 +186,13 @@ class solver(object):
         self.pos = guess
     
     
-    def solve_kds(self,time_array,run_id='',save=False):
-        dt = time_array[1]-time_array[0]
-        
-        A = self.eval_jac_eq()
-        
-        vel_rhs = self.eval_vel_eq()
-        v0 = solve(A,-vel_rhs)
-        self.set_gen_velocities(v0)
-        self._vel_history[0] = v0
-        
-        acc_rhs = self.eval_acc_eq()
-        self._acc_history[0] = solve(A,-acc_rhs)
-        
-        print('\nRunning System Kinematic Analysis:')
-        for i,t in enumerate(time_array[1:]):
-            progress_bar(len(time_array)-1,i)
-            self.set_time(t)
-
-            g =   self._pos_history[i] \
-                + self._vel_history[i]*dt \
-                + 0.5*self._acc_history[i]*(dt**2)
-            
-            self.newton_raphson(g)
-            self._pos_history[i+1] = self.pos
-            A = self.eval_jac_eq()
-            
-            vel_rhs = self.eval_vel_eq()
-            vi = solve(A,-vel_rhs)
-            self.set_gen_velocities(vi)
-            self._vel_history[i+1] = vi
-
-            acc_rhs = self.eval_acc_eq()
-            self._acc_history[i+1] = solve(A,-acc_rhs)
-            
-            i+=1
-        
-        self.creat_results_dataframes()
-        
-    
     def _eval_lagrange_multipliers(self,i):
-        applied_forces = self.eval_frc_eq()
-        mass_matrix = self.eval_mass_eq()
+        applied_forces = self._eval_frc_eq()
+        mass_matrix = self._eval_mass_eq()
         qdd = self._acc_history[i]
         inertia_forces = mass_matrix.dot(qdd)
         rhs = applied_forces - inertia_forces
-        jac = self.eval_jac_eq()
+        jac = self._eval_jac_eq()
         lamda = solve(jac.T,-rhs)
         return lamda
     
@@ -199,12 +201,12 @@ class solver(object):
         self.model.set_lagrange_multipliers(lamda)
         self.model.eval_reactions_eq()
     
-    def eval_reactions_eq(self):
+    def eval_reactions(self):
         self.reactions = {}
         for i in range(len(self._acc_history)):            
-            self.set_gen_coordinates(self._pos_history[i])
-            self.set_gen_velocities(self._vel_history[i])
-            self.set_gen_accelerations(self._acc_history[i])
+            self._set_gen_coordinates(self._pos_history[i])
+            self._set_gen_velocities(self._vel_history[i])
+            self._set_gen_accelerations(self._acc_history[i])
             self._eval_reactions_eq(i)
             self.reactions[i] = self.model.reactions
         
@@ -221,7 +223,4 @@ class solver(object):
     
     def save_data(self,data,filename):
         pass
-
-        
-
 

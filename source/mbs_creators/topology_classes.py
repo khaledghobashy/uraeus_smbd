@@ -171,18 +171,18 @@ class abstract_topology(object):
         self._perform_cse()
         self._initialize_toplogy_reqs()
     
-    def perform_cse(self):
+    
+    def save(self):
+        with open('%s\\%s.stpl'%(self.path,self.name),'wb') as f:
+            cloudpickle.dump(self,f)
+
+    def _perform_cse(self):
         self.pos_rep, self.pos_exp = self._generate_cse(self.pos_equations,'x')
         self.vel_rep, self.vel_exp = self._generate_cse(self.vel_equations,'v')
         self.acc_rep, self.acc_exp = self._generate_cse(self.acc_equations,'a')
         self.jac_rep, self.jac_exp = self._generate_cse(self.jac_equations,'j')
         self.frc_rep, self.frc_exp = self._generate_cse(self.frc_equations,'f')
         self.mass_rep, self.mass_exp = self._generate_cse(self.mass_equations,'m')
-    
-    def save(self):
-        with open('%s\\%s.stpl'%(self.path,self.name),'wb') as f:
-            cloudpickle.dump(self,f)
-
 
     def _get_topology_attr(self,name):
         graph = self.graph

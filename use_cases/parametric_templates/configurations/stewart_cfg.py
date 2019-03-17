@@ -18,10 +18,8 @@ def main():
     global config
     
     name = 'stewart_points'
-    config = parametric_configuration(model.template)
+    config = parametric_configuration(name,model.template)
     config.assemble_base_layer()
-    config.name = name
-    model.template.cfg_file = name
     
     # HARD POINTS:
     config.add_point('bottom_1')
@@ -116,7 +114,6 @@ def main():
     config.add_relation('gms_link_3',cylinder_geometry,'hps_upper_3','hps_middle_3','s_links_ro')
     config.assign_geometry_to_body('rbs_link_3','gms_link_3')
         
-    model.template.save()
     
     config_code = configuration_code_generator(config)
     config_code.write_code_file()

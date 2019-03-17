@@ -72,30 +72,6 @@ class abstract_generator(object):
         self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.virtual_coordinates]
                 
         self.bodies = self.mbs.bodies
-        
-#        ind_body = {v:k for k,v in self.mbs.nodes_indicies.items()}
-#        cols_ind = [i[1] for i in self.jac_equations.row_list()]
-#        self.jac_cols = [(ind_body[i//2]+'*2' if i%2==0 else ind_body[i//2]+'*2+1') for i in cols_ind]
-        
-    
-    def _setup_x_equations(self,eq_initial):
-        printer = self.printer
-        
-        # Geting the optimized equations' vector/matrix from the topology class.
-        # The expected format is two lists [replacements] and [expressions].
-        cse_rep_list = getattr(self.mbs,'%s_rep'%eq_initial)
-        cse_exp_list = getattr(self.mbs,'%s_exp'%eq_initial)
-        # Extracting the vector/matrix from the returned expressions list.
-        cse_exp = cse_exp_list[0]
-        
-        # Breaking down the vector/matrix into three lists, [rows], [cols] and 
-        # [data]
-        data_blocks_lst = [v for i,j,v in cse_exp.row_list()]
-        data_blocks_txt = printer._print(data_blocks_lst)
-        cse_rep_txt = [printer._print(exp) for exp in cse_rep_list]
-        setattr(self,'%s_eq_cse_rep'%eq_initial,cse_rep_txt)
-        setattr(self,'%s_eq_data_blocks'%eq_initial,data_blocks_txt)
-        
 
     @staticmethod
     def _insert_string(string):
@@ -173,13 +149,14 @@ class configuration_code_generator(abstract_generator):
                 def load_from_csv(self,csv_file):
                     dataframe = pd.read_csv(csv_file,index_col=0)
                     for ind in dataframe.index:
-                        if isinstance(np.ndarray):
-                            shape = getattr(self,ind).shape
+                        value = getattr(self,ind)
+                        if isinstance(value, np.ndarray):
+                            shape = value.shape
                             v = np.array(dataframe.loc[ind],dtype=np.float64)
                             v = np.resize(v,shape)
                             setattr(self,ind,v)
                         else:
-                            v = dataframe.loc[ind]
+                            v = dataframe.loc[ind][0]
                             setattr(self,ind,v)
                     self._set_arguments()
                 
@@ -290,19 +267,15 @@ class template_code_generator(abstract_generator):
                         self.ncols = 2*{nodes}
                         self.rows = np.arange(self.nrows)
                         
-                        self.jac_rows = {jac_rows}
                         self.joints_reactions_indicies = {reactions}
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        
+                
         reactions = ','.join(['%r'%i for i in self.joint_reactions_sym])
         reactions = '[%s]'%reactions
 
-        
-        text = text.format(jac_rows = '',#self.jac_eq_rows,
-                           jac_cols = '',#self.jac_eq_cols,
-                           n = self.mbs.n,
+        text = text.format(n = self.mbs.n,
                            nc = self.mbs.nc,
                            nve = self.mbs.nve,
                            nodes = len(self.mbs.nodes),
@@ -311,17 +284,18 @@ class template_code_generator(abstract_generator):
 
     def write_template_assembler(self):
         text = '''
-                def _set_mapping(self,indicies_map,interface_map):
+                def _set_mapping(self,indicies_map, interface_map):
                     p = self.prefix
                     {maped}
                     {virtuals}
                 
-                def assemble_template(self,indicies_map,interface_map,rows_offset):
+                def assemble_template(self,indicies_map, interface_map, rows_offset):
                     self.rows_offset = rows_offset
-                    self._set_mapping(indicies_map,interface_map)
+                    self._set_mapping(indicies_map, interface_map)
                     self.rows += self.rows_offset
+                    self.jac_rows = np.array({jac_rows})
                     self.jac_rows += self.rows_offset
-                    self.jac_cols = {jac_cols}
+                    self.jac_cols = [{jac_cols}]
                 
                 def set_initial_states(self):
                     self.set_gen_coordinates(self.config.q)
@@ -338,9 +312,15 @@ class template_code_generator(abstract_generator):
         virtuals = '\n'.join(['%s = indicies_map[interface_map[p+%r]]'%('self.%s'%i,i) for i in self.mbs.virtual_bodies])
         virtuals = textwrap.indent(virtuals,indent).lstrip()
         
+        ind_body = {v:k for k,v in self.mbs.nodes_indicies.items()}
+        rows, cols, data = zip(*self.mbs.jac_equations.row_list())
+        string_cols = [('self.%s*2'%ind_body[i//2] if i%2==0 else 'self.%s*2+1'%ind_body[i//2]) for i in cols]
+        string_cols_text = ', '.join(string_cols)
+        
         text = text.format(maped = nodes,
                            virtuals = virtuals,
-                           jac_cols = '')#self.jac_eq_cols)
+                           jac_rows = list(rows),
+                           jac_cols = string_cols_text)
         text = textwrap.indent(text,indent)
         return text
     
@@ -353,10 +333,12 @@ class template_code_generator(abstract_generator):
                     
                     {sym_constants}
                 '''
-        indent = 4*' '
-        p = self.printer
-                
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
         
+        printer = self.printer
+        indent = 4*' '
+                
         config_pattern_iter = itertools.chain(self.arguments_symbols,
                                               self.virtual_coordinates)
         config_pattern = '|'.join(config_pattern_iter)
@@ -366,24 +348,21 @@ class template_code_generator(abstract_generator):
         self_pattern = '|'.join(self_pattern_iter)
         self_inserter = self._insert_string('self.')
         
-        sym_consts = self.constants_symbolic_expr
-        cse_var_txt, cse_exp_txt = self._generate_cse(sym_consts,'c')
-        cse_var_txt = re.sub(config_pattern,config_inserter,cse_var_txt)
-        cse_exp_txt = re.sub(config_pattern,config_inserter,cse_exp_txt)
-        cse_var_txt = re.sub(self_pattern,self_inserter,cse_var_txt)
-        cse_exp_txt = re.sub(self_pattern,self_inserter,cse_exp_txt)
-        sym_constants = '\n'.join([cse_var_txt,'',cse_exp_txt])
-        sym_constants = textwrap.indent(sym_constants,indent).lstrip()
+        sym_constants = self.constants_symbolic_expr
+        sym_constants_text = '\n'.join((printer._print(i) for i in sym_constants))
+        sym_constants_text = re.sub(config_pattern, config_inserter, sym_constants_text)
+        sym_constants_text = re.sub(self_pattern, self_inserter, sym_constants_text)
+        sym_constants_text = textwrap.indent(sym_constants_text, indent).lstrip()
         
         num_constants_list = self.constants_numeric_expr
-        num_constants_text = '\n'.join((p._print(i) for i in num_constants_list))
-        num_constants_text = re.sub(config_pattern,config_inserter,num_constants_text)
-        num_constants_text = re.sub(self_pattern,self_inserter,num_constants_text)
-        num_constants_text = textwrap.indent(num_constants_text,indent).lstrip()
+        num_constants_text = '\n'.join((printer._print(i) for i in num_constants_list))
+        num_constants_text = re.sub(config_pattern, config_inserter, num_constants_text)
+        num_constants_text = re.sub(self_pattern, self_inserter, num_constants_text)
+        num_constants_text = textwrap.indent(num_constants_text, indent).lstrip()
 
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(sym_constants = sym_constants,
+        text = text.format(sym_constants = sym_constants_text,
                            num_constants = num_constants_text)
         text = textwrap.indent(text,indent)
         return text
@@ -483,7 +462,7 @@ class template_code_generator(abstract_generator):
         
         class_init = self.write_class_init()
         assembler  = self.write_template_assembler()
-#        constants  = self.write_constants_eval()
+        constants  = self.write_constants_eval()
         coord_setter = self.write_coordinates_setter()
         veloc_setter = self.write_velocities_setter()
         accel_setter = self.write_accelerations_setter()
@@ -499,7 +478,7 @@ class template_code_generator(abstract_generator):
         
         text = text.format(class_init = class_init,
                            assembler = assembler,
-                           constants = '',
+                           constants = constants,
                            eval_pos = eval_pos,
                            eval_vel = eval_vel,
                            eval_acc = eval_acc,
@@ -579,11 +558,13 @@ class template_code_generator(abstract_generator):
         expressions_list  = getattr(self.mbs,'%s_exp'%eq_initial)
         # Extracting the vector/matrix from the returned expressions list.
         vector_expr = expressions_list[0]
+        # Extracting the Non-Zero values of the vector/matrix.
+        vector_data = [i[-1] for i in vector_expr.row_list()]
         
         # Extract the numerical format of the replacements and expressions into
         # a list of string expressions.
         num_repl_list = [printer._print(exp) for exp in replacements_list]
-        num_expr_list = [printer._print(exp) for exp in vector_expr]
+        num_expr_list = [printer._print(exp) for exp in vector_data]
         
         # Joining the extracted strings to form a valid text block.
         num_repl_text = '\n'.join(num_repl_list)
@@ -613,7 +594,7 @@ class template_code_generator(abstract_generator):
         # Indenting the text block for propper class and function indentation.
         num_repl_text = textwrap.indent(num_repl_text,indent).lstrip() 
         num_expr_text = textwrap.indent(num_expr_text,indent).lstrip()
-                
+        
         text = text.format(eq_initial  = eq_initial,
                            replacements = num_repl_text,
                            expressions  = num_expr_text)

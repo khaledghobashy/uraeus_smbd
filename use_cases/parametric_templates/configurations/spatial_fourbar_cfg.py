@@ -17,8 +17,7 @@ def main():
     global config
     
     name = 'spatial_fourbar_cfg'
-    config = parametric_configuration(model.template)
-    config.name = name
+    config = parametric_configuration(name,model.template)
     config.assemble_base_layer()
     
     config.add_point('rev_crank')

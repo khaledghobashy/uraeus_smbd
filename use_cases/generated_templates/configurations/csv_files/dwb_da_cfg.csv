@@ -47,3 +47,8 @@ hpr_ucar,0.0,0.0,0.0,0.0
 hpr_wc,0.0,0.0,0.0,0.0
 pt1_far_strut,0.0,0.0,0.0,0.0
 pt2_far_strut,0.0,0.0,0.0,0.0
+s_links_ro,0.0,0.0,0.0,0.0
+s_strut_inner,0.0,0.0,0.0,0.0
+s_strut_outer,0.0,0.0,0.0,0.0
+s_thickness,0.0,0.0,0.0,0.0
+s_tire_radius,0.0,0.0,0.0,0.0

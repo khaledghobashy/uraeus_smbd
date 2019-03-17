@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 from source.solvers.python_solver import solver
 
 import use_cases.generated_templates.assemblies.spatial_fourbar_assm as assm
-from use_cases.generated_templates.configurations import spatial_fourbar
+from use_cases.generated_templates.configurations import spatial_fourbar_cfg
 
-assm.FB.config = spatial_fourbar.configuration()
-assm.FB.config.load_from_csv('spatial_fourbar_mod.csv')
+assm.FB.config = spatial_fourbar_cfg.configuration()
+assm.FB.config.load_from_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\csv_files\spatial_fourbar_mod.csv')
 
 assm.FB.config.AF_jcs_rev_crank = lambda t: -np.pi*t
 

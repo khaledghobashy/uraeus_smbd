@@ -19,10 +19,9 @@ def main():
     
     global config
     
-    name = 'dwb_simple_points'
-    config = parametric_configuration(model.template)
+    name = 'dwb_da_cfg'
+    config = parametric_configuration(name,model.template)
     config.assemble_base_layer()
-    config.name = name
     
     # Adding Points
     config.add_point('ucaf',mirror=True)

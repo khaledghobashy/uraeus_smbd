@@ -1,16 +1,14 @@
 
 import numpy as np
 
-from use_cases.generated_templates.configurations import dwb_simple_points
-from use_cases.generated_templates.configurations import steer_simple_points
-
 from use_cases.generated_templates.templates import dwb
 from use_cases.generated_templates.templates import steer
 from use_cases.generated_templates.templates import test_rig
 
-SU = dwb.topology('SU',dwb_simple_points.configuration())
 
-ST = steer.topology('ST',steer_simple_points.configuration())
+SU = dwb.topology('SU')
+
+ST = steer.topology('ST')
 
 TR = test_rig.topology('TR')
 
@@ -22,7 +20,7 @@ class numerical_assembly(object):
         self._t = 0
         self.subsystems = [SU,ST,TR]
 
-        self.interface_map = {'SU.vbs_ground': 'ground', 'SU.vbr_steer': 'ST.rbr_rocker', 'SU.vbs_chassis': 'ground', 'SU.vbl_steer': 'ST.rbl_rocker', 'ST.vbs_ground': 'ground', 'ST.vbs_chassis': 'ground', 'TR.vbr_upright': 'SU.rbr_upright', 'TR.vbl_hub': 'SU.rbl_hub', 'TR.vbl_upright': 'SU.rbl_upright', 'TR.vbs_ground': 'ground', 'TR.vbr_hub': 'SU.rbr_hub', 'TR.vbs_chassis': 'ground', 'TR.vbs_steer_gear': 'ST.rbr_rocker'}
+        self.interface_map = {'SU.vbl_steer': 'ST.rbl_rocker', 'SU.vbr_steer': 'ST.rbr_rocker', 'SU.vbs_chassis': 'ground', 'SU.vbs_ground': 'ground', 'ST.vbs_ground': 'ground', 'ST.vbs_chassis': 'ground', 'TR.vbl_hub': 'SU.rbl_hub', 'TR.vbr_hub': 'SU.rbr_hub', 'TR.vbl_upright': 'SU.rbl_upright', 'TR.vbs_steer_gear': 'ST.rbr_rocker', 'TR.vbs_chassis': 'ground', 'TR.vbs_ground': 'ground', 'TR.vbr_upright': 'SU.rbr_upright'}
         self.indicies_map  = {'ground': 0, 'SU.rbr_uca': 1, 'SU.rbl_uca': 2, 'SU.rbr_lca': 3, 'SU.rbl_lca': 4, 'SU.rbr_upright': 5, 'SU.rbl_upright': 6, 'SU.rbr_upper_strut': 7, 'SU.rbl_upper_strut': 8, 'SU.rbr_lower_strut': 9, 'SU.rbl_lower_strut': 10, 'SU.rbr_tie_rod': 11, 'SU.rbl_tie_rod': 12, 'SU.rbr_hub': 13, 'SU.rbl_hub': 14, 'ST.rbs_coupler': 15, 'ST.rbr_rocker': 16, 'ST.rbl_rocker': 17}
 
         self.R_ground  = np.array([[0],[0],[0]],dtype=np.float64)
@@ -82,32 +80,32 @@ class numerical_assembly(object):
 
     
     def eval_constants(self):
-        SU.config.R_vbs_ground = self.R_ground
-        SU.config.P_vbs_ground = self.P_ground
+        SU.config.R_vbl_steer = ST.config.R_rbl_rocker
+        SU.config.P_vbl_steer = ST.config.P_rbl_rocker
         SU.config.R_vbr_steer = ST.config.R_rbr_rocker
         SU.config.P_vbr_steer = ST.config.P_rbr_rocker
         SU.config.R_vbs_chassis = self.R_ground
         SU.config.P_vbs_chassis = self.P_ground
-        SU.config.R_vbl_steer = ST.config.R_rbl_rocker
-        SU.config.P_vbl_steer = ST.config.P_rbl_rocker
+        SU.config.R_vbs_ground = self.R_ground
+        SU.config.P_vbs_ground = self.P_ground
         ST.config.R_vbs_ground = self.R_ground
         ST.config.P_vbs_ground = self.P_ground
         ST.config.R_vbs_chassis = self.R_ground
         ST.config.P_vbs_chassis = self.P_ground
-        TR.config.R_vbr_upright = SU.config.R_rbr_upright
-        TR.config.P_vbr_upright = SU.config.P_rbr_upright
         TR.config.R_vbl_hub = SU.config.R_rbl_hub
         TR.config.P_vbl_hub = SU.config.P_rbl_hub
-        TR.config.R_vbl_upright = SU.config.R_rbl_upright
-        TR.config.P_vbl_upright = SU.config.P_rbl_upright
-        TR.config.R_vbs_ground = self.R_ground
-        TR.config.P_vbs_ground = self.P_ground
         TR.config.R_vbr_hub = SU.config.R_rbr_hub
         TR.config.P_vbr_hub = SU.config.P_rbr_hub
-        TR.config.R_vbs_chassis = self.R_ground
-        TR.config.P_vbs_chassis = self.P_ground
+        TR.config.R_vbl_upright = SU.config.R_rbl_upright
+        TR.config.P_vbl_upright = SU.config.P_rbl_upright
         TR.config.R_vbs_steer_gear = ST.config.R_rbr_rocker
         TR.config.P_vbs_steer_gear = ST.config.P_rbr_rocker
+        TR.config.R_vbs_chassis = self.R_ground
+        TR.config.P_vbs_chassis = self.P_ground
+        TR.config.R_vbs_ground = self.R_ground
+        TR.config.P_vbs_ground = self.P_ground
+        TR.config.R_vbr_upright = SU.config.R_rbr_upright
+        TR.config.P_vbr_upright = SU.config.P_rbr_upright
 
         for sub in self.subsystems:
             sub.eval_constants()
@@ -122,32 +120,32 @@ class numerical_assembly(object):
             sub.set_gen_coordinates(qs)
             offset += sub.n
 
-        SU.R_vbs_ground = self.R_ground
-        SU.P_vbs_ground = self.P_ground
+        SU.R_vbl_steer = ST.R_rbl_rocker
+        SU.P_vbl_steer = ST.P_rbl_rocker
         SU.R_vbr_steer = ST.R_rbr_rocker
         SU.P_vbr_steer = ST.P_rbr_rocker
         SU.R_vbs_chassis = self.R_ground
         SU.P_vbs_chassis = self.P_ground
-        SU.R_vbl_steer = ST.R_rbl_rocker
-        SU.P_vbl_steer = ST.P_rbl_rocker
+        SU.R_vbs_ground = self.R_ground
+        SU.P_vbs_ground = self.P_ground
         ST.R_vbs_ground = self.R_ground
         ST.P_vbs_ground = self.P_ground
         ST.R_vbs_chassis = self.R_ground
         ST.P_vbs_chassis = self.P_ground
-        TR.R_vbr_upright = SU.R_rbr_upright
-        TR.P_vbr_upright = SU.P_rbr_upright
         TR.R_vbl_hub = SU.R_rbl_hub
         TR.P_vbl_hub = SU.P_rbl_hub
-        TR.R_vbl_upright = SU.R_rbl_upright
-        TR.P_vbl_upright = SU.P_rbl_upright
-        TR.R_vbs_ground = self.R_ground
-        TR.P_vbs_ground = self.P_ground
         TR.R_vbr_hub = SU.R_rbr_hub
         TR.P_vbr_hub = SU.P_rbr_hub
-        TR.R_vbs_chassis = self.R_ground
-        TR.P_vbs_chassis = self.P_ground
+        TR.R_vbl_upright = SU.R_rbl_upright
+        TR.P_vbl_upright = SU.P_rbl_upright
         TR.R_vbs_steer_gear = ST.R_rbr_rocker
         TR.P_vbs_steer_gear = ST.P_rbr_rocker
+        TR.R_vbs_chassis = self.R_ground
+        TR.P_vbs_chassis = self.P_ground
+        TR.R_vbs_ground = self.R_ground
+        TR.P_vbs_ground = self.P_ground
+        TR.R_vbr_upright = SU.R_rbr_upright
+        TR.P_vbr_upright = SU.P_rbr_upright
 
     
     def set_gen_velocities(self,qd):
@@ -159,32 +157,32 @@ class numerical_assembly(object):
             sub.set_gen_velocities(qs)
             offset += sub.n
 
-        SU.Rd_vbs_ground = self.Rd_ground
-        SU.Pd_vbs_ground = self.Pd_ground
+        SU.Rd_vbl_steer = ST.Rd_rbl_rocker
+        SU.Pd_vbl_steer = ST.Pd_rbl_rocker
         SU.Rd_vbr_steer = ST.Rd_rbr_rocker
         SU.Pd_vbr_steer = ST.Pd_rbr_rocker
         SU.Rd_vbs_chassis = self.Rd_ground
         SU.Pd_vbs_chassis = self.Pd_ground
-        SU.Rd_vbl_steer = ST.Rd_rbl_rocker
-        SU.Pd_vbl_steer = ST.Pd_rbl_rocker
+        SU.Rd_vbs_ground = self.Rd_ground
+        SU.Pd_vbs_ground = self.Pd_ground
         ST.Rd_vbs_ground = self.Rd_ground
         ST.Pd_vbs_ground = self.Pd_ground
         ST.Rd_vbs_chassis = self.Rd_ground
         ST.Pd_vbs_chassis = self.Pd_ground
-        TR.Rd_vbr_upright = SU.Rd_rbr_upright
-        TR.Pd_vbr_upright = SU.Pd_rbr_upright
         TR.Rd_vbl_hub = SU.Rd_rbl_hub
         TR.Pd_vbl_hub = SU.Pd_rbl_hub
-        TR.Rd_vbl_upright = SU.Rd_rbl_upright
-        TR.Pd_vbl_upright = SU.Pd_rbl_upright
-        TR.Rd_vbs_ground = self.Rd_ground
-        TR.Pd_vbs_ground = self.Pd_ground
         TR.Rd_vbr_hub = SU.Rd_rbr_hub
         TR.Pd_vbr_hub = SU.Pd_rbr_hub
-        TR.Rd_vbs_chassis = self.Rd_ground
-        TR.Pd_vbs_chassis = self.Pd_ground
+        TR.Rd_vbl_upright = SU.Rd_rbl_upright
+        TR.Pd_vbl_upright = SU.Pd_rbl_upright
         TR.Rd_vbs_steer_gear = ST.Rd_rbr_rocker
         TR.Pd_vbs_steer_gear = ST.Pd_rbr_rocker
+        TR.Rd_vbs_chassis = self.Rd_ground
+        TR.Pd_vbs_chassis = self.Pd_ground
+        TR.Rd_vbs_ground = self.Rd_ground
+        TR.Pd_vbs_ground = self.Pd_ground
+        TR.Rd_vbr_upright = SU.Rd_rbr_upright
+        TR.Pd_vbr_upright = SU.Pd_rbr_upright
 
     
     def set_gen_accelerations(self,qdd):
@@ -196,36 +194,36 @@ class numerical_assembly(object):
             sub.set_gen_accelerations(qs)
             offset += sub.n
 
-        SU.Rdd_vbs_ground = self.Rdd_ground
-        SU.Pdd_vbs_ground = self.Pdd_ground
+        SU.Rdd_vbl_steer = ST.Rdd_rbl_rocker
+        SU.Pdd_vbl_steer = ST.Pdd_rbl_rocker
         SU.Rdd_vbr_steer = ST.Rdd_rbr_rocker
         SU.Pdd_vbr_steer = ST.Pdd_rbr_rocker
         SU.Rdd_vbs_chassis = self.Rdd_ground
         SU.Pdd_vbs_chassis = self.Pdd_ground
-        SU.Rdd_vbl_steer = ST.Rdd_rbl_rocker
-        SU.Pdd_vbl_steer = ST.Pdd_rbl_rocker
+        SU.Rdd_vbs_ground = self.Rdd_ground
+        SU.Pdd_vbs_ground = self.Pdd_ground
         ST.Rdd_vbs_ground = self.Rdd_ground
         ST.Pdd_vbs_ground = self.Pdd_ground
         ST.Rdd_vbs_chassis = self.Rdd_ground
         ST.Pdd_vbs_chassis = self.Pdd_ground
-        TR.Rdd_vbr_upright = SU.Rdd_rbr_upright
-        TR.Pdd_vbr_upright = SU.Pdd_rbr_upright
         TR.Rdd_vbl_hub = SU.Rdd_rbl_hub
         TR.Pdd_vbl_hub = SU.Pdd_rbl_hub
-        TR.Rdd_vbl_upright = SU.Rdd_rbl_upright
-        TR.Pdd_vbl_upright = SU.Pdd_rbl_upright
-        TR.Rdd_vbs_ground = self.Rdd_ground
-        TR.Pdd_vbs_ground = self.Pdd_ground
         TR.Rdd_vbr_hub = SU.Rdd_rbr_hub
         TR.Pdd_vbr_hub = SU.Pdd_rbr_hub
-        TR.Rdd_vbs_chassis = self.Rdd_ground
-        TR.Pdd_vbs_chassis = self.Pdd_ground
+        TR.Rdd_vbl_upright = SU.Rdd_rbl_upright
+        TR.Pdd_vbl_upright = SU.Pdd_rbl_upright
         TR.Rdd_vbs_steer_gear = ST.Rdd_rbr_rocker
         TR.Pdd_vbs_steer_gear = ST.Pdd_rbr_rocker
+        TR.Rdd_vbs_chassis = self.Rdd_ground
+        TR.Pdd_vbs_chassis = self.Pdd_ground
+        TR.Rdd_vbs_ground = self.Rdd_ground
+        TR.Pdd_vbs_ground = self.Pdd_ground
+        TR.Rdd_vbr_upright = SU.Rdd_rbr_upright
+        TR.Pdd_vbr_upright = SU.Pdd_rbr_upright
 
     
     def set_lagrange_multipliers(self,Lambda):
-        offset = 0
+        offset = 7
         for sub in self.subsystems:
             l = Lambda[offset:sub.nc+offset]
             sub.set_lagrange_multipliers(l)

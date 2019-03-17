@@ -112,8 +112,9 @@ class configuration(object):
     def load_from_csv(self,csv_file):
         dataframe = pd.read_csv(csv_file,index_col=0)
         for ind in dataframe.index:
-            if isinstance(np.ndarray):
-                shape = getattr(self,ind).shape
+            value = getattr(self,ind)
+            if isinstance(value, np.ndarray):
+                shape = value.shape
                 v = np.array(dataframe.loc[ind],dtype=np.float64)
                 v = np.resize(v,shape)
                 setattr(self,ind,v)

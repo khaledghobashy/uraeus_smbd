@@ -18,10 +18,8 @@ def main():
     global config
     
     name = 'steer_simple_points'
-    config = parametric_configuration(model.template)
+    config = parametric_configuration(name,model.template)
     config.assemble_base_layer()
-    config.name = name
-    model.template.cfg_file = name
     
     config.add_point('rocker_chassis',mirror=True)
     config.add_point('rocker_coupler',mirror=True)

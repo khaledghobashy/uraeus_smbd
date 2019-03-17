@@ -7,7 +7,7 @@ Created on Tue Jan 29 08:21:51 2019
 import os
 import pickle
 
-from source.symbolic_classes.spatial_joints import (revolute,spherical,cylinderical)
+from source.symbolic_classes.joints import (revolute,spherical,cylinderical)
 
 from source.mbs_creators.topology_classes import template_based_topology
 from source.code_generators.python_code_generators import template_code_generator
@@ -45,5 +45,3 @@ if __name__ == '__main__':
     create()
 else:
     load()
-    
-
