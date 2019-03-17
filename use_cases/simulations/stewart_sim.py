@@ -24,79 +24,77 @@ f.TR.config.AF_jcs_rev_2 = lambda t: 0*np.deg2rad(360)*t
 f.TR.config.AF_jcs_rev_3 = lambda t: 0*np.deg2rad(360)*t
 
 assm = f.numerical_assembly()
-assm.set_gen_coordinates(assm.q0)
 soln = solver(assm)
 
 soln.set_time_array(1, 100)
-soln.solve_kds()
+soln.solve_kds('stewart_sim_data_temp', save=True)
+
+time_array = soln.time_array
+
+plt.figure(figsize=(8, 4))
+plt.plot(time_array, soln.pos_dataframe['SG.rbs_table.z'])
+plt.legend()
+plt.grid()
+plt.show()
+
+plt.figure(figsize=(8, 4))
+plt.plot(time_array, soln.pos_dataframe['SG.rbs_table.x'])
+plt.legend()
+plt.grid()
+plt.show()
+
+plt.figure(figsize=(8, 4))
+plt.plot(time_array, soln.vel_dataframe['SG.rbs_table.z'])
+plt.legend()
+plt.grid()
+plt.show()
+
+plt.figure(figsize=(8, 4))
+plt.plot(time_array, soln.acc_dataframe['SG.rbs_table.z'])
+plt.legend()
+plt.grid()
+plt.show()
 
 
-#plt.figure(figsize=(8, 4))
-#plt.plot(time_array, soln.pos_dataframe['SG.rbs_table.z'])
-#plt.legend()
-#plt.grid()
-#plt.show()
-#
-#plt.figure(figsize=(8, 4))
-#plt.plot(time_array, soln.pos_dataframe['SG.rbs_table.x'])
-#plt.legend()
-#plt.grid()
-#plt.show()
-#
-#
-#plt.figure(figsize=(8, 4))
-#plt.plot(time_array, soln.vel_dataframe['SG.rbs_table.z'])
-#plt.legend()
-#plt.grid()
-#plt.show()
-#
-#plt.figure(figsize=(8, 4))
-#plt.plot(time_array, soln.acc_dataframe['SG.rbs_table.z'])
-#plt.legend()
-#plt.grid()
-#plt.show()
-#
-#soln.pos_dataframe.to_csv('stewart_sim_data_temp.csv', index=True)
-#
-## Solving For Joints Reactions
-#soln.eval_reactions_eq()
-#
-#plt.figure(figsize=(8, 4))
-#plt.plot(time_array, soln.reactions_dataframe['SG.F_vbs_ground_jcs_rev_1.x'])
-#plt.plot(time_array, soln.reactions_dataframe['SG.F_vbs_ground_jcs_rev_1.y'])
-#plt.plot(time_array, soln.reactions_dataframe['SG.F_vbs_ground_jcs_rev_1.z'])
-#plt.legend()
-#plt.grid()
-#plt.show()
-#
-#plt.figure(figsize=(8, 4))
-#plt.plot(time_array, soln.reactions_dataframe['SG.T_vbs_ground_jcs_rev_1.x'])
-#plt.plot(time_array, soln.reactions_dataframe['SG.T_vbs_ground_jcs_rev_1.y'])
-#plt.plot(time_array, soln.reactions_dataframe['SG.T_vbs_ground_jcs_rev_1.z'])
-#plt.legend()
-#plt.grid()
-#plt.show()
-#
-#plt.figure(figsize=(8, 4))
-#plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_1_jcs_rev_1.x'])
-#plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_1_jcs_rev_1.y'])
-#plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_1_jcs_rev_1.z'])
-#plt.legend()
-#plt.grid()
-#plt.show()
-#
-#plt.figure(figsize=(8, 4))
-#plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_2_jcs_rev_2.x'])
-#plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_2_jcs_rev_2.y'])
-#plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_2_jcs_rev_2.z'])
-#plt.legend()
-#plt.grid()
-#plt.show()
-#
-#plt.figure(figsize=(8, 4))
-#plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_3_jcs_rev_3.x'])
-#plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_3_jcs_rev_3.y'])
-#plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_3_jcs_rev_3.z'])
-#plt.legend()
-#plt.grid()
-#plt.show()
+# Solving For Joints Reactions
+soln.eval_reactions()
+
+plt.figure(figsize=(8, 4))
+plt.plot(time_array, soln.reactions_dataframe['SG.F_vbs_ground_jcs_rev_1.x'])
+plt.plot(time_array, soln.reactions_dataframe['SG.F_vbs_ground_jcs_rev_1.y'])
+plt.plot(time_array, soln.reactions_dataframe['SG.F_vbs_ground_jcs_rev_1.z'])
+plt.legend()
+plt.grid()
+plt.show()
+
+plt.figure(figsize=(8, 4))
+plt.plot(time_array, soln.reactions_dataframe['SG.T_vbs_ground_jcs_rev_1.x'])
+plt.plot(time_array, soln.reactions_dataframe['SG.T_vbs_ground_jcs_rev_1.y'])
+plt.plot(time_array, soln.reactions_dataframe['SG.T_vbs_ground_jcs_rev_1.z'])
+plt.legend()
+plt.grid()
+plt.show()
+
+plt.figure(figsize=(8, 4))
+plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_1_jcs_rev_1.x'])
+plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_1_jcs_rev_1.y'])
+plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_1_jcs_rev_1.z'])
+plt.legend()
+plt.grid()
+plt.show()
+
+plt.figure(figsize=(8, 4))
+plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_2_jcs_rev_2.x'])
+plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_2_jcs_rev_2.y'])
+plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_2_jcs_rev_2.z'])
+plt.legend()
+plt.grid()
+plt.show()
+
+plt.figure(figsize=(8, 4))
+plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_3_jcs_rev_3.x'])
+plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_3_jcs_rev_3.y'])
+plt.plot(time_array, soln.reactions_dataframe['TR.T_vbs_rocker_3_jcs_rev_3.z'])
+plt.legend()
+plt.grid()
+plt.show()

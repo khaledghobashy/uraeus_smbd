@@ -39,22 +39,27 @@ class solver(object):
         self._jac_shape = (self._nrows,self._ncols)
         
         model.set_initial_states()
+        model.set_gen_coordinates(model.q0)
                 
-        self._pos_history = {0:self.model.q0}
+        self._pos_history = {0:model.q0}
         self._vel_history = {}
         self._acc_history = {}
         
-        sorted_coordinates = {v:k for k,v in self.model.indicies_map.items()}
+        sorted_coordinates = {v:k for k,v in model.indicies_map.items()}
         self._coordinates_indicies = []
         for name in sorted_coordinates.values():
             self._coordinates_indicies += ['%s.%s'%(name,i) 
             for i in ['x','y','z','e0','e1','e2','e3']]
     
     def set_time_array(self,duration,spacing):
-        self.time_array = np.linspace(0,duration,spacing,retstep=True)
+        self.time_array, self.step_size = np.linspace(0,duration,spacing,retstep=True)
+    
+    def save_results(self,data,filename):
+        pass
         
-    def solve_kds(self,run_id='',save=False):
-        time_array, dt = self.time_array
+    def solve_kds(self, run_id, save=False):
+        time_array = self.time_array
+        dt = self.step_size
         
         A = self._eval_jac_eq()
         
@@ -90,6 +95,9 @@ class solver(object):
             i+=1
         
         self._creat_results_dataframes()
+        if save:
+            filename = run_id
+            self.pos_dataframe.to_csv('results_csv//%s.csv'%filename, index=True)
 
         
     def _creat_results_dataframes(self):
@@ -219,8 +227,3 @@ class solver(object):
         self.reactions_dataframe = pd.DataFrame(
                 data = np.concatenate(list(self.values.values()),1).T,
                 columns = self.reactions_indicies)
-        
-    
-    def save_data(self,data,filename):
-        pass
-

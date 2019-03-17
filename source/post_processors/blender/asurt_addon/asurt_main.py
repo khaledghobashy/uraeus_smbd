@@ -316,13 +316,13 @@ def register():
     
     bpy.types.Scene.cfg_path = bpy.props.StringProperty \
       (name = "",
-      default = "%s//use_cases//generated_templates//configurations//"%asurt_path,
+      default = "%s//use_cases//generated_templates//configurations//csv_files//"%asurt_path,
       description = "Define the config. file of the system.",
       subtype = 'FILE_PATH')
       
     bpy.types.Scene.sim_path = bpy.props.StringProperty \
       (name = "",
-      default = "%s//use_cases//simulations//"%asurt_path,
+      default = "%s//use_cases//simulations//results_csv//"%asurt_path,
       description = "Define the simulation results file of the system.",
       subtype = 'FILE_PATH')
       
