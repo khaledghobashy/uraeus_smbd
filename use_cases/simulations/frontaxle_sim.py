@@ -26,7 +26,7 @@ f.SU.config.load_from_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mat
 f.ST.config.load_from_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\csv_files\steer_st500_axletech.csv')
 f.TR.config.load_from_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\csv_files\frontaxle_testrig_mod.csv')
 
-f.TR.config.AF_jcs_steer_gear = lambda t : np.deg2rad(15)*np.sin(t)
+f.TR.config.AF_jcs_steer_gear = lambda t : 0*np.deg2rad(15)*np.sin(t)
 f.TR.config.AF_mcr_ver_act = lambda t : 170*np.sin(t)
 f.TR.config.AF_mcl_ver_act = lambda t : 170*np.sin(t)
 f.TR.config.AF_jcr_rev = lambda t :  0*np.deg2rad(360)*t
