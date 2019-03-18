@@ -82,7 +82,7 @@ class rotational_actuator(joint_actuator,metaclass=joint_constructor):
 
 class absolute_locator(absolute_actuator,metaclass=joint_constructor):
     def_axis = 0
-    def_locs = 0
+    def_locs = 1
     vector_equations = [coordinate_constraint()]
 
 

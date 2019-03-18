@@ -328,6 +328,7 @@ class dot_product_2(object):
                 
         v_bar = getattr(obj.mi_bar,v)
         v = v_bar.express()
+        
         dij = obj.dij
         Pdi = obj.Pdi
         Pdj = obj.Pdj
@@ -338,7 +339,8 @@ class dot_product_2(object):
         acc_level_equation =   v.T*( B(Pdi,obj.ui_bar)*Pdi - B(Pdj,obj.uj_bar)*Pdj ) \
                              + dij.T*B(Pdi,v_bar)*Pdi \
                              + 2*(B(obj.Pi,v_bar)*Pdi).T*dijd
-        jacobian = ([v.T, dij.T*B(obj.Pi,v_bar) + v.T*obj.Bui], [ -v.T, -v.T*obj.Buj])
+        jacobian = ([ v.T, dij.T*B(obj.Pi,v_bar) + v.T*obj.Bui], 
+                    [-v.T, -v.T*obj.Buj])
         
         obj._pos_level_equations.append(pos_level_equation)
         obj._vel_level_equations.append(vel_level_equation)
@@ -398,13 +400,21 @@ class coordinate_constraint(object):
         pass
     
     def construct(self,obj):
-        pos_level_equation = obj.Ri[obj.i,0]
+        i  = obj.i
+        Ri = obj.Ri
+        Ai = obj.Ai
+        C  = obj.loc_1
+        ui_bar = obj.ui_bar
+        Pdi = obj.Pdi
+
+        pos_level_equation = (Ri + Ai*ui_bar - C)[i,:]
         vel_level_equation = zero_matrix(1,1)
-        acc_level_equation = zero_matrix(1,1)
+        acc_level_equation = (B(Pdi,ui_bar)*Pdi)[i,:]
         
-        jac = sm.MatrixSymbol('J_%s'%obj.name,1,3)
+        J_R = I[i,:]
+        J_P = obj.Bui[i,:]
             
-        jacobian = ([jac,zero_matrix(1,4)], 
+        jacobian = ([J_R, J_P], 
                     [zero_matrix(1,3),zero_matrix(1,4)])
        
         obj._pos_level_equations.append(pos_level_equation)
@@ -414,6 +424,29 @@ class coordinate_constraint(object):
         obj._jacobian_i.append(jacobian[0])
         obj._jacobian_j.append(jacobian[1])
             
+#class coordinate_constraint(object):
+#    
+#    nc  = 1
+#    
+#    def __init__(self):
+#        pass
+#    
+#    def construct(self,obj):
+#        pos_level_equation = (obj.Ri + obj.Ai*obj.ui_bar - obj.loc1)[obj.i,0] #obj.Ri[obj.i,0]
+#        vel_level_equation = zero_matrix(1,1)
+#        acc_level_equation = zero_matrix(1,1)
+#        
+#        jac = sm.MatrixSymbol('J_%s'%obj.name,1,3)
+#            
+#        jacobian = ([jac,zero_matrix(1,4)], 
+#                    [zero_matrix(1,3),zero_matrix(1,4)])
+#       
+#        obj._pos_level_equations.append(pos_level_equation)
+#        obj._vel_level_equations.append(vel_level_equation)
+#        obj._acc_level_equations.append(acc_level_equation)
+#        
+#        obj._jacobian_i.append(jacobian[0])
+#        obj._jacobian_j.append(jacobian[1])
 
 ###############################################################################
 ###############################################################################
@@ -471,16 +504,6 @@ class actuator(algebraic_constraints):
     @property
     def arguments_symbols(self):
         return super().arguments_symbols + [self.act_func]
-    
-    def _create_reactions_equalities(self):
-        self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e
-        jacobian_i = self.jacobian_i
-        Qi_eq = sm.Eq(self.Qi,-jacobian_i.T*self.L)
-        Fi_eq = sm.Eq(self.Fi,self.Qi[0:3,0])
-        Ti_e_eq = sm.Eq(self.Ti_e,self.Qi[3:7,0])
-        Ti_eq = sm.Eq(self.Ti,self.Ti_eq)
-        self._reactions_equalities = [Qi_eq,Fi_eq,Ti_e_eq,Ti_eq]
-
 
 ###############################################################################
 ###############################################################################
@@ -496,6 +519,15 @@ class joint_actuator(actuator):
         else:
             super().__init__(name)
     
+    def _create_reactions_equalities(self):
+        self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e
+        jacobian_i = self.jacobian_i
+        Qi_eq = sm.Eq(self.Qi,-jacobian_i.T*self.L)
+        Fi_eq = sm.Eq(self.Fi,self.Qi[0:3,0])
+        Ti_e_eq = sm.Eq(self.Ti_e,self.Qi[3:7,0])
+        Ti_eq = sm.Eq(self.Ti,self.Ti_eq)
+        self._reactions_equalities = [Qi_eq,Fi_eq,Ti_e_eq,Ti_eq]
+    
 ###############################################################################
 ###############################################################################
 
@@ -507,18 +539,4 @@ class absolute_actuator(actuator):
         self.coordinate = coordinate
         self.i = self.coordinates_map[self.coordinate]
         super().__init__(name,body_i,body_j)
-    
-    @property
-    def constants_symbolic_expr(self):
-        return []
-    @property
-    def constants_numeric_expr(self):
-        num_jac = sm.zeros(1,3)
-        num_jac[0,self.i] = 1
-        sym_jac = sm.MatrixSymbol('%sJ_%s'%(self.prefix,self.id_name),1,3)
-        eq = sm.Eq(sym_jac,num_jac)
-        return [eq]
-        
-
-    
     

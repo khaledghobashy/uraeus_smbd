@@ -42,6 +42,10 @@ class AbstractMatrix(sm.MatrixExpr):
         name = self.__class__.__name__
         return r'{%s%s}'%(name,self.args,)
     
+    def _entry(self,i,j):
+        v = sm.MatrixSlice(self,i,j)
+        return v
+    
 class A(AbstractMatrix):
     """
     Representaion of symbolic transformation matrix which represents the 

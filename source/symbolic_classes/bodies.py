@@ -105,7 +105,7 @@ class body(reference_frame):
         self.G = G(self.P)
         self.E = E(self.P)
                 
-        self.normalized_pos_equation = sm.sqrt(self.P.T*self.P)-sm.Identity(1)
+        self.normalized_pos_equation = sm.sqrt(self.P.T*self.P) - sm.Identity(1)
         self.normalized_vel_equation = zero_matrix(1,1)
         self.normalized_acc_equation = 2*sm.sqrt(self.Pd.T*self.Pd)
         self.normalized_jacobian = [zero_matrix(1,3), 2*self.P.T]

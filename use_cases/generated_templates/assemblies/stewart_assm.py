@@ -17,7 +17,7 @@ class numerical_assembly(object):
         self._t = 0
         self.subsystems = [SG,TR]
 
-        self.interface_map = {'SG.vbs_ground': 'ground', 'TR.vbs_rocker_3': 'SG.rbs_rocker_3', 'TR.vbs_rocker_2': 'SG.rbs_rocker_2', 'TR.vbs_ground': 'ground', 'TR.vbs_rocker_1': 'SG.rbs_rocker_1'}
+        self.interface_map = {'SG.vbs_ground': 'ground', 'TR.vbs_rocker_2': 'SG.rbs_rocker_2', 'TR.vbs_ground': 'ground', 'TR.vbs_rocker_1': 'SG.rbs_rocker_1', 'TR.vbs_rocker_3': 'SG.rbs_rocker_3'}
         self.indicies_map  = {'ground': 0, 'SG.rbs_table': 1, 'SG.rbs_link_1': 2, 'SG.rbs_link_2': 3, 'SG.rbs_link_3': 4, 'SG.rbs_rocker_1': 5, 'SG.rbs_rocker_2': 6, 'SG.rbs_rocker_3': 7}
 
         self.R_ground  = np.array([[0],[0],[0]],dtype=np.float64)
@@ -75,18 +75,20 @@ class numerical_assembly(object):
         self.jac_rows = np.concatenate([self.jac_rows,self.gr_jac_rows])
         self.jac_cols = np.concatenate([self.jac_cols,self.gr_jac_cols])
 
+        self.reactions_indicies = sum([sub.reactions_indicies for sub in self.subsystems],[])
+
     
     def eval_constants(self):
         SG.config.R_vbs_ground = self.R_ground
         SG.config.P_vbs_ground = self.P_ground
-        TR.config.R_vbs_rocker_3 = SG.config.R_rbs_rocker_3
-        TR.config.P_vbs_rocker_3 = SG.config.P_rbs_rocker_3
         TR.config.R_vbs_rocker_2 = SG.config.R_rbs_rocker_2
         TR.config.P_vbs_rocker_2 = SG.config.P_rbs_rocker_2
         TR.config.R_vbs_ground = self.R_ground
         TR.config.P_vbs_ground = self.P_ground
         TR.config.R_vbs_rocker_1 = SG.config.R_rbs_rocker_1
         TR.config.P_vbs_rocker_1 = SG.config.P_rbs_rocker_1
+        TR.config.R_vbs_rocker_3 = SG.config.R_rbs_rocker_3
+        TR.config.P_vbs_rocker_3 = SG.config.P_rbs_rocker_3
 
         for sub in self.subsystems:
             sub.eval_constants()
@@ -103,14 +105,14 @@ class numerical_assembly(object):
 
         SG.R_vbs_ground = self.R_ground
         SG.P_vbs_ground = self.P_ground
-        TR.R_vbs_rocker_3 = SG.R_rbs_rocker_3
-        TR.P_vbs_rocker_3 = SG.P_rbs_rocker_3
         TR.R_vbs_rocker_2 = SG.R_rbs_rocker_2
         TR.P_vbs_rocker_2 = SG.P_rbs_rocker_2
         TR.R_vbs_ground = self.R_ground
         TR.P_vbs_ground = self.P_ground
         TR.R_vbs_rocker_1 = SG.R_rbs_rocker_1
         TR.P_vbs_rocker_1 = SG.P_rbs_rocker_1
+        TR.R_vbs_rocker_3 = SG.R_rbs_rocker_3
+        TR.P_vbs_rocker_3 = SG.P_rbs_rocker_3
 
     
     def set_gen_velocities(self,qd):
@@ -124,14 +126,14 @@ class numerical_assembly(object):
 
         SG.Rd_vbs_ground = self.Rd_ground
         SG.Pd_vbs_ground = self.Pd_ground
-        TR.Rd_vbs_rocker_3 = SG.Rd_rbs_rocker_3
-        TR.Pd_vbs_rocker_3 = SG.Pd_rbs_rocker_3
         TR.Rd_vbs_rocker_2 = SG.Rd_rbs_rocker_2
         TR.Pd_vbs_rocker_2 = SG.Pd_rbs_rocker_2
         TR.Rd_vbs_ground = self.Rd_ground
         TR.Pd_vbs_ground = self.Pd_ground
         TR.Rd_vbs_rocker_1 = SG.Rd_rbs_rocker_1
         TR.Pd_vbs_rocker_1 = SG.Pd_rbs_rocker_1
+        TR.Rd_vbs_rocker_3 = SG.Rd_rbs_rocker_3
+        TR.Pd_vbs_rocker_3 = SG.Pd_rbs_rocker_3
 
     
     def set_gen_accelerations(self,qdd):
@@ -145,14 +147,14 @@ class numerical_assembly(object):
 
         SG.Rdd_vbs_ground = self.Rdd_ground
         SG.Pdd_vbs_ground = self.Pdd_ground
-        TR.Rdd_vbs_rocker_3 = SG.Rdd_rbs_rocker_3
-        TR.Pdd_vbs_rocker_3 = SG.Pdd_rbs_rocker_3
         TR.Rdd_vbs_rocker_2 = SG.Rdd_rbs_rocker_2
         TR.Pdd_vbs_rocker_2 = SG.Pdd_rbs_rocker_2
         TR.Rdd_vbs_ground = self.Rdd_ground
         TR.Pdd_vbs_ground = self.Pdd_ground
         TR.Rdd_vbs_rocker_1 = SG.Rdd_rbs_rocker_1
         TR.Pdd_vbs_rocker_1 = SG.Pdd_rbs_rocker_1
+        TR.Rdd_vbs_rocker_3 = SG.Rdd_rbs_rocker_3
+        TR.Pdd_vbs_rocker_3 = SG.Pdd_rbs_rocker_3
 
     
     def set_lagrange_multipliers(self,Lambda):

@@ -267,13 +267,13 @@ class template_code_generator(abstract_generator):
                         self.ncols = 2*{nodes}
                         self.rows = np.arange(self.nrows)
                         
-                        self.joints_reactions_indicies = {reactions}
+                        reactions_indicies = {reactions}
+                        self.reactions_indicies = ['%s%s'%(self.prefix,i) for i in reactions_indicies]
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
                 
-        reactions = ','.join(['%r'%i for i in self.joint_reactions_sym])
-        reactions = '[%s]'%reactions
+        reactions = ['%s'%i for i in self.joint_reactions_sym]
 
         text = text.format(n = self.mbs.n,
                            nc = self.mbs.nc,
@@ -738,6 +738,8 @@ class assembly_code_generator(template_code_generator):
                     self.rows = np.concatenate([self.rows,self.gr_rows])
                     self.jac_rows = np.concatenate([self.jac_rows,self.gr_jac_rows])
                     self.jac_cols = np.concatenate([self.jac_cols,self.gr_jac_cols])
+                    
+                    self.reactions_indicies = sum([sub.reactions_indicies for sub in self.subsystems],[])
                '''
         indent = 4*' '
         text = text.expandtabs()

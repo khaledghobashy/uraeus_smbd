@@ -131,7 +131,7 @@ class gravity_force(generic_force):
         return []
     @property
     def constants_numeric_expr(self):
-        gravity = sm.Eq(self.Fi,self.body_i.m*sm.Matrix([0,0,9.81e3]))
+        gravity = sm.Eq(self.Fi,self.body_i.m*sm.Matrix([0,0,-9.81e3]))
         return [gravity]
 
 ###############################################################################

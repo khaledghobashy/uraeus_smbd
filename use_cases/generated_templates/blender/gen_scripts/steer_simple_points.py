@@ -32,9 +32,15 @@ class blender_scene(object):
             for row in content:
                 attr = row[0]
                 if attr in self._inputs:
-                    value = np.array(row[1:],dtype=np.float64)
-                    value = np.resize(value,(3,1))*self.scale
+                    value = getattr(self,attr)
                     setattr(self,attr,value)
+                    if isinstance(value, np.ndarray):
+                        value = np.array(row[1:],dtype=np.float64)
+                        value = np.resize(value,(3,1))*self.scale
+                        setattr(self,attr,value)
+                    else:
+                        value = float(row[1])
+                        setattr(self,ind,value)
 
     def load_anim_data(self,csv_file):
         with open(csv_file, newline='') as csvfile:
@@ -60,9 +66,9 @@ class blender_scene(object):
     def create_scene(self):
         self.hpl_rocker_coupler = mirrored(self.hpr_rocker_coupler)
         self.hpl_rocker_chassis = mirrored(self.hpr_rocker_chassis)
-        self.gml_rocker = cylinder_geometry(self.hpl_rocker_chassis,self.hpl_rocker_coupler,self.s_links_ro)
         self.gms_coupler = cylinder_geometry(self.hpr_rocker_coupler,self.hpl_rocker_coupler,self.s_links_ro)
         self.gmr_rocker = cylinder_geometry(self.hpr_rocker_chassis,self.hpr_rocker_coupler,self.s_links_ro)
+        self.gml_rocker = cylinder_geometry(self.hpl_rocker_chassis,self.hpl_rocker_coupler,self.s_links_ro)
 
         self.setup_VIEW_3D()
 

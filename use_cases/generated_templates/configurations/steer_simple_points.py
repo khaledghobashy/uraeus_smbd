@@ -46,7 +46,7 @@ class configuration(object):
                 v = np.resize(v,shape)
                 setattr(self,ind,v)
             else:
-                v = dataframe.loc[ind]
+                v = dataframe.loc[ind][0]
                 setattr(self,ind,v)
         self._set_arguments()
 

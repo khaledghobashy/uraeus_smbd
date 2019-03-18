@@ -45,11 +45,21 @@ class solver(object):
         self._vel_history = {}
         self._acc_history = {}
         
+        self._lagrange_history = {}
+        self._inertia_forces_history = {}
+        self._constraints_history = {}
+        
         sorted_coordinates = {v:k for k,v in model.indicies_map.items()}
         self._coordinates_indicies = []
         for name in sorted_coordinates.values():
             self._coordinates_indicies += ['%s.%s'%(name,i) 
             for i in ['x','y','z','e0','e1','e2','e3']]
+            
+        self.reactions_indicies = []
+        for name in model.reactions_indicies:
+            self.reactions_indicies += ['%s.%s'%(name,i) 
+            for i in ['x','y','z']]
+
     
     def set_time_array(self,duration,spacing):
         self.time_array, self.step_size = np.linspace(0,duration,spacing,retstep=True)
@@ -71,15 +81,16 @@ class solver(object):
         self._acc_history[0] = solve(A,-acc_rhs)
         
         print('\nRunning System Kinematic Analysis:')
+        bar_length = len(time_array)-1
         for i,t in enumerate(time_array[1:]):
-            progress_bar(len(time_array)-1,i)
+            progress_bar(bar_length,i)
             self._set_time(t)
 
             g =   self._pos_history[i] \
                 + self._vel_history[i]*dt \
                 + 0.5*self._acc_history[i]*(dt**2)
             
-            self.newton_raphson(g)
+            self._newton_raphson(g)
             self._pos_history[i+1] = self.pos
             A = self._eval_jac_eq()
             
@@ -97,6 +108,28 @@ class solver(object):
         if save:
             filename = run_id
             self.save_results(filename)
+            
+            
+    def eval_reactions(self):
+        self.reactions = {}
+        for i in range(len(self.time_array)):            
+            self._set_gen_coordinates(self._pos_history[i])
+            self._set_gen_velocities(self._vel_history[i])
+            self._set_gen_accelerations(self._acc_history[i])
+            self._eval_reactions_eq(i)
+            self.reactions[i] = self.model.reactions
+        
+        self.values = {i:np.concatenate(list(v.values())) for i,v in self.reactions.items()}
+        
+        self.reactions_dataframe = pd.DataFrame(
+                data = np.concatenate(list(self.values.values()),1).T,
+                columns = self.reactions_indicies)
+        self.con_dataframe = pd.DataFrame(
+                data = np.concatenate(list(self._constraints_history.values()),1).T,
+                columns = self._coordinates_indicies)
+        self.inr_dataframe = pd.DataFrame(
+                data = np.concatenate(list(self._inertia_forces_history.values()),1).T,
+                columns = self._coordinates_indicies)
 
         
     def _creat_results_dataframes(self):
@@ -167,7 +200,7 @@ class solver(object):
         return mat
     
         
-    def newton_raphson(self,guess):
+    def _newton_raphson(self,guess):
         self._set_gen_coordinates(guess)
         
         A = self._eval_jac_eq()
@@ -200,7 +233,11 @@ class solver(object):
         inertia_forces = mass_matrix.dot(qdd)
         rhs = applied_forces - inertia_forces
         jac = self._eval_jac_eq()
-        lamda = solve(jac.T,-rhs)
+        lamda = solve(jac.T,rhs)
+        
+        self._lagrange_history[i] = lamda
+        self._constraints_history[i] = rhs
+        self._inertia_forces_history[i] = inertia_forces
         return lamda
     
     def _eval_reactions_eq(self,i):
@@ -208,21 +245,3 @@ class solver(object):
         self.model.set_lagrange_multipliers(lamda)
         self.model.eval_reactions_eq()
     
-    def eval_reactions(self):
-        self.reactions = {}
-        for i in range(len(self._acc_history)):            
-            self._set_gen_coordinates(self._pos_history[i])
-            self._set_gen_velocities(self._vel_history[i])
-            self._set_gen_accelerations(self._acc_history[i])
-            self._eval_reactions_eq(i)
-            self.reactions[i] = self.model.reactions
-        
-        self.values = {i:np.concatenate(list(v.values())) for i,v in self.reactions.items()}
-        
-        self.reactions_indicies = []
-        for name in self.reactions[0].keys():
-            self.reactions_indicies += ['%s.%s'%(name,i) 
-            for i in ['x','y','z']]
-        self.reactions_dataframe = pd.DataFrame(
-                data = np.concatenate(list(self.values.values()),1).T,
-                columns = self.reactions_indicies)
