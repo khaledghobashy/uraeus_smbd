@@ -409,7 +409,7 @@ class coordinate_constraint(object):
 
         pos_level_equation = (Ri + Ai*ui_bar - C)[i,:]
         vel_level_equation = zero_matrix(1,1)
-        acc_level_equation = -(B(Pdi,ui_bar)*Pdi)[i,:]
+        acc_level_equation = (B(Pdi,ui_bar)*Pdi)[i,:]
         
         J_R = I[i,:]
         J_P = obj.Bui[i,:]
