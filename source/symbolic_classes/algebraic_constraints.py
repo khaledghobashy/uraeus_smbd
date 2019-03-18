@@ -392,38 +392,6 @@ class angle_constraint(object):
         obj._jacobian_j.append(jacobian[1])
 
 ###############################################################################
-#class coordinate_constraint(object):
-#    
-#    nc  = 1
-#    
-#    def __init__(self):
-#        pass
-#    
-#    def construct(self,obj):
-#        i  = obj.i
-#        Ri = obj.Ri
-#        Ai = obj.Ai
-#        C  = obj.loc_1
-#        ui_bar = obj.ui_bar
-#        Pdi = obj.Pdi
-#
-#        pos_level_equation = (Ri + Ai*ui_bar - C)[i,:]
-#        vel_level_equation = zero_matrix(1,1)
-#        acc_level_equation = (B(Pdi,ui_bar)*Pdi)[i,:]
-#        
-#        J_R = I[i,:]
-#        J_P = obj.Bui[i,:]
-#            
-#        jacobian = ([J_R, J_P], 
-#                    [zero_matrix(1,3),zero_matrix(1,4)])
-#       
-#        obj._pos_level_equations.append(pos_level_equation)
-#        obj._vel_level_equations.append(vel_level_equation)
-#        obj._acc_level_equations.append(acc_level_equation)
-#        
-#        obj._jacobian_i.append(jacobian[0])
-#        obj._jacobian_j.append(jacobian[1])
-            
 class coordinate_constraint(object):
     
     nc  = 1
@@ -432,13 +400,21 @@ class coordinate_constraint(object):
         pass
     
     def construct(self,obj):
-        pos_level_equation = obj.Ri[obj.i,0]
+        i  = obj.i
+        Ri = obj.Ri
+        Ai = obj.Ai
+        C  = obj.loc_1
+        ui_bar = obj.ui_bar
+        Pdi = obj.Pdi
+
+        pos_level_equation = (Ri + Ai*ui_bar - C)[i,:]
         vel_level_equation = zero_matrix(1,1)
-        acc_level_equation = zero_matrix(1,1)
+        acc_level_equation = -(B(Pdi,ui_bar)*Pdi)[i,:]
         
-        jac = sm.MatrixSymbol('J_%s'%obj.name,1,3)
+        J_R = I[i,:]
+        J_P = obj.Bui[i,:]
             
-        jacobian = ([jac,zero_matrix(1,4)], 
+        jacobian = ([J_R, J_P], 
                     [zero_matrix(1,3),zero_matrix(1,4)])
        
         obj._pos_level_equations.append(pos_level_equation)
@@ -447,6 +423,30 @@ class coordinate_constraint(object):
         
         obj._jacobian_i.append(jacobian[0])
         obj._jacobian_j.append(jacobian[1])
+            
+#class coordinate_constraint(object):
+#    
+#    nc  = 1
+#    
+#    def __init__(self):
+#        pass
+#    
+#    def construct(self,obj):
+#        pos_level_equation = obj.Ri[obj.i,0]
+#        vel_level_equation = zero_matrix(1,1)
+#        acc_level_equation = zero_matrix(1,1)
+#        
+#        jac = sm.MatrixSymbol('J_%s'%obj.name,1,3)
+#            
+#        jacobian = ([jac,zero_matrix(1,4)], 
+#                    [zero_matrix(1,3),zero_matrix(1,4)])
+#       
+#        obj._pos_level_equations.append(pos_level_equation)
+#        obj._vel_level_equations.append(vel_level_equation)
+#        obj._acc_level_equations.append(acc_level_equation)
+#        
+#        obj._jacobian_i.append(jacobian[0])
+#        obj._jacobian_j.append(jacobian[1])
 
 ###############################################################################
 ###############################################################################
@@ -540,9 +540,9 @@ class absolute_actuator(actuator):
         self.i = self.coordinates_map[self.coordinate]
         super().__init__(name,body_i,body_j)
         
-    @property
-    def constants_symbolic_expr(self):
-        return []
+#    @property
+#    def constants_symbolic_expr(self):
+#        return []
     @property
     def constants_numeric_expr(self):
         num_jac = sm.zeros(1,3)

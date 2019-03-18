@@ -29,7 +29,7 @@ def create():
     template.add_body('upright',mirrored=True,virtual=True)
     template.add_joint(revolute,'rev','vbr_upright','vbr_hub',mirrored=True,virtual=True)
     template.add_joint_actuator(rotational_actuator,'act','jcr_rev',mirrored=True)
-    template.add_absolute_actuator('ver_act','vbr_hub','z',mirrored=True)
+    template.add_absolute_actuator('ver_act','vbr_upright','z',mirrored=True)
     
     template.add_body('steer_gear',virtual=True)
     template.add_body('chassis',virtual=True)
