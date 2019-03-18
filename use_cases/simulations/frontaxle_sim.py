@@ -28,11 +28,11 @@ f.SU.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configur
 f.ST.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\steer_st500_axletech.csv')
 f.TR.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\frontaxle_testrig_mod.csv')
 
-f.TR.config.AF_jcs_steer_gear = lambda t : 0*np.deg2rad(15)*np.sin(t)
+f.TR.config.AF_jcs_steer_gear = lambda t : np.deg2rad(15)*np.sin(t)
 f.TR.config.AF_mcr_ver_act = lambda t : 170*np.sin(t)
 f.TR.config.AF_mcl_ver_act = lambda t : 170*np.sin(t)
-f.TR.config.AF_jcr_rev = lambda t :  0*np.deg2rad(360)*t
-f.TR.config.AF_jcl_rev = lambda t : 0*-np.deg2rad(360)*t
+f.TR.config.AF_jcr_rev = lambda t :  np.deg2rad(360)*t
+f.TR.config.AF_jcl_rev = lambda t : -np.deg2rad(360)*t
 
 #damping_data = lookup_table('damping')
 #damping_data.read_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Data\ST500_Damping.csv')
@@ -60,7 +60,7 @@ assm = f.numerical_assembly()
 assm.set_gen_coordinates(assm.q0)
 soln = solver(assm)
 
-soln.set_time_array(2*np.pi,100)
+soln.set_time_array(2*np.pi,200)
 soln.solve_kds('sim_dwb_st500_axletech_temp', save=True)
 time_array = soln.time_array
 
