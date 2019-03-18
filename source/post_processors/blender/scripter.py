@@ -93,7 +93,7 @@ class scripter(object):
                                     setattr(self,attr,value)
                                 else:
                                     value = float(row[1])
-                                    setattr(self,ind,value)
+                                    setattr(self,attr,value)
                     
                 def load_anim_data(self,csv_file):
                     with open(csv_file, newline='') as csvfile:

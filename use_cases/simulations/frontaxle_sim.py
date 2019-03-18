@@ -26,10 +26,10 @@ f.SU.config.load_from_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mat
 f.ST.config.load_from_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\csv_files\steer_st500_axletech.csv')
 f.TR.config.load_from_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic\use_cases\generated_templates\configurations\csv_files\frontaxle_testrig_mod.csv')
 
-f.TR.config.AF_jcs_steer_gear = lambda t : 0*np.deg2rad(15)*np.sin(t)
+f.TR.config.AF_jcs_steer_gear = lambda t : np.deg2rad(15)*np.sin(t)
 f.TR.config.AF_mcr_ver_act = lambda t : 170*np.sin(t)
 f.TR.config.AF_mcl_ver_act = lambda t : 170*np.sin(t)
-f.TR.config.AF_jcr_rev = lambda t : 0*np.deg2rad(360)*t
+f.TR.config.AF_jcr_rev = lambda t :  0*np.deg2rad(360)*t
 f.TR.config.AF_jcl_rev = lambda t : 0*-np.deg2rad(360)*t
 
 damping_data = lookup_table('damping')
@@ -89,6 +89,7 @@ plt.legend()
 plt.grid()
 plt.show()
 
+
 # System Accelerations
 plt.figure(figsize=(8,4))
 plt.plot(time_array, soln.acc_dataframe['SU.rbl_hub.z'])
@@ -102,6 +103,14 @@ plt.plot(time_array, np.gradient(soln.vel_dataframe['SU.rbl_lower_strut.y'],soln
 plt.legend()
 plt.grid()
 plt.show()
+
+plt.figure(figsize=(8,4))
+plt.plot(time_array, soln.acc_dataframe['SU.rbr_hub.y'])
+plt.plot(time_array, np.gradient(soln.vel_dataframe['SU.rbr_lower_strut.y'],soln.step_size))
+plt.legend()
+plt.grid()
+plt.show()
+
 
 plt.figure(figsize=(8,4))
 plt.plot(time_array,soln.pos_dataframe['SU.rbl_lower_strut.z'])

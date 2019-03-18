@@ -51,13 +51,13 @@ class topology(object):
     def eval_constants(self):
         config = self.config
 
-        self.F_rbs_table_gravity = np.array([[0], [0], [9810.0*config.m_rbs_table]],dtype=np.float64)
-        self.F_rbs_link_1_gravity = np.array([[0], [0], [9810.0*config.m_rbs_link_1]],dtype=np.float64)
-        self.F_rbs_link_2_gravity = np.array([[0], [0], [9810.0*config.m_rbs_link_2]],dtype=np.float64)
-        self.F_rbs_link_3_gravity = np.array([[0], [0], [9810.0*config.m_rbs_link_3]],dtype=np.float64)
-        self.F_rbs_rocker_1_gravity = np.array([[0], [0], [9810.0*config.m_rbs_rocker_1]],dtype=np.float64)
-        self.F_rbs_rocker_2_gravity = np.array([[0], [0], [9810.0*config.m_rbs_rocker_2]],dtype=np.float64)
-        self.F_rbs_rocker_3_gravity = np.array([[0], [0], [9810.0*config.m_rbs_rocker_3]],dtype=np.float64)
+        self.F_rbs_table_gravity = np.array([[0], [0], [-9810.0*config.m_rbs_table]],dtype=np.float64)
+        self.F_rbs_link_1_gravity = np.array([[0], [0], [-9810.0*config.m_rbs_link_1]],dtype=np.float64)
+        self.F_rbs_link_2_gravity = np.array([[0], [0], [-9810.0*config.m_rbs_link_2]],dtype=np.float64)
+        self.F_rbs_link_3_gravity = np.array([[0], [0], [-9810.0*config.m_rbs_link_3]],dtype=np.float64)
+        self.F_rbs_rocker_1_gravity = np.array([[0], [0], [-9810.0*config.m_rbs_rocker_1]],dtype=np.float64)
+        self.F_rbs_rocker_2_gravity = np.array([[0], [0], [-9810.0*config.m_rbs_rocker_2]],dtype=np.float64)
+        self.F_rbs_rocker_3_gravity = np.array([[0], [0], [-9810.0*config.m_rbs_rocker_3]],dtype=np.float64)
 
         self.Mbar_vbs_ground_jcs_rev_1 = multi_dot([A(config.P_vbs_ground).T,triad(config.ax1_jcs_rev_1)])
         self.Mbar_rbs_rocker_1_jcs_rev_1 = multi_dot([A(config.P_rbs_rocker_1).T,triad(config.ax1_jcs_rev_1)])
@@ -275,16 +275,16 @@ class topology(object):
 
         a0 = self.Pd_vbs_ground
         a1 = self.Pd_rbs_rocker_1
-        a2 = self.Mbar_rbs_rocker_1_jcs_rev_1[:,2:3]
-        a3 = a2.T
-        a4 = self.P_rbs_rocker_1
-        a5 = A(a4).T
-        a6 = self.Mbar_vbs_ground_jcs_rev_1[:,0:1]
-        a7 = self.P_vbs_ground
-        a8 = A(a7).T
-        a9 = B(a1,a2)
+        a2 = self.Mbar_vbs_ground_jcs_rev_1[:,0:1]
+        a3 = self.P_vbs_ground
+        a4 = A(a3).T
+        a5 = self.Mbar_rbs_rocker_1_jcs_rev_1[:,2:3]
+        a6 = B(a1,a5)
+        a7 = a5.T
+        a8 = self.P_rbs_rocker_1
+        a9 = A(a8).T
         a10 = a0.T
-        a11 = B(a4,a2)
+        a11 = B(a8,a5)
         a12 = self.Mbar_vbs_ground_jcs_rev_1[:,1:2]
         a13 = self.Pd_rbs_rocker_2
         a14 = self.Mbar_vbs_ground_jcs_rev_2[:,0:1]
@@ -316,13 +316,13 @@ class topology(object):
         a40 = self.ubar_rbs_table_jcs_tripod
         a41 = self.ubar_vbs_ground_jcs_tripod
         a42 = (multi_dot([B(a36,a40),a36]) + -1*multi_dot([B(a0,a41),a0]))
-        a43 = (self.Rd_rbs_table + -1*self.Rd_vbs_ground + multi_dot([B(a33,a40),a36]) + -1*multi_dot([B(a7,a41),a0]))
-        a44 = (self.R_rbs_table.T + -1*self.R_vbs_ground.T + multi_dot([a40.T,a34]) + -1*multi_dot([a41.T,a8]))
+        a43 = (self.Rd_rbs_table + -1*self.Rd_vbs_ground + multi_dot([B(a33,a40),a36]) + -1*multi_dot([B(a3,a41),a0]))
+        a44 = (self.R_rbs_table.T + -1*self.R_vbs_ground.T + multi_dot([a40.T,a34]) + -1*multi_dot([a41.T,a4]))
         a45 = self.Mbar_rbs_table_jcs_tripod[:,1:2]
         a46 = self.Pd_rbs_link_1
-        a47 = self.Mbar_rbs_link_1_jcs_upper_uni_1[:,0:1]
-        a48 = self.P_rbs_link_1
-        a49 = self.Mbar_rbs_table_jcs_upper_uni_1[:,0:1]
+        a47 = self.Mbar_rbs_table_jcs_upper_uni_1[:,0:1]
+        a48 = self.Mbar_rbs_link_1_jcs_upper_uni_1[:,0:1]
+        a49 = self.P_rbs_link_1
         a50 = a46.T
         a51 = self.Pd_rbs_link_2
         a52 = self.Mbar_rbs_link_2_jcs_upper_uni_2[:,0:1]
@@ -336,19 +336,19 @@ class topology(object):
         a60 = a56.T
 
         self.acc_eq_blocks = [(multi_dot([B(a0,self.ubar_vbs_ground_jcs_rev_1),a0]) + -1*multi_dot([B(a1,self.ubar_rbs_rocker_1_jcs_rev_1),a1])),
-        (multi_dot([a3,a5,B(a0,a6),a0]) + multi_dot([a6.T,a8,a9,a1]) + 2*multi_dot([a10,B(a7,a6).T,a11,a1])),
-        (multi_dot([a3,a5,B(a0,a12),a0]) + multi_dot([a12.T,a8,a9,a1]) + 2*multi_dot([a10,B(a7,a12).T,a11,a1])),
+        (multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2*multi_dot([a10,B(a3,a2).T,a11,a1])),
+        (multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2*multi_dot([a10,B(a3,a12).T,a11,a1])),
         (multi_dot([B(a0,self.ubar_vbs_ground_jcs_rev_2),a0]) + -1*multi_dot([B(a13,self.ubar_rbs_rocker_2_jcs_rev_2),a13])),
-        (multi_dot([a14.T,a8,a16,a13]) + multi_dot([a17,a19,B(a0,a14),a0]) + 2*multi_dot([a10,B(a7,a14).T,a20,a13])),
-        (multi_dot([a21.T,a8,a16,a13]) + multi_dot([a17,a19,B(a0,a21),a0]) + 2*multi_dot([a10,B(a7,a21).T,a20,a13])),
+        (multi_dot([a14.T,a4,a16,a13]) + multi_dot([a17,a19,B(a0,a14),a0]) + 2*multi_dot([a10,B(a3,a14).T,a20,a13])),
+        (multi_dot([a21.T,a4,a16,a13]) + multi_dot([a17,a19,B(a0,a21),a0]) + 2*multi_dot([a10,B(a3,a21).T,a20,a13])),
         (multi_dot([B(a0,self.ubar_vbs_ground_jcs_rev_3),a0]) + -1*multi_dot([B(a22,self.ubar_rbs_rocker_3_jcs_rev_3),a22])),
-        (multi_dot([a24,a26,B(a0,a27),a0]) + multi_dot([a27.T,a8,a28,a22]) + 2*multi_dot([a10,B(a7,a27).T,a29,a22])),
-        (multi_dot([a24,a26,B(a0,a30),a0]) + multi_dot([a30.T,a8,a28,a22]) + 2*multi_dot([a10,B(a7,a30).T,a29,a22])),
-        (multi_dot([a32,a34,B(a0,a35),a0]) + multi_dot([a35.T,a8,a37,a36]) + 2*multi_dot([a38,a39,B(a7,a35),a0])),
+        (multi_dot([a24,a26,B(a0,a27),a0]) + multi_dot([a27.T,a4,a28,a22]) + 2*multi_dot([a10,B(a3,a27).T,a29,a22])),
+        (multi_dot([a24,a26,B(a0,a30),a0]) + multi_dot([a30.T,a4,a28,a22]) + 2*multi_dot([a10,B(a3,a30).T,a29,a22])),
+        (multi_dot([a32,a34,B(a0,a35),a0]) + multi_dot([a35.T,a4,a37,a36]) + 2*multi_dot([a38,a39,B(a3,a35),a0])),
         (multi_dot([a32,a34,a42]) + 2*multi_dot([a38,a39,a43]) + multi_dot([a44,a37,a36])),
         (multi_dot([a45.T,a34,a42]) + 2*multi_dot([a38,B(a33,a45).T,a43]) + multi_dot([a44,B(a36,a45),a36])),
         (multi_dot([B(a46,self.ubar_rbs_link_1_jcs_upper_uni_1),a46]) + -1*multi_dot([B(a36,self.ubar_rbs_table_jcs_upper_uni_1),a36])),
-        (multi_dot([a47.T,A(a48).T,B(a36,a49),a36]) + multi_dot([a49.T,a34,B(a46,a47),a46]) + 2*multi_dot([a50,B(a48,a47).T,B(a33,a49),a36])),
+        (multi_dot([a47.T,a34,B(a46,a48),a46]) + multi_dot([a48.T,A(a49).T,B(a36,a47),a36]) + 2*multi_dot([a50,B(a49,a48).T,B(a33,a47),a36])),
         (multi_dot([B(a51,self.ubar_rbs_link_2_jcs_upper_uni_2),a51]) + -1*multi_dot([B(a36,self.ubar_rbs_table_jcs_upper_uni_2),a36])),
         (multi_dot([a52.T,A(a53).T,B(a36,a54),a36]) + multi_dot([a54.T,a34,B(a51,a52),a51]) + 2*multi_dot([a55,B(a53,a52).T,B(a33,a54),a36])),
         (multi_dot([B(a56,self.ubar_rbs_link_3_jcs_upper_uni_3),a56]) + -1*multi_dot([B(a36,self.ubar_rbs_table_jcs_upper_uni_3),a36])),
