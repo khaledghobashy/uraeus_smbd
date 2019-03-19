@@ -26,7 +26,7 @@ asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Mod
 
 f.SU.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\dwb_st500_axletech.csv')
 f.ST.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\steer_st500_axletech.csv')
-f.TR.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\frontaxle_testrig.csv')
+f.TR.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\frontaxle_testrig_dyn.csv')
 
 f.TR.config.AF_jcs_steer_gear = lambda t : 0*np.deg2rad(15)*np.sin(t)
 #f.TR.config.AF_mcr_ver_act = lambda t : 170*np.sin(t)
@@ -60,7 +60,7 @@ assm = f.numerical_assembly()
 assm.set_gen_coordinates(assm.q0)
 
 dynamic_soln = dynamic_solver(assm)
-dynamic_soln.set_time_array(25,200)
+dynamic_soln.set_time_array(10,200)
 dynamic_soln._extract_independent_coordinates()
 dynamic_soln.solve_dds('sim_dwb_st500_axletech_temp_dyn', save=True)
 time_array = dynamic_soln.time_array
@@ -70,6 +70,22 @@ plt.figure(figsize=(8,4))
 plt.plot(time_array, dynamic_soln.pos_dataframe['SU.rbl_hub.z'])
 plt.grid()
 plt.show()
+
+plt.figure(figsize=(8,4))
+plt.plot(time_array, dynamic_soln.vel_dataframe['SU.rbl_hub.z'])
+plt.grid()
+plt.show()
+
+plt.figure(figsize=(8,4))
+plt.plot(time_array, dynamic_soln.pos_dataframe['SU.rbr_hub.z'])
+plt.grid()
+plt.show()
+
+plt.figure(figsize=(8,4))
+plt.plot(time_array, dynamic_soln.vel_dataframe['SU.rbr_hub.z'])
+plt.grid()
+plt.show()
+
 
 #dynamic_soln.save_results('sim_dwb_st500_axletech_temp_dyn')
 

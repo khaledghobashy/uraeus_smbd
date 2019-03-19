@@ -16,11 +16,11 @@ class blender_scene(object):
         scale = 1/20
         self.scale = scale
 
+        self.hpr_rocker_coupler = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hpr_rocker_chassis = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.s_links_ro = 1*scale
-        self.hpr_rocker_coupler = np.array([[0], [0], [0]],dtype=np.float64)
+        self.s_links_ro = 1
 
-        self._inputs = ['hpr_rocker_chassis', 's_links_ro', 'hpr_rocker_coupler']
+        self._inputs = ['hpr_rocker_coupler', 'hpr_rocker_chassis', 's_links_ro']
         self.geometries = {'gmr_rocker': 'rbr_rocker', 'gml_rocker': 'rbl_rocker', 'gms_coupler': 'rbs_coupler'}
 
     
@@ -39,8 +39,8 @@ class blender_scene(object):
                         value = np.resize(value,(3,1))*self.scale
                         setattr(self,attr,value)
                     else:
-                        value = float(row[1])
-                        setattr(self,ind,value)
+                        value = float(row[1])*self.scale
+                        setattr(self,attr,value)
 
     def load_anim_data(self,csv_file):
         with open(csv_file, newline='') as csvfile:
@@ -66,9 +66,9 @@ class blender_scene(object):
     def create_scene(self):
         self.hpl_rocker_coupler = mirrored(self.hpr_rocker_coupler)
         self.hpl_rocker_chassis = mirrored(self.hpr_rocker_chassis)
-        self.gms_coupler = cylinder_geometry(self.hpr_rocker_coupler,self.hpl_rocker_coupler,self.s_links_ro)
-        self.gmr_rocker = cylinder_geometry(self.hpr_rocker_chassis,self.hpr_rocker_coupler,self.s_links_ro)
         self.gml_rocker = cylinder_geometry(self.hpl_rocker_chassis,self.hpl_rocker_coupler,self.s_links_ro)
+        self.gmr_rocker = cylinder_geometry(self.hpr_rocker_chassis,self.hpr_rocker_coupler,self.s_links_ro)
+        self.gms_coupler = cylinder_geometry(self.hpr_rocker_coupler,self.hpl_rocker_coupler,self.s_links_ro)
 
         self.setup_VIEW_3D()
 

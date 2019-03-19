@@ -17,7 +17,7 @@ def load():
         template = pickle.load(f)
 
 def create():
-    from source.symbolic_classes.joints import (revolute, rotational_actuator)
+    from source.symbolic_classes.joints import (revolute, rotational_actuator, spherical)
     from source.mbs_creators.topology_classes import template_based_topology
     from source.code_generators.python_code_generators import template_code_generator
 
