@@ -269,17 +269,21 @@ class dynamic_solver(solver):
         
         self._acc_history[0] = acc_t0
         
+        print('\nRunning System Dynamic Analysis:')
+        bar_length = len(time_array)-1
         for i,t in enumerate(time_array[1:]):
+            progress_bar(bar_length,i)
             self._set_time(t)
-            integrator.integrate(t)
+            
+            integrator.integrate(integrator.t+dt)
             yi = integrator.y
             
             ind_pos_i = yi[:len(yi)//2]
             ind_vel_i = yi[len(yi)//2:]
             
-            print(dict(zip(self.independent_cord,list(ind_pos_i[:,0]))))
-            print(dict(zip(self.independent_cord,list(ind_vel_i[:,0]))))
-            print('\n')
+#            print(dict(zip(self.independent_cord,list(ind_pos_i[:,0]))))
+#            print(dict(zip(self.independent_cord,list(ind_vel_i[:,0]))))
+#            print('\n')
             
             g =   self._pos_history[i] \
                 + self._vel_history[i]*dt \
@@ -294,13 +298,9 @@ class dynamic_solver(solver):
             
             vel_rhs = self._eval_vel_eq(ind_vel_i)
             vi = solve(A,-vel_rhs)
-            self._set_gen_velocities(vi)
             self._vel_history[i+1] = vi
-            
-            pos_ti = self._pos_history[i+1]
-            vel_ti = self._vel_history[i+1]
-            
-            M, J, Qt, Qd = self._eval_augmented_matricies(pos_ti, vel_ti)
+                        
+            M, J, Qt, Qd = self._eval_augmented_matricies(self.pos, vi)
             acc_ti, lamda_ti = self._solve_augmented_system(M, J, Qt, Qd)
             Mii, Mid, Qti, Ji, qdd_d = self._partioned_system(M, J, Qt, acc_ti)
             integrator.set_f_params(Mii, Mid, Qti, Ji, lamda_ti, qdd_d)
@@ -374,7 +374,9 @@ class dynamic_solver(solver):
     def _partioned_system(self, M, J, Qt, qdd):
         P   = self.permutaion_mat
         dof = self.dof
+#        print('System mass matrix : %s'%M)
         Mp  = P @ M @ P.T
+#        print('Permuted mass matrix : %s'%Mp)
         Mii = Mp[-dof:, -dof:]
         Mid = Mp[-dof:, :-dof]
         Qtp = P@Qt
@@ -386,6 +388,7 @@ class dynamic_solver(solver):
     
     @staticmethod
     def _state_space_model(t, y, Mii, Mid, Qti, Ji, lamda, qdd_d):
+#        print('independent mass matrix : %s'%Mii)
         v = list(y[len(y)//2:])
         rhs = Qti - Ji.T@lamda - Mid@qdd_d
         vdot = list(solve(sc.sparse.csc_matrix(Mii), rhs))

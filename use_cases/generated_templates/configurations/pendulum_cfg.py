@@ -16,7 +16,6 @@ class configuration(object):
         self.Rdd_rbs_crank = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pdd_rbs_crank = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.ax1_jcs_rev_crank = np.array([[0], [0], [0]],dtype=np.float64)
-        self.AF_jcs_rev_crank = lambda t : 0
         self.hps_rev_crank = np.array([[0], [0], [0]],dtype=np.float64)
         self.hps_end_point = np.array([[0], [0], [0]],dtype=np.float64)
         self.s_links_ro = 1                       

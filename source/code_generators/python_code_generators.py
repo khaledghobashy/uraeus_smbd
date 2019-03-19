@@ -723,21 +723,18 @@ class assembly_code_generator(template_code_generator):
     def write_assembler(self):
         text = '''
                 def assemble_system(self):
-                    offset = 0
+                    offset = 2
                     for sub in self.subsystems:
                         sub.assemble_template(self.indicies_map,self.interface_map,offset)
                         offset += sub.nrows
-                    
-                    self.gr_rows += offset
-                    self.gr_jac_rows += offset
-                    
+                                        
                     self.rows = np.concatenate([s.rows for s in self.subsystems])
                     self.jac_rows = np.concatenate([s.jac_rows for s in self.subsystems])
                     self.jac_cols = np.concatenate([s.jac_cols for s in self.subsystems])
-                    
-                    self.rows = np.concatenate([self.rows,self.gr_rows])
-                    self.jac_rows = np.concatenate([self.jac_rows,self.gr_jac_rows])
-                    self.jac_cols = np.concatenate([self.jac_cols,self.gr_jac_cols])
+            
+                    self.rows = np.concatenate([self.gr_rows,self.rows])
+                    self.jac_rows = np.concatenate([self.gr_jac_rows,self.jac_rows])
+                    self.jac_cols = np.concatenate([self.gr_jac_cols,self.jac_cols])
                     
                     self.reactions_indicies = sum([sub.reactions_indicies for sub in self.subsystems],[])
                '''
@@ -831,7 +828,7 @@ class assembly_code_generator(template_code_generator):
     
     def write_mass_equations(self):
         return self._write_x_equations('mass')
-    
+
     def write_reactions_equations(self):
         func_name = 'reactions'
         text = '''
@@ -968,8 +965,7 @@ class assembly_code_generator(template_code_generator):
                     
                     for sub in self.subsystems:
                         sub.eval_{func_name}_eq()
-                    self.{func_name}_eq_blocks = sum([s.{func_name}_eq_blocks for s in self.subsystems],[])
-                    self.{func_name}_eq_blocks += {func_name}_ground_eq_blocks
+                    self.{func_name}_eq_blocks = {func_name}_ground_eq_blocks + sum([s.{func_name}_eq_blocks for s in self.subsystems],[])
                 '''
         indent = 4*' '
         p = self.printer

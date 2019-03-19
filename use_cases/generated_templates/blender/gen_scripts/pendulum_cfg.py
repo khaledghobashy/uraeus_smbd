@@ -39,7 +39,7 @@ class blender_scene(object):
                         value = np.resize(value,(3,1))*self.scale
                         setattr(self,attr,value)
                     else:
-                        value = float(row[1])
+                        value = float(row[1])*self.scale
                         setattr(self,attr,value)
 
     def load_anim_data(self,csv_file):

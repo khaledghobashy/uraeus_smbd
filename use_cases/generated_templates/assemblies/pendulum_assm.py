@@ -28,7 +28,7 @@ class numerical_assembly(object):
         self.gr_jac_rows = np.array([0,0,1,1])
         self.gr_jac_cols = np.array([0,1,0,1])
 
-        self.nrows = 7
+        self.nrows = 6
         self.ncols = 4
 
         self.initialize_assembly()
@@ -56,21 +56,18 @@ class numerical_assembly(object):
         self.eval_constants()
 
     def assemble_system(self):
-        offset = 0
+        offset = 2
         for sub in self.subsystems:
             sub.assemble_template(self.indicies_map,self.interface_map,offset)
             offset += sub.nrows
-
-        self.gr_rows += offset
-        self.gr_jac_rows += offset
 
         self.rows = np.concatenate([s.rows for s in self.subsystems])
         self.jac_rows = np.concatenate([s.jac_rows for s in self.subsystems])
         self.jac_cols = np.concatenate([s.jac_cols for s in self.subsystems])
 
-        self.rows = np.concatenate([self.rows,self.gr_rows])
-        self.jac_rows = np.concatenate([self.jac_rows,self.gr_jac_rows])
-        self.jac_cols = np.concatenate([self.jac_cols,self.gr_jac_cols])
+        self.rows = np.concatenate([self.gr_rows,self.rows])
+        self.jac_rows = np.concatenate([self.gr_jac_rows,self.jac_rows])
+        self.jac_cols = np.concatenate([self.gr_jac_cols,self.jac_cols])
 
         self.reactions_indicies = sum([sub.reactions_indicies for sub in self.subsystems],[])
 
@@ -136,8 +133,7 @@ class numerical_assembly(object):
 
         for sub in self.subsystems:
             sub.eval_pos_eq()
-        self.pos_eq_blocks = sum([s.pos_eq_blocks for s in self.subsystems],[])
-        self.pos_eq_blocks += pos_ground_eq_blocks
+        self.pos_eq_blocks = pos_ground_eq_blocks + sum([s.pos_eq_blocks for s in self.subsystems],[])
 
     
     def eval_vel_eq(self):
@@ -146,8 +142,7 @@ class numerical_assembly(object):
 
         for sub in self.subsystems:
             sub.eval_vel_eq()
-        self.vel_eq_blocks = sum([s.vel_eq_blocks for s in self.subsystems],[])
-        self.vel_eq_blocks += vel_ground_eq_blocks
+        self.vel_eq_blocks = vel_ground_eq_blocks + sum([s.vel_eq_blocks for s in self.subsystems],[])
 
     
     def eval_acc_eq(self):
@@ -156,8 +151,7 @@ class numerical_assembly(object):
 
         for sub in self.subsystems:
             sub.eval_acc_eq()
-        self.acc_eq_blocks = sum([s.acc_eq_blocks for s in self.subsystems],[])
-        self.acc_eq_blocks += acc_ground_eq_blocks
+        self.acc_eq_blocks = acc_ground_eq_blocks + sum([s.acc_eq_blocks for s in self.subsystems],[])
 
     
     def eval_jac_eq(self):
@@ -166,8 +160,7 @@ class numerical_assembly(object):
 
         for sub in self.subsystems:
             sub.eval_jac_eq()
-        self.jac_eq_blocks = sum([s.jac_eq_blocks for s in self.subsystems],[])
-        self.jac_eq_blocks += jac_ground_eq_blocks
+        self.jac_eq_blocks = jac_ground_eq_blocks + sum([s.jac_eq_blocks for s in self.subsystems],[])
 
     
     def eval_mass_eq(self):
@@ -176,8 +169,7 @@ class numerical_assembly(object):
 
         for sub in self.subsystems:
             sub.eval_mass_eq()
-        self.mass_eq_blocks = sum([s.mass_eq_blocks for s in self.subsystems],[])
-        self.mass_eq_blocks += mass_ground_eq_blocks
+        self.mass_eq_blocks = mass_ground_eq_blocks + sum([s.mass_eq_blocks for s in self.subsystems],[])
 
     
     def eval_frc_eq(self):
@@ -186,8 +178,7 @@ class numerical_assembly(object):
 
         for sub in self.subsystems:
             sub.eval_frc_eq()
-        self.frc_eq_blocks = sum([s.frc_eq_blocks for s in self.subsystems],[])
-        self.frc_eq_blocks += frc_ground_eq_blocks
+        self.frc_eq_blocks = frc_ground_eq_blocks + sum([s.frc_eq_blocks for s in self.subsystems],[])
 
     
     def eval_reactions_eq(self):
