@@ -8,6 +8,7 @@ Created on Tue Jan  1 13:21:35 2019
 import sys
 import numpy as np
 import scipy as sc
+import scipy.integrate
 from scipy.sparse.linalg import spsolve
 import pandas as pd
 
@@ -190,7 +191,7 @@ class solver(object):
         n = self.model.ncols
         rows = cols = np.arange(n)
         mat = scipy_matrix_assembler(data,rows,cols,(n,n))
-        return mat
+        return mat.A
     
     def _eval_frc_eq(self):
         self.model.eval_frc_eq()
@@ -257,7 +258,7 @@ class dynamic_solver(solver):
         vel_t0 = self._vel_history[0]
         self._get_initial_conditions(pos_t0, vel_t0)
         
-        integrator = sc.integrate.ode(self._state_space_model)
+        integrator = scipy.integrate.ode(self._state_space_model)
         integrator.set_integrator('dop853')
         integrator.set_initial_value(self.y0)
         
@@ -266,6 +267,8 @@ class dynamic_solver(solver):
         Mii, Mid, Qti, Ji, qdd_d = self._partioned_system(M, J, Qt, acc_t0)
         integrator.set_f_params(Mii, Mid, Qti, Ji, lamda_t0, qdd_d)
         
+        self._acc_history[0] = acc_t0
+        
         for i,t in enumerate(time_array[1:]):
             self._set_time(t)
             integrator.integrate(t)
@@ -273,6 +276,10 @@ class dynamic_solver(solver):
             
             ind_pos_i = yi[:len(yi)//2]
             ind_vel_i = yi[len(yi)//2:]
+            
+            print(dict(zip(self.independent_cord,list(ind_pos_i[:,0]))))
+            print(dict(zip(self.independent_cord,list(ind_vel_i[:,0]))))
+            print('\n')
             
             g =   self._pos_history[i] \
                 + self._vel_history[i]*dt \
@@ -297,6 +304,8 @@ class dynamic_solver(solver):
             acc_ti, lamda_ti = self._solve_augmented_system(M, J, Qt, Qd)
             Mii, Mid, Qti, Ji, qdd_d = self._partioned_system(M, J, Qt, acc_ti)
             integrator.set_f_params(Mii, Mid, Qti, Ji, lamda_ti, qdd_d)
+            
+            self._acc_history[i+1] = acc_ti
         
         self._creat_results_dataframes()
         if save:
@@ -306,13 +315,13 @@ class dynamic_solver(solver):
             
     
     def _extract_independent_coordinates(self):
-        A = self._eval_jac_eq()
+        A = super()._eval_jac_eq()
         rows, cols = A.shape
         permutaion_mat = sc.linalg.lu(A.A.T)[0]
         independent_cols = permutaion_mat[:, rows:]
         self.dof = dof = independent_cols.shape[1]
         independent_cord = [self._coordinates_indicies[np.argmax(independent_cols[:,i])] for i in range(dof) ]
-        self.permutaion_mat  = permutaion_mat
+        self.permutaion_mat  = permutaion_mat.T
         self.independent_cols = independent_cols
         self.independent_cord = independent_cord
     
@@ -327,8 +336,8 @@ class dynamic_solver(solver):
     def _eval_augmented_matricies(self,q ,qd):
         self._set_gen_coordinates(q)
         self._set_gen_velocities(qd)
+        J  = super()._eval_jac_eq()
         M  = self._eval_mass_eq()
-        J  = self._eval_jac_eq()
         Qt = self._eval_frc_eq()
         Qd = self._eval_acc_eq()
         return M, J, Qt, Qd
@@ -337,26 +346,26 @@ class dynamic_solver(solver):
         A = sc.sparse.bmat([[M,J.T],[J,None]], format='csc')
         b = np.concatenate([Qt,-Qd])
         x = solve(A, b)
-        n = self.model.n
+        n = len(self._coordinates_indicies)
         accelerations = x[:n]
         lamda = x[n:]
         return accelerations, lamda
     
     def _eval_pos_eq(self):
-        A = super._eval_pos_eq()
+        A = super()._eval_pos_eq()
         Z = np.zeros((self.dof,1))
         A = np.concatenate([A,Z])
         return A
 
     def _eval_vel_eq(self,ind_vel_i):
-        A = super._eval_vel_eq()
+        A = super()._eval_vel_eq()
         V = np.array(ind_vel_i)
         V = np.reshape(V,(self.dof,1))
         A = np.concatenate([A,-V])
         return A
     
     def _eval_jac_eq(self):
-        A = super._eval_jac_eq()
+        A = super()._eval_jac_eq()
         A = A.A
         A = np.concatenate([A,self.independent_cols.T])
         return sc.sparse.csc_matrix(A)
@@ -365,8 +374,8 @@ class dynamic_solver(solver):
     def _partioned_system(self, M, J, Qt, qdd):
         P   = self.permutaion_mat
         dof = self.dof
-        Mp  = np.linalg.multi_dot(P, M, P.T)
-        Mii = Mp[-dof:, :-dof]
+        Mp  = P @ M @ P.T
+        Mii = Mp[-dof:, -dof:]
         Mid = Mp[-dof:, :-dof]
         Qtp = P@Qt
         Qti = Qtp[-dof:]
@@ -378,7 +387,7 @@ class dynamic_solver(solver):
     @staticmethod
     def _state_space_model(t, y, Mii, Mid, Qti, Ji, lamda, qdd_d):
         v = list(y[len(y)//2:])
-        rhs = Qti - Ji@lamda - Mid@qdd_d
-        vdot = list(solve(Mii, rhs))
+        rhs = Qti - Ji.T@lamda - Mid@qdd_d
+        vdot = list(solve(sc.sparse.csc_matrix(Mii), rhs))
         dydt = v + vdot
         return dydt
