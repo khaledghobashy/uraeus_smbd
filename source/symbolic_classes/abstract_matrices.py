@@ -9,7 +9,7 @@ import sympy as sm
 import networkx as nx
 import matplotlib.pyplot as plt
 
-sm.init_printing(pretty_print=False,use_latex=True,forecolor='White')
+sm.init_printing(pretty_print=False, use_latex=True, forecolor='White')
 
 ###############################################################################
 ###############################################################################

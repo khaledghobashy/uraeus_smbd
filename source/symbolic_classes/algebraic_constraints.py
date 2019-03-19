@@ -415,7 +415,7 @@ class coordinate_constraint(object):
         J_P = obj.Bui[i,:]
             
         jacobian = ([J_R, J_P], 
-                    [zero_matrix(1,3),zero_matrix(1,4)])
+                    [zero_matrix(1,3), zero_matrix(1,4)])
        
         obj._pos_level_equations.append(pos_level_equation)
         obj._vel_level_equations.append(vel_level_equation)
@@ -540,13 +540,3 @@ class absolute_actuator(actuator):
         self.i = self.coordinates_map[self.coordinate]
         super().__init__(name,body_i,body_j)
         
-#    @property
-#    def constants_symbolic_expr(self):
-#        return []
-    @property
-    def constants_numeric_expr(self):
-        num_jac = sm.zeros(1,3)
-        num_jac[0,self.i] = 1
-        sym_jac = sm.MatrixSymbol('%sJ_%s'%(self.prefix,self.id_name),1,3)
-        eq = sm.Eq(sym_jac,num_jac)
-        return [eq]    

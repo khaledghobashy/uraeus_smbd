@@ -16,11 +16,11 @@ class blender_scene(object):
         scale = 1/20
         self.scale = scale
 
-        self.hps_end_point = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.s_links_ro = 1*scale
+        self.hps_end_point = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hps_rev_crank = np.array([[0], [0], [0]],dtype=np.float64)
 
-        self._inputs = ['hps_end_point', 's_links_ro', 'hps_rev_crank']
+        self._inputs = ['s_links_ro', 'hps_end_point', 'hps_rev_crank']
         self.geometries = {'gms_crank': 'rbs_crank'}
 
     
@@ -39,7 +39,7 @@ class blender_scene(object):
                         value = np.resize(value,(3,1))*self.scale
                         setattr(self,attr,value)
                     else:
-                        value = float(row[1])*self.scale
+                        value = float(row[1])
                         setattr(self,attr,value)
 
     def load_anim_data(self,csv_file):

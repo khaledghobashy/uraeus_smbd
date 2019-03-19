@@ -31,7 +31,8 @@ def create():
     
     # Adding System Joints
     template.add_joint(revolute,'rev_crank','rbs_crank','vbs_ground')
-    template.add_joint_actuator(rotational_actuator,'act','jcs_rev_crank')
+#    template.add_joint_actuator(rotational_actuator,'act','jcs_rev_crank')
+#    template.add_absolute_actuator('act','rbs_crank','z')
 
     # Assembling System
     template.assemble_model()

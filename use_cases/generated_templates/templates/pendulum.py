@@ -15,12 +15,12 @@ class topology(object):
         self.config = None
 
         self.n  = 7
-        self.nc = 7
-        self.nrows = 5
+        self.nc = 6
+        self.nrows = 4
         self.ncols = 2*2
         self.rows = np.arange(self.nrows)
 
-        reactions_indicies = ['F_rbs_crank_jcs_rev_crank', 'T_rbs_crank_jcs_rev_crank', 'F_rbs_crank_jcs_rev_crank', 'T_rbs_crank_jcs_rev_crank']
+        reactions_indicies = ['F_rbs_crank_jcs_rev_crank', 'T_rbs_crank_jcs_rev_crank']
         self.reactions_indicies = ['%s%s'%(self.prefix,i) for i in reactions_indicies]
 
     
@@ -33,9 +33,9 @@ class topology(object):
         self.rows_offset = rows_offset
         self._set_mapping(indicies_map, interface_map)
         self.rows += self.rows_offset
-        self.jac_rows = np.array([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4])
+        self.jac_rows = np.array([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3])
         self.jac_rows += self.rows_offset
-        self.jac_cols = [self.vbs_ground*2, self.vbs_ground*2+1, self.rbs_crank*2, self.rbs_crank*2+1, self.vbs_ground*2, self.vbs_ground*2+1, self.rbs_crank*2, self.rbs_crank*2+1, self.vbs_ground*2, self.vbs_ground*2+1, self.rbs_crank*2, self.rbs_crank*2+1, self.vbs_ground*2, self.vbs_ground*2+1, self.rbs_crank*2, self.rbs_crank*2+1, self.rbs_crank*2+1]
+        self.jac_cols = [self.vbs_ground*2, self.vbs_ground*2+1, self.rbs_crank*2, self.rbs_crank*2+1, self.vbs_ground*2, self.vbs_ground*2+1, self.rbs_crank*2, self.rbs_crank*2+1, self.vbs_ground*2, self.vbs_ground*2+1, self.rbs_crank*2, self.rbs_crank*2+1, self.rbs_crank*2+1]
 
     def set_initial_states(self):
         self.set_gen_coordinates(self.config.q)
@@ -51,8 +51,6 @@ class topology(object):
         self.Mbar_vbs_ground_jcs_rev_crank = multi_dot([A(config.P_vbs_ground).T,triad(config.ax1_jcs_rev_crank)])
         self.ubar_rbs_crank_jcs_rev_crank = (multi_dot([A(config.P_rbs_crank).T,config.pt1_jcs_rev_crank]) + -1*multi_dot([A(config.P_rbs_crank).T,config.R_rbs_crank]))
         self.ubar_vbs_ground_jcs_rev_crank = (multi_dot([A(config.P_vbs_ground).T,config.pt1_jcs_rev_crank]) + -1*multi_dot([A(config.P_vbs_ground).T,config.R_vbs_ground]))
-        self.Mbar_rbs_crank_jcs_rev_crank = multi_dot([A(config.P_rbs_crank).T,triad(config.ax1_jcs_rev_crank)])
-        self.Mbar_vbs_ground_jcs_rev_crank = multi_dot([A(config.P_vbs_ground).T,triad(config.ax1_jcs_rev_crank)])
 
     
     def set_gen_coordinates(self,q):
@@ -72,7 +70,6 @@ class topology(object):
     
     def set_lagrange_multipliers(self,Lambda):
         self.L_jcs_rev_crank = Lambda[0:5,0:1]
-        self.L_jcs_rev_crank = Lambda[5:6,0:1]
 
     
     def eval_pos_eq(self):
@@ -84,12 +81,10 @@ class topology(object):
         x2 = A(self.P_vbs_ground)
         x3 = x1.T
         x4 = self.Mbar_vbs_ground_jcs_rev_crank[:,2:3]
-        x5 = self.Mbar_vbs_ground_jcs_rev_crank[:,0:1]
 
         self.pos_eq_blocks = [(self.R_rbs_crank + -1*self.R_vbs_ground + multi_dot([x1,self.ubar_rbs_crank_jcs_rev_crank]) + -1*multi_dot([x2,self.ubar_vbs_ground_jcs_rev_crank])),
         multi_dot([self.Mbar_rbs_crank_jcs_rev_crank[:,0:1].T,x3,x2,x4]),
         multi_dot([self.Mbar_rbs_crank_jcs_rev_crank[:,1:2].T,x3,x2,x4]),
-        (cos(config.AF_jcs_rev_crank(t))*multi_dot([self.Mbar_rbs_crank_jcs_rev_crank[:,1:2].T,x3,x2,x5]) + sin(config.AF_jcs_rev_crank(t))*-1*multi_dot([self.Mbar_rbs_crank_jcs_rev_crank[:,0:1].T,x3,x2,x5])),
         (-1*np.eye(1,dtype=np.float64) + (multi_dot([x0.T,x0]))**(1.0/2.0))]
 
     
@@ -102,7 +97,6 @@ class topology(object):
         self.vel_eq_blocks = [np.zeros((3,1),dtype=np.float64),
         v0,
         v0,
-        -1*derivative(config.AF_jcs_rev_crank,t,0.1,1)*np.eye(1,dtype=np.float64),
         v0]
 
     
@@ -112,25 +106,21 @@ class topology(object):
 
         a0 = self.Pd_rbs_crank
         a1 = self.Pd_vbs_ground
-        a2 = self.Mbar_vbs_ground_jcs_rev_crank[:,2:3]
-        a3 = a2.T
-        a4 = self.P_vbs_ground
-        a5 = A(a4).T
-        a6 = self.Mbar_rbs_crank_jcs_rev_crank[:,0:1]
-        a7 = self.P_rbs_crank
-        a8 = A(a7).T
-        a9 = B(a1,a2)
+        a2 = self.Mbar_rbs_crank_jcs_rev_crank[:,0:1]
+        a3 = self.P_rbs_crank
+        a4 = A(a3).T
+        a5 = self.Mbar_vbs_ground_jcs_rev_crank[:,2:3]
+        a6 = B(a1,a5)
+        a7 = a5.T
+        a8 = self.P_vbs_ground
+        a9 = A(a8).T
         a10 = a0.T
-        a11 = B(a4,a2)
+        a11 = B(a8,a5)
         a12 = self.Mbar_rbs_crank_jcs_rev_crank[:,1:2]
-        a13 = self.Mbar_vbs_ground_jcs_rev_crank[:,0:1]
-        a14 = self.Mbar_rbs_crank_jcs_rev_crank[:,1:2]
-        a15 = self.Mbar_rbs_crank_jcs_rev_crank[:,0:1]
 
         self.acc_eq_blocks = [(multi_dot([B(a0,self.ubar_rbs_crank_jcs_rev_crank),a0]) + -1*multi_dot([B(a1,self.ubar_vbs_ground_jcs_rev_crank),a1])),
-        (multi_dot([a3,a5,B(a0,a6),a0]) + multi_dot([a6.T,a8,a9,a1]) + 2*multi_dot([a10,B(a7,a6).T,a11,a1])),
-        (multi_dot([a3,a5,B(a0,a12),a0]) + multi_dot([a12.T,a8,a9,a1]) + 2*multi_dot([a10,B(a7,a12).T,a11,a1])),
-        (-1*derivative(config.AF_jcs_rev_crank,t,0.1,2)*np.eye(1,dtype=np.float64) + multi_dot([a13.T,a5,(cos(config.AF_jcs_rev_crank(t))*B(a0,a14) + sin(config.AF_jcs_rev_crank(t))*-1*B(a0,a15)),a0]) + multi_dot([(cos(config.AF_jcs_rev_crank(t))*multi_dot([a14.T,a8]) + sin(config.AF_jcs_rev_crank(t))*-1*multi_dot([a15.T,a8])),B(a1,a13),a1]) + 2*multi_dot([((cos(config.AF_jcs_rev_crank(t))*multi_dot([B(a7,a14),a0])).T + sin(config.AF_jcs_rev_crank(t))*-1*multi_dot([a10,B(a7,a15).T])),B(a4,a13),a1])),
+        (multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2*multi_dot([a10,B(a3,a2).T,a11,a1])),
+        (multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2*multi_dot([a10,B(a3,a12).T,a11,a1])),
         2*(multi_dot([a10,a0]))**(1.0/2.0)]
 
     
@@ -149,9 +139,6 @@ class topology(object):
         j8 = self.Mbar_rbs_crank_jcs_rev_crank[:,1:2]
         j9 = A(j1).T
         j10 = B(j5,j3)
-        j11 = self.Mbar_vbs_ground_jcs_rev_crank[:,0:1]
-        j12 = self.Mbar_rbs_crank_jcs_rev_crank[:,1:2]
-        j13 = self.Mbar_rbs_crank_jcs_rev_crank[:,0:1]
 
         self.jac_eq_blocks = [-1*j0,
         -1*B(j5,self.ubar_vbs_ground_jcs_rev_crank),
@@ -165,10 +152,6 @@ class topology(object):
         multi_dot([j8.T,j9,j10]),
         j2,
         multi_dot([j4,j6,B(j1,j8)]),
-        j2,
-        multi_dot([(cos(config.AF_jcs_rev_crank(t))*multi_dot([j12.T,j9]) + sin(config.AF_jcs_rev_crank(t))*-1*multi_dot([j13.T,j9])),B(j5,j11)]),
-        j2,
-        multi_dot([j11.T,j6,(cos(config.AF_jcs_rev_crank(t))*B(j1,j12) + sin(config.AF_jcs_rev_crank(t))*-1*B(j1,j13))]),
         2*j1.T]
 
     
@@ -200,10 +183,6 @@ class topology(object):
         self.F_rbs_crank_jcs_rev_crank = Q_rbs_crank_jcs_rev_crank[0:3,0:1]
         Te_rbs_crank_jcs_rev_crank = Q_rbs_crank_jcs_rev_crank[3:7,0:1]
         self.T_rbs_crank_jcs_rev_crank = (-1*multi_dot([skew(multi_dot([A(self.P_rbs_crank),self.ubar_rbs_crank_jcs_rev_crank])),self.F_rbs_crank_jcs_rev_crank]) + 0.5*multi_dot([E(self.P_rbs_crank),Te_rbs_crank_jcs_rev_crank]))
-        Q_rbs_crank_jcs_rev_crank = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(config.AF_jcs_rev_crank(t))*B(self.P_rbs_crank,self.Mbar_rbs_crank_jcs_rev_crank[:,0:1]).T + (cos(config.AF_jcs_rev_crank(t))*B(self.P_rbs_crank,self.Mbar_rbs_crank_jcs_rev_crank[:,1:2])).T),A(self.P_vbs_ground),self.Mbar_vbs_ground_jcs_rev_crank[:,0:1]])]]),self.L_jcs_rev_crank])
-        self.F_rbs_crank_jcs_rev_crank = Q_rbs_crank_jcs_rev_crank[0:3,0:1]
-        Te_rbs_crank_jcs_rev_crank = Q_rbs_crank_jcs_rev_crank[3:7,0:1]
-        self.T_rbs_crank_jcs_rev_crank = 0.5*multi_dot([E(self.P_rbs_crank),Te_rbs_crank_jcs_rev_crank])
 
-        self.reactions = {'F_rbs_crank_jcs_rev_crank':self.F_rbs_crank_jcs_rev_crank,'T_rbs_crank_jcs_rev_crank':self.T_rbs_crank_jcs_rev_crank,'F_rbs_crank_jcs_rev_crank':self.F_rbs_crank_jcs_rev_crank,'T_rbs_crank_jcs_rev_crank':self.T_rbs_crank_jcs_rev_crank}
+        self.reactions = {'F_rbs_crank_jcs_rev_crank':self.F_rbs_crank_jcs_rev_crank,'T_rbs_crank_jcs_rev_crank':self.T_rbs_crank_jcs_rev_crank}
 
