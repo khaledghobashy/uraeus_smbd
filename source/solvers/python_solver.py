@@ -18,7 +18,8 @@ def solve(A,b):
     except AttributeError:
         pass
     x = np.linalg.solve(A,b)
-    x = np.reshape(x,(x.shape[0],1))
+    shape = (x.shape[0],x.size//x.shape[0])
+    x = np.reshape(x,shape)
     return x
 
 def progress_bar(steps,i):
@@ -358,10 +359,13 @@ class dynamic_solver(solver):
         Qv = Qp[-dof:]
         Qu = Qp[:-dof]
         
+#        print([i.shape for i in [Qv,H.T, H.T@Qu, Mvv, H.T@Muv, Ju, acc_rhs]])
+
         M_hat = Mvv + (Mvu @ H) + H.T@(Muv + Muu@H)
-        Q_hat = Qv + H.T@Qu - (Mvv + H.T@Muu)@solve(Ju,-acc_rhs)
+        Q_hat = Qv + H.T@Qu - (Mvu + H.T@Muu)@solve(Ju,-acc_rhs)
         
         return M_hat, Q_hat
+    
     def _extract_independent_coordinates(self):
         A = super()._eval_jac_eq()
         rows, cols = A.shape

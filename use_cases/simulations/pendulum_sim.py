@@ -27,7 +27,7 @@ assm.PD.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\confi
 assembled = assm.numerical_assembly()
 
 dynamic_soln = dynamic_solver(assembled)
-dynamic_soln.set_time_array(1,500)
+dynamic_soln.set_time_array(1,350)
 time_array = dynamic_soln.time_array
 
 try:
