@@ -85,7 +85,7 @@ class topology(object):
         self.pos_eq_blocks = [(self.R_rbs_crank + -1*self.R_vbs_ground + multi_dot([x1,self.ubar_rbs_crank_jcs_rev_crank]) + -1*multi_dot([x2,self.ubar_vbs_ground_jcs_rev_crank])),
         multi_dot([self.Mbar_rbs_crank_jcs_rev_crank[:,0:1].T,x3,x2,x4]),
         multi_dot([self.Mbar_rbs_crank_jcs_rev_crank[:,1:2].T,x3,x2,x4]),
-        (-1*np.eye(1,dtype=np.float64) + (multi_dot([x0.T,x0]))**(1.0/2.0))]
+        (-1*np.eye(1,dtype=np.float64) + multi_dot([x0.T,x0]))]
 
     
     def eval_vel_eq(self):
@@ -121,7 +121,7 @@ class topology(object):
         self.acc_eq_blocks = [(multi_dot([B(a0,self.ubar_rbs_crank_jcs_rev_crank),a0]) + -1*multi_dot([B(a1,self.ubar_vbs_ground_jcs_rev_crank),a1])),
         (multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2*multi_dot([a10,B(a3,a2).T,a11,a1])),
         (multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2*multi_dot([a10,B(a3,a12).T,a11,a1])),
-        2*(multi_dot([a10,a0]))**(1.0/2.0)]
+        2*multi_dot([a10,a0])]
 
     
     def eval_jac_eq(self):

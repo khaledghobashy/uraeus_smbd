@@ -15,8 +15,8 @@ from use_cases.generated_templates.configurations import pendulum_cfg
 
 assm.PD.config = pendulum_cfg.configuration()
 
-asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic'
-#asurt_path = r'E:\Main\asurt_cdt_symbolic'
+#asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic'
+asurt_path = r'E:\Main\asurt_cdt_symbolic'
 
 assm.PD.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\pendulum_cfg_mod_dyn.csv')
 
@@ -27,7 +27,7 @@ assm.PD.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\confi
 assembled = assm.numerical_assembly()
 
 dynamic_soln = dynamic_solver(assembled)
-dynamic_soln.set_time_array(1,350)
+dynamic_soln.set_time_array(2,1000)
 time_array = dynamic_soln.time_array
 
 try:
@@ -35,7 +35,7 @@ try:
 except np.linalg.LinAlgError:
     dynamic_soln._creat_results_dataframes()
     dynamic_soln.save_results('pendulum_temp_dyn')
-    time_array = time_array[:len(dynamic_soln.acc_dataframe)+1]
+    time_array = time_array[:len(dynamic_soln.acc_dataframe)]
 
 
 plt.figure(figsize=(8,4))
@@ -47,6 +47,12 @@ plt.figure(figsize=(8,4))
 plt.plot(time_array, dynamic_soln.vel_dataframe['PD.rbs_crank.z'])
 plt.grid()
 plt.show()
+
+plt.figure(figsize=(8,4))
+plt.plot(time_array, dynamic_soln.acc_dataframe['PD.rbs_crank.z'])
+plt.grid()
+plt.show()
+
 
 plt.figure(figsize=(8,4))
 plt.plot(time_array, dynamic_soln.pos_dataframe['PD.rbs_crank.y'])

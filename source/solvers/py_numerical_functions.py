@@ -101,7 +101,7 @@ def cylinder_geometry(arg1,arg2,ro=10,ri=0):
     l = np.linalg.norm(v)
     frame = triad(v)
     
-    vol = (np.pi/4)*(ro-ri)**2*l*10**-3
+    vol = np.pi*(ro**2-ri**2)*l*1e-3
     m   = 7.9*vol
     Jzz = (m/2)*(ro**2+ri**2)
     Jxx = Jyy = (m/12)*(3*(ro**2+ri**2)+(l**2))

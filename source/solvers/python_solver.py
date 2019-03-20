@@ -267,7 +267,7 @@ class dynamic_solver(solver):
         self._get_initial_conditions(pos_t0, vel_t0)
         
         integrator = scipy.integrate.ode(self._state_space_model)
-        integrator.set_integrator('lsoda')
+        integrator.set_integrator('dopri5')
         integrator.set_initial_value(self.y0)
         
         M, J, Qt, Qd = self._eval_augmented_matricies(pos_t0, vel_t0)
