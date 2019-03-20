@@ -13,7 +13,11 @@ from scipy.sparse.linalg import spsolve
 import pandas as pd
 
 def solve(A,b):
-    x = np.linalg.solve(A.A,b)
+    try:
+        A = A.A
+    except AttributeError:
+        pass
+    x = np.linalg.solve(A,b)
     x = np.reshape(x,(x.shape[0],1))
     return x
 
@@ -246,6 +250,9 @@ class solver(object):
         self.model.eval_reactions_eq()
     
 
+###############################################################################
+###############################################################################
+
 class dynamic_solver(solver):
     
     def solve_dds(self, run_id, save=False):
@@ -259,13 +266,13 @@ class dynamic_solver(solver):
         self._get_initial_conditions(pos_t0, vel_t0)
         
         integrator = scipy.integrate.ode(self._state_space_model)
-        integrator.set_integrator('dop853')
+        integrator.set_integrator('lsoda')
         integrator.set_initial_value(self.y0)
         
         M, J, Qt, Qd = self._eval_augmented_matricies(pos_t0, vel_t0)
         acc_t0, lamda_t0 = self._solve_augmented_system(M, J, Qt, Qd)
-        Mii, Mid, Qti, Ji, qdd_d = self._partioned_system(M, J, Qt, acc_t0)
-        integrator.set_f_params(Mii, Mid, Qti, Ji, lamda_t0, qdd_d)
+        M_hat, Q_hat = self._partioned_system(M, J, Qt, Qd)
+        integrator.set_f_params(M_hat, Q_hat)
         
         self._acc_history[0] = acc_t0
         
@@ -274,18 +281,19 @@ class dynamic_solver(solver):
         for i,t in enumerate(time_array[1:]):
 #            progress_bar(bar_length,i)
             self._set_time(t)
-            
-            integrator.integrate(integrator.t+dt)
+                
+            integrator.integrate(t)
             yi = integrator.y
             
             ind_pos_i = yi[:len(yi)//2]
             ind_vel_i = yi[len(yi)//2:]
             
+            print('time : %s'%integrator.t)
             print(dict(zip(self.independent_cord,list(ind_pos_i[:,0]))))
             print(dict(zip(self.independent_cord,list(ind_vel_i[:,0]))))
             print('\n')
-            
-            g =   self._pos_history[i] \
+
+            g = self._pos_history[i] \
                 + self._vel_history[i]*dt \
                 + 0.5*self._acc_history[i]*(dt**2)
             
@@ -294,26 +302,66 @@ class dynamic_solver(solver):
             
             self._newton_raphson(g)
             self._pos_history[i+1] = self.pos
-            A = self._eval_jac_eq()
             
+#            vi = self._solve_velocity(ind_vel_i)
+#            self._vel_history[i+1] = vi
+            
+            A = self._eval_jac_eq()
             vel_rhs = self._eval_vel_eq(ind_vel_i)
             vi = solve(A,-vel_rhs)
             self._vel_history[i+1] = vi
-                        
+
             M, J, Qt, Qd = self._eval_augmented_matricies(self.pos, vi)
-            acc_ti, lamda_ti = self._solve_augmented_system(M, J, Qt, Qd)
-            Mii, Mid, Qti, Ji, qdd_d = self._partioned_system(M, J, Qt, acc_ti)
-            integrator.set_f_params(Mii, Mid, Qti, Ji, lamda_ti, qdd_d)
             
-            self._acc_history[i+1] = acc_ti
+            acc_ti, lamda_ti = self._solve_augmented_system(M, J, Qt, Qd)
+            self._acc_history[i+1] = acc_ti            
+            
+            M_hat, Q_hat = self._partioned_system(M, J, Qt, Qd)
+            integrator.set_f_params(M_hat, Q_hat)
+
         
         self._creat_results_dataframes()
         if save:
             filename = run_id
             self.save_results(filename)
 
-            
+    def _solve_velocity(self,vdot):
+        dof = self.dof
+        P = self.permutaion_mat
+        J = solver._eval_jac_eq(self).A
+        Jp = J@P.T
+        Jv = Jp[:,-dof:]
+        Ju = Jp[:,:-dof]
+        H = -solve(Ju, Jv)
+        udot = H@vdot
+        qd = np.concatenate([udot,vdot])
+        return P.T@qd
     
+    def _partioned_system(self, M, J, Q, acc_rhs):
+        P   = self.permutaion_mat
+        dof = self.dof
+        
+        Mp = P @ M @ P.T
+        Qp = P@Q
+        Jp = J@P.T
+        
+        Jv = Jp[:,-dof:]
+        Ju = Jp[:,:-dof]
+        
+        H = -solve(Ju, Jv)
+
+        Mvv = Mp[-dof:, -dof:]
+        Mvu = Mp[-dof:, :-dof]
+        Muu = Mp[:-dof, :-dof]
+        Muv = Mp[:-dof, -dof:]
+        
+        Qv = Qp[-dof:]
+        Qu = Qp[:-dof]
+        
+        M_hat = Mvv + (Mvu @ H) + H.T@(Muv + Muu@H)
+        Q_hat = Qv + H.T@Qu - (Mvv + H.T@Muu)@solve(Ju,-acc_rhs)
+        
+        return M_hat, Q_hat
     def _extract_independent_coordinates(self):
         A = super()._eval_jac_eq()
         rows, cols = A.shape
@@ -336,7 +384,7 @@ class dynamic_solver(solver):
     def _eval_augmented_matricies(self,q ,qd):
         self._set_gen_coordinates(q)
         self._set_gen_velocities(qd)
-        J  = super()._eval_jac_eq()
+        J  = super()._eval_jac_eq().A
         M  = self._eval_mass_eq()
         Qt = self._eval_frc_eq()
         Qd = self._eval_acc_eq()
@@ -369,26 +417,10 @@ class dynamic_solver(solver):
         A = A.A
         A = np.concatenate([A,self.independent_cols.T])
         return sc.sparse.csc_matrix(A)
-    
-    
-    def _partioned_system(self, M, J, Qt, qdd):
-        P   = self.permutaion_mat
-        dof = self.dof
-        Mp  = P @ M @ P.T
-        Mii = Mp[-dof:, -dof:]
-        print(Mii)
-        Mid = Mp[-dof:, :-dof]
-        Qtp = P@Qt
-        Qti = Qtp[-dof:]
-        Jp = J@P.T
-        Ji = Jp[:,-dof:]
-        qdd_d = (P@qdd)[:-dof]
-        return Mii, Mid, Qti, Ji, qdd_d
-    
+
     @staticmethod
-    def _state_space_model(t, y, Mii, Mid, Qti, Ji, lamda, qdd_d):
+    def _state_space_model(t, y, M_hat, Q_hat):
         v = list(y[len(y)//2:])
-        rhs = Qti - Ji.T@lamda - Mid@qdd_d
-        vdot = list(solve(sc.sparse.csc_matrix(Mii), rhs))
+        vdot = list(solve(sc.sparse.csc_matrix(M_hat), Q_hat))
         dydt = v + vdot
         return dydt

@@ -27,10 +27,15 @@ assm.PD.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\confi
 assembled = assm.numerical_assembly()
 
 dynamic_soln = dynamic_solver(assembled)
-dynamic_soln.set_time_array(1,200)
+dynamic_soln.set_time_array(1,500)
 time_array = dynamic_soln.time_array
 
-dynamic_soln.solve_dds('pendulum_temp_dyn', save=True)
+try:
+    dynamic_soln.solve_dds('pendulum_temp_dyn', save=True)
+except np.linalg.LinAlgError:
+    dynamic_soln._creat_results_dataframes()
+    dynamic_soln.save_results('pendulum_temp_dyn')
+    time_array = time_array[:len(dynamic_soln.acc_dataframe)+1]
 
 
 plt.figure(figsize=(8,4))
@@ -43,14 +48,11 @@ plt.plot(time_array, dynamic_soln.vel_dataframe['PD.rbs_crank.z'])
 plt.grid()
 plt.show()
 
-
 plt.figure(figsize=(8,4))
 plt.plot(time_array, dynamic_soln.pos_dataframe['PD.rbs_crank.y'])
 plt.grid()
 plt.show()
 
-dynamic_soln._creat_results_dataframes()
-dynamic_soln.save_results('pendulum_temp_dyn')
 
 
 #soln = solver(assembled)
