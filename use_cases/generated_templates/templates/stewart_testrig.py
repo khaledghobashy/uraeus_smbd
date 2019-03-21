@@ -27,9 +27,9 @@ class topology(object):
     def _set_mapping(self,indicies_map, interface_map):
         p = self.prefix
     
+        self.vbs_rocker_2 = indicies_map[interface_map[p+'vbs_rocker_2']]
         self.vbs_rocker_3 = indicies_map[interface_map[p+'vbs_rocker_3']]
         self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
-        self.vbs_rocker_2 = indicies_map[interface_map[p+'vbs_rocker_2']]
         self.vbs_rocker_1 = indicies_map[interface_map[p+'vbs_rocker_1']]
 
     def assemble_template(self,indicies_map, interface_map, rows_offset):

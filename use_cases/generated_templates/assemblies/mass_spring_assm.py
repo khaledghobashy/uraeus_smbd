@@ -1,10 +1,10 @@
 
 import numpy as np
 
-from use_cases.generated_templates.templates import spatial_fourbar
+from use_cases.generated_templates.templates import mass_spring
 
 
-FB = spatial_fourbar.topology('FB')
+MS = mass_spring.topology('MS')
 
 
 
@@ -12,10 +12,10 @@ class numerical_assembly(object):
 
     def __init__(self):
         self._t = 0
-        self.subsystems = [FB]
+        self.subsystems = [MS]
 
-        self.interface_map = {'FB.vbs_ground': 'ground'}
-        self.indicies_map  = {'ground': 0, 'FB.rbs_crank': 1, 'FB.rbs_rocker': 2, 'FB.rbs_coupler': 3}
+        self.interface_map = {'MS.vbs_ground': 'ground'}
+        self.indicies_map  = {'ground': 0, 'MS.rbs_block': 1, 'MS.rbs_dummy': 2}
 
         self.R_ground  = np.array([[0],[0],[0]],dtype=np.float64)
         self.P_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
@@ -28,8 +28,8 @@ class numerical_assembly(object):
         self.gr_jac_rows = np.array([0,0,1,1])
         self.gr_jac_cols = np.array([0,1,0,1])
 
-        self.nrows = 15
-        self.ncols = 8
+        self.nrows = 12
+        self.ncols = 6
 
         self.initialize_assembly()
 
@@ -73,8 +73,8 @@ class numerical_assembly(object):
 
     
     def eval_constants(self):
-        FB.config.R_vbs_ground = self.R_ground
-        FB.config.P_vbs_ground = self.P_ground
+        MS.config.R_vbs_ground = self.R_ground
+        MS.config.P_vbs_ground = self.P_ground
 
         for sub in self.subsystems:
             sub.eval_constants()
@@ -89,8 +89,8 @@ class numerical_assembly(object):
             sub.set_gen_coordinates(qs)
             offset += sub.n
 
-        FB.R_vbs_ground = self.R_ground
-        FB.P_vbs_ground = self.P_ground
+        MS.R_vbs_ground = self.R_ground
+        MS.P_vbs_ground = self.P_ground
 
     
     def set_gen_velocities(self,qd):
@@ -102,8 +102,8 @@ class numerical_assembly(object):
             sub.set_gen_velocities(qs)
             offset += sub.n
 
-        FB.Rd_vbs_ground = self.Rd_ground
-        FB.Pd_vbs_ground = self.Pd_ground
+        MS.Rd_vbs_ground = self.Rd_ground
+        MS.Pd_vbs_ground = self.Pd_ground
 
     
     def set_gen_accelerations(self,qdd):
@@ -115,8 +115,8 @@ class numerical_assembly(object):
             sub.set_gen_accelerations(qs)
             offset += sub.n
 
-        FB.Rdd_vbs_ground = self.Rdd_ground
-        FB.Pdd_vbs_ground = self.Pdd_ground
+        MS.Rdd_vbs_ground = self.Rdd_ground
+        MS.Pdd_vbs_ground = self.Pdd_ground
 
     
     def set_lagrange_multipliers(self,Lambda):

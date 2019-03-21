@@ -29,8 +29,8 @@ class topology(object):
         self.rbs_coupler = indicies_map[p+'rbs_coupler']
         self.rbr_rocker = indicies_map[p+'rbr_rocker']
         self.rbl_rocker = indicies_map[p+'rbl_rocker']
-        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
         self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
+        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
 
     def assemble_template(self,indicies_map, interface_map, rows_offset):
         self.rows_offset = rows_offset
@@ -140,9 +140,9 @@ class topology(object):
         multi_dot([x17,x13,x9,x16]),
         multi_dot([x15,x13,x18]),
         multi_dot([x17,x13,x18]),
-        (x19 + (multi_dot([x8.T,x8]))**(1.0/2.0)),
-        (x19 + (multi_dot([x2.T,x2]))**(1.0/2.0)),
-        (x19 + (multi_dot([x11.T,x11]))**(1.0/2.0))]
+        (x19 + multi_dot([x8.T,x8])),
+        (x19 + multi_dot([x2.T,x2])),
+        (x19 + multi_dot([x11.T,x11]))]
 
     
     def eval_vel_eq(self):
@@ -227,9 +227,9 @@ class topology(object):
         (multi_dot([a35,a17,a27,a13]) + multi_dot([a28,a30,a36,a14]) + 2*multi_dot([a21,a37,a33,a13])),
         (multi_dot([a25,a17,a40]) + 2*multi_dot([a21,a32,a41]) + multi_dot([a42,a31,a14])),
         (multi_dot([a35,a17,a40]) + 2*multi_dot([a21,a37,a41]) + multi_dot([a42,a36,a14])),
-        2*(multi_dot([a13.T,a13]))**(1.0/2.0),
-        2*(multi_dot([a10,a0]))**(1.0/2.0),
-        2*(multi_dot([a21,a14]))**(1.0/2.0)]
+        2*multi_dot([a13.T,a13]),
+        2*multi_dot([a10,a0]),
+        2*multi_dot([a21,a14])]
 
     
     def eval_jac_eq(self):

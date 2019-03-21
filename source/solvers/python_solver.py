@@ -259,6 +259,7 @@ class dynamic_solver(solver):
     def solve_dds(self, run_id, save=False):
         time_array = self.time_array
         dt = self.step_size
+        bar_length = len(time_array)-1
         
         self._extract_independent_coordinates()
         
@@ -267,7 +268,7 @@ class dynamic_solver(solver):
         self._get_initial_conditions(pos_t0, vel_t0)
         
         integrator = scipy.integrate.ode(self._state_space_model)
-        integrator.set_integrator('dopri5')
+        integrator.set_integrator('dop853')
         integrator.set_initial_value(self.y0)
         
         M, J, Qt, Qd = self._eval_augmented_matricies(pos_t0, vel_t0)
@@ -278,7 +279,6 @@ class dynamic_solver(solver):
         self._acc_history[0] = acc_t0
         
         print('\nRunning System Dynamic Analysis:')
-        bar_length = len(time_array)-1
         for i,t in enumerate(time_array[1:]):
 #            progress_bar(bar_length,i)
             self._set_time(t)
@@ -338,33 +338,6 @@ class dynamic_solver(solver):
         qd = np.concatenate([udot,vdot])
         return P.T@qd
     
-    def _partioned_system(self, M, J, Q, acc_rhs):
-        P   = self.permutaion_mat
-        dof = self.dof
-        
-        Mp = P @ M @ P.T
-        Qp = P@Q
-        Jp = J@P.T
-        
-        Jv = Jp[:,-dof:]
-        Ju = Jp[:,:-dof]
-        
-        H = -solve(Ju, Jv)
-
-        Mvv = Mp[-dof:, -dof:]
-        Mvu = Mp[-dof:, :-dof]
-        Muu = Mp[:-dof, :-dof]
-        Muv = Mp[:-dof, -dof:]
-        
-        Qv = Qp[-dof:]
-        Qu = Qp[:-dof]
-        
-#        print([i.shape for i in [Qv,H.T, H.T@Qu, Mvv, H.T@Muv, Ju, acc_rhs]])
-
-        M_hat = Mvv + (Mvu @ H) + H.T@(Muv + Muu@H)
-        Q_hat = Qv + H.T@Qu - (Mvu + H.T@Muu)@solve(Ju,-acc_rhs)
-        
-        return M_hat, Q_hat
     
     def _extract_independent_coordinates(self):
         A = super()._eval_jac_eq()
@@ -421,9 +394,38 @@ class dynamic_solver(solver):
         A = A.A
         A = np.concatenate([A,self.independent_cols.T])
         return sc.sparse.csc_matrix(A)
+    
+#    def M_hat(self,y):
+        
+    def _partioned_system(self, M, J, Q, acc_rhs):
+        P   = self.permutaion_mat
+        dof = self.dof
+        
+        Mp = P @ M @ P.T
+        Qp = P@Q
+        Jp = J@P.T
+        
+        Jv = Jp[:,-dof:]
+        Ju = Jp[:,:-dof]
+        
+        H = -solve(Ju, Jv)
+
+        Mvv = Mp[-dof:, -dof:]
+        Mvu = Mp[-dof:, :-dof]
+        Muu = Mp[:-dof, :-dof]
+        Muv = Mp[:-dof, -dof:]
+        
+        Qv = Qp[-dof:]
+        Qu = Qp[:-dof]
+        
+        M_hat = Mvv + (Mvu @ H) + H.T@(Muv + Muu@H)
+        Q_hat = Qv + H.T@Qu - (Mvu + H.T@Muu)@solve(Ju,-acc_rhs)
+        
+        return M_hat, Q_hat
 
     @staticmethod
     def _state_space_model(t, y, M_hat, Q_hat):
+#        print('IN SSODE : ')
         v = list(y[len(y)//2:])
         vdot = list(solve(sc.sparse.csc_matrix(M_hat), Q_hat))
         dydt = v + vdot

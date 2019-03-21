@@ -36,6 +36,8 @@ except np.linalg.LinAlgError:
     dynamic_soln._creat_results_dataframes()
     dynamic_soln.save_results('pendulum_temp_dyn')
     time_array = time_array[:len(dynamic_soln.acc_dataframe)]
+    raise np.linalg.LinAlgError
+    
 
 
 plt.figure(figsize=(8,4))
@@ -55,9 +57,21 @@ plt.show()
 
 
 plt.figure(figsize=(8,4))
-plt.plot(time_array, dynamic_soln.pos_dataframe['PD.rbs_crank.x'])
+plt.plot(time_array, dynamic_soln.pos_dataframe['PD.rbs_crank.y'])
 plt.grid()
 plt.show()
+
+plt.figure(figsize=(8,4))
+plt.plot(time_array, dynamic_soln.vel_dataframe['PD.rbs_crank.y'])
+plt.grid()
+plt.show()
+
+
+plt.figure(figsize=(8,4))
+plt.plot(time_array, dynamic_soln.acc_dataframe['PD.rbs_crank.y'])
+plt.grid()
+plt.show()
+
 
 
 

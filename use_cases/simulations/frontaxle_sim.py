@@ -38,7 +38,7 @@ damping_data = lookup_table('damping')
 damping_data.read_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Data\ST500_Damping.csv')
 damping_func = damping_data.get_interpolator()
 def damping_func_mod(x):
-    return damping_func(x)*1e6*0
+    return damping_func(x)*1e6
 f.SU.config.Fd_fal_strut = damping_func_mod
 f.SU.config.Fd_far_strut = damping_func_mod
 
@@ -48,7 +48,7 @@ stiffness_data.read_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Data\
 stiffness_func = stiffness_data.get_interpolator()
 def stiffness_func_mod(x):
     x = (x if x>=0 else 0)
-    return stiffness_func(x)*1e6*0
+    return stiffness_func(x)*1e6
 f.SU.config.Fs_fal_strut = stiffness_func_mod
 f.SU.config.Fs_far_strut = stiffness_func_mod
 
@@ -60,7 +60,7 @@ assm = f.numerical_assembly()
 assm.set_gen_coordinates(assm.q0)
 
 dynamic_soln = dynamic_solver(assm)
-dynamic_soln.set_time_array(10,200)
+dynamic_soln.set_time_array(8,400)
 dynamic_soln._extract_independent_coordinates()
 dynamic_soln.solve_dds('sim_dwb_st500_axletech_temp_dyn', save=True)
 time_array = dynamic_soln.time_array
