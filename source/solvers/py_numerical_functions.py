@@ -111,7 +111,7 @@ def cylinder_geometry(arg1,arg2,ro=10,ri=0):
     P = dcm2ep(frame)
     J = np.diag([Jxx,Jyy,Jzz])
     
-    J = A(P).dot(J).dot(A(P).T)
+    J = A(P).T.dot(J).dot(A(P)) # chamged from A(P).dot(J).dot(A(P).T)
     P = np.array([[1],[0],[0],[0]],dtype=np.float64)
     
     return geometry(R,P,m,J)
@@ -152,7 +152,7 @@ def triangular_prism(p1,p2,p3,thickness=10):
     R = centered(p1,p2,p3)
     P = dcm2ep(frame)
     
-    J = A(P).dot(J).dot(A(P).T)
+    J = A(P).T.dot(J).dot(A(P))
     P = np.array([[1],[0],[0],[0]],dtype=np.float64)
     
     return geometry(R,P,m,J)
@@ -237,7 +237,7 @@ def E(p):
         E   : 3x4 ndarray
     ===========================================================================
     '''
-    e0,e1,e2,e3 = p.flatten()
+    e0,e1,e2,e3 = [float(i) for i in p]
     m = np.array([[-e1, e0,-e3, e2],
                 [-e2, e3, e0,-e1],
                 [-e3,-e2, e1, e0]])
@@ -257,7 +257,7 @@ def G(p):
         G   : 3x4 ndarray
     ===========================================================================
     '''
-    e0,e1,e2,e3 = p.flatten()
+    e0,e1,e2,e3 = [float(i) for i in p]
     m = np.array([[-e1, e0, e3,-e2],
                 [-e2,-e3, e0, e1],
                 [-e3, e2,-e1, e0]])
@@ -295,7 +295,7 @@ def B(p,a):
         B   : 3x4 ndarray representing the jacobian of A.dot(a)
     ===========================================================================
     '''
-    e0,e1,e2,e3=p.flatten()
+    e0,e1,e2,e3 = [float(i) for i in p]
     e = np.array([[e1],[e2],[e3]])
     a = np.array(a).reshape((3,1))
     a_s = skew_matrix(a)

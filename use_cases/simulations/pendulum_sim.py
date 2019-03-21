@@ -15,8 +15,8 @@ from use_cases.generated_templates.configurations import pendulum_cfg
 
 assm.PD.config = pendulum_cfg.configuration()
 
-#asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic'
-asurt_path = r'E:\Main\asurt_cdt_symbolic'
+asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic'
+#asurt_path = r'E:\Main\asurt_cdt_symbolic'
 
 assm.PD.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\pendulum_cfg_mod_dyn.csv')
 
@@ -27,7 +27,7 @@ assm.PD.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\confi
 assembled = assm.numerical_assembly()
 
 dynamic_soln = dynamic_solver(assembled)
-dynamic_soln.set_time_array(2,1000)
+dynamic_soln.set_time_array(4,4/1e-3)
 time_array = dynamic_soln.time_array
 
 try:
@@ -55,7 +55,7 @@ plt.show()
 
 
 plt.figure(figsize=(8,4))
-plt.plot(time_array, dynamic_soln.pos_dataframe['PD.rbs_crank.y'])
+plt.plot(time_array, dynamic_soln.pos_dataframe['PD.rbs_crank.x'])
 plt.grid()
 plt.show()
 

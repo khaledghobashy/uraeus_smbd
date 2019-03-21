@@ -28,7 +28,7 @@ class numerical_assembly(object):
         self.gr_jac_rows = np.array([0,0,1,1])
         self.gr_jac_cols = np.array([0,1,0,1])
 
-        self.nrows = 6
+        self.nrows = 4
         self.ncols = 4
 
         self.initialize_assembly()
