@@ -186,7 +186,7 @@ class internal_force(generic_force):
         defflection = self.LF - distance
         velocity    = unit_vector.T*self.joint.dijd
              
-        self.Fi = unit_vector*(self.Fs(defflection) + self.Fd(velocity))
+        self.Fi = unit_vector*(self.Fs(defflection) - self.Fd(velocity))
         Ti_e = 2*G(self.Pi).T*(self.Ti + Skew(self.ui).T*self.Fi)
         
         force_vector = sm.BlockMatrix([[self.Fi], [Ti_e]])

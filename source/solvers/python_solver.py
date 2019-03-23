@@ -35,6 +35,7 @@ def scipy_matrix_assembler(data,rows,cols,shape):
     mat[rows,cols] = data
     return sc.sparse.bmat(mat,format='csc')
 
+
 class solver(object):
     
     def __init__(self,model):
@@ -69,7 +70,17 @@ class solver(object):
             
     
     def set_time_array(self,duration,spacing):
-        self.time_array, self.step_size = np.linspace(0,duration,spacing,retstep=True)
+        
+        if duration > spacing:
+            time_array = np.arange(0, duration, spacing)
+            step_size  = spacing
+        elif duration < spacing:
+            time_array, step_size = np.linspace(0, duration, spacing, retstep=True)
+        else:
+            raise ValueError('Time array is not properly sampled.')
+        self.time_array = time_array
+        self.step_size  = step_size
+        
     
     def save_results(self,filename):
         self.pos_dataframe.to_csv('results_csv//%s.csv'%filename, index=True)
@@ -138,15 +149,22 @@ class solver(object):
 
         
     def _creat_results_dataframes(self):
+        columns = self._coordinates_indicies
+        
         self.pos_dataframe = pd.DataFrame(
                 data = np.concatenate(list(self._pos_history.values()),1).T,
-                columns = self._coordinates_indicies)
+                columns = columns)
         self.vel_dataframe = pd.DataFrame(
                 data = np.concatenate(list(self._vel_history.values()),1).T,
-                columns = self._coordinates_indicies)
+                columns = columns)
         self.acc_dataframe = pd.DataFrame(
                 data = np.concatenate(list(self._acc_history.values()),1).T,
-                columns = self._coordinates_indicies)
+                columns = columns)
+        
+        time_array = self.time_array[:self.pos_dataframe.shape[0]]
+        self.pos_dataframe['time'] = time_array
+        self.vel_dataframe['time'] = time_array
+        self.acc_dataframe['time'] = time_array
     
     def _assemble_equations(self,data):
         mat = np.concatenate(data)
@@ -260,15 +278,18 @@ class dynamic_solver(solver):
         time_array = self.time_array
         dt = self.step_size
         bar_length = len(time_array)-1
+        print('\nStarting System Dynamic Analysis:')
         
         self._extract_independent_coordinates()
+        print('Estimated DOF : %s'%(len(self.independent_cord),))
+        print('Estimated Independent Coordinates : %s'%(self.independent_cord,))
         
         pos_t0 = self._pos_history[0]
         vel_t0 = self._vel_history[0]
         self._get_initial_conditions(pos_t0, vel_t0)
         
         integrator = scipy.integrate.ode(self._state_space_model)
-        integrator.set_integrator('dop853')
+        integrator.set_integrator('lsoda')
         integrator.set_initial_value(self.y0)
         
         M, J, Qt, Qd = self._eval_augmented_matricies(pos_t0, vel_t0)

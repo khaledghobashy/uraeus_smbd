@@ -15,8 +15,8 @@ from use_cases.generated_templates.configurations import mass_spring_cfg
 
 assm.MS.config = mass_spring_cfg.configuration()
 
-asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic'
-#asurt_path = r'E:\Main\asurt_cdt_symbolic'
+#asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic'
+asurt_path = r'E:\Main\asurt_cdt_symbolic'
 
 
 def stiffness_func(x):

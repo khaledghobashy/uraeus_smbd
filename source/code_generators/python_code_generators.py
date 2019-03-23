@@ -246,11 +246,10 @@ class template_code_generator(abstract_generator):
         text = textwrap.dedent(text)
         return text
     
-    def write_config_class(self):
-        config_code_gen = configuration_code_generator(self.config)
-        text = config_code_gen.write_system_class()
-        return text
-
+    def write_base_configuration_file(self):
+        self.config.assemble_base_layer()
+        config_code = configuration_code_generator(self.config)
+        config_code.write_code_file()
     
     def write_class_init(self):
         text = '''
@@ -503,7 +502,8 @@ class template_code_generator(abstract_generator):
         text = '\n'.join([imports,system_class])
         with open('%s.py'%self.mbs.name,'w') as file:
             file.write(text)
-                
+        
+        self.write_base_configuration_file()
     ###########################################################################
     ###########################################################################
 
