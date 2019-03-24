@@ -12,8 +12,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from source.symbolic_classes.abstract_matrices import (vector, quatrenion,
-                                                       Mirrored, matrix_symbol,
-                                                       Equal_to)
+                                                       matrix_symbol, 
+                                                       Config_Relations as CR)
 
 ###############################################################################
 ###############################################################################
@@ -28,10 +28,10 @@ class geometry(sm.Symbol):
         Name of the geometry object
     
     """
-    def __new__(cls,name,*args):
-        return super().__new__(cls,name)
+    def __new__(cls, name, *args):
+        return super().__new__(cls, name)
     
-    def __init__(self,name,*args):
+    def __init__(self, name, *args):
         self.name = name
         self._args = args
 
@@ -59,7 +59,7 @@ class simple_geometry(sm.Function):
     def _latex(self,expr):
         name = self.__class__.__name__
         name = '\_'.join(name.split('_'))
-        return r'%s%s'%(name,(*self.args,))
+        return r'%s%s'%(name, (*self.args,))
 
 class composite_geometry(simple_geometry):
     """
@@ -79,7 +79,7 @@ class composite_geometry(simple_geometry):
 
 class cylinder_geometry(simple_geometry):
     
-    def __init__(self,arg1,arg2,ro=10,ri=0):
+    def __init__(self, arg1, arg2, ro=10, ri=0):
         self.arg1 = arg1
         self.arg2 = arg2
         self.ri = ri
@@ -87,36 +87,40 @@ class cylinder_geometry(simple_geometry):
 
 class triangular_prism(simple_geometry):
     
-    def __init__(self,arg1,arg2,arg3,l=10):
+    def __init__(self, arg1, arg2, arg3, l=10):
         self.arg1 = arg1
         self.arg2 = arg2
         self.arg3 = arg3
         self.l = l
 
+class geometries(object):
     
+    triangular_prism = triangular_prism
+    cylinder_geometry = cylinder_geometry
+    composite_geometry = composite_geometry
+
 ###############################################################################
 ###############################################################################
 
-class parametric_configuration(object):
-        
+class abstract_configuration(object):
+    
     def __init__(self,name,mbs_instance):
-        
         self.name  = name
         self.topology = mbs_instance
         self.graph = nx.DiGraph(name=self.name)
         self.geometries_map = {}
-        
+
     @property
     def arguments_symbols(self):
         return set(nx.get_node_attributes(self.graph,'obj').values())
-    
+
     @property
     def primary_arguments(self):
         graph = self.graph
         cond = lambda n : graph.nodes[n]['primary']
         args = filter(cond,graph.nodes)
         return set(args)
-        
+    
     @property
     def input_nodes(self):
         return self.get_input_nodes(self.graph)
@@ -135,17 +139,16 @@ class parametric_configuration(object):
         nodes = self.output_nodes
         equalities = self.get_output_equalities(g,nodes)
         return self.mid_equalities(g,nodes) + equalities
-        
+            
+    @property
+    def geometry_nodes(self):
+        return set(i[0] for i in self.graph.nodes(data='obj') if isinstance(i[-1],geometry))
+
     def mid_equalities(self,graph,output_nodes):
         mid_layer = []
         for n in output_nodes:
             self._get_node_dependencies(n,mid_layer)
         return [graph.nodes[n]['func'] for n in mid_layer]
-    
-    @property
-    def geometry_nodes(self):
-        return set(i[0] for i in self.graph.nodes(data='obj') if isinstance(i[-1],geometry))
-
 
     def assemble_base_layer(self):
         self._get_nodes_arguments()
@@ -153,51 +156,7 @@ class parametric_configuration(object):
         nx.set_node_attributes(self.graph,True,'primary')
         self.bodies = {n:self.topology.nodes[n] for n in self.topology.bodies}
         self._get_topology_args()
-    
-    def add_scalar(self,name):
-        self._add_nodes(name,False,'',sm.symbols)
-    
-    def add_point(self,name,mirror=False):
-        self._add_nodes(name,mirror,'hp')
-    
-    def add_vector(self,name,mirror=False):
-       self._add_nodes(name,mirror,'vc')
-   
-    def add_geometry(self,name,mirror=False):
-        self._add_nodes(name,mirror,'gm',geometry)
-    
-    def assign_geometry_to_body(self,body,geo,eval_inertia=True,mirror=False):
-        b1 = body
-        g1 = geo
-        b2 = self.bodies[body]['mirr']
-        g2 = self.graph.nodes[geo]['mirr']
-        self._assign_geometry_to_body(b1,g1,eval_inertia)
-        if b1 != b2 : self._assign_geometry_to_body(b2,g2,eval_inertia)
-            
         
-    def add_relation(self,node,relation,*nbunch,mirror=False):
-        if mirror:
-            node1 = node
-            node2 = self.graph.nodes[node1]['mirr']
-            nbunch1 = nbunch
-            nbunch2 = [self.graph.nodes[i]['mirr'] for i in nbunch1]
-            self._add_relation(node1,relation,*nbunch1)
-            self._add_relation(node2,relation,*nbunch2)
-        else:
-            self._add_relation(node,relation,*nbunch)
-    
-    def add_sub_relation(self,node,relation,*nbunch,mirror=False):
-        if mirror:
-            node1 = node
-            node2 = self.graph.nodes[node1]['mirr']
-            nbunch1 = nbunch
-            nbunch2 = [self.graph.nodes[i]['mirr'] for i in nbunch1]
-            self._add_sub_relation(node1,relation,*nbunch1)
-            self._add_sub_relation(node2,relation,*nbunch2)
-        else:
-            self._add_sub_relation(node,relation,*nbunch)
-    
-    
     def get_node_dependencies(self,n):
         edges = [e[:-1] for e in nx.edge_bfs(self.graph,n,'reverse')]
         g = self.graph.edge_subgraph(edges)
@@ -228,7 +187,7 @@ class parametric_configuration(object):
                 'output_equal':output_equal,
                 'geometries_map':self.geometries_map}
         return data
-    
+
     def create_inputs_dataframe(self):
         nodes  = self.graph.nodes
         inputs = self.input_nodes
@@ -240,7 +199,7 @@ class parametric_configuration(object):
         dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
         return dataframe
 
-    
+
     def _get_topology_args(self):
         args = {}
         nodes_args = dict(self.topology.nodes(data='arguments_symbols'))
@@ -251,80 +210,7 @@ class parametric_configuration(object):
         args.update(edges_args)
         self._base_args = args
         self._base_nodes = sum(args.values(),[])
-    
-    def _get_node_dependencies(self,n,mid_layer):
-        self.get_node_deps(self.graph,n,self.input_nodes,mid_layer)
-    
-    def _add_nodes(self,name,mirror=False,sym='hp',typ=vector):
-        Eq = self._set_base_equality
-        graph = self.graph
-        if mirror:
-            node1 = '%sr_%s'%(sym,name)
-            node2 = '%sl_%s'%(sym,name)
-            self._add_node(node1,typ)
-            self._add_node(node2,typ)
-            graph.nodes[node1].update({'mirr':node2,'align':'r'})
-            graph.nodes[node2].update({'mirr':node1,'align':'l'})
-            obj1 = graph.nodes[node1]['obj']
-            obj2 = graph.nodes[node2]['obj']
-            graph.nodes[node2].update({'func':Eq(obj1,obj2)})
-            graph.add_edge(node1,node2)
-        else:
-            node1 = node2 = '%ss_%s'%(sym,name)
-            self._add_node(node1,typ)
-            graph.nodes[node1]['mirr'] = node2
-    
-    def _add_node(self,name,typ):
-        obj = typ(name)
-        attr_dict = self._obj_attr_dict(obj)
-        self.graph.add_node(name,**attr_dict)
-    
-    def _add_relation(self,node,relation,*nbunch):
-        graph = self.graph
-        edges = [(i,node) for i in nbunch]
-        obj = graph.nodes[node]['obj']
-        nobj = [graph.nodes[n]['obj'] for n in nbunch]
-        graph.nodes[node]['func'] = sm.Equality(obj,relation(*nobj))
-        removed_edges = list(graph.in_edges(node))
-        graph.remove_edges_from(removed_edges)
-        graph.add_edges_from(edges)
-    
-    def _add_sub_relation(self,node,relation,*nbunch):
-        graph = self.graph
-        mod_nbunch  = []
-        mod_objects = []
-        obj = graph.nodes[node]['obj']
-        for n in nbunch:
-            splited = n.split('.')
-            name = splited[0]
-            attr = '.'.join(splited[1:])
-            mod_nbunch.append(name)
-            nobj = getattr(graph.nodes[name]['obj'],attr)
-            mod_objects.append(nobj)
-        edges = [(i,node) for i in mod_nbunch]
-        graph.nodes[node]['func'] = sm.Equality(obj,relation(*mod_objects))
-        removed_edges = list(graph.in_edges(node))
-        graph.remove_edges_from(removed_edges)
-        graph.add_edges_from(edges)
-    
-    def _assign_geometry_to_body(self,body,geo,eval_inertia):
-        b = self.bodies[body]['obj']
-        R, P, m, J = [str(getattr(b,i)) for i in 'R,P,m,Jbar'.split(',')]
-        self.geometries_map[geo] = body
-        if eval_inertia:
-            self.add_sub_relation(R,Equal_to,'%s.R'%geo)
-            self.add_sub_relation(P,Equal_to,'%s.P'%geo)
-            self.add_sub_relation(J,Equal_to,'%s.J'%geo)
-            self.add_sub_relation(m,Equal_to,'%s.m'%geo)
-
-
-    def _obj_attr_dict(self,obj):
-        Eq = self._set_base_equality
-        attr_dict = {'obj':obj,'mirr':None,'align':'s','func':Eq(obj),
-                     'primary':False}
-        return attr_dict
-    
-    
+        
     def _get_nodes_arguments(self):
         Eq = self._set_base_equality
         graph   = self.graph
@@ -355,7 +241,6 @@ class parametric_configuration(object):
                 nx.set_node_attributes(self.graph,mirr,'mirr')
                 mirr = {n:m for n,m in edges}
                 nx.set_node_attributes(self.graph,mirr,'mirr')
-    
     
     def _get_edges_arguments(self):
         Eq = self._set_base_equality
@@ -390,40 +275,31 @@ class parametric_configuration(object):
                 mirr = {n:m for n,m in edges}
                 nx.set_node_attributes(self.graph,mirr,'mirr')
     
-    
-    
+    def _get_node_dependencies(self,n,mid_layer):
+        self.get_node_deps(self.graph, n, self.input_nodes, mid_layer)
+
     def _set_base_equality(self,sym1,sym2=None):
         if sym1 and sym2:
-            if isinstance(sym1,sm.MatrixSymbol):
-                return sm.Eq(sym2,Mirrored(sym1))
-            elif isinstance(sym1,sm.Symbol):
-                return sm.Eq(sym2,sym1)
-            elif issubclass(sym1,sm.Function):
-                return sm.Eq(sym2,sym1)
+            if isinstance(sym1, sm.MatrixSymbol):
+                return sm.Eq(sym2, CR.Mirrored(sym1))
+            
+            elif isinstance(sym1, sm.Symbol):
+                return sm.Eq(sym2, sym1)
+            
+            elif issubclass(sym1, sm.Function):
+                return sm.Eq(sym2, sym1)
+        
         else:
-            if isinstance(sym1,sm.MatrixSymbol):
-                return sm.Eq(sym1,sm.zeros(*sym1.shape))
-            elif isinstance(sym1,sm.Symbol):
-                return sm.Eq(sym1,1)
-            elif issubclass(sym1,sm.Function):
+            if isinstance(sym1, sm.MatrixSymbol):
+                return sm.Eq(sym1, sm.zeros(*sym1.shape))
+            
+            elif isinstance(sym1, sm.Symbol):
+                return sm.Eq(sym1, 1)
+            
+            elif issubclass(sym1, sm.Function):
                 t = sm.symbols('t')
-                return sm.Eq(sym1,sm.Lambda(t,0))
-    
-#    @staticmethod
-#    def _set_mirror_equality(arg1,arg2):
-#         return sm.Eq(arg2,Mirrored(arg1),evaluate=False)
-#    @staticmethod
-#    def _set_direct_equality(arg1,arg2):
-#        return sm.Eq(arg2,arg1,evaluate=False)
-#    @staticmethod
-#    def _set_array_equality(arg1):
-#        default = sm.zeros(*arg1.shape)
-#        return sm.Eq(arg1,default,evaluate=False)
-#    @staticmethod
-#    def _set_function_equality(arg1):
-#        t = sm.symbols('t')
-#        return sm.Eq(arg1,sm.Lambda(t,0),evaluate=False)
-    
+                return sm.Eq(sym1, sm.Lambda(t, 0))
+
     @staticmethod
     def get_input_nodes(graph):
         nodes = [i for i,d in graph.in_degree() if d == 0]
@@ -453,6 +329,159 @@ class parametric_configuration(object):
             if node not in input_nodes and node not in mid_layer:
                 mid_layer.append(node)
 
+###############################################################################
+###############################################################################
+
+class standalone_configuration(abstract_configuration):
+    
+    def __init__(self, name, mbs_instance):
+        super().__init__(name, mbs_instance)
+        self._decorate_relations()
+    
+    @property
+    def add_relation(self):
+        return self._relations
+
+        
+    def _add_node(self, typ, name):
+        obj = typ(name)
+        attr_dict = self._obj_attr_dict(obj)
+        self.graph.add_node(name, **attr_dict)
+    
+    def _obj_attr_dict(self ,obj):
+        Eq = self._set_base_equality
+        attr_dict = {'obj':obj,'mirr':None,'align':'s','func':Eq(obj),
+                     'primary':False}
+        return attr_dict
+        
+
+    def _add_relation(self, relation, node, args):
+        graph = self.graph
+        edges = [(i,node) for i in args]
+        obj = graph.nodes[node]['obj']
+        nobj = [graph.nodes[n]['obj'] for n in args]
+        graph.nodes[node]['func'] = sm.Equality(obj,relation(*nobj))
+        removed_edges = list(graph.in_edges(node))
+        graph.remove_edges_from(removed_edges)
+        graph.add_edges_from(edges)
+    
+    def _add_sub_relation(self,relation, node, args):
+        graph = self.graph
+        mod_args  = []
+        mod_objects = []
+        obj = graph.nodes[node]['obj']
+        for n in args:
+            splited = n.split('.')
+            name = splited[0]
+            attr = '.'.join(splited[1:])
+            mod_args.append(name)
+            nobj = getattr(graph.nodes[name]['obj'],attr)
+            mod_objects.append(nobj)
+        edges = [(i,node) for i in mod_args]
+        graph.nodes[node]['func'] = sm.Equality(obj,relation(*mod_objects))
+        removed_edges = list(graph.in_edges(node))
+        graph.remove_edges_from(removed_edges)
+        graph.add_edges_from(edges)
+    
+    def _assign_geometry_to_body(self, body, geo, eval_inertia):
+        b = self.bodies[body]['obj']
+        R, P, m, J = [str(getattr(b,i)) for i in 'R,P,m,Jbar'.split(',')]
+        self.geometries_map[geo] = body
+        if eval_inertia:
+            self.add_sub_relation(CR.Equal_to, R, '%s.R'%geo)
+            self.add_sub_relation(CR.Equal_to, P, '%s.P'%geo)
+            self.add_sub_relation(CR.Equal_to, J, '%s.J'%geo)
+            self.add_sub_relation(CR.Equal_to, m, '%s.m'%geo)
+
+    
+    def _decorate_relations(self):
+        names = ['Mirrored', 'Centered', 'Oriented', 'Equal_to']
+        self._relations = self._decorate_components(names, CR)
+        
+    def _decorate_geometries(self):
+        names = ['triangular_prism', 'cylinder_geometry', 'composite_geometry']
+        self._geometries = self._decorate_components(names, geometries)
+        
+    def _decorate_components(self, comp_names, module):   
+        comp_dict = {k:None for k in comp_names}
+        comp_container = type('comps', (object,), comp_dict)
+        for name in comp_names:
+            component = getattr(module, name)
+            decorated_component = self._decorate_as_attr(component)
+            setattr(comp_container, name, decorated_component)
+        return comp_container
+    
+    def _decorate_as_attr(self,typ):
+        def decorated(*args,**kwargs):
+            return self._add_relation(typ, *args, **kwargs)
+        return decorated
+
+###############################################################################
+###############################################################################
+
+class parametric_configuration(standalone_configuration):
+        
+    def add_scalar(self,name):
+        self._add_nodes(name, False,'', sm.symbols)
+    
+    def add_point(self, name, mirror=False):
+        self._add_nodes(name, mirror, 'hp')
+    
+    def add_vector(self, name, mirror=False):
+       self._add_nodes(name, mirror, 'vc')
+   
+    def add_geometry(self, name, mirror=False):
+        self._add_nodes(name, mirror, 'gm', geometry)
+    
+    def assign_geometry_to_body(self, body, geo, eval_inertia=True, mirror=False):
+        b1 = body
+        g1 = geo
+        b2 = self.bodies[body]['mirr']
+        g2 = self.graph.nodes[geo]['mirr']
+        self._assign_geometry_to_body(b1,g1,eval_inertia)
+        if b1 != b2 : self._assign_geometry_to_body(b2,g2,eval_inertia)
+            
+            
+    def add_sub_relation(self, relation, node, args, mirror=False):
+        if mirror:
+            node1 = node
+            node2 = self.graph.nodes[node1]['mirr']
+            args1 = args
+            args2 = [self.graph.nodes[i]['mirr'] for i in args1]
+            self._add_sub_relation(relation, node1, args1)
+            self._add_sub_relation(relation, node2, args2)
+        else:
+            self._add_sub_relation(relation, node, args)
+
+    def _add_nodes(self, typ, name, mirror=False, sym='hp'):
+        Eq = self._set_base_equality
+        graph = self.graph
+        if mirror:
+            node1 = '%sr_%s'%(sym, name)
+            node2 = '%sl_%s'%(sym, name)
+            self._add_node(typ, node1)
+            self._add_node(typ, node2)
+            graph.nodes[node1].update({'mirr':node2, 'align':'r'})
+            graph.nodes[node2].update({'mirr':node1, 'align':'l'})
+            obj1 = graph.nodes[node1]['obj']
+            obj2 = graph.nodes[node2]['obj']
+            graph.nodes[node2].update({'func': Eq(obj1, obj2)})
+            graph.add_edge(node1, node2)
+        else:
+            node1 = node2 = '%ss_%s'%(sym, name)
+            self._add_node(typ, node1)
+            graph.nodes[node1]['mirr'] = node2
+            
+    def _add_relation(self, relation, node, args, mirror=False):
+        if mirror:
+            node1 = node
+            node2 = self.graph.nodes[node1]['mirr']
+            args1 = args
+            args2 = [self.graph.nodes[i]['mirr'] for i in args1]
+            self._add_single_relation(relation, node1, args1)
+            self._add_single_relation(relation, node2, args2)
+        else:
+            self._add_single_relation(relation, node, args)
 
 ###############################################################################
 ###############################################################################
