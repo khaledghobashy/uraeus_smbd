@@ -8,6 +8,7 @@ Created on Fri Feb 15 15:34:03 2019
 import numpy as np
 import matplotlib.pyplot as plt
 
+from source import pkg_path
 from source.solvers.python_solver import solver, dynamic_solver
 from source.solvers.py_numerical_functions import lookup_table
 
@@ -21,12 +22,10 @@ f.SU.config = dwb_simple_points.configuration()
 f.ST.config = steer_simple_points.configuration()
 f.TR.config = frontaxle_testrig.configuration()
 
-asurt_path = r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Mathematical Models\asurt_cdt_symbolic'
-#asurt_path = r'E:\Main\asurt_cdt_symbolic'
 
-f.SU.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\dwb_st500_axletech.csv')
-f.ST.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\steer_st500_axletech.csv')
-f.TR.config.load_from_csv(asurt_path + r'\use_cases\generated_templates\configurations\csv_files\frontaxle_testrig_dyn.csv')
+f.SU.config.load_from_csv(pkg_path + r'\use_cases\generated_templates\configurations\csv_files\dwb_st500_axletech.csv')
+f.ST.config.load_from_csv(pkg_path + r'\use_cases\generated_templates\configurations\csv_files\steer_st500_axletech.csv')
+f.TR.config.load_from_csv(pkg_path + r'\use_cases\generated_templates\configurations\csv_files\frontaxle_testrig_dyn.csv')
 
 f.TR.config.AF_jcs_steer_gear = lambda t : 0*np.deg2rad(15)*np.sin(t)
 #f.TR.config.AF_mcr_ver_act = lambda t : 170*np.sin(t)

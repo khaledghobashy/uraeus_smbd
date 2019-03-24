@@ -413,28 +413,26 @@ class abstract_topology(object):
             
 ###############################################################################
 ###############################################################################
+import source.symbolic_classes.joints as joints
+from collections import namedtuple
 
 class topology(abstract_topology):
     
+    def __init__(self,name):
+        super().__init__(name)
+        self._decorate_joints()
     
+    @property
+    def add_joint(self):
+        return self.joints
+                
     def add_body(self,name):
         variant = self.selected_variant
         if name not in variant.nodes():
             attr_dict = self._typ_attr_dict(body)
             variant.add_node(name,**attr_dict)
             self._add_node_forces(name)
-    
-    def add_joint(self,typ,name,body_i,body_j):
-        assert body_i and body_j in self.nodes , 'bodies do not exist!'
-        variant = self.selected_variant
-        edge  = (body_i,body_j)
-        if name not in self._edges_keys_map:
-            attr_dict = self._typ_attr_dict(typ)
-            attr_dict.update({'name':name})
-            key = variant.add_edge(*edge,**attr_dict)
-            self._edges_map[name] = (*edge,key)
-            self._edges_keys_map[name] = key
-            
+                
     def add_joint_actuator(self,typ,name,joint_name):
         assert joint_name in self._edges_map, 'joint does not exist!'
         variant = self.selected_variant
@@ -473,6 +471,49 @@ class topology(abstract_topology):
         grf = self.grf
         self.add_force(gravity_force,'%s_gravity'%n,n,grf)
         self.add_force(centrifugal_force,'%s_centrifuge'%n,n,grf)
+    
+    def _add_joint(self,typ,name,body_i,body_j):
+        assert body_i and body_j in self.nodes , 'bodies do not exist!'
+        variant = self.selected_variant
+        edge  = (body_i,body_j)
+        if name not in self._edges_keys_map:
+            attr_dict = self._typ_attr_dict(typ)
+            attr_dict.update({'name':name})
+            key = variant.add_edge(*edge,**attr_dict)
+            self._edges_map[name] = (*edge,key)
+            self._edges_keys_map[name] = key
+    
+    def _decorate_joints(self):
+        joints_names = ['spherical', 'revolute', 'universal', 'translational',
+                       'cylinderical', 'tripod', 'fixed']
+        joints_tuple = namedtuple('joints', joints_names)
+        
+        for name in joints_names:
+            joint = getattr(joints, name)
+            decorated_joint = self._decorate_as_edge(joint)
+            setattr(joints_tuple, name, decorated_joint)
+        self.joints = joints_tuple
+    
+    
+    def _decorate_actuators(self):        
+        actuators_names = ['rotational_actuator', 'absolute_locator']
+        actuators_tuple = namedtuple('actuators', actuators_names)
+        
+        for name in actuators_names:
+            actuator = getattr(joints, name)
+            decorated_joint = self._decorate_as_edge(actuator)
+            setattr(actuators_tuple, name, decorated_joint)
+        self.actuators = actuators_tuple
+    
+    def _decorate_as_edge(self,typ):
+        def decorated(*args):
+            if issubclass(typ,joints.absolute_locator):
+                return self.add_absolute_actuator(typ,*args)
+            elif issubclass(typ,joints.rotational_actuator):
+                return self.add_joint_actuator(typ,*args)
+            else:
+                return self._add_joint(typ,*args)
+        return decorated
 
 
 ###############################################################################
@@ -587,8 +628,7 @@ class template_based_topology(topology):
         self.graph.add_node(self.grf,**typ_dict)
         self.nodes[self.grf]['mirr'] = self.grf
         self._set_body_as_virtual(self.grf)
-    
-
+        
     
     def _set_joint_as_virtual(self,edge):
         variant = self.selected_variant
