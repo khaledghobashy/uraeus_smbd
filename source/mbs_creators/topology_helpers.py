@@ -93,6 +93,7 @@ class Config_Relations(object):
     Centered = Centered
     Oriented = Oriented
     Equal_to = Equal_to
+    UserInput = None
 
 CR = Config_Relations
 ###############################################################################
@@ -309,7 +310,7 @@ class abstract_configuration(object):
             if m == n:
                 graph.add_nodes_from(nodes_args_n)
                 mirr = {i[0]:i[0] for i in nodes_args_n}
-                nx.set_node_attributes(self.graph,mirr,'mirr')
+                nx.set_node_attributes(self.graph, mirr, 'mirr')
             else:
                 args_m = t_nodes[m]['arguments_symbols']
                 args_c = zip(args_n,args_m)
@@ -318,9 +319,9 @@ class abstract_configuration(object):
                 edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
                 graph.add_edges_from(edges)    
                 mirr = {m:n for n,m in edges}
-                nx.set_node_attributes(self.graph,mirr,'mirr')
+                nx.set_node_attributes(self.graph, mirr, 'mirr')
                 mirr = {n:m for n,m in edges}
-                nx.set_node_attributes(self.graph,mirr,'mirr')
+                nx.set_node_attributes(self.graph, mirr, 'mirr')
     
     def _get_edges_arguments(self):
         Eq = self._set_base_equality
@@ -358,7 +359,7 @@ class abstract_configuration(object):
     def _get_node_dependencies(self,n,mid_layer):
         self.get_node_deps(self.graph, n, self.input_nodes, mid_layer)
 
-    def _set_base_equality(self,sym1,sym2=None):
+    def _set_base_equality(self, sym1, sym2=None):
         if sym1 and sym2:
             if isinstance(sym1, sm.MatrixSymbol):
                 return sm.Eq(sym2, CR.Mirrored(sym1))
@@ -447,17 +448,17 @@ class standalone_configuration(abstract_configuration):
     
     def _obj_attr_dict(self ,obj):
         Eq = self._set_base_equality
-        attr_dict = {'obj':obj,'mirr':None,'align':'s','func':Eq(obj),
+        attr_dict = {'obj':obj, 'mirr':None, 'align':'s', 'func':Eq(obj),
                      'primary':False}
         return attr_dict
         
 
     def _add_relation(self, relation, node, args):
         graph = self.graph
-        edges = [(i,node) for i in args]
+        edges = [(i, node) for i in args]
         obj = graph.nodes[node]['obj']
         nobj = [graph.nodes[n]['obj'] for n in args]
-        graph.nodes[node]['func'] = sm.Equality(obj,relation(*nobj))
+        graph.nodes[node]['func'] = sm.Equality(obj, relation(*nobj))
         removed_edges = list(graph.in_edges(node))
         graph.remove_edges_from(removed_edges)
         graph.add_edges_from(edges)
@@ -492,35 +493,47 @@ class standalone_configuration(abstract_configuration):
 
     
     def _decorate_point_methods(self):
-        names = ['Mirrored', 'Centered', 'Equal_to']
-        self._point_methods = self._decorate_components(names, CR)
+        node_type = vector
+        methods = ['Mirrored', 'Centered', 'Equal_to', 'UserInput']
+        self._point_methods = self._decorate_components(node_type, methods, CR)
         
     def _decorate_vector_methods(self):
-        names = ['Mirrored', 'Oriented', 'Equal_to']
-        self._vector_methods = self._decorate_components(names, CR)
+        node_type = vector
+        methods = ['Mirrored', 'Oriented', 'Equal_to', 'UserInput']
+        self._vector_methods = self._decorate_components(node_type, methods, CR)
 
     def _decorate_scalar_methods(self):
-        names = ['Mirrored', 'Centered', 'Equal_to']
-        self._scalar_methods = self._decorate_components(names, CR)
+        node_type = sm.symbols
+        methods = ['Equal_to', 'UserInput']
+        self._scalar_methods = self._decorate_components(node_type, methods, CR)
             
     def _decorate_geometry_methods(self):
-        names = ['triangular_prism', 'cylinder_geometry', 'composite_geometry']
-        self._geometry_methods = self._decorate_components(names, geometries)
+        node_type = geometry
+        methods = ['triangular_prism', 'cylinder_geometry', 'composite_geometry']
+        self._geometry_methods = self._decorate_components(node_type, methods, geometries)
             
     
-    def _decorate_components(self, comp_names, module):   
-        comp_container = type('comps', (object,), {})
-        for name in comp_names:
-            component = getattr(module, name)
-            decorated_component = self._decorate_as_attr(component)
-            setattr(comp_container, name, decorated_component)
-        return comp_container
+    def _decorate_components(self, node_type, methods_list, methods_class):   
+        container_class = type('comps', (object,), {})
+        for name in methods_list:
+            method = getattr(methods_class, name)
+            decorated_method = self._decorate_as_attr(node_type, method)
+            setattr(container_class, name, decorated_method)
+        return container_class
     
-    def _decorate_as_attr(self, typ):
-        def decorated(*args, **kwargs):
-            self._add_node(args[0],**kwargs)
-            return self._add_relation(typ, *args, **kwargs)
-        decorated.__doc__ = typ.__doc__
+    def _decorate_as_attr(self, node_type, construction_method):
+        
+        if construction_method is None:
+            def decorated(*args, **kwargs):
+                self._add_node(node_type, args[0], **kwargs)
+            decorated.__doc__ = ''
+        
+        else:
+            def decorated(*args, **kwargs):
+                self._add_node(node_type, args[0], **kwargs)
+                self._add_relation(construction_method, *args, **kwargs)
+            decorated.__doc__ = construction_method.__doc__
+        
         return decorated
 
 ###############################################################################
