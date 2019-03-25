@@ -11,10 +11,90 @@ import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from source.symbolic_classes.abstract_matrices import (vector, quatrenion,
-                                                       matrix_symbol, 
-                                                       Config_Relations as CR)
+from source.symbolic_classes.abstract_matrices import (AbstractMatrix, vector, 
+                                                       quatrenion, matrix_symbol)
 
+###############################################################################
+###############################################################################
+    
+class Mirrored(AbstractMatrix):
+    """
+    A symbolic matrix function that represents a mirrored vector about the 
+    Y-Axis.
+    
+    Parameters
+    ----------
+    v : vector
+    
+    """
+    def __init__(self,v):
+        super().__init__(v)
+        self.shape = v.shape
+    def _latex(self,expr):
+        return r'{Mirrored(%s)}'%self.args[0].name
+
+class Centered(AbstractMatrix):
+    """
+    A symbolic matrix function that represents the center point of a collection
+    of points in 3D.
+    
+    Parameters
+    ----------
+    args : Collection of vectors
+    
+    """
+    shape = (3,1)
+    def __init__(self,*args):
+        super().__init__(*args)
+    def _latex(self,expr):
+        return r'{Centered%s}'%(self.args,)
+
+class Oriented(AbstractMatrix):
+    """
+    A symbolic matrix function that represents an oriented vector based on
+    the given parameters, either oriented along two points or normal to the
+    plane given by three points.
+    
+    Parameters
+    ----------
+    args : Collection of vectors
+    
+    """
+    shape = (3,1)
+    def __init__(self,*args):
+        super().__init__(*args)
+    def _latex(self,expr):
+        return r'{Oriented%s}'%(self.args,)
+
+class Equal_to(AbstractMatrix):
+    """
+    A symbolic matrix function that functions as a place holder that reference
+    the value of a vector to that of another.
+    
+    Parameters
+    ----------
+    v : vector
+    
+    """
+    def __new__(cls,arg):
+        return arg
+    def __init__(self,arg):
+        super().__init__(arg)
+    def _latex(self,expr):
+        return r'{Equal\_to%s}'%(self.args,)
+
+
+class Config_Relations(object):
+    """
+    A container class that holds the relational classes as its' attributes
+    for convienient access and import.    
+    """
+    Mirrored = Mirrored
+    Centered = Centered
+    Oriented = Oriented
+    Equal_to = Equal_to
+
+CR = Config_Relations
 ###############################################################################
 ###############################################################################
 
@@ -336,12 +416,29 @@ class standalone_configuration(abstract_configuration):
     
     def __init__(self, name, mbs_instance):
         super().__init__(name, mbs_instance)
-        self._decorate_relations()
+        self._decorate_methods()
     
     @property
-    def add_relation(self):
-        return self._relations
-
+    def add_point(self):
+        return self._point_methods
+    
+    @property
+    def add_vector(self):
+        return self._vector_methods
+    
+    @property
+    def add_scalar(self):
+        return self._scalar_methods
+    
+    @property
+    def add_geometry(self):
+        return self._geometry_methods
+    
+    def _decorate_methods(self):
+        self._decorate_point_methods()
+        self._decorate_vector_methods()
+        self._decorate_scalar_methods()
+        self._decorate_geometry_methods()
         
     def _add_node(self, typ, name):
         obj = typ(name)
@@ -394,26 +491,36 @@ class standalone_configuration(abstract_configuration):
             self.add_sub_relation(CR.Equal_to, m, '%s.m'%geo)
 
     
-    def _decorate_relations(self):
-        names = ['Mirrored', 'Centered', 'Oriented', 'Equal_to']
-        self._relations = self._decorate_components(names, CR)
+    def _decorate_point_methods(self):
+        names = ['Mirrored', 'Centered', 'Equal_to']
+        self._point_methods = self._decorate_components(names, CR)
         
-    def _decorate_geometries(self):
+    def _decorate_vector_methods(self):
+        names = ['Mirrored', 'Oriented', 'Equal_to']
+        self._vector_methods = self._decorate_components(names, CR)
+
+    def _decorate_scalar_methods(self):
+        names = ['Mirrored', 'Centered', 'Equal_to']
+        self._scalar_methods = self._decorate_components(names, CR)
+            
+    def _decorate_geometry_methods(self):
         names = ['triangular_prism', 'cylinder_geometry', 'composite_geometry']
-        self._geometries = self._decorate_components(names, geometries)
-        
+        self._geometry_methods = self._decorate_components(names, geometries)
+            
+    
     def _decorate_components(self, comp_names, module):   
-        comp_dict = {k:None for k in comp_names}
-        comp_container = type('comps', (object,), comp_dict)
+        comp_container = type('comps', (object,), {})
         for name in comp_names:
             component = getattr(module, name)
             decorated_component = self._decorate_as_attr(component)
             setattr(comp_container, name, decorated_component)
         return comp_container
     
-    def _decorate_as_attr(self,typ):
-        def decorated(*args,**kwargs):
+    def _decorate_as_attr(self, typ):
+        def decorated(*args, **kwargs):
+            self._add_node(args[0],**kwargs)
             return self._add_relation(typ, *args, **kwargs)
+        decorated.__doc__ = typ.__doc__
         return decorated
 
 ###############################################################################
