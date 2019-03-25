@@ -20,20 +20,20 @@ def main():
     config.assemble_base_layer()
     
     # Adding Points
-    config.add_point('ucaf',mirror=True)
-    config.add_point('ucar',mirror=True)
-    config.add_point('ucao',mirror=True)
-    config.add_point('lcaf',mirror=True)
-    config.add_point('lcar',mirror=True)
-    config.add_point('lcao',mirror=True)
-    config.add_point('tro',mirror=True)
-    config.add_point('tri',mirror=True)
-    config.add_point('strut_chassis',mirror=True)
-    config.add_point('strut_lca',mirror=True)
-    config.add_point('strut_mid',mirror=True)
-    config.add_point('wc',mirror=True)
+    config.add_point.UserInput('ucaf', mirror=True)
+    config.add_point.UserInput('ucar', mirror=True)
+    config.add_point.UserInput('ucao', mirror=True)
+    config.add_point.UserInput('lcaf', mirror=True)
+    config.add_point.UserInput('lcar', mirror=True)
+    config.add_point.UserInput('lcao', mirror=True)
+    config.add_point.UserInput('tro', mirror=True)
+    config.add_point.UserInput('tri', mirror=True)
+    config.add_point.UserInput('strut_chassis', mirror=True)
+    config.add_point.UserInput('strut_lca', mirror=True)
+    config.add_point.UserInput('strut_mid', mirror=True)
+    config.add_point.UserInput('wc', mirror=True)
     
-    config.add_relation.Centered('hpr_strut_mid', args=('hpr_strut_chassis','hpr_strut_lca'), mirror=True)
+    config.add_point.Centered('hpr_strut_mid', ('hpr_strut_chassis','hpr_strut_lca'), mirror=True)
 
     # JOINTS CONFIGURATIONS
     

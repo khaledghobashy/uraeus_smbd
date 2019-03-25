@@ -230,7 +230,7 @@ class abstract_configuration(object):
         for n in output_nodes:
             self._get_node_dependencies(n,mid_layer)
         return [graph.nodes[n]['func'] for n in mid_layer]
-
+    
     def assemble_base_layer(self):
         self._get_nodes_arguments()
         self._get_edges_arguments()
@@ -419,6 +419,16 @@ class standalone_configuration(abstract_configuration):
         super().__init__(name, mbs_instance)
         self._decorate_methods()
     
+    def assemble_base_layer(self):
+        super().assemble_base_layer()
+        base_nodes_class = type('base_nodes_class', (), {})
+        def dummy_init(dself): pass
+        base_nodes_class.__init__ = dummy_init
+        base_nodes_instance = base_nodes_class()
+        for n in self.input_nodes:
+            setattr(base_nodes_instance, n, n)
+        self.primary_variable = base_nodes_instance
+    
     @property
     def add_point(self):
         return self._point_methods
@@ -451,7 +461,6 @@ class standalone_configuration(abstract_configuration):
         attr_dict = {'obj':obj, 'mirr':None, 'align':'s', 'func':Eq(obj),
                      'primary':False}
         return attr_dict
-        
 
     def _add_relation(self, relation, node, args):
         graph = self.graph
@@ -462,8 +471,8 @@ class standalone_configuration(abstract_configuration):
         removed_edges = list(graph.in_edges(node))
         graph.remove_edges_from(removed_edges)
         graph.add_edges_from(edges)
-    
-    def _add_sub_relation(self,relation, node, args):
+
+    def _add_sub_relation(self, relation, node, args):
         graph = self.graph
         mod_args  = []
         mod_objects = []
@@ -514,12 +523,17 @@ class standalone_configuration(abstract_configuration):
             
     
     def _decorate_components(self, node_type, methods_list, methods_class):   
-        container_class = type('comps', (object,), {})
+        container_class = type('container', (object,), {})
+        def dummy_init(dself): pass
+        container_class.__init__ = dummy_init
+        container_instance = container_class()
+
         for name in methods_list:
             method = getattr(methods_class, name)
             decorated_method = self._decorate_as_attr(node_type, method)
-            setattr(container_class, name, decorated_method)
-        return container_class
+            setattr(container_instance, name, decorated_method)
+        
+        return container_instance
     
     def _decorate_as_attr(self, node_type, construction_method):
         
@@ -540,18 +554,6 @@ class standalone_configuration(abstract_configuration):
 ###############################################################################
 
 class parametric_configuration(standalone_configuration):
-        
-    def add_scalar(self,name):
-        self._add_nodes(name, False,'', sm.symbols)
-    
-    def add_point(self, name, mirror=False):
-        self._add_nodes(name, mirror, 'hp')
-    
-    def add_vector(self, name, mirror=False):
-       self._add_nodes(name, mirror, 'vc')
-   
-    def add_geometry(self, name, mirror=False):
-        self._add_nodes(name, mirror, 'gm', geometry)
     
     def assign_geometry_to_body(self, body, geo, eval_inertia=True, mirror=False):
         b1 = body
@@ -573,14 +575,14 @@ class parametric_configuration(standalone_configuration):
         else:
             self._add_sub_relation(relation, node, args)
 
-    def _add_nodes(self, typ, name, mirror=False, sym='hp'):
+    def _add_node(self, typ, name, mirror=False, sym='hp'):
         Eq = self._set_base_equality
         graph = self.graph
         if mirror:
             node1 = '%sr_%s'%(sym, name)
             node2 = '%sl_%s'%(sym, name)
-            self._add_node(typ, node1)
-            self._add_node(typ, node2)
+            super()._add_node(typ, node1)
+            super()._add_node(typ, node2)
             graph.nodes[node1].update({'mirr':node2, 'align':'r'})
             graph.nodes[node2].update({'mirr':node1, 'align':'l'})
             obj1 = graph.nodes[node1]['obj']
@@ -589,7 +591,7 @@ class parametric_configuration(standalone_configuration):
             graph.add_edge(node1, node2)
         else:
             node1 = node2 = '%ss_%s'%(sym, name)
-            self._add_node(typ, node1)
+            super()._add_node(typ, node1)
             graph.nodes[node1]['mirr'] = node2
             
     def _add_relation(self, relation, node, args, mirror=False):
@@ -598,10 +600,10 @@ class parametric_configuration(standalone_configuration):
             node2 = self.graph.nodes[node1]['mirr']
             args1 = args
             args2 = [self.graph.nodes[i]['mirr'] for i in args1]
-            self._add_single_relation(relation, node1, args1)
-            self._add_single_relation(relation, node2, args2)
+            super()._add_relation(relation, node1, args1)
+            super()._add_relation(relation, node2, args2)
         else:
-            self._add_single_relation(relation, node, args)
+            super()._add_relation(relation, node, args)
 
 ###############################################################################
 ###############################################################################
