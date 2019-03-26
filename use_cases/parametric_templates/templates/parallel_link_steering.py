@@ -7,13 +7,11 @@ Created on Tue Jan 29 08:21:51 2019
 import os
 import pickle
 
-from source.symbolic_classes.joints import (revolute,spherical,cylinderical)
-
 from source.mbs_creators.topology_classes import template_based_topology
 from source.code_generators.python_code_generators import template_code_generator
 
 
-topology_name = 'steer'
+topology_name = os.path.basename(__file__).split('.')[0]
 
 def load():
     global template
@@ -30,9 +28,9 @@ def create():
     template.add_body('rocker',mirrored=True)
     template.add_body('chassis',virtual=True)
     
-    template.add_joint(revolute,'rocker_ch','rbr_rocker','vbs_chassis',mirrored=True)
-    template.add_joint(spherical,'rc_sph','rbr_rocker','rbs_coupler')
-    template.add_joint(cylinderical,'rc_cyl','rbl_rocker','rbs_coupler')
+    template.add_joint.revolute('rocker_ch','rbr_rocker','vbs_chassis',mirrored=True)
+    template.add_joint.spherical('rc_sph','rbr_rocker','rbs_coupler')
+    template.add_joint.cylinderical('rc_cyl','rbl_rocker','rbs_coupler')
     
     template.assemble_model()
     template.save()

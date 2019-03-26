@@ -27,13 +27,13 @@ class topology(object):
     def _set_mapping(self,indicies_map, interface_map):
         p = self.prefix
     
-        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
+        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
         self.vbl_upright = indicies_map[interface_map[p+'vbl_upright']]
-        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
         self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbs_steer_gear = indicies_map[interface_map[p+'vbs_steer_gear']]
-        self.vbr_upright = indicies_map[interface_map[p+'vbr_upright']]
+        self.vbl_hub = indicies_map[interface_map[p+'vbl_hub']]
         self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
+        self.vbr_hub = indicies_map[interface_map[p+'vbr_hub']]
 
     def assemble_template(self,indicies_map, interface_map, rows_offset):
         self.rows_offset = rows_offset

@@ -9,8 +9,6 @@ tempalte_script = '''
 import os
 import pickle
 
-import source.symbolic_classes.joints
-from source.symbolic_classes.forces import internal_force
 from source.mbs_creators.topology_classes import template_based_topology
 from source.code_generators.python_code_generators import template_code_generator
 

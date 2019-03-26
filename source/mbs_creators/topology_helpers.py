@@ -99,7 +99,7 @@ CR = Config_Relations
 ###############################################################################
 ###############################################################################
 
-class geometry(sm.Symbol):
+class Geometry(sm.Symbol):
     """
     A symbolic geometry class.
     
@@ -122,10 +122,10 @@ class geometry(sm.Symbol):
         self.J = matrix_symbol('%s.J'%name,3,3)
         
     def __call__(self,*args):
-        return geometry(self.name,*args)
+        return Geometry(self.name,*args)
 
 
-class simple_geometry(sm.Function):
+class Simple_geometry(sm.Function):
     """
     A symbolic geometry class representing simple geometries of well-known,
     easy to calculate properties.
@@ -141,8 +141,13 @@ class simple_geometry(sm.Function):
         name = self.__class__.__name__
         name = '\_'.join(name.split('_'))
         return r'%s%s'%(name, (*self.args,))
+    
+    def _ccode(self, printer):
+        expr_lowerd = self.__class__.__name__.lower()
+        args = ','.join([printer._print(i) for i in self.args])
+        return '%s(%s)'%(expr_lowerd,args)
 
-class composite_geometry(simple_geometry):
+class Composite_Geometry(Simple_geometry):
     """
     A symbolic geometry class representing a composite geometry instance that 
     can be composed of other simple geometries of well-known, easy to calculate
@@ -158,7 +163,7 @@ class composite_geometry(simple_geometry):
     """
     pass
 
-class cylinder_geometry(simple_geometry):
+class Cylinder_Geometry(Simple_geometry):
     
     def __init__(self, arg1, arg2, ro=10, ri=0):
         self.arg1 = arg1
@@ -166,7 +171,7 @@ class cylinder_geometry(simple_geometry):
         self.ri = ri
         self.ro = ro
 
-class triangular_prism(simple_geometry):
+class Triangular_Prism(Simple_geometry):
     
     def __init__(self, arg1, arg2, arg3, l=10):
         self.arg1 = arg1
@@ -174,11 +179,11 @@ class triangular_prism(simple_geometry):
         self.arg3 = arg3
         self.l = l
 
-class geometries(object):
+class Geometries(object):
     
-    triangular_prism = triangular_prism
-    cylinder_geometry = cylinder_geometry
-    composite_geometry = composite_geometry
+    Triangular_Prism   = Triangular_Prism
+    Cylinder_Geometry  = Cylinder_Geometry
+    Composite_Geometry = Composite_Geometry
 
 ###############################################################################
 ###############################################################################
@@ -223,7 +228,7 @@ class abstract_configuration(object):
             
     @property
     def geometry_nodes(self):
-        return set(i[0] for i in self.graph.nodes(data='obj') if isinstance(i[-1],geometry))
+        return set(i[0] for i in self.graph.nodes(data='obj') if isinstance(i[-1],Geometry))
 
     def mid_equalities(self,graph,output_nodes):
         mid_layer = []
@@ -445,11 +450,27 @@ class standalone_configuration(abstract_configuration):
     def add_geometry(self):
         return self._geometry_methods
     
+    @property
+    def add_relation(self):
+        return self._relation_methods
+    
+    def assign_geometry_to_body(self, body, geo, eval_inertia):
+        b = self.bodies[body]['obj']
+        R, P, m, J = [str(getattr(b,i)) for i in 'R,P,m,Jbar'.split(',')]
+        self.geometries_map[geo] = body
+        if eval_inertia:
+            self._add_relation(CR.Equal_to, R, ('%s.R'%geo,))
+            self._add_relation(CR.Equal_to, P, ('%s.P'%geo,))
+            self._add_relation(CR.Equal_to, J, ('%s.J'%geo,))
+            self._add_relation(CR.Equal_to, m, ('%s.m'%geo,))
+
+    
     def _decorate_methods(self):
         self._decorate_point_methods()
         self._decorate_vector_methods()
         self._decorate_scalar_methods()
         self._decorate_geometry_methods()
+        self._decorate_relation_methods()
         
     def _add_node(self, typ, name):
         obj = typ(name)
@@ -464,65 +485,63 @@ class standalone_configuration(abstract_configuration):
 
     def _add_relation(self, relation, node, args):
         graph = self.graph
-        edges = [(i, node) for i in args]
-        obj = graph.nodes[node]['obj']
-        nobj = [graph.nodes[n]['obj'] for n in args]
-        graph.nodes[node]['func'] = sm.Equality(obj, relation(*nobj))
-        removed_edges = list(graph.in_edges(node))
-        graph.remove_edges_from(removed_edges)
-        graph.add_edges_from(edges)
-
-    def _add_sub_relation(self, relation, node, args):
-        graph = self.graph
-        mod_args  = []
-        mod_objects = []
-        obj = graph.nodes[node]['obj']
-        for n in args:
-            splited = n.split('.')
-            name = splited[0]
-            attr = '.'.join(splited[1:])
-            mod_args.append(name)
-            nobj = getattr(graph.nodes[name]['obj'],attr)
-            mod_objects.append(nobj)
-        edges = [(i,node) for i in mod_args]
-        graph.nodes[node]['func'] = sm.Equality(obj,relation(*mod_objects))
-        removed_edges = list(graph.in_edges(node))
-        graph.remove_edges_from(removed_edges)
-        graph.add_edges_from(edges)
+        
+        node_object = graph.nodes[node]['obj']
+        name_object = [self._extract_name_and_object(n) for n in args]
+        arguments_names, arguments_objects = zip(*[item for item in name_object])
+        
+        graph.nodes[node]['func'] = sm.Equality(node_object, relation(*arguments_objects))        
+        
+        old_edges = list(graph.in_edges(node))
+        graph.remove_edges_from(old_edges)
+        new_edges = [(i, node) for i in arguments_names]
+        graph.add_edges_from(new_edges)
+        
+        
+    def _extract_name_and_object(self, argument):
+        splitted_attributes = argument.split('.')
+        node_name = splitted_attributes[0]
+        if len(splitted_attributes) == 1:
+            symbolic_object = self.graph.nodes[node_name]['obj']
+        else:
+            node_object = self.graph.nodes[node_name]['obj']
+            attribute_string = '.'.join(splitted_attributes[1:])
+            symbolic_object  = getattr(node_object, attribute_string)
+        return node_name, symbolic_object
+            
     
-    def _assign_geometry_to_body(self, body, geo, eval_inertia):
-        b = self.bodies[body]['obj']
-        R, P, m, J = [str(getattr(b,i)) for i in 'R,P,m,Jbar'.split(',')]
-        self.geometries_map[geo] = body
-        if eval_inertia:
-            self.add_sub_relation(CR.Equal_to, R, '%s.R'%geo)
-            self.add_sub_relation(CR.Equal_to, P, '%s.P'%geo)
-            self.add_sub_relation(CR.Equal_to, J, '%s.J'%geo)
-            self.add_sub_relation(CR.Equal_to, m, '%s.m'%geo)
-
+    def _decorate_relation_methods(self):
+        sym = None
+        node_type = None
+        methods = ['Mirrored', 'Centered', 'Equal_to', 'Oriented', 'UserInput']
+        self._relation_methods = self._decorate_components(node_type, sym, methods, CR)
     
     def _decorate_point_methods(self):
+        sym = 'hp'
         node_type = vector
         methods = ['Mirrored', 'Centered', 'Equal_to', 'UserInput']
-        self._point_methods = self._decorate_components(node_type, methods, CR)
+        self._point_methods = self._decorate_components(node_type, sym, methods, CR)
         
     def _decorate_vector_methods(self):
+        sym = 'vc'
         node_type = vector
         methods = ['Mirrored', 'Oriented', 'Equal_to', 'UserInput']
-        self._vector_methods = self._decorate_components(node_type, methods, CR)
+        self._vector_methods = self._decorate_components(node_type, sym, methods, CR)
 
     def _decorate_scalar_methods(self):
+        sym = ''
         node_type = sm.symbols
         methods = ['Equal_to', 'UserInput']
-        self._scalar_methods = self._decorate_components(node_type, methods, CR)
+        self._scalar_methods = self._decorate_components(node_type, sym, methods, CR)
             
     def _decorate_geometry_methods(self):
-        node_type = geometry
-        methods = ['triangular_prism', 'cylinder_geometry', 'composite_geometry']
-        self._geometry_methods = self._decorate_components(node_type, methods, geometries)
+        sym = 'gm'
+        node_type = Geometry
+        methods = ['Composite_Geometry', 'Cylinder_Geometry', 'Triangular_Prism']
+        self._geometry_methods = self._decorate_components(node_type, sym, methods, Geometries)
             
     
-    def _decorate_components(self, node_type, methods_list, methods_class):   
+    def _decorate_components(self, node_type, sym, methods_list, methods_class):   
         container_class = type('container', (object,), {})
         def dummy_init(dself): pass
         container_class.__init__ = dummy_init
@@ -530,22 +549,27 @@ class standalone_configuration(abstract_configuration):
 
         for name in methods_list:
             method = getattr(methods_class, name)
-            decorated_method = self._decorate_as_attr(node_type, method)
+            decorated_method = self._decorate_as_attr(node_type, sym, method)
             setattr(container_instance, name, decorated_method)
         
         return container_instance
     
-    def _decorate_as_attr(self, node_type, construction_method):
+    def _decorate_as_attr(self, node_type, sym, construction_method):
         
         if construction_method is None:
             def decorated(*args, **kwargs):
-                self._add_node(node_type, args[0], **kwargs)
+                self._add_node(node_type, args[0], **kwargs, sym=sym)
             decorated.__doc__ = ''
         
+        elif node_type is None:
+            def decorated(*args, **kwargs):
+                self._add_relation(construction_method, *args, **kwargs)
+            decorated.__doc__ = construction_method.__doc__
+       
         else:
             def decorated(*args, **kwargs):
-                self._add_node(node_type, args[0], **kwargs)
-                self._add_relation(construction_method, *args, **kwargs)
+                node = self._add_node(node_type, args[0], **kwargs, sym=sym)
+                self._add_relation(construction_method, node, *args[1:], **kwargs)
             decorated.__doc__ = construction_method.__doc__
         
         return decorated
@@ -560,22 +584,10 @@ class parametric_configuration(standalone_configuration):
         g1 = geo
         b2 = self.bodies[body]['mirr']
         g2 = self.graph.nodes[geo]['mirr']
-        self._assign_geometry_to_body(b1,g1,eval_inertia)
-        if b1 != b2 : self._assign_geometry_to_body(b2,g2,eval_inertia)
+        super().assign_geometry_to_body(b1,g1,eval_inertia)
+        if b1 != b2 : super().assign_geometry_to_body(b2,g2,eval_inertia)
             
-            
-    def add_sub_relation(self, relation, node, args, mirror=False):
-        if mirror:
-            node1 = node
-            node2 = self.graph.nodes[node1]['mirr']
-            args1 = args
-            args2 = [self.graph.nodes[i]['mirr'] for i in args1]
-            self._add_sub_relation(relation, node1, args1)
-            self._add_sub_relation(relation, node2, args2)
-        else:
-            self._add_sub_relation(relation, node, args)
-
-    def _add_node(self, typ, name, mirror=False, sym='hp'):
+    def _add_node(self, typ, name, sym='', mirror=False):
         Eq = self._set_base_equality
         graph = self.graph
         if mirror:
@@ -593,6 +605,7 @@ class parametric_configuration(standalone_configuration):
             node1 = node2 = '%ss_%s'%(sym, name)
             super()._add_node(typ, node1)
             graph.nodes[node1]['mirr'] = node2
+        return node1
             
     def _add_relation(self, relation, node, args, mirror=False):
         if mirror:
