@@ -667,6 +667,7 @@ class template_based_topology(topology):
 
 
 class facade_topology(object):
+    
     def __init__(self, name):
         self._mbs = template_based_topology(name)
         
