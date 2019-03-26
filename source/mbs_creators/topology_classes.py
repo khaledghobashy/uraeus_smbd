@@ -664,7 +664,26 @@ class template_based_topology(topology):
             del self._edges_keys_map['fas_%s_centrifuge'%node]
         except KeyError:
             pass
+
+
+class facade_topology(object):
+    def __init__(self, name):
+        self._mbs = template_based_topology(name)
+        
+    def add_body(self, *args, **kwargs):
+        self._mbs.add_body(*args, **kwargs)
     
+    @property
+    def add_joint(self):
+        return self._mbs.add_joint
+    
+    @property
+    def add_actuator(self):
+        return self._mbs.add_actuator
+    
+    @property
+    def add_force(self,):
+        return self._mbs.add_force
 ###############################################################################
 ###############################################################################
 

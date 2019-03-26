@@ -30,8 +30,8 @@ f.TR.config.load_from_csv(pkg_path + r'\use_cases\generated_templates\configurat
 f.TR.config.AF_jcs_steer_gear = lambda t : 0*np.deg2rad(15)*np.sin(t)
 f.TR.config.AF_mcr_ver_act = lambda t : 170*np.sin(t)
 f.TR.config.AF_mcl_ver_act = lambda t : 170*np.sin(t)
-f.TR.config.AF_jcr_rev = lambda t :  0*np.deg2rad(360)*t
-f.TR.config.AF_jcl_rev = lambda t : 0*-np.deg2rad(360)*t
+f.TR.config.AF_jcr_rev = lambda t :  np.deg2rad(360)*t
+f.TR.config.AF_jcl_rev = lambda t : -np.deg2rad(360)*t
 
 damping_data = lookup_table('damping')
 damping_data.read_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Data\ST500_Damping.csv')
@@ -111,13 +111,6 @@ plt.plot(time_array, soln.pos_dataframe['ST.rbr_rocker.y'])
 plt.grid()
 plt.show()
 
-plt.figure(figsize=(8,4))
-plt.plot(vertical_travel, soln.acc_dataframe['SU.rbl_hub.y'])
-plt.plot(vertical_travel, np.gradient(soln.vel_dataframe['SU.rbl_lower_strut.y'],soln.step_size))
-plt.legend()
-plt.grid()
-plt.show()
-
 
 # System Accelerations
 plt.figure(figsize=(8,4))
@@ -127,7 +120,7 @@ plt.grid()
 plt.show()
 
 plt.figure(figsize=(8,4))
-plt.plot(time_array, soln.acc_dataframe['SU.rbl_hub.y'])
+plt.plot(time_array, soln.acc_dataframe['SU.rbl_lower_strut.y'])
 plt.plot(time_array, np.gradient(soln.vel_dataframe['SU.rbl_lower_strut.y'],soln.step_size))
 plt.legend()
 plt.grid()
@@ -135,25 +128,25 @@ plt.show()
 
 plt.figure(figsize=(8,4))
 plt.plot(time_array, soln.acc_dataframe['SU.rbr_hub.y'])
-plt.plot(time_array, np.gradient(soln.vel_dataframe['SU.rbr_lower_strut.y'],soln.step_size))
+plt.plot(time_array, np.gradient(soln.vel_dataframe['SU.rbr_hub.y'],soln.step_size))
 plt.legend()
 plt.grid()
 plt.show()
 
 
 plt.figure(figsize=(8,4))
-plt.plot(time_array,soln.pos_dataframe['SU.rbl_lower_strut.z'])
+plt.plot(time_array, soln.pos_dataframe['SU.rbl_lower_strut.z'])
 plt.legend()
 plt.grid()
 plt.show()
 plt.figure(figsize=(8,4))
-plt.plot(time_array,soln.vel_dataframe['SU.rbl_lower_strut.z'])
+plt.plot(time_array, soln.vel_dataframe['SU.rbl_lower_strut.z'])
 plt.legend()
 plt.grid()
 plt.show()
 
 plt.figure(figsize=(8,4))
-plt.plot(time_array,soln.acc_dataframe['SU.rbl_lower_strut.z'])
+plt.plot(time_array, soln.acc_dataframe['SU.rbl_lower_strut.z'])
 plt.plot(time_array, np.gradient(soln.vel_dataframe['SU.rbl_lower_strut.z'],soln.step_size))
 plt.legend()
 plt.grid()
@@ -172,9 +165,17 @@ plt.show()
 
 
 plt.figure(figsize=(8,4))
-plt.plot(vertical_travel, soln.reactions_dataframe['TR.F_vbr_hub_mcr_ver_act.x'])
-plt.plot(vertical_travel, soln.reactions_dataframe['TR.F_vbr_hub_mcr_ver_act.y'])
-plt.plot(vertical_travel, soln.reactions_dataframe['TR.F_vbr_hub_mcr_ver_act.z'])
+plt.plot(time_array, soln.reactions_dataframe['TR.F_vbr_upright_mcr_ver_act.x'])
+plt.plot(time_array, soln.reactions_dataframe['TR.F_vbr_upright_mcr_ver_act.y'])
+plt.plot(time_array, soln.reactions_dataframe['TR.F_vbr_upright_mcr_ver_act.z'])
+plt.legend()
+plt.grid()
+plt.show()
+
+plt.figure(figsize=(8,4))
+plt.plot(time_array, soln.reactions_dataframe['TR.F_vbl_upright_mcl_ver_act.x'])
+plt.plot(time_array, soln.reactions_dataframe['TR.F_vbl_upright_mcl_ver_act.y'])
+plt.plot(time_array, soln.reactions_dataframe['TR.F_vbl_upright_mcl_ver_act.z'])
 plt.legend()
 plt.grid()
 plt.show()
@@ -219,13 +220,3 @@ plt.plot(time_array,soln.reactions_dataframe['SU.F_rbl_lower_strut_jcl_strut_lca
 plt.legend()
 plt.grid()
 plt.show()
-
-
-plt.figure(figsize=(8,4))
-plt.plot(time_array,soln.reactions_dataframe['TR.F_vbl_hub_mcl_ver_act.x'])
-plt.plot(time_array,soln.reactions_dataframe['TR.F_vbl_hub_mcl_ver_act.y'])
-plt.plot(time_array,soln.reactions_dataframe['TR.F_vbl_hub_mcl_ver_act.z'])
-plt.legend()
-plt.grid()
-plt.show()
-
