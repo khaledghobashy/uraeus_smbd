@@ -615,8 +615,8 @@ class assembly_code_generator(template_code_generator):
         self.templates = []
         self.subsystems_templates = {}
         
-        for sub_name,template in self.mbs.subsystems.items():
-            topology_name = template.topology.name
+        for sub_name, system in self.mbs.subsystems.items():
+            topology_name = system.template.name
             self.subsystems_templates[sub_name] = topology_name
             if topology_name not in self.templates:
                 self.templates.append(topology_name)

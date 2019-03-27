@@ -60,7 +60,6 @@ class configuration(object):
         self.hpr_tri = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_strut_chassis = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_strut_lca = np.array([[0], [0], [0]],dtype=np.float64)
-        self.hpr_strut_mid = np.array([[0], [0], [0]],dtype=np.float64)
         self.hpr_wc = np.array([[0], [0], [0]],dtype=np.float64)
         self.s_links_ro = 1
         self.s_strut_outer = 1
@@ -107,12 +106,13 @@ class configuration(object):
         self.gmr_upright = triangular_prism(self.hpr_ucao,self.hpr_wc,self.hpr_lcao,self.s_thickness)
         self.hpl_wc = mirrored(self.hpr_wc)
         self.gml_upright = triangular_prism(self.hpl_ucao,self.hpl_wc,self.hpl_lcao,self.s_thickness)
+        self.hpr_strut_mid = centered(self.hpr_strut_chassis,self.hpr_strut_lca)
         self.gmr_upper_strut = cylinder_geometry(self.hpr_strut_chassis,self.hpr_strut_mid,self.s_strut_outer)
-        self.hpl_strut_mid = mirrored(self.hpr_strut_mid)
+        self.hpl_strut_lca = mirrored(self.hpr_strut_lca)
         self.hpl_strut_chassis = mirrored(self.hpr_strut_chassis)
+        self.hpl_strut_mid = centered(self.hpl_strut_chassis,self.hpl_strut_lca)
         self.gml_upper_strut = cylinder_geometry(self.hpl_strut_chassis,self.hpl_strut_mid,self.s_strut_outer)
         self.gmr_lower_strut = cylinder_geometry(self.hpr_strut_mid,self.hpr_strut_lca,self.s_strut_inner)
-        self.hpl_strut_lca = mirrored(self.hpr_strut_lca)
         self.gml_lower_strut = cylinder_geometry(self.hpl_strut_mid,self.hpl_strut_lca,self.s_strut_inner)
         self.gmr_tie_rod = cylinder_geometry(self.hpr_tri,self.hpr_tro,self.s_links_ro)
         self.hpl_tro = mirrored(self.hpr_tro)
@@ -253,7 +253,5 @@ class configuration(object):
         self.ax1_jcl_tie_steering = oriented(self.hpl_tri,self.hpl_tro)
         self.ax2_jcl_tie_steering = oriented(self.hpl_tro,self.hpl_tri)
         self.pt1_jcl_tie_steering = self.hpl_tri
-        self.hpr_hpr_strut_mid = centered(self.hpr_strut_chassis,self.hpr_strut_lca)
-        self.hpl_hpr_strut_mid = centered(self.hpl_strut_chassis,self.hpl_strut_lca)
     
 

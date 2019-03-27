@@ -285,7 +285,20 @@ class abstract_topology(object):
 
     def _remove_virtual_edges(self):
         self.graph.remove_edges_from(self.virtual_edges)
-
+    
+    def _store_constaints_index(self):
+        self._actuators_indicies = {}
+        edges = self.constraints_graph.edges
+        row_ind = 0
+        for e in edges:
+            if self._is_virtual_edge(e):
+                continue
+            constraint_name = edges[e]['name']
+            constraint_nve  = edges[e]['nve']
+            rows = slice(row_ind, row_ind + constraint_nve)
+            self._actuators_indicies[constraint_name] = rows
+            row_ind += constraint_nve
+    
     def _assemble_constraints_equations(self):
         
         edges    = self.constraints_graph.edges
@@ -309,7 +322,7 @@ class abstract_topology(object):
             
             # tracker of row index based on the current joint type and the history
             # of the loop
-            eo_nve = eo.nve+row_ind 
+            eo_nve = eo.nve + row_ind
             
             ui = node_index[u]
             vi = node_index[v]
@@ -665,76 +678,58 @@ class template_based_topology(topology):
         except KeyError:
             pass
 
-
-class facade_topology(object):
-    
-    def __init__(self, name):
-        self._mbs = template_based_topology(name)
-        
-    def add_body(self, *args, **kwargs):
-        self._mbs.add_body(*args, **kwargs)
-    
-    @property
-    def add_joint(self):
-        return self._mbs.add_joint
-    
-    @property
-    def add_actuator(self):
-        return self._mbs.add_actuator
-    
-    @property
-    def add_force(self,):
-        return self._mbs.add_force
 ###############################################################################
 ###############################################################################
 
 class subsystem(abstract_topology):
     
-    def __init__(self,name,topology):
+    def __init__(self, name, template):
         self.name = name
         self._set_global_frame()
-        self.topology = topology
-        self.graph = topology.graph.copy()
-        self._relable()
+        self.template = template
+        self.graph = self.template.graph.copy()
         self._virtual_bodies = []
+        if name != '':
+            self._relable()
     
     def _relable(self):
         def label(x): return '%s.%s'%(self.name, x)
-        labels_map = {i:label(i) for i in self.topology.nodes}
-        self.graph = nx.relabel_nodes(self.graph,labels_map)
-        mirr_maped = {k:label(v) for k,v in self.nodes(data='mirr')}
-        nx.set_node_attributes(self.graph,mirr_maped,'mirr')
+        labels_map = {i:label(i) for i in self.template.nodes}
+        self.graph = nx.relabel_nodes(self.graph, labels_map)
+        mirr_maped = {k:label(v) for k, v in self.nodes(data='mirr')}
+        nx.set_node_attributes(self.graph, mirr_maped, 'mirr')
     
     
 ###############################################################################
 ###############################################################################
 
-class assembly(abstract_topology):
+class assembly(template_based_topology):
     
-    def __init__(self,name):
-        self.name  = name
-        self.graph = nx.MultiDiGraph(name=name)
+    def __init__(self, name):
+        super().__init__(name)
+#        self.name  = name
+#        self.graph = nx.MultiDiGraph(name=name)
+#        self._set_global_frame()
+#        self._insert_ground()
         self.interface_graph = nx.MultiDiGraph(name=name)
-        self._set_global_frame()
-        self._insert_ground()
         self.subsystems = {}
         self._interface_map = {}
 
-        
     @property
     def interface_map(self):
         return self._interface_map
             
-    def add_subsystem(self,sub):
-        assert isinstance(sub,subsystem), 'value should be instance of subsystem'
+    def add_subsystem(self, sub):
+        if not isinstance(sub, subsystem):
+            raise ValueError('Entry should be instance of subsystem class.')
         self.subsystems[sub.name] = sub
         subsystem_graph = sub.selected_variant
         self.graph.add_nodes_from(subsystem_graph.nodes(data=True))
-        self.graph.add_edges_from(subsystem_graph.edges(data=True,keys=True))
+        self.graph.add_edges_from(subsystem_graph.edges(data=True, keys=True))
         self._update_interface_map(sub)
         self.global_instance.merge_global(sub.global_instance)
     
-    def assign_virtual_body(self,virtual_node,actual_node):
+    def assign_virtual_body(self, virtual_node, actual_node):
         virtual_node_1 = virtual_node
         virtual_node_2 = self.nodes[virtual_node]['mirr']
         actual_node_1 = actual_node
@@ -750,14 +745,14 @@ class assembly(abstract_topology):
         
     def draw_interface_graph(self):
         plt.figure(figsize=(10,6))
-        nx.draw_spring(self.interface_graph,with_labels=True)
+        nx.draw_spring(self.interface_graph, with_labels=True)
         plt.show()
 
 
     def _insert_ground(self):
         typ_dict = self._typ_attr_dict(bodies.ground)
         self.grf = 'ground'
-        self.graph.add_node(self.grf,**typ_dict)
+        self.graph.add_node(self.grf, **typ_dict)
         self._assemble_node(self.grf)
         
     def _update_interface_map(self,subsystem):
@@ -778,9 +773,9 @@ class assembly(abstract_topology):
             if a!= self.grf : self._assemble_node(a)
             R_v,P_v = self.nodes[v]['obj'].q.blocks
             R_a,P_a = self.nodes[a]['obj'].q.blocks
-            R_eq = sm.Eq(R_v,R_a,evaluate=False)
-            P_eq = sm.Eq(P_v,P_a,evaluate=False)
-            self.mapped_vir_coordinates += [R_eq,P_eq]
+            R_eq = sm.Eq(R_v, R_a, evaluate=False)
+            P_eq = sm.Eq(P_v, P_a, evaluate=False)
+            self.mapped_vir_coordinates += [R_eq, P_eq]
         
         self.mapped_vir_velocities = []
         for v,a in self.interface_map.items():
@@ -788,9 +783,9 @@ class assembly(abstract_topology):
             if a!= self.grf : self._assemble_node(a)
             R_v,P_v = self.nodes[v]['obj'].qd.blocks
             R_a,P_a = self.nodes[a]['obj'].qd.blocks
-            R_eq = sm.Eq(R_v,R_a,evaluate=False)
-            P_eq = sm.Eq(P_v,P_a,evaluate=False)
-            self.mapped_vir_velocities += [R_eq,P_eq]
+            R_eq = sm.Eq(R_v, R_a, evaluate=False)
+            P_eq = sm.Eq(P_v, P_a, evaluate=False)
+            self.mapped_vir_velocities += [R_eq, P_eq]
         
         self.mapped_vir_accelerations = []
         for v,a in self.interface_map.items():
@@ -798,19 +793,19 @@ class assembly(abstract_topology):
             if a!= self.grf : self._assemble_node(a)
             R_v,P_v = self.nodes[v]['obj'].qdd.blocks
             R_a,P_a = self.nodes[a]['obj'].qdd.blocks
-            R_eq = sm.Eq(R_v,R_a,evaluate=False)
-            P_eq = sm.Eq(P_v,P_a,evaluate=False)
-            self.mapped_vir_accelerations += [R_eq,P_eq]
+            R_eq = sm.Eq(R_v, R_a, evaluate=False)
+            P_eq = sm.Eq(P_v, P_a, evaluate=False)
+            self.mapped_vir_accelerations += [R_eq, P_eq]
 
             
     def _replace_nodes(self,virtual,actual):
         a = actual
         v = virtual
         H = self.graph
-        new_edges1 = [(w,a,d) for w,x,d in H.in_edges(v,data=True)]
-        new_edges2 = [(a,w,d) for x,w,d in H.out_edges(v,data=True)]
+        new_edges1 = [(w, a, d) for w, x, d in H.in_edges(v, data=True)]
+        new_edges2 = [(a, w, d) for x, w, d in H.out_edges(v, data=True)]
         H.remove_node(v)
-        new_edges = new_edges1+new_edges2
+        new_edges = new_edges1 + new_edges2
         H.add_edges_from(new_edges)
         self.interface_graph.add_edges_from(new_edges)
             
@@ -821,19 +816,19 @@ class assembly(abstract_topology):
     
     def _assemble_constraints_equations(self):
         
-        nodelist    = self.nodes
+        nodelist = self.nodes
         cols = 2*len(nodelist)
         nve  = 2
         
-        equations = sm.MutableSparseMatrix(nve,1,None)
-        vel_rhs   = sm.MutableSparseMatrix(nve,1,None)
-        acc_rhs   = sm.MutableSparseMatrix(nve,1,None)
-        jacobian  = sm.MutableSparseMatrix(nve,cols,None)
+        equations = sm.MutableSparseMatrix(nve, 1, None)
+        vel_rhs   = sm.MutableSparseMatrix(nve, 1, None)
+        acc_rhs   = sm.MutableSparseMatrix(nve, 1, None)
+        jacobian  = sm.MutableSparseMatrix(nve, cols, None)
         
         row_ind = 0
         b = self.nodes['ground']['obj']
         i = self.nodes_indicies['ground']
-        jacobian[row_ind:row_ind+2,i*2:i*2+2]    = b.normalized_jacobian.blocks
+        jacobian[row_ind:row_ind+2,i*2:i*2+2] = b.normalized_jacobian.blocks
         equations[row_ind:row_ind+2,0] = b.normalized_pos_equation.blocks
         vel_rhs[row_ind:row_ind+2,0]   = b.normalized_vel_equation.blocks
         acc_rhs[row_ind:row_ind+2,0]   = b.normalized_acc_equation.blocks
@@ -845,7 +840,7 @@ class assembly(abstract_topology):
     
     def _assemble_mass_matrix(self):
         ground_obj  = self.nodes['ground']['obj']
-        matrix = sm.MutableSparseMatrix(2,2,None)
+        matrix = sm.MutableSparseMatrix(2, 2, None)
         matrix[0,0] = ground_obj.M
         matrix[1,1] = ground_obj.J
         self.mass_equations = matrix
@@ -855,7 +850,7 @@ class assembly(abstract_topology):
         node = 'ground'
         nrows = 2
         F_applied = sm.MutableSparseMatrix(nrows,1,None)
-        in_edges  = self.forces_graph.in_edges([node],data='obj')
+        in_edges  = self.forces_graph.in_edges([node], data='obj')
         if len(in_edges) == 0 :
             Q_in_R = zero_matrix(3,1)
             Q_in_P = zero_matrix(4,1)
@@ -863,7 +858,7 @@ class assembly(abstract_topology):
             Q_in_R = sm.MatAdd(*[e[-1].Qj.blocks[0] for e in in_edges])
             Q_in_P = sm.MatAdd(*[e[-1].Qj.blocks[1] for e in in_edges])
         
-        out_edges = self.forces_graph.out_edges([node],data='obj')
+        out_edges = self.forces_graph.out_edges([node], data='obj')
         if len(out_edges) == 0 :
             Q_out_R = zero_matrix(3,1)
             Q_out_P = zero_matrix(4,1)

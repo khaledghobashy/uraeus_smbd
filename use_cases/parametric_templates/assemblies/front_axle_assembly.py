@@ -28,6 +28,7 @@ assembled.assign_virtual_body('TR.vbr_upright','SU.rbr_upright')
 assembled.assign_virtual_body('TR.vbr_hub','SU.rbr_hub')
 assembled.assign_virtual_body('TR.vbs_steer_gear','ST.rbl_rocker')
 
+
 assembled.assemble_model()
 assembled.draw_constraints_topology()
 assembled.draw_interface_graph()

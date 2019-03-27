@@ -35,7 +35,7 @@ def main():
     config.add_point.UserInput('strut_mid', mirror=True)
     config.add_point.UserInput('wc', mirror=True)
     
-    config.add_point.Centered('hpr_strut_mid', ('hpr_strut_chassis', 'hpr_strut_lca'), mirror=True)
+    config.add_point.Centered('strut_mid', ('hpr_strut_chassis', 'hpr_strut_lca'), mirror=True)
 
     # JOINTS CONFIGURATIONS
     
