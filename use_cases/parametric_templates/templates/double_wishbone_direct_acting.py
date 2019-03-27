@@ -7,7 +7,7 @@ Created on Tue Jan 29 08:18:17 2019
 import os
 import pickle
 
-from source.mbs_creators.topology_classes import template_based_topology
+from source.interfaces.scripting_interfaces import topology
 from source.code_generators.python_code_generators import template_code_generator
 
 topology_name = 'dwb'
@@ -22,7 +22,7 @@ def create():
     global template
     global numerical_code
     
-    template = template_based_topology(topology_name)
+    template = topology(topology_name)
     
     # Adding System Bodies
     template.add_body('uca', mirrored=True)
