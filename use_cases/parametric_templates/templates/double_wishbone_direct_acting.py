@@ -4,25 +4,16 @@ Created on Tue Jan 29 08:18:17 2019
 
 @author: khaled.ghobashy
 """
-import os
-import pickle
 
 from source.interfaces.scripting_interfaces import topology
-from source.code_generators.python_code_generators import template_code_generator
-
-topology_name = 'dwb'
 
 def load():
     global template
-    path = os.path.dirname(__file__)
-    with open('%s\\%s.stpl'%(path,topology_name),'rb') as f:
-        template = pickle.load(f)
+    template = topology.reload(__file__)
 
 def create():
-    global template
-    global numerical_code
-    
-    template = topology(topology_name)
+    global template    
+    template = topology(__file__)
     
     # Adding System Bodies
     template.add_body('uca', mirrored=True)
@@ -50,12 +41,9 @@ def create():
     # Adding System Forces
     template.add_force.internal_force('strut', 'rbr_upper_strut', 'rbr_lower_strut', mirrored=True)
     
-#    template.assemble_model()
-#    template.draw_constraints_topology()
-#    template.save()
-#    
-#    numerical_code = template_code_generator(template)
-#    numerical_code.write_code_file()
+    template.assemble_model()
+    template.save()
+    template.write_python_code()
     
 
 if __name__ == '__main__':

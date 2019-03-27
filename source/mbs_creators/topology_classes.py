@@ -5,9 +5,6 @@ Created on Tue Jan  1 11:31:35 2019
 @author: khale
 """
 import itertools
-import os
-
-import cloudpickle
 import sympy as sm
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -36,7 +33,6 @@ class abstract_topology(object):
         self._insert_ground()
         self._set_global_frame()
         self._param_config = parametric_configuration('%s_bcfg'%name,self)
-        self.path = os.getcwd()        
 
     @property
     def param_config(self):
@@ -50,7 +46,6 @@ class abstract_topology(object):
     @property
     def edges(self):
         return self.selected_variant.edges
-    
     
     @property
     def constraints_graph(self):
@@ -170,12 +165,7 @@ class abstract_topology(object):
         self._assemble_mass_matrix()
         self._perform_cse()
         self._initialize_toplogy_reqs()
-    
-    
-    def save(self):
-        with open('%s\\%s.stpl'%(self.path,self.name),'wb') as f:
-            cloudpickle.dump(self,f)
-            
+                
     
     def _initialize_toplogy_reqs(self):
         self.param_config.assemble_base_layer()
