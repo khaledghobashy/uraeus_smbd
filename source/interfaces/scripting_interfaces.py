@@ -14,9 +14,6 @@ import source.symbolic_classes.forces as forces
 
 from source.code_generators.python_code_generators import template_code_generator
 
-def get_script_name(script_path):
-    name = os.path.basename(script_path).split('.')[0]
-    return name
 
 class topology(object):
     
@@ -24,7 +21,7 @@ class topology(object):
         
         self.script_path = script_path
         
-        self.name = get_script_name(script_path)
+        self.name = os.path.basename(script_path).split('.')[0]
         self._mbs = topology_classes.template_based_topology(self.name)
         
         self._decorate_joints()
@@ -87,13 +84,15 @@ class topology(object):
 
         
     def _decorate_edge_components(self, container_name, container_items, module):   
-        comp_dict = {k:None for k in container_items}
-        comp_container = type(container_name, (object,), comp_dict)
+        container_class = type(container_name, (object,), {})
+        def dummy_init(dself): pass
+        container_class.__init__ = dummy_init
+        container_instance = container_class()
         for name in container_items:
             component = getattr(module, name)
             decorated_component = self._decorate_as_edge(component)
-            setattr(comp_container, name, decorated_component)
-        return comp_container
+            setattr(container_instance, name, decorated_component)
+        return container_instance
     
     def _decorate_as_edge(self, typ):
         if issubclass(typ, joints.absolute_locator):
@@ -114,6 +113,8 @@ class topology(object):
         return decorated
 
 
+###############################################################################
+###############################################################################
 
 class assembly(object):
     
@@ -126,4 +127,11 @@ class assembly(object):
     def assign_virtual_body(self, virtual_node, actual_node):
         self._mbs.assign_virtual_body(virtual_node, actual_node)
             
+###############################################################################
+###############################################################################
+
+class configuration(object):
     
+    def __init__(self, name, model_instance):
+        pass
+
