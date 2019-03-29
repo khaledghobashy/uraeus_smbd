@@ -178,7 +178,7 @@ class abstract_topology(object):
         self.frc_rep, self.frc_exp = self._generate_cse(self.frc_equations, 'f')
         self.mass_rep, self.mass_exp = self._generate_cse(self.mass_equations, 'm')
 
-    def _get_topology_attr(self,name):
+    def _get_topology_attr(self, name):
         graph = self.graph
         nodes_attr = nx.get_node_attributes(graph, name).values()
         edges_attr = nx.get_edge_attributes(graph, name).values()

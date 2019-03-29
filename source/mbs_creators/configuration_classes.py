@@ -4,7 +4,7 @@ Created on Mon Feb 11 09:44:13 2019
 
 @author: khaled.ghobashy
 """
-
+import itertools
 import sympy as sm
 import numpy as np
 import networkx as nx
@@ -215,8 +215,16 @@ class relational_graph(object):
         nodes = self.output_nodes
         equalities = nx.get_node_attributes(g, nodes, 'rhs_function')
         return equalities
-        
-    def add_node(self, name, symbolic_type, ):
+    
+    def intermediat_nodes(self):
+        graph = self.graph
+        nodes = self.output_nodes
+        edges = itertools.chain(*[self.get_node_deps(graph, n) for n in nodes])
+        mid_nodes = {e[0]:i for i,e in enumerate(edges)}
+        return mid_nodes
+    
+    
+    def add_node(self, name, symbolic_type):
         node_object    = symbolic_type(name)
         node_attr_dict = self._create_node_dict(node_object)
         self.graph.add_node(name, **node_attr_dict)
@@ -228,6 +236,18 @@ class relational_graph(object):
         graph.nodes[node]['rhs_function'] = relation(*arguments_objects)
         self._update_in_edges(graph, node, arguments_names)
     
+    def draw_node_dependencies(self, node):
+        graph = self.graph
+        edges = self.get_node_deps(graph, node)
+        sub_graph = graph.edge_subgraph(edges)
+        plt.figure(figsize=(10, 6))
+        nx.draw_networkx(sub_graph, with_labels=True)
+        plt.show() 
+        
+    def draw_graph(self):
+        plt.figure(figsize=(10, 6))
+        nx.draw_circular(self.graph, with_labels=True)
+        plt.show()
     
     def _create_node_dict(self, node_object):
         function = self._get_initial_equality(node_object)
@@ -285,7 +305,109 @@ class relational_graph(object):
         edges = reversed([e[:-1] for e in nx.edge_bfs(graph, node, 'reverse')])
         return edges
     
+
+###############################################################################
+###############################################################################
+
+class configuration(relational_graph):
     
+    def __init__(self, name, mbs):
+        super().__init(name)
+        self.topology = mbs
+        self.geometries_map = {}
+                
+
+    @property
+    def arguments_symbols(self):
+        return set(nx.get_node_attributes(self.graph,'obj').values())
+
+    @property
+    def primary_arguments(self):
+        graph = self.graph
+        cond = lambda n : graph.nodes[n]['primary']
+        args = filter(cond,graph.nodes)
+        return set(args)
+    
+    @property
+    def geometry_nodes(self):
+        return set(i[0] for i in self.graph.nodes(data='obj') if isinstance(i[-1],Geometry))
+
+    def assemble_base_layer(self):
+        self._get_nodes_arguments()
+        self._get_edges_arguments()
+        nx.set_node_attributes(self.graph, True, 'primary')
+        self.bodies = {n:self.topology.nodes[n] for n in self.topology.bodies}
+
+#    def _get_topology_args(self):
+#        nodes = self.topology.nodes
+#        edges = self.topology.edges
+#        nodes_args = [nodes[n]['arguments_symbols'] for n in nodes]
+#        edges_args = [edges[e]['arguments_symbols'] for e in edges]
+#        return nodes_args + edges_args
+    
+    def _add_primary_nodes(self):
+        arguments_symbols = self.mbs.arguments_symbols
+        for arg in arguments_symbols:
+            self.add_node(str(arg), arg.__class__)
+        
+    
+    def _get_nodes_arguments(self):
+        Eq = self._set_base_equality
+        graph   = self.graph
+        
+        for node, data in self.bodies.items():
+            node_2 = data['mirr']
+            args_n = data['arguments_symbols']
+            nodes_args_n = [(str(i),{'func':Eq(i),'obj':i}) for i in args_n]
+            if m == n:
+                graph.add_nodes_from(nodes_args_n)
+                mirr = {i[0]:i[0] for i in nodes_args_n}
+                nx.set_node_attributes(self.graph, mirr, 'mirr')
+            else:
+                args_m = t_nodes[m]['arguments_symbols']
+                args_c = zip(args_n,args_m)
+                nodes_args_m = [(str(m),{'func':Eq(n,m),'obj':m}) for n,m in args_c]
+                graph.add_nodes_from(nodes_args_n+nodes_args_m)
+                edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
+                graph.add_edges_from(edges)    
+                mirr = {m:n for n,m in edges}
+                nx.set_node_attributes(self.graph, mirr, 'mirr')
+                mirr = {n:m for n,m in edges}
+                nx.set_node_attributes(self.graph, mirr, 'mirr')
+    
+    def _get_edges_arguments(self):
+        Eq = self._set_base_equality
+        graph   = self.graph
+        t_edges = self.topology.edges
+        
+        def filter_cond(e):
+            cond = (e not in self.topology.virtual_edges
+                    and t_edges[e]['align'] in 'sr')
+            return cond
+        filtered_edges = filter(filter_cond,t_edges)
+        
+        for e in filtered_edges:
+            n = t_edges[e]['name']
+            m = t_edges[e]['mirr']
+            args_n = t_edges[e]['arguments_symbols']
+            nodes_args_n = [(str(i),{'func':Eq(i),'obj':i}) for i in args_n]
+            if m == n:
+                graph.add_nodes_from(nodes_args_n)
+                mirr = {i[0]:i[0] for i in nodes_args_n}
+                nx.set_node_attributes(self.graph,mirr,'mirr')
+            else:
+                e2 = self.topology._edges_map[m]
+                args_m = t_edges[e2]['arguments_symbols']
+                args_c = zip(args_n,args_m)
+                nodes_args_m = [(str(m),{'func':Eq(n,m),'obj':m}) for n,m in args_c]
+                graph.add_nodes_from(nodes_args_n+nodes_args_m)
+                edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
+                graph.add_edges_from(edges)    
+                mirr = {m:n for n,m in edges}
+                nx.set_node_attributes(self.graph,mirr,'mirr')
+                mirr = {n:m for n,m in edges}
+                nx.set_node_attributes(self.graph,mirr,'mirr')
+
 ###############################################################################
 ###############################################################################
 
