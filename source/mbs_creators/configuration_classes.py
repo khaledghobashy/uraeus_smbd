@@ -196,14 +196,98 @@ class relational_graph(object):
         self.name = name
         self.graph = nx.DiGraph(name=self.name)
         
-    def add_node(self, name, symbolic_type, ):
-        node_object = symbolic_type(name)
-        self.graph.add_node(name)
+    @property
+    def input_nodes(self):
+        return self.get_input_nodes(self.graph)
+    @property
+    def input_equalities(self):
+        g = self.graph
+        nodes = self.input_nodes
+        equalities = nx.get_node_attributes(g, nodes, 'rhs_function')
+        return equalities
+    
+    @property
+    def output_nodes(self):
+        return self.get_output_nodes(self.graph)
+    @property
+    def output_equalities(self):
+        g = self.graph
+        nodes = self.output_nodes
+        equalities = nx.get_node_attributes(g, nodes, 'rhs_function')
+        return equalities
         
-    def _get_node_attr(self, node_object):
-        function = self._set_base_equality
+    def add_node(self, name, symbolic_type, ):
+        node_object    = symbolic_type(name)
+        node_attr_dict = self._create_node_dict(node_object)
+        self.graph.add_node(name, **node_attr_dict)
+        
+    def add_relation(self, relation, node, args):
+        graph = self.graph
+        name_object = [self._extract_name_and_object(graph, n) for n in args]
+        arguments_names, arguments_objects = zip(*name_object)
+        graph.nodes[node]['rhs_function'] = relation(*arguments_objects)
+        self._update_in_edges(graph, node, arguments_names)
+    
+    
+    def _create_node_dict(self, node_object):
+        function = self._get_initial_equality(node_object)
         attr_dict = {'lhs_value':node_object, 'rhs_function':function}
         return attr_dict
+    
+    
+    
+    @staticmethod
+    def _extract_name_and_object(graph, argument):
+        splitted_attributes = argument.split('.')
+        node_name = splitted_attributes[0]
+        if node_name not in graph.nodes:
+            raise ValueError('Node %r is not is the graph.'%node_name)
+        
+        node_object = graph.nodes[node_name]['lhs_value']
+        if len(splitted_attributes) == 1:
+            symbolic_object = node_object
+        else:
+            attribute_string = '.'.join(splitted_attributes[1:])
+            symbolic_object  = getattr(node_object, attribute_string)
+        
+        return node_name, symbolic_object
+        
+    @staticmethod    
+    def _update_in_edges(graph, node, nbunch):
+        old_edges = list(graph.in_edges(node))
+        graph.remove_edges_from(old_edges)
+        new_edges = [(i, node) for i in nbunch]
+        graph.add_edges_from(new_edges)
+
+    @staticmethod
+    def _get_initial_equality(node_object):
+        if isinstance(node_object, sm.MatrixSymbol):
+            return sm.zeros(*node_object.shape)
+        elif isinstance(node_object, sm.Symbol):
+            return 1.0
+        elif issubclass(node_object, sm.Function):
+            t = sm.symbols('t')
+            return sm.Lambda(t, 0.0)
+
+    @staticmethod
+    def get_input_nodes(graph):
+        nodes = [i for i,d in graph.in_degree() if d == 0]
+        return nodes
+    
+    @staticmethod
+    def get_output_nodes(graph):
+        condition = lambda i,d : d==0 and graph.in_degree(i)!=0
+        nodes = [i for i,d in graph.out_degree() if condition(i,d)]
+        return nodes
+    
+    @staticmethod
+    def get_node_deps(graph, node):
+        edges = reversed([e[:-1] for e in nx.edge_bfs(graph, node, 'reverse')])
+        return edges
+    
+    
+###############################################################################
+###############################################################################
 
 class abstract_configuration(object):
     
