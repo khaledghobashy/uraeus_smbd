@@ -200,8 +200,7 @@ class relational_graph(object):
     @property
     def input_equalities(self):
         nodes = self.input_nodes
-        graph = self.graph.subgraph(nodes)
-        equalities = list(nx.get_node_attributes(graph, 'rhs_function').values())
+        equalities = self.get_nodes_attributes(self.graph, nodes, 'rhs_function')
         return equalities
     
     @property
@@ -210,20 +209,16 @@ class relational_graph(object):
     @property
     def output_equalities(self):
         nodes = self.output_nodes
-        graph = self.graph.subgraph(nodes)
-        equalities = list(nx.get_node_attributes(graph, 'rhs_function').values())
+        equalities = self.get_nodes_attributes(self.graph, nodes, 'rhs_function')
         return equalities
     
     @property
     def intermediat_nodes(self):
-        graph = self.graph
-        nodes = self.output_nodes
-        return self.get_intermediat_nodes(graph, nodes)
+        return self.get_intermediat_nodes(self.graph)
     @property
     def intermediat_equalities(self):
         nodes = self.intermediat_nodes
-        graph = self.graph.subgraph(nodes)
-        equalities = list(nx.get_node_attributes(graph, 'rhs_function').values())
+        equalities = self.get_nodes_attributes(self.graph, nodes, 'rhs_function')
         return equalities
     
     
@@ -304,11 +299,17 @@ class relational_graph(object):
         return nodes
     
     @staticmethod
-    def get_intermediat_nodes(graph, zero_outdeg_nodes):
-        nodes = zero_outdeg_nodes
+    def get_intermediat_nodes(graph):
+        nodes = relational_graph.get_output_nodes(graph)
         edges = itertools.chain(*[relational_graph.get_node_deps(graph, n) for n in nodes])
         mid_nodes = {e[0]:i for i,e in enumerate(edges)}
         return mid_nodes
+    
+    @staticmethod
+    def get_nodes_attributes(graph, nodes, attribute):
+        sub_graph = graph.subgraph(nodes)
+        attr_list = list(nx.get_node_attributes(sub_graph, attribute).values())
+        return attr_list
     
     @staticmethod
     def get_node_deps(graph, node):
@@ -329,7 +330,7 @@ class configuration(relational_graph):
 
     @property
     def arguments_symbols(self):
-        return nx.get_node_attributes(self.graph, 'lhs_value').values()
+        return list(nx.get_node_attributes(self.graph, 'lhs_value').values())
 
     @property
     def primary_arguments(self):
@@ -339,6 +340,36 @@ class configuration(relational_graph):
     def geometry_nodes(self):
         return set(i[0] for i in self.graph.nodes(data='lhs_value') if isinstance(i[-1],Geometry))
     
+    def assemble_geometries_graph_data(self):
+        graph = self.graph
+        geo_graph = graph.subgraph(self.geometry_nodes)
+        
+        input_nodes = self.get_input_nodes(geo_graph)
+        input_equal = self.get_nodes_attributes(graph, input_nodes, 'rhs_function')
+
+        mid_nodes = self.get_intermediat_nodes(geo_graph)
+        mid_equal = self.get_nodes_attributes(graph, mid_nodes, 'rhs_function')
+
+        output_nodes = self.get_output_nodes(geo_graph)
+        output_equal = self.get_nodes_attributes(graph, output_nodes, 'rhs_function')
+        
+        data = {'input_nodes':input_nodes,
+                'input_equal':input_equal,
+                'output_nodes':output_nodes,
+                'output_equal':output_equal + mid_equal,
+                'geometries_map':self.geometries_map}
+        return data
+
+    def create_inputs_dataframe(self):
+        nodes  = self.graph.nodes
+        inputs = self.input_nodes
+        condition = lambda i:  isinstance(nodes[i]['lhs_value'], sm.MatrixSymbol)\
+                            or isinstance(nodes[i]['lhs_value'], sm.Symbol)
+        indecies = list(filter(condition, inputs))
+        indecies.sort()
+        shape = (len(indecies),4)
+        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
+        return dataframe
 
     def assemble_base_layer(self):
         edges_data = list(zip(*self.topology.edges(data=True)))
@@ -715,7 +746,7 @@ class standalone_configuration(abstract_configuration):
     def _decorate_relation_methods(self):
         sym = None
         node_type = None
-        methods = ['Mirrored', 'Centered', 'Equal_to', 'Oriented', 'UserInput']
+        methods = ['Mirrored', 'Centered', 'Equal_to', 'Oriented']
         self._relation_methods = self._decorate_components(node_type, sym, methods, CR)
     
     def _decorate_point_methods(self):
