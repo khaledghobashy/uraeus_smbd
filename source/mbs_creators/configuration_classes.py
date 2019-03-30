@@ -188,22 +188,20 @@ class Geometries(object):
 ###############################################################################
 ###############################################################################
     
-equalities_map = {vector: sm.Matrix}
-    
 class relational_graph(object):
     
     def __init__(self, name):
         self.name = name
         self.graph = nx.DiGraph(name=self.name)
-        
+    
     @property
     def input_nodes(self):
         return self.get_input_nodes(self.graph)
     @property
     def input_equalities(self):
-        g = self.graph
         nodes = self.input_nodes
-        equalities = nx.get_node_attributes(g, nodes, 'rhs_function')
+        graph = self.graph.subgraph(nodes)
+        equalities = list(nx.get_node_attributes(graph, 'rhs_function').values())
         return equalities
     
     @property
@@ -211,17 +209,22 @@ class relational_graph(object):
         return self.get_output_nodes(self.graph)
     @property
     def output_equalities(self):
-        g = self.graph
         nodes = self.output_nodes
-        equalities = nx.get_node_attributes(g, nodes, 'rhs_function')
+        graph = self.graph.subgraph(nodes)
+        equalities = list(nx.get_node_attributes(graph, 'rhs_function').values())
         return equalities
     
+    @property
     def intermediat_nodes(self):
         graph = self.graph
         nodes = self.output_nodes
-        edges = itertools.chain(*[self.get_node_deps(graph, n) for n in nodes])
-        mid_nodes = {e[0]:i for i,e in enumerate(edges)}
-        return mid_nodes
+        return self.get_intermediat_nodes(graph, nodes)
+    @property
+    def intermediat_equalities(self):
+        nodes = self.intermediat_nodes
+        graph = self.graph.subgraph(nodes)
+        equalities = list(nx.get_node_attributes(graph, 'rhs_function').values())
+        return equalities
     
     
     def add_node(self, name, symbolic_type):
@@ -282,16 +285,16 @@ class relational_graph(object):
     @staticmethod
     def _get_initial_equality(node_object):
         if isinstance(node_object, sm.MatrixSymbol):
-            return sm.zeros(*node_object.shape)
+            return sm.Eq(node_object, sm.zeros(*node_object.shape))
         elif isinstance(node_object, sm.Symbol):
-            return 1.0
+            return sm.Eq(node_object, 1.0)
         elif issubclass(node_object, sm.Function):
             t = sm.symbols('t')
-            return sm.Lambda(t, 0.0)
+            return sm.Eq(node_object, sm.Lambda(t, 0.0))
 
     @staticmethod
     def get_input_nodes(graph):
-        nodes = [i for i,d in graph.in_degree() if d == 0]
+        nodes = [i for i,d in graph.in_degree() if d==0]
         return nodes
     
     @staticmethod
@@ -299,6 +302,13 @@ class relational_graph(object):
         condition = lambda i,d : d==0 and graph.in_degree(i)!=0
         nodes = [i for i,d in graph.out_degree() if condition(i,d)]
         return nodes
+    
+    @staticmethod
+    def get_intermediat_nodes(graph, zero_outdeg_nodes):
+        nodes = zero_outdeg_nodes
+        edges = itertools.chain(*[relational_graph.get_node_deps(graph, n) for n in nodes])
+        mid_nodes = {e[0]:i for i,e in enumerate(edges)}
+        return mid_nodes
     
     @staticmethod
     def get_node_deps(graph, node):
@@ -312,102 +322,71 @@ class relational_graph(object):
 class configuration(relational_graph):
     
     def __init__(self, name, mbs):
-        super().__init(name)
-        self.topology = mbs
+        super().__init__(name)
+        self.topology = mbs._mbs
         self.geometries_map = {}
                 
 
     @property
     def arguments_symbols(self):
-        return set(nx.get_node_attributes(self.graph,'obj').values())
+        return nx.get_node_attributes(self.graph, 'lhs_value').values()
 
     @property
     def primary_arguments(self):
-        graph = self.graph
-        cond = lambda n : graph.nodes[n]['primary']
-        args = filter(cond,graph.nodes)
-        return set(args)
+        return self.topology.arguments_symbols
     
     @property
     def geometry_nodes(self):
-        return set(i[0] for i in self.graph.nodes(data='obj') if isinstance(i[-1],Geometry))
+        return set(i[0] for i in self.graph.nodes(data='lhs_value') if isinstance(i[-1],Geometry))
+    
 
     def assemble_base_layer(self):
-        self._get_nodes_arguments()
-        self._get_edges_arguments()
-        nx.set_node_attributes(self.graph, True, 'primary')
+        edges_data = list(zip(*self.topology.edges(data=True)))
+        edges_arguments = self._extract_primary_arguments(edges_data[-1])
+        self._add_primary_nodes(edges_arguments)
+        
+        nodes_data = list(zip(*self.topology.nodes(data=True)))
+        nodes_arguments = self._extract_primary_arguments(nodes_data[-1])
+        self._add_primary_nodes(nodes_arguments)
+
         self.bodies = {n:self.topology.nodes[n] for n in self.topology.bodies}
 
-#    def _get_topology_args(self):
-#        nodes = self.topology.nodes
-#        edges = self.topology.edges
-#        nodes_args = [nodes[n]['arguments_symbols'] for n in nodes]
-#        edges_args = [edges[e]['arguments_symbols'] for e in edges]
-#        return nodes_args + edges_args
-    
-    def _add_primary_nodes(self):
-        arguments_symbols = self.mbs.arguments_symbols
-        for arg in arguments_symbols:
-            self.add_node(str(arg), arg.__class__)
-        
-    
-    def _get_nodes_arguments(self):
-        Eq = self._set_base_equality
-        graph   = self.graph
-        
-        for node, data in self.bodies.items():
-            node_2 = data['mirr']
-            args_n = data['arguments_symbols']
-            nodes_args_n = [(str(i),{'func':Eq(i),'obj':i}) for i in args_n]
-            if m == n:
-                graph.add_nodes_from(nodes_args_n)
-                mirr = {i[0]:i[0] for i in nodes_args_n}
-                nx.set_node_attributes(self.graph, mirr, 'mirr')
-            else:
-                args_m = t_nodes[m]['arguments_symbols']
-                args_c = zip(args_n,args_m)
-                nodes_args_m = [(str(m),{'func':Eq(n,m),'obj':m}) for n,m in args_c]
-                graph.add_nodes_from(nodes_args_n+nodes_args_m)
-                edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
-                graph.add_edges_from(edges)    
-                mirr = {m:n for n,m in edges}
-                nx.set_node_attributes(self.graph, mirr, 'mirr')
-                mirr = {n:m for n,m in edges}
-                nx.set_node_attributes(self.graph, mirr, 'mirr')
-    
-    def _get_edges_arguments(self):
-        Eq = self._set_base_equality
-        graph   = self.graph
-        t_edges = self.topology.edges
-        
-        def filter_cond(e):
-            cond = (e not in self.topology.virtual_edges
-                    and t_edges[e]['align'] in 'sr')
-            return cond
-        filtered_edges = filter(filter_cond,t_edges)
-        
-        for e in filtered_edges:
-            n = t_edges[e]['name']
-            m = t_edges[e]['mirr']
-            args_n = t_edges[e]['arguments_symbols']
-            nodes_args_n = [(str(i),{'func':Eq(i),'obj':i}) for i in args_n]
-            if m == n:
-                graph.add_nodes_from(nodes_args_n)
-                mirr = {i[0]:i[0] for i in nodes_args_n}
-                nx.set_node_attributes(self.graph,mirr,'mirr')
-            else:
-                e2 = self.topology._edges_map[m]
-                args_m = t_edges[e2]['arguments_symbols']
-                args_c = zip(args_n,args_m)
-                nodes_args_m = [(str(m),{'func':Eq(n,m),'obj':m}) for n,m in args_c]
-                graph.add_nodes_from(nodes_args_n+nodes_args_m)
-                edges = [(str(n),str(m)) for n,m in zip(args_n,args_m)]
-                graph.add_edges_from(edges)    
-                mirr = {m:n for n,m in edges}
-                nx.set_node_attributes(self.graph,mirr,'mirr')
-                mirr = {n:m for n,m in edges}
-                nx.set_node_attributes(self.graph,mirr,'mirr')
 
+    def _add_primary_nodes(self, arguments_lists):
+        single_args, right_args, left_args = arguments_lists
+        for arg in single_args:
+            node = str(arg)
+            self._add_primary_node(arg, {'mirr':node, 'align':'s'})
+        for arg1, arg2 in zip(right_args, left_args):
+            node1 = str(arg1)
+            node2 = str(arg2)
+            self._add_primary_node(arg1, {'mirr':node2, 'align':'r'})
+            self._add_primary_node(arg2, {'mirr':node1, 'align':'l'})
+            relation = self._get_primary_mirrored_relation(arg1)
+            self.add_relation(relation, node2, (node1,))
+        
+    def _add_primary_node(self, node_object, attrs):
+        name = str(node_object)
+        node_attr_dict = self._create_node_dict(node_object)
+        self.graph.add_node(name, **node_attr_dict, **attrs)
+
+    @staticmethod
+    def _extract_primary_arguments(data_dict):
+        s_args = [n['arguments_symbols'] for n in data_dict if n['align']=='s']
+        r_args = [n['arguments_symbols'] for n in data_dict if n['align']=='r']
+        l_args = [n['arguments_symbols'] for n in data_dict if n['align']=='l']
+        arguments = [itertools.chain(*i) for i in (s_args, r_args, l_args)]
+        return arguments
+
+    @staticmethod
+    def _get_primary_mirrored_relation(arg1):
+        if isinstance(arg1, sm.MatrixSymbol):
+            return Mirrored
+        elif isinstance(arg1, sm.Symbol):
+            return Equal_to
+        elif issubclass(arg1, sm.Function):
+            return Equal_to
+        
 ###############################################################################
 ###############################################################################
 
