@@ -9,6 +9,7 @@ import pickle
 import cloudpickle
 
 import source.mbs_creators.topology_classes as topology_classes
+from source.mbs_creators.configuration_classes import abstract_configuration
 import source.symbolic_classes.joints as joints
 import source.symbolic_classes.forces as forces
 
@@ -133,5 +134,92 @@ class assembly(object):
 class configuration(object):
     
     def __init__(self, name, model_instance):
-        pass
+        self.name = name
+        self._config = abstract_configuration(name, model_instance)
+        self._decorate_methods()
+    
+    @property
+    def add_point(self):
+        return self._point_methods
+    
+    @property
+    def add_vector(self):
+        return self._vector_methods
+    
+    @property
+    def add_scalar(self):
+        return self._scalar_methods
+    
+    @property
+    def add_geometry(self):
+        return self._geometry_methods
+    
+    @property
+    def add_relation(self):
+        return self._relation_methods
+    
+    def _decorate_methods(self):
+        self._decorate_point_methods()
+        self._decorate_vector_methods()
+        self._decorate_scalar_methods()
+        self._decorate_geometry_methods()
+        self._decorate_relation_methods()
+
+    def _decorate_point_methods(self):
+        sym = 'hp'
+        node_type = vector
+        methods = ['Mirrored', 'Centered', 'Equal_to', 'UserInput']
+        self._point_methods = self._decorate_components(node_type, sym, methods, CR)
+        
+    def _decorate_vector_methods(self):
+        sym = 'vc'
+        node_type = vector
+        methods = ['Mirrored', 'Oriented', 'Equal_to', 'UserInput']
+        self._vector_methods = self._decorate_components(node_type, sym, methods, CR)
+
+    def _decorate_scalar_methods(self):
+        sym = ''
+        node_type = sm.symbols
+        methods = ['Equal_to', 'UserInput']
+        self._scalar_methods = self._decorate_components(node_type, sym, methods, CR)
+            
+    def _decorate_geometry_methods(self):
+        sym = 'gm'
+        node_type = Geometry
+        methods = ['Composite_Geometry', 'Cylinder_Geometry', 'Triangular_Prism']
+        self._geometry_methods = self._decorate_components(node_type, sym, methods, Geometries)
+
+    def _decorate_components(self, node_type, sym, methods_list, methods_class):   
+        container_class = type('container', (object,), {})
+        def dummy_init(dself): pass
+        container_class.__init__ = dummy_init
+        container_instance = container_class()
+
+        for name in methods_list:
+            method = getattr(methods_class, name)
+            decorated_method = self._decorate_as_attr(node_type, sym, method)
+            setattr(container_instance, name, decorated_method)
+        
+        return container_instance
+    
+    def _decorate_as_attr(self, node_type, sym, construction_method):
+        
+        if construction_method is None:
+            def decorated(*args, **kwargs):
+                self._add_node(node_type, args[0], **kwargs, sym=sym)
+            decorated.__doc__ = ''
+        
+        elif node_type is None:
+            def decorated(*args, **kwargs):
+                self._add_relation(construction_method, *args, **kwargs)
+            decorated.__doc__ = construction_method.__doc__
+       
+        else:
+            def decorated(*args, **kwargs):
+                node = self._add_node(node_type, args[0], **kwargs, sym=sym)
+                self._add_relation(construction_method, node, *args[1:], **kwargs)
+            decorated.__doc__ = construction_method.__doc__
+        
+        return decorated
+
 
