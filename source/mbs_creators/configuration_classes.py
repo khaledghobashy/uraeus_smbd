@@ -268,11 +268,7 @@ class relational_graph(object):
 ###############################################################################
 
 class abstract_configuration(relational_graph):
-    
-    def __init__(self, name, model_instance):
-        self.topology = model_instance._mbs
-        self.geometries_map = {}
-                
+                    
     def add_node(self, name, symbolic_type, sym='', mirror=False):
         if mirror:
             node1 = '%sr_%s'%(sym, name)
@@ -318,6 +314,11 @@ class abstract_configuration(relational_graph):
 
 class configuration(abstract_configuration):                
 
+    def __init__(self, name, model_instance):
+        self.topology = model_instance._mbs
+        self.geometries_map = {}
+
+        
     @property
     def arguments_symbols(self):
         return list(nx.get_node_attributes(self.graph, 'lhs_value').values())
