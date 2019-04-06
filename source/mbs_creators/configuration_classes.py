@@ -217,11 +217,11 @@ class relational_graph(object):
     def add_node(self, name, **kwargs):
         self.graph.add_node(name, **kwargs)
 
-    def add_relation(self, node, args):
-        graph = self.graph
-        name_attribute = [self._extract_name_and_attr(n) for n in args]
+    def add_relation(self, node, arg_nodes):
+        name_attribute = [self._extract_name_and_attr(n) for n in arg_nodes]
         arguments_names, nested_attributes = zip(*name_attribute)
-        self._update_in_edges(graph, node, arguments_names)
+        passed_attrs = {'passed_attr':i for i in nested_attributes}
+        self._update_in_edges(node, arguments_names, passed_attrs)
 
         
     def draw_node_dependencies(self, node):
@@ -237,11 +237,11 @@ class relational_graph(object):
         nx.draw_circular(self.graph, with_labels=True)
         plt.show()
     
-    def _update_in_edges(self, node, nbunch):
+    def _update_in_edges(self, node, nbunch, edges_attrs):
         graph = self.graph
         old_edges = list(graph.in_edges(node))
         graph.remove_edges_from(old_edges)
-        new_edges = [(i, node) for i in nbunch]
+        new_edges = [(i, node, d) for i, d in zip(nbunch, edges_attrs)]
         graph.add_edges_from(new_edges)
         
     def _extract_name_and_attr(self, argument):
@@ -253,7 +253,7 @@ class relational_graph(object):
             raise ValueError('Node %r is not is the graph.'%node_name)
         return node_name, attribute_string
     
-    def _get_nodes_attributes(self, nodes, attribute):
+    def _get_nodes_attribute(self, nodes, attribute):
         graph = self.graph
         sub_graph = graph.subgraph(nodes)
         attr_list = list(nx.get_node_attributes(sub_graph, attribute).values())
@@ -267,137 +267,41 @@ class relational_graph(object):
 ###############################################################################
 ###############################################################################
 
-class abstract_configuration1(relational_graph):
+class abstract_configuration(relational_graph):
     
     def __init__(self, name, model_instance):
         self.topology = model_instance._mbs
         self.geometries_map = {}
+                
+    def add_node(self, name, symbolic_type, sym='', mirror=False):
+        if mirror:
+            node1 = '%sr_%s'%(sym, name)
+            node2 = '%sl_%s'%(sym, name)
+            node1_attr_dict = self._create_node_dict(node1, symbolic_type, node2)
+            node2_attr_dict = self._create_node_dict(node2, symbolic_type, node1)
+            super().add_node(node1, **node1_attr_dict)
+            super().add_node(node2, **node2_attr_dict)
+            self.add_relation(Mirrored, node2, (node1,))
+        else:
+            node1 = '%ss_%s'%(sym, name)
+            node1_attr_dict = self._create_node_dict(node1, symbolic_type, node1)
+            super().add_node(node1, **node1_attr_dict)
+        return node1
+    
+    def add_relation(self, relation, node, arg_nodes):
+        super().add_relation(node, arg_nodes)
+        self._update_node_rhs(node, relation)
         
-    def _add_single_node(self, name, symbolic_type, sym='', mirr=''):
-        node = '%sr_%s'%(sym, name)
-        node_object = symbolic_type(node)
+    
+    def _update_node_rhs(self, node, rhs_function):
+        self.graph.nodes[node]['rhs_function'] = rhs_function
+    
+    def _create_node_dict(self, name, symbolic_type, mirr=''):
+        node_object = symbolic_type(name)
         function = self._get_initial_equality(node_object)
         attributes_dict = {'lhs_value':node_object, 'rhs_function':function,
                            'mirr':mirr, 'align':'r'}
-        super().add_node(node, **attributes_dict)
-        
-    def add_node(self, name, symbolic_type, sym='', mirror=False):
-        graph = self.graph
-        if mirror:
-            node1 = '%sr_%s'%(sym, name)
-            obj_1 = symbolic_type(node1)
-            equ_1 = self._get_initial_equality(obj_1)
-            dic_1 = {'lhs_value':obj_1, 'rhs_function':equ_1,
-                     'mirr':node2, 'align':'r'}
-            
-            node2 = '%sl_%s'%(sym, name)
-            obj_2 = symbolic_type(node2)
-            equ_2 = self._get_initial_equality(obj_2)
-
-            super().add_node(node1,**{'mirr':node2, 'align':'r'})
-            super().add_node(node2,**{'mirr':node1, 'align':'l'})
-            obj2 = graph.nodes[node2]['obj']
-            graph.nodes[node2].update({'func': Eq(obj1, obj2)})
-            graph.add_edge(node1, node2)
-        else:
-            node1 = node2 = '%ss_%s'%(sym, name)
-            super()._add_node(typ, node1)
-            graph.nodes[node1]['mirr'] = node2
-        return node1
-    
-    def _create_node_dict(self, node_object):
-        function = self._get_initial_equality(node_object)
-        attr_dict = {'lhs_value':node_object, 'rhs_function':function}
-        return attr_dict
-###############################################################################
-###############################################################################
-class relational_graph2(object):
-    
-    def __init__(self, name):
-        self.name = name
-        self.graph = nx.DiGraph(name=self.name)
-    
-    @property
-    def input_nodes(self):
-        return self.get_input_nodes(self.graph)
-    @property
-    def input_equalities(self):
-        nodes = self.input_nodes
-        equalities = self.get_nodes_attributes(self.graph, nodes, 'rhs_function')
-        return equalities
-    
-    @property
-    def output_nodes(self):
-        return self.get_output_nodes(self.graph)
-    @property
-    def output_equalities(self):
-        nodes = self.output_nodes
-        equalities = self.get_nodes_attributes(self.graph, nodes, 'rhs_function')
-        return equalities
-    
-    @property
-    def intermediat_nodes(self):
-        return self.get_intermediat_nodes(self.graph)
-    @property
-    def intermediat_equalities(self):
-        nodes = self.intermediat_nodes
-        equalities = self.get_nodes_attributes(self.graph, nodes, 'rhs_function')
-        return equalities
-    
-    
-    def add_node(self, name, symbolic_type):
-        node_object    = symbolic_type(name)
-        node_attr_dict = self._create_node_dict(node_object)
-        self.graph.add_node(name, **node_attr_dict)
-        
-    def add_relation(self, relation, node, args):
-        graph = self.graph
-        name_object = [self._extract_name_and_object(graph, n) for n in args]
-        arguments_names, arguments_objects = zip(*name_object)
-        graph.nodes[node]['rhs_function'] = relation(*arguments_objects)
-        self._update_in_edges(graph, node, arguments_names)
-    
-    def draw_node_dependencies(self, node):
-        graph = self.graph
-        edges = self.get_node_deps(graph, node)
-        sub_graph = graph.edge_subgraph(edges)
-        plt.figure(figsize=(10, 6))
-        nx.draw_networkx(sub_graph, with_labels=True)
-        plt.show() 
-        
-    def draw_graph(self):
-        plt.figure(figsize=(10, 6))
-        nx.draw_circular(self.graph, with_labels=True)
-        plt.show()
-    
-    def _create_node_dict(self, node_object):
-        function = self._get_initial_equality(node_object)
-        attr_dict = {'lhs_value':node_object, 'rhs_function':function}
-        return attr_dict
-    
-    
-    @staticmethod
-    def _extract_name_and_object(graph, argument):
-        splitted_attributes = argument.split('.')
-        node_name = splitted_attributes[0]
-        if node_name not in graph.nodes:
-            raise ValueError('Node %r is not is the graph.'%node_name)
-        
-        node_object = graph.nodes[node_name]['lhs_value']
-        if len(splitted_attributes) == 1:
-            symbolic_object = node_object
-        else:
-            attribute_string = '.'.join(splitted_attributes[1:])
-            symbolic_object  = getattr(node_object, attribute_string)
-        
-        return node_name, symbolic_object
-        
-    @staticmethod    
-    def _update_in_edges(graph, node, nbunch):
-        old_edges = list(graph.in_edges(node))
-        graph.remove_edges_from(old_edges)
-        new_edges = [(i, node) for i in nbunch]
-        graph.add_edges_from(new_edges)
+        return attributes_dict
 
     @staticmethod
     def _get_initial_equality(node_object):
@@ -408,47 +312,11 @@ class relational_graph2(object):
         elif issubclass(node_object, sm.Function):
             t = sm.symbols('t')
             return sm.Eq(node_object, sm.Lambda(t, 0.0))
-
-    @staticmethod
-    def get_input_nodes(graph):
-        nodes = [i for i,d in graph.in_degree() if d==0]
-        return nodes
     
-    @staticmethod
-    def get_output_nodes(graph):
-        condition = lambda i,d : d==0 and graph.in_degree(i)!=0
-        nodes = [i for i,d in graph.out_degree() if condition(i,d)]
-        return nodes
-    
-    @staticmethod
-    def get_intermediat_nodes(graph):
-        nodes = relational_graph.get_output_nodes(graph)
-        edges = itertools.chain(*[relational_graph.get_node_deps(graph, n) for n in nodes])
-        mid_nodes = {e[0]:i for i,e in enumerate(edges)}
-        return mid_nodes
-    
-    @staticmethod
-    def get_nodes_attributes(graph, nodes, attribute):
-        sub_graph = graph.subgraph(nodes)
-        attr_list = list(nx.get_node_attributes(sub_graph, attribute).values())
-        return attr_list
-    
-    @staticmethod
-    def get_node_deps(graph, node):
-        edges = reversed([e[:-1] for e in nx.edge_bfs(graph, node, 'reverse')])
-        return edges
-    
-
 ###############################################################################
 ###############################################################################
 
-class abstract_configuration(relational_graph):
-    
-    def __init__(self, name, mbs):
-        super().__init__(name)
-        self.topology = mbs._mbs
-        self.geometries_map = {}
-                
+class configuration(abstract_configuration):                
 
     @property
     def arguments_symbols(self):
@@ -539,6 +407,7 @@ class abstract_configuration(relational_graph):
             return Equal_to
         elif issubclass(arg1, sm.Function):
             return Equal_to
-        
+
+
 ###############################################################################
 ###############################################################################
