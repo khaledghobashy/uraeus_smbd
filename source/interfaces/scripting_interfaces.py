@@ -12,7 +12,9 @@ import sympy as sm
 import source.mbs_creators.topology_classes as topology_classes
 import source.symbolic_classes.joints as joints
 import source.symbolic_classes.forces as forces
-from source.code_generators.python_code_generators import template_code_generator
+from source.code_generators.python_code_generators import (template_code_generator,
+                                                           configuration_code_generator)
+from source.post_processors.blender.scripter import scripter
 
 from source.symbolic_classes.abstract_matrices import vector
 from source.mbs_creators.configuration_classes import (configuration, Geometries,
@@ -167,6 +169,15 @@ class configuration1(object):
     
     def assemble_base_layer(self):
         self._config.assemble_base_layer()
+        
+    def write_python_code(self):
+        numerical_code = configuration_code_generator(self)
+        numerical_code.write_code_file()
+        
+    def write_blender_script(self):
+        blender_code_gen = scripter(self)
+        blender_code_gen.write_code_file()
+        
     
     def _decorate_methods(self):
         self._decorate_point_methods()

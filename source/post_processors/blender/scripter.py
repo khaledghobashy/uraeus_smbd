@@ -14,11 +14,11 @@ class scripter(object):
         
     def __init__(self,config,printer=numerical_printer()):
         
-        self.config  = config
-        self.printer = printer
+        self.config  = config._config
         self.name = self.config.name
-        
-        data = config.get_geometries_graph_data()
+        self.printer = printer
+
+        data = self.config.get_geometries_graph_data()
         self.input_args   = data['input_nodes']
         self.output_args  = data['output_nodes']
         self.input_equalities  = data['input_equal']

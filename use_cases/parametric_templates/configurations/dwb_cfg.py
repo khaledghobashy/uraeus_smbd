@@ -6,15 +6,10 @@ Created on Wed Feb 13 09:56:01 2019
 """
 import os
 
-from source.mbs_creators.topology_helpers import parametric_configuration
-from source.code_generators.python_code_generators import configuration_code_generator
-from source.post_processors.blender.scripter import scripter
-
+from source.interfaces.scripting_interfaces import configuration1
 import use_cases.parametric_templates.templates.double_wishbone_direct_acting as model
 
 configuration_name = os.path.basename(__file__).split('.')[0]
-
-from source.interfaces.scripting_interfaces import configuration1
 
 def main():
     
@@ -104,13 +99,10 @@ def main():
     
     config.add_geometry.Cylinder_Geometry('hub', ('hpr_wc','R_rbr_upright','s_hub_radius'), mirror=True)
     config.assign_geometry_to_body('rbr_hub', 'gmr_hub', mirror=True)
-        
     
-#    config_code = configuration_code_generator(config)
-#    config_code.write_code_file()
-#
-#    geo_code = scripter(config)
-#    geo_code.write_code_file()
+    # Writing Code Files
+    config.write_python_code()
+    config.write_blender_script()
 
 
 if __name__ == '__main__':

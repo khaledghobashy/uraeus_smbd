@@ -85,7 +85,7 @@ class configuration_code_generator(abstract_generator):
         
     def __init__(self,config,printer=numerical_printer()):
         
-        self.config  = config
+        self.config  = config._config
         self.printer = printer
         self.name = self.config.name
                 

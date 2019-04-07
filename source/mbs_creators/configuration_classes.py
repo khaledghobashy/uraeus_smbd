@@ -196,23 +196,15 @@ class relational_graph(object):
         
     @property
     def input_nodes(self):
-        graph = self.graph
-        nodes = [i for i,d in graph.in_degree() if d==0]
-        return nodes
+        return self._get_input_nodes()
     
     @property
     def intermediat_nodes(self):
-        nodes = self.output_nodes
-        edges = itertools.chain(*[self._get_node_predecessors(n) for n in nodes])
-        mid_nodes = {e[0]:i for i,e in enumerate(edges)}
-        return mid_nodes
+        return self._get_intermediat_nodes()
 
     @property
     def output_nodes(self):
-        graph = self.graph
-        condition = lambda i,d : d==0 and graph.in_degree(i)!=0
-        nodes = [i for i,d in graph.out_degree() if condition(i,d)]
-        return nodes
+        return self._get_output_nodes()
     
     def add_node(self, name, **kwargs):
         self.graph.add_node(name, **kwargs)
@@ -259,15 +251,51 @@ class relational_graph(object):
         attr_list = list(nx.get_node_attributes(sub_graph, attribute).values())
         return attr_list
     
-    def _get_node_predecessors(self, node):
-        graph = self.graph
+    def _get_node_predecessors(self, node, graph=None):
+        if graph is None: graph = self.graph
         edges = reversed([e[:-1] for e in nx.edge_bfs(graph, node, 'reverse')])
         return edges
+    
+    def _get_input_nodes(self, graph=None):
+        if graph is None: graph = self.graph
+        nodes = [i for i,d in graph.in_degree() if d==0]
+        return nodes
+    
+    def _get_output_nodes(self, graph=None):
+        if graph is None: graph = self.graph
+        condition = lambda i,d : d==0 and graph.in_degree(i)!=0
+        nodes = [i for i,d in graph.out_degree() if condition(i,d)]
+        return nodes
+
+    def _get_intermediat_nodes(self, graph=None):
+        if graph is None: graph = self.graph
+        nodes = self._get_output_nodes(graph)
+        edges = itertools.chain(*[self._get_node_predecessors(n, graph) for n in nodes])
+        mid_nodes = {e[0]:i for i,e in enumerate(edges)}
+        return mid_nodes
 
 ###############################################################################
 ###############################################################################
 
 class abstract_configuration(relational_graph):
+    
+    @property
+    def input_equalities(self):
+        nodes = self.input_nodes
+        equalities = self._get_nodes_attribute(nodes, 'rhs_function')
+        return equalities
+    
+    @property
+    def intermediat_equalities(self):
+        nodes = self.intermediat_nodes
+        equalities = self._get_nodes_attribute(nodes, 'rhs_function')
+        return equalities
+
+    @property
+    def output_equalities(self):
+        nodes = self.output_nodes
+        equalities = self._get_nodes_attribute(nodes, 'rhs_function')
+        return equalities
                     
     def add_node(self, name, symbolic_type, sym='', mirror=False):
         if mirror:
@@ -342,21 +370,21 @@ class configuration(abstract_configuration):
     @property
     def geometry_nodes(self):
         nodes = self.graph.nodes
-        geometries = [n for n in nodes if isinstance(n['lhs_value'], Geometry)]
+        geometries = [n for n in nodes if isinstance(nodes[n]['lhs_value'], Geometry)]
         return geometries
     
-    def assemble_geometries_graph_data(self):
+    def get_geometries_graph_data(self):
         graph = self.graph
         geo_graph = graph.subgraph(self.geometry_nodes)
         
-        input_nodes = self.get_input_nodes(geo_graph)
-        input_equal = self.get_nodes_attributes(graph, input_nodes, 'rhs_function')
+        input_nodes = self._get_input_nodes(geo_graph)
+        input_equal = self._get_nodes_attribute(input_nodes, 'rhs_function')
 
-        mid_nodes = self.get_intermediat_nodes(geo_graph)
-        mid_equal = self.get_nodes_attributes(graph, mid_nodes, 'rhs_function')
+        mid_nodes = self._get_intermediat_nodes(geo_graph)
+        mid_equal = self._get_nodes_attribute(mid_nodes, 'rhs_function')
 
-        output_nodes = self.get_output_nodes(geo_graph)
-        output_equal = self.get_nodes_attributes(graph, output_nodes, 'rhs_function')
+        output_nodes = self._get_output_nodes(geo_graph)
+        output_equal = self._get_nodes_attribute(output_nodes, 'rhs_function')
         
         data = {'input_nodes':input_nodes,
                 'input_equal':input_equal,
