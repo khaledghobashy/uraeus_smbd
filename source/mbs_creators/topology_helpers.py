@@ -606,7 +606,7 @@ class parametric_configuration(standalone_configuration):
             super()._add_node(typ, node1)
             graph.nodes[node1]['mirr'] = node2
         return node1
-            
+    
     def _add_relation(self, relation, node, args, mirror=False):
         if mirror:
             node1 = node

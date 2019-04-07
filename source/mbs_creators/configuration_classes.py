@@ -220,7 +220,7 @@ class relational_graph(object):
     def add_relation(self, node, arg_nodes):
         name_attribute = [self._extract_name_and_attr(n) for n in arg_nodes]
         arguments_names, nested_attributes = zip(*name_attribute)
-        passed_attrs = {'passed_attr':i for i in nested_attributes}
+        passed_attrs = [{'passed_attr':i if i!='' else None } for i in nested_attributes]
         self._update_in_edges(node, arguments_names, passed_attrs)
 
         
@@ -273,30 +273,40 @@ class abstract_configuration(relational_graph):
         if mirror:
             node1 = '%sr_%s'%(sym, name)
             node2 = '%sl_%s'%(sym, name)
-            node1_attr_dict = self._create_node_dict(node1, symbolic_type, node2)
-            node2_attr_dict = self._create_node_dict(node2, symbolic_type, node1)
+            node1_attr_dict = self._create_node_dict(node1, symbolic_type, node2, align='r')
+            node2_attr_dict = self._create_node_dict(node2, symbolic_type, node1, align='l')
             super().add_node(node1, **node1_attr_dict)
             super().add_node(node2, **node2_attr_dict)
             self.add_relation(Mirrored, node2, (node1,))
         else:
             node1 = '%ss_%s'%(sym, name)
-            node1_attr_dict = self._create_node_dict(node1, symbolic_type, node1)
+            node1_attr_dict = self._create_node_dict(node1, symbolic_type, node1, align='s')
             super().add_node(node1, **node1_attr_dict)
         return node1
     
-    def add_relation(self, relation, node, arg_nodes):
-        super().add_relation(node, arg_nodes)
-        self._update_node_rhs(node, relation)
-        
+    def add_relation(self, relation, node, arg_nodes, mirror=False):
+        if mirror:
+            node1 = node
+            node2 = self.graph.nodes[node1]['mirr']
+            args1 = arg_nodes
+            args2 = [self.graph.nodes[i]['mirr'] for i in args1]
+            super().add_relation(node1, args1)
+            super().add_relation(node2, args2)
+            self._update_node_rhs(node1, relation)
+            self._update_node_rhs(node2, relation)
+        else:
+            super().add_relation(node, arg_nodes)
+            self._update_node_rhs(node, relation)
+    
     
     def _update_node_rhs(self, node, rhs_function):
         self.graph.nodes[node]['rhs_function'] = rhs_function
     
-    def _create_node_dict(self, name, symbolic_type, mirr=''):
+    def _create_node_dict(self, name, symbolic_type, mirr='',align='s'):
         node_object = symbolic_type(name)
         function = self._get_initial_equality(node_object)
         attributes_dict = {'lhs_value':node_object, 'rhs_function':function,
-                           'mirr':mirr, 'align':'r'}
+                           'mirr':mirr, 'align':align}
         return attributes_dict
 
     @staticmethod
@@ -315,13 +325,15 @@ class abstract_configuration(relational_graph):
 class configuration(abstract_configuration):                
 
     def __init__(self, name, model_instance):
+        super().__init__(name)
         self.topology = model_instance._mbs
         self.geometries_map = {}
 
         
     @property
     def arguments_symbols(self):
-        return list(nx.get_node_attributes(self.graph, 'lhs_value').values())
+        nodes = self.graph.nodes(data='lhs_value')
+        return [n[-1] for n in nodes]
 
     @property
     def primary_arguments(self):
@@ -329,7 +341,9 @@ class configuration(abstract_configuration):
     
     @property
     def geometry_nodes(self):
-        return set(i[0] for i in self.graph.nodes(data='lhs_value') if isinstance(i[-1],Geometry))
+        nodes = self.graph.nodes
+        geometries = [n for n in nodes if isinstance(n['lhs_value'], Geometry)]
+        return geometries
     
     def assemble_geometries_graph_data(self):
         graph = self.graph
@@ -373,24 +387,46 @@ class configuration(abstract_configuration):
 
         self.bodies = {n:self.topology.nodes[n] for n in self.topology.bodies}
 
+            
+    def assign_geometry_to_body(self, body, geo, eval_inertia=True, mirror=False):
+        b1 = body
+        g1 = geo
+        b2 = self.bodies[body]['mirr']
+        g2 = self.graph.nodes[geo]['mirr']
+        self._assign_geometry_to_body(b1, g1, eval_inertia)
+        if b1 != b2 : self._assign_geometry_to_body(b2, g2, eval_inertia)
+
 
     def _add_primary_nodes(self, arguments_lists):
         single_args, right_args, left_args = arguments_lists
         for arg in single_args:
             node = str(arg)
-            self._add_primary_node(arg, {'mirr':node, 'align':'s'})
+            self._add_primary_node(arg, mirr=node, align='s')
         for arg1, arg2 in zip(right_args, left_args):
             node1 = str(arg1)
             node2 = str(arg2)
-            self._add_primary_node(arg1, {'mirr':node2, 'align':'r'})
-            self._add_primary_node(arg2, {'mirr':node1, 'align':'l'})
+            self._add_primary_node(arg1, mirr=node2, align='r')
+            self._add_primary_node(arg2, mirr=node1, align='l')
             relation = self._get_primary_mirrored_relation(arg1)
             self.add_relation(relation, node2, (node1,))
         
-    def _add_primary_node(self, node_object, attrs):
+    def _add_primary_node(self, node_object, mirr='', align='s'):
         name = str(node_object)
-        node_attr_dict = self._create_node_dict(node_object)
-        self.graph.add_node(name, **node_attr_dict, **attrs)
+        function = self._get_initial_equality(node_object)
+        attributes_dict = {'lhs_value':node_object, 'rhs_function':function,
+                           'mirr':mirr, 'align':align}
+        self.graph.add_node(name, **attributes_dict)
+
+    def _assign_geometry_to_body(self, body, geo, eval_inertia=True):
+        b = self.bodies[body]['obj']
+        R, P, m, J = [str(getattr(b,i)) for i in 'R,P,m,Jbar'.split(',')]
+        self.geometries_map[geo] = body
+        if eval_inertia:
+            self.add_relation(CR.Equal_to, R, ('%s.R'%geo,))
+            self.add_relation(CR.Equal_to, P, ('%s.P'%geo,))
+            self.add_relation(CR.Equal_to, J, ('%s.J'%geo,))
+            self.add_relation(CR.Equal_to, m, ('%s.m'%geo,))
+
 
     @staticmethod
     def _extract_primary_arguments(data_dict):
@@ -408,7 +444,6 @@ class configuration(abstract_configuration):
             return Equal_to
         elif issubclass(arg1, sm.Function):
             return Equal_to
-
 
 ###############################################################################
 ###############################################################################

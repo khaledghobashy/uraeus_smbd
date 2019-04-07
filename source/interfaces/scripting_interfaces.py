@@ -7,13 +7,16 @@ Created on Wed Mar 27 08:49:16 2019
 import os
 import pickle
 import cloudpickle
+import sympy as sm
 
 import source.mbs_creators.topology_classes as topology_classes
-from source.mbs_creators.configuration_classes import abstract_configuration
 import source.symbolic_classes.joints as joints
 import source.symbolic_classes.forces as forces
-
 from source.code_generators.python_code_generators import template_code_generator
+
+from source.symbolic_classes.abstract_matrices import vector
+from source.mbs_creators.configuration_classes import (configuration, Geometries,
+                                                       CR, Geometry)
 
 
 class topology(object):
@@ -131,11 +134,11 @@ class assembly(object):
 ###############################################################################
 ###############################################################################
 
-class configuration(object):
+class configuration1(object):
     
     def __init__(self, name, model_instance):
         self.name = name
-        self._config = abstract_configuration(name, model_instance)
+        self._config = configuration(name, model_instance)
         self._decorate_methods()
     
     @property
@@ -157,6 +160,13 @@ class configuration(object):
     @property
     def add_relation(self):
         return self._relation_methods
+    
+    def assign_geometry_to_body(self, body, geo, eval_inertia=True, mirror=False):
+        self._config.assign_geometry_to_body(body, geo, eval_inertia, mirror)
+
+    
+    def assemble_base_layer(self):
+        self._config.assemble_base_layer()
     
     def _decorate_methods(self):
         self._decorate_point_methods()
@@ -189,6 +199,12 @@ class configuration(object):
         methods = ['Composite_Geometry', 'Cylinder_Geometry', 'Triangular_Prism']
         self._geometry_methods = self._decorate_components(node_type, sym, methods, Geometries)
 
+    def _decorate_relation_methods(self):
+        sym = None
+        node_type = None
+        methods = ['Mirrored', 'Centered', 'Equal_to', 'Oriented', 'UserInput']
+        self._relation_methods = self._decorate_components(node_type, sym, methods, CR)
+
     def _decorate_components(self, node_type, sym, methods_list, methods_class):   
         container_class = type('container', (object,), {})
         def dummy_init(dself): pass
@@ -202,24 +218,31 @@ class configuration(object):
         
         return container_instance
     
-    def _decorate_as_attr(self, node_type, sym, construction_method):
+    def _decorate_as_attr(self, symbolic_type, sym, construction_method):
         
         if construction_method is None:
             def decorated(*args, **kwargs):
-                self._add_node(node_type, args[0], **kwargs, sym=sym)
+                name = args[0]
+                self._add_node(name, symbolic_type , sym=sym, **kwargs)
             decorated.__doc__ = ''
         
-        elif node_type is None:
+        elif symbolic_type is None:
             def decorated(*args, **kwargs):
                 self._add_relation(construction_method, *args, **kwargs)
             decorated.__doc__ = construction_method.__doc__
        
         else:
             def decorated(*args, **kwargs):
-                node = self._add_node(node_type, args[0], **kwargs, sym=sym)
+                name = args[0]
+                node = self._add_node(name, symbolic_type, sym=sym, **kwargs)
                 self._add_relation(construction_method, node, *args[1:], **kwargs)
             decorated.__doc__ = construction_method.__doc__
         
         return decorated
+    
+    def _add_node(self, name, symbolic_type, **kwargs):
+        return self._config.add_node(name, symbolic_type, **kwargs)
 
+    def _add_relation(self, relation, node, arg_nodes, **kwargs):
+        self._config.add_relation(relation, node, arg_nodes, **kwargs)
 

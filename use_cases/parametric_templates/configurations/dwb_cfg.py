@@ -14,11 +14,13 @@ import use_cases.parametric_templates.templates.double_wishbone_direct_acting as
 
 configuration_name = os.path.basename(__file__).split('.')[0]
 
+from source.interfaces.scripting_interfaces import configuration1
+
 def main():
     
     global config
     
-    config = parametric_configuration(configuration_name, model.template)
+    config = configuration1(configuration_name, model.template)
     config.assemble_base_layer()
     
     # Adding Points
@@ -104,11 +106,11 @@ def main():
     config.assign_geometry_to_body('rbr_hub', 'gmr_hub', mirror=True)
         
     
-    config_code = configuration_code_generator(config)
-    config_code.write_code_file()
-
-    geo_code = scripter(config)
-    geo_code.write_code_file()
+#    config_code = configuration_code_generator(config)
+#    config_code.write_code_file()
+#
+#    geo_code = scripter(config)
+#    geo_code.write_code_file()
 
 
 if __name__ == '__main__':
