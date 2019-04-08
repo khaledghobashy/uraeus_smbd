@@ -33,23 +33,23 @@ f.TR.config.AF_mcl_ver_act = lambda t : 170*np.sin(t)
 f.TR.config.AF_jcr_rev = lambda t :  np.deg2rad(360)*t
 f.TR.config.AF_jcl_rev = lambda t : -np.deg2rad(360)*t
 
-damping_data = lookup_table('damping')
-damping_data.read_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Data\ST500_Damping.csv')
-damping_func = damping_data.get_interpolator()
-def damping_func_mod(x):
-    return damping_func(x)*1e6
-f.SU.config.Fd_fal_strut = damping_func_mod
-f.SU.config.Fd_far_strut = damping_func_mod
-
-
-stiffness_data = lookup_table('stiffness')
-stiffness_data.read_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Data\ST500_GasSpring_IsoThermal.csv')
-stiffness_func = stiffness_data.get_interpolator()
-def stiffness_func_mod(x):
-    x = (x if x>=0 else 0)
-    return stiffness_func(x)*1e6
-f.SU.config.Fs_fal_strut = stiffness_func_mod
-f.SU.config.Fs_far_strut = stiffness_func_mod
+#damping_data = lookup_table('damping')
+#damping_data.read_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Data\ST500_Damping.csv')
+#damping_func = damping_data.get_interpolator()
+#def damping_func_mod(x):
+#    return damping_func(x)*1e6
+#f.SU.config.Fd_fal_strut = damping_func_mod
+#f.SU.config.Fd_far_strut = damping_func_mod
+#
+#
+#stiffness_data = lookup_table('stiffness')
+#stiffness_data.read_csv(r'C:\Users\khaled.ghobashy\Desktop\Khaled Ghobashy\Data\ST500_GasSpring_IsoThermal.csv')
+#stiffness_func = stiffness_data.get_interpolator()
+#def stiffness_func_mod(x):
+#    x = (x if x>=0 else 0)
+#    return stiffness_func(x)*1e6
+#f.SU.config.Fs_fal_strut = stiffness_func_mod
+#f.SU.config.Fs_far_strut = stiffness_func_mod
 
 
 f.SU.config.far_strut_FL = 794
