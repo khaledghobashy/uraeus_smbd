@@ -88,10 +88,11 @@ class configuration_code_generator(abstract_generator):
         self.config  = config._config
         self.printer = printer
         self.name = self.config.name
-                
+        
         self.config_vars = [printer._print(i) for i in self.config.arguments_symbols]
         self.input_args  = self.config.input_equalities
-        self.output_args = self.config.output_equalities
+        self.output_args = self.config.intermediat_equalities \
+                         + self.config.output_equalities
         
         self.gen_coordinates_sym = [printer._print(exp.lhs) 
         for exp in self.config.topology.mapped_gen_coordinates]

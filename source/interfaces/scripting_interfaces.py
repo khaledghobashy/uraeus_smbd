@@ -171,6 +171,7 @@ class configuration1(object):
         self._config.assemble_base_layer()
         
     def write_python_code(self):
+        self._config.assemble_equalities()
         numerical_code = configuration_code_generator(self)
         numerical_code.write_code_file()
         

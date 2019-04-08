@@ -271,7 +271,11 @@ class relational_graph(object):
         if graph is None: graph = self.graph
         nodes = self._get_output_nodes(graph)
         edges = itertools.chain(*[self._get_node_predecessors(n, graph) for n in nodes])
-        mid_nodes = {e[0]:i for i,e in enumerate(edges)}
+        mid_nodes = []
+        for e in edges:
+            node = e[0]
+            if node not in mid_nodes and node not in self.input_nodes:
+                mid_nodes.append(node)
         return mid_nodes
 
 ###############################################################################
@@ -279,24 +283,46 @@ class relational_graph(object):
 
 class abstract_configuration(relational_graph):
     
-    @property
-    def input_equalities(self):
-        nodes = self.input_nodes
-        equalities = self._get_nodes_attribute(nodes, 'rhs_function')
-        return equalities
+#    @property
+#    def input_equalities(self):
+#        nodes = self.input_nodes
+#        equalities = self._get_nodes_attribute(nodes, 'rhs_function')
+#        return equalities
+#    
+#    @property
+#    def intermediat_equalities(self):
+#        nodes = self.intermediat_nodes
+#        equalities = self._get_nodes_attribute(nodes, 'rhs_function')
+#        return equalities
+#
+#    @property
+#    def output_equalities(self):
+#        nodes = self.output_nodes
+#        equalities = self._get_nodes_attribute(nodes, 'rhs_function')
+#        return equalities
     
-    @property
-    def intermediat_equalities(self):
-        nodes = self.intermediat_nodes
-        equalities = self._get_nodes_attribute(nodes, 'rhs_function')
+    def assemble_equalities(self):
+        self.input_equalities = self._evaluate_nodes(self.input_nodes)
+        self.intermediat_equalities = self._evaluate_nodes(self.intermediat_nodes)
+        self.output_equalities = self._evaluate_nodes(self.output_nodes)
+        
+    def _evaluate_nodes(self, nodes):
+        equalities = [self._evaluate_node(n) for n in nodes]
         return equalities
-
-    @property
-    def output_equalities(self):
-        nodes = self.output_nodes
-        equalities = self._get_nodes_attribute(nodes, 'rhs_function')
-        return equalities
-                    
+        
+    def _evaluate_node(self, node):
+        nodes = self.graph.nodes
+        lhs_value = nodes[node]['lhs_value']
+        rhs_function = nodes[node]['rhs_function']
+        if rhs_function is None:
+            equality = self._get_initial_equality(lhs_value)
+        else:
+            input_nodes = self.graph.predecessors(node)
+            input_values = self._get_nodes_attribute(input_nodes, 'lhs_value')
+            rhs_value = rhs_function(*input_values)
+            equality = sm.Eq(lhs_value, rhs_value, evaluate=False)
+        return equality
+        
     def add_node(self, name, symbolic_type, sym='', mirror=False):
         if mirror:
             node1 = '%sr_%s'%(sym, name)
@@ -332,7 +358,7 @@ class abstract_configuration(relational_graph):
     
     def _create_node_dict(self, name, symbolic_type, mirr='',align='s'):
         node_object = symbolic_type(name)
-        function = self._get_initial_equality(node_object)
+        function = None #self._get_initial_equality(node_object)
         attributes_dict = {'lhs_value':node_object, 'rhs_function':function,
                            'mirr':mirr, 'align':align}
         return attributes_dict
@@ -340,12 +366,12 @@ class abstract_configuration(relational_graph):
     @staticmethod
     def _get_initial_equality(node_object):
         if isinstance(node_object, sm.MatrixSymbol):
-            return sm.Eq(node_object, sm.zeros(*node_object.shape))
+            return sm.Eq(node_object, sm.zeros(*node_object.shape), evaluate=False)
         elif isinstance(node_object, sm.Symbol):
-            return sm.Eq(node_object, 1.0)
+            return sm.Eq(node_object, 1.0, evaluate=False)
         elif issubclass(node_object, sm.Function):
             t = sm.symbols('t')
-            return sm.Eq(node_object, sm.Lambda(t, 0.0))
+            return sm.Eq(node_object, sm.Lambda(t, 0.0), evaluate=False)
     
 ###############################################################################
 ###############################################################################
@@ -440,7 +466,7 @@ class configuration(abstract_configuration):
         
     def _add_primary_node(self, node_object, mirr='', align='s'):
         name = str(node_object)
-        function = self._get_initial_equality(node_object)
+        function = None #self._get_initial_equality(node_object)
         attributes_dict = {'lhs_value':node_object, 'rhs_function':function,
                            'mirr':mirr, 'align':align}
         self.graph.add_node(name, **attributes_dict)
