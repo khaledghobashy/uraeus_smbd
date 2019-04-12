@@ -18,13 +18,14 @@ from source.symbolic_classes.joints import absolute_locator
 from source.symbolic_classes.algebraic_constraints import joint_actuator
 from source.symbolic_classes.forces import generic_force, gravity_force, centrifugal_force
 
-from source.mbs_creators.topology_helpers import parametric_configuration
+from source.mbs_creators.configuration_classes import abstract_configuration
 
 ###############################################################################
 
 class abstract_topology(object):
     
     def __init__(self,name):
+        
         self.name = name
         self.graph = nx.MultiDiGraph(name=name)
         self._edges_map = {}
@@ -32,8 +33,8 @@ class abstract_topology(object):
 
         self._insert_ground()
         self._set_global_frame()
-        self._param_config = parametric_configuration('%s_bcfg'%name,self)
-
+        self._param_config = abstract_configuration('%s_bcfg'%name, self)
+    
     @property
     def param_config(self):
         return self._param_config
@@ -169,6 +170,7 @@ class abstract_topology(object):
     
     def _initialize_toplogy_reqs(self):
         self.param_config.assemble_base_layer()
+        self.param_config.assemble_equalities()
 
     def _perform_cse(self):
         self.pos_rep, self.pos_exp = self._generate_cse(self.pos_equations, 'x')

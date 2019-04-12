@@ -12,22 +12,29 @@ import sympy as sm
 import source.mbs_creators.topology_classes as topology_classes
 import source.symbolic_classes.joints as joints
 import source.symbolic_classes.forces as forces
-from source.code_generators.python_code_generators import (template_code_generator,
+from source.code_generators.python_code_generators import (assembly_code_generator,
+                                                           template_code_generator,
                                                            configuration_code_generator)
 from source.post_processors.blender.scripter import scripter
 
 from source.symbolic_classes.abstract_matrices import vector
-from source.mbs_creators.configuration_classes import (configuration, Geometries,
+from source.mbs_creators.configuration_classes import (abstract_configuration, 
+                                                       Geometries,
                                                        CR, Geometry)
 
+
+def get_file_name(script_path):
+    name = os.path.basename(script_path).split('.')[0]
+    return name
+
+###############################################################################
+###############################################################################
 
 class topology(object):
     
     def __init__(self, script_path):
-        
         self.script_path = script_path
-        
-        self.name = os.path.basename(script_path).split('.')[0]
+        self.name = get_file_name(script_path)
         self._mbs = topology_classes.template_based_topology(self.name)
         
         self._decorate_joints()
@@ -55,7 +62,7 @@ class topology(object):
     def write_python_code(self):
         numerical_code = template_code_generator(self._mbs)
         numerical_code.write_code_file()
-        
+    
     def save(self):
         file = '%s.stpl'%os.path.splitext(self.script_path)[0]
         with open(file,'wb') as f:
@@ -124,23 +131,46 @@ class topology(object):
 
 class assembly(object):
     
-    def __init__(self, name):
-        self._mbs = topology_classes.assembly(name)
+    def __init__(self, script_path):
+        self.script_path = script_path
+        self.name = get_file_name(script_path)
+        self._mbs = topology_classes.assembly(self.name)
         
-    def add_subsystem(self, subsystem):
+    def add_subsystem(self, subsystem_name, template_instance):
+        try :
+            template_instance = template_instance._mbs
+        except AttributeError:
+            pass
+        subsystem = topology_classes.subsystem(subsystem_name, template_instance)
         self._mbs.add_subsystem(subsystem)
         
     def assign_virtual_body(self, virtual_node, actual_node):
         self._mbs.assign_virtual_body(virtual_node, actual_node)
-            
+    
+    def assemble_model(self):
+        self._mbs.assemble_model()
+    
+    def write_python_code(self):
+        code = assembly_code_generator(self._mbs)
+        code.write_code_file()
+    
+    def draw_constraints_topology(self):
+        self._mbs.draw_constraints_topology()
+    
+    def draw_interface_graph(self):
+        self._mbs.draw_interface_graph()
+        
 ###############################################################################
 ###############################################################################
 
-class configuration1(object):
+class configuration(object):
     
-    def __init__(self, name, model_instance):
-        self.name = name
-        self._config = configuration(name, model_instance)
+    def __init__(self, script_path, model_instance):
+        self.script_path = script_path
+        self.name = get_file_name(script_path)
+        
+        self._config = abstract_configuration(self.name, model_instance._mbs)
+        self._config.assemble_base_layer()
         self._decorate_methods()
     
     @property
@@ -166,10 +196,7 @@ class configuration1(object):
     def assign_geometry_to_body(self, body, geo, eval_inertia=True, mirror=False):
         self._config.assign_geometry_to_body(body, geo, eval_inertia, mirror)
 
-    
-    def assemble_base_layer(self):
-        self._config.assemble_base_layer()
-        
+            
     def write_python_code(self):
         self._config.assemble_equalities()
         numerical_code = configuration_code_generator(self)

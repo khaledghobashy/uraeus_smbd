@@ -4,19 +4,13 @@ Created on Wed Feb 13 09:56:01 2019
 
 @author: khaled.ghobashy
 """
-import os
-
-from source.interfaces.scripting_interfaces import configuration1
+from source.interfaces.scripting_interfaces import configuration
 import use_cases.parametric_templates.templates.double_wishbone_direct_acting as model
-
-configuration_name = os.path.basename(__file__).split('.')[0]
 
 def main():
     
     global config
-    
-    config = configuration1(configuration_name, model.template)
-    config.assemble_base_layer()
+    config = configuration(__file__, model.template)
     
     # Adding Points
     config.add_point.UserInput('ucaf', mirror=True)

@@ -283,8 +283,29 @@ class relational_graph(object):
 ###############################################################################
 
 class abstract_configuration(relational_graph):
+
+    def __init__(self, name, model_instance):
+        super().__init__(name)
+        self._config = self
+        self.topology = model_instance
+        self.geometries_map = {}
+
+        
+    @property
+    def arguments_symbols(self):
+        nodes = self.graph.nodes(data='lhs_value')
+        return [n[-1] for n in nodes]
+
+    @property
+    def primary_arguments(self):
+        return self.topology.arguments_symbols
     
-            
+    @property
+    def geometry_nodes(self):
+        nodes = self.graph.nodes
+        geometries = [n for n in nodes if isinstance(nodes[n]['lhs_value'], Geometry)]
+        return geometries
+    
     def add_node(self, name, symbolic_type, sym='', mirror=False):
         if mirror:
             node1 = '%sr_%s'%(sym, name)
@@ -313,76 +334,12 @@ class abstract_configuration(relational_graph):
         else:
             super().add_relation(node, arg_nodes)
             self._update_node_rhs(node, relation)
-    
-    
-    def _update_node_rhs(self, node, rhs_function):
-        self.graph.nodes[node]['rhs_function'] = rhs_function
-    
-    def _create_node_dict(self, name, symbolic_type, mirr='',align='s'):
-        node_object = symbolic_type(name)
-        function = None #self._get_initial_equality(node_object)
-        attributes_dict = {'lhs_value':node_object, 'rhs_function':function,
-                           'mirr':mirr, 'align':align}
-        return attributes_dict
-    
+        
     def assemble_equalities(self):
         self.input_equalities = self._evaluate_nodes(self.input_nodes)
         self.intermediat_equalities = self._evaluate_nodes(self.intermediat_nodes)
         self.output_equalities = self._evaluate_nodes(self.output_nodes)
         
-    def _evaluate_nodes(self, nodes):
-        equalities = [self._evaluate_node(n) for n in nodes]
-        return equalities
-        
-    def _evaluate_node(self, node):
-        nodes = self.graph.nodes
-        lhs_value = nodes[node]['lhs_value']
-        rhs_function = nodes[node]['rhs_function']
-        if rhs_function is None:
-            equality = self._get_initial_equality(lhs_value)
-        else:
-            input_edges = self.graph.in_edges(node, data='passed_attr')
-            inputs = [(nodes[e[0]]['lhs_value'], e[-1]) for e in input_edges]
-            input_values = [i[0] if i[1] is None else getattr(*i) for i in inputs]
-            rhs_value = rhs_function(*input_values)
-            equality = sm.Eq(lhs_value, rhs_value, evaluate=False)
-        return equality
-    
-    @staticmethod
-    def _get_initial_equality(node_object):
-        if isinstance(node_object, sm.MatrixSymbol):
-            return sm.Eq(node_object, sm.zeros(*node_object.shape), evaluate=False)
-        elif isinstance(node_object, sm.Symbol):
-            return sm.Eq(node_object, 1.0, evaluate=False)
-        elif issubclass(node_object, sm.Function):
-            t = sm.symbols('t')
-            return sm.Eq(node_object, sm.Lambda(t, 0.0), evaluate=False)
-    
-###############################################################################
-###############################################################################
-
-class configuration(abstract_configuration):                
-
-    def __init__(self, name, model_instance):
-        super().__init__(name)
-        self.topology = model_instance._mbs
-        self.geometries_map = {}
-
-        
-    @property
-    def arguments_symbols(self):
-        nodes = self.graph.nodes(data='lhs_value')
-        return [n[-1] for n in nodes]
-
-    @property
-    def primary_arguments(self):
-        return self.topology.arguments_symbols
-    
-    @property
-    def geometry_nodes(self):
-        nodes = self.graph.nodes
-        geometries = [n for n in nodes if isinstance(nodes[n]['lhs_value'], Geometry)]
-        return geometries
     
     def get_geometries_graph_data(self):
         graph = self.graph
@@ -436,6 +393,16 @@ class configuration(abstract_configuration):
         if b1 != b2 : self._assign_geometry_to_body(b2, g2, eval_inertia)
 
 
+    def _update_node_rhs(self, node, rhs_function):
+        self.graph.nodes[node]['rhs_function'] = rhs_function
+    
+    def _create_node_dict(self, name, symbolic_type, mirr='',align='s'):
+        node_object = symbolic_type(name)
+        function = None 
+        attributes_dict = {'lhs_value':node_object, 'rhs_function':function,
+                           'mirr':mirr, 'align':align}
+        return attributes_dict
+
     def _add_primary_nodes(self, arguments_lists):
         single_args, right_args, left_args = arguments_lists
         for arg in single_args:
@@ -466,6 +433,33 @@ class configuration(abstract_configuration):
             self.add_relation(CR.Equal_to, J, ('%s.J'%geo,))
             self.add_relation(CR.Equal_to, m, ('%s.m'%geo,))
 
+    def _evaluate_nodes(self, nodes):
+        equalities = [self._evaluate_node(n) for n in nodes]
+        return equalities
+        
+    def _evaluate_node(self, node):
+        nodes = self.graph.nodes
+        lhs_value = nodes[node]['lhs_value']
+        rhs_function = nodes[node]['rhs_function']
+        if rhs_function is None:
+            equality = self._get_initial_equality(lhs_value)
+        else:
+            input_edges = self.graph.in_edges(node, data='passed_attr')
+            inputs = [(nodes[e[0]]['lhs_value'], e[-1]) for e in input_edges]
+            input_values = [i[0] if i[1] is None else getattr(*i) for i in inputs]
+            rhs_value = rhs_function(*input_values)
+            equality = sm.Eq(lhs_value, rhs_value, evaluate=False)
+        return equality
+    
+    @staticmethod
+    def _get_initial_equality(node_object):
+        if isinstance(node_object, sm.MatrixSymbol):
+            return sm.Eq(node_object, sm.zeros(*node_object.shape), evaluate=False)
+        elif isinstance(node_object, sm.Symbol):
+            return sm.Eq(node_object, 1.0, evaluate=False)
+        elif issubclass(node_object, sm.Function):
+            t = sm.symbols('t')
+            return sm.Eq(node_object, sm.Lambda(t, 0.0), evaluate=False)
 
     @staticmethod
     def _extract_primary_arguments(data_dict):

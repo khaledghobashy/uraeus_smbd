@@ -5,23 +5,10 @@ Created on Tue Jan 29 10:08:34 2019
 @author: khaled.ghobashy
 """
 
-import os
-import pickle
-
-from source.mbs_creators.topology_classes import template_based_topology
-from source.code_generators.python_code_generators import template_code_generator
-
-
-topology_name = os.path.basename(__file__).split('.')[0]
-
-def load():
-    global template
-    path = os.path.dirname(__file__)
-    with open('%s\\%s.stpl'%(path,topology_name),'rb') as f:
-        template = pickle.load(f)
+from source.interfaces.scripting_interfaces import topology
 
 def create():
-    template = template_based_topology(topology_name)
+    template = topology(__file__)
     
     template.add_body('hub', mirrored=True, virtual=True)
     template.add_body('upright', mirrored=True, virtual=True)
@@ -36,13 +23,10 @@ def create():
     
     template.assemble_model()
     template.save()
-    
-    numerical_code = template_code_generator(template)
-    numerical_code.write_code_file()
-
+    template.write_python_code()
     
 if __name__ == '__main__':
     create()
 else:
-    load()
+    template = topology.reload(__file__)
 

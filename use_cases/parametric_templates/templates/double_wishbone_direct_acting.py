@@ -7,10 +7,6 @@ Created on Tue Jan 29 08:18:17 2019
 
 from source.interfaces.scripting_interfaces import topology
 
-def load():
-    global template
-    template = topology.reload(__file__)
-
 def create():
     global template    
     template = topology(__file__)
@@ -49,4 +45,5 @@ def create():
 if __name__ == '__main__':
     create()
 else:
-    load()
+    template = topology.reload(__file__)
+

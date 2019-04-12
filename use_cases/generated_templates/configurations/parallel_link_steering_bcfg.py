@@ -11,13 +11,19 @@ from source.solvers.py_numerical_functions import (mirrored, centered, oriented,
 class configuration(object):
 
     def __init__(self):
+        self.ax1_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
+        self.pt1_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
+        self.ax1_jcs_rc_cyl = np.array([[0], [0], [0]],dtype=np.float64)
+        self.pt1_jcs_rc_cyl = np.array([[0], [0], [0]],dtype=np.float64)
+        self.ax1_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
+        self.pt1_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
         self.R_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_rbs_coupler = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rd_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pd_rbs_coupler = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rdd_rbs_coupler = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pdd_rbs_coupler = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.m_rbs_coupler = 1
+        self.m_rbs_coupler = 1.0
         self.Jbar_rbs_coupler = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]],dtype=np.float64)
         self.R_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
         self.P_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
@@ -25,14 +31,8 @@ class configuration(object):
         self.Pd_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
         self.Rdd_rbr_rocker = np.array([[0], [0], [0]],dtype=np.float64)
         self.Pdd_rbr_rocker = np.array([[0], [0], [0], [0]],dtype=np.float64)
-        self.m_rbr_rocker = 1
-        self.Jbar_rbr_rocker = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]],dtype=np.float64)
-        self.ax1_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
-        self.pt1_jcr_rocker_ch = np.array([[0], [0], [0]],dtype=np.float64)
-        self.ax1_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
-        self.pt1_jcs_rc_sph = np.array([[0], [0], [0]],dtype=np.float64)
-        self.ax1_jcs_rc_cyl = np.array([[0], [0], [0]],dtype=np.float64)
-        self.pt1_jcs_rc_cyl = np.array([[0], [0], [0]],dtype=np.float64)                       
+        self.m_rbr_rocker = 1.0
+        self.Jbar_rbr_rocker = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]],dtype=np.float64)                       
 
     
     @property
@@ -60,6 +60,8 @@ class configuration(object):
         self._set_arguments()
 
     def _set_arguments(self):
+        self.ax1_jcl_rocker_ch = mirrored(self.ax1_jcr_rocker_ch)
+        self.pt1_jcl_rocker_ch = mirrored(self.pt1_jcr_rocker_ch)
         self.R_rbl_rocker = mirrored(self.R_rbr_rocker)
         self.P_rbl_rocker = mirrored(self.P_rbr_rocker)
         self.Rd_rbl_rocker = mirrored(self.Rd_rbr_rocker)
@@ -68,7 +70,5 @@ class configuration(object):
         self.Pdd_rbl_rocker = mirrored(self.Pdd_rbr_rocker)
         self.m_rbl_rocker = self.m_rbr_rocker
         self.Jbar_rbl_rocker = mirrored(self.Jbar_rbr_rocker)
-        self.ax1_jcl_rocker_ch = mirrored(self.ax1_jcr_rocker_ch)
-        self.pt1_jcl_rocker_ch = mirrored(self.pt1_jcr_rocker_ch)
     
 

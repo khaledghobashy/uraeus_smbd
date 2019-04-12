@@ -424,7 +424,7 @@ class template_code_generator(abstract_generator):
         self_inserter = self._insert_string('self.')
         equations_text = re.sub(self_pattern,self_inserter,equations_text)
         
-        config_pattern = self.primary_arguments - set(self.runtime_symbols)
+        config_pattern = set(self.primary_arguments) - set(self.runtime_symbols)
         config_pattern = '|'.join([r'%s'%i for i in config_pattern])
         config_inserter = self._insert_string('config.')
         equations_text = re.sub(config_pattern,config_inserter,equations_text)
@@ -579,7 +579,7 @@ class template_code_generator(abstract_generator):
         
         # Creating a regex pattern of strings that represents the variables
         # which need to be perfixed by a 'config.' to be referenced correctly.
-        config_pattern = self.primary_arguments - set(self.runtime_symbols)
+        config_pattern = set(self.primary_arguments) - set(self.runtime_symbols)
         config_pattern = '|'.join([r'%s'%i for i in config_pattern])
         
         # Performing the regex substitution with 'self.'.
