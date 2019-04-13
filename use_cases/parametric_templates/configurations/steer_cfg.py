@@ -25,7 +25,7 @@ def main():
     
     config.add_relation.Oriented('ax1_jcs_rc_cyl', ('hpr_rocker_coupler','hpl_rocker_coupler','hpr_rocker_chassis'))
     config.add_relation.Oriented('ax1_jcr_rocker_ch', ('hpr_rocker_coupler','hpl_rocker_coupler','hpr_rocker_chassis'),mirror=True)
-    
+        
     # GEOMETRIES
     config.add_scalar.UserInput('links_ro')
     config.add_scalar.UserInput('thickness')
