@@ -62,6 +62,7 @@ class topology(object):
     def write_python_code(self):
         numerical_code = template_code_generator(self._mbs)
         numerical_code.write_code_file()
+        self._python_code_gen = numerical_code
     
     def save(self):
         file = '%s.stpl'%os.path.splitext(self.script_path)[0]

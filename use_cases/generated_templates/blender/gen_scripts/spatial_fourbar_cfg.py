@@ -16,13 +16,13 @@ class blender_scene(object):
         scale = 1/20
         self.scale = scale
 
-        self.s_links_ro = 1*scale
+        self.hps_coupler_rocker = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hps_rev_crank = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hps_rev_rocker = np.array([[0], [0], [0]],dtype=np.float64)*scale
         self.hps_coupler_crank = np.array([[0], [0], [0]],dtype=np.float64)*scale
-        self.hps_coupler_rocker = np.array([[0], [0], [0]],dtype=np.float64)
+        self.s_links_ro = 1.0
 
-        self._inputs = ['s_links_ro', 'hps_rev_crank', 'hps_rev_rocker', 'hps_coupler_crank', 'hps_coupler_rocker']
+        self._inputs = ['hps_coupler_rocker', 'hps_rev_crank', 'hps_rev_rocker', 'hps_coupler_crank', 's_links_ro']
         self.geometries = {'gms_rocker': 'rbs_rocker', 'gms_crank': 'rbs_crank', 'gms_coupler': 'rbs_coupler'}
 
     

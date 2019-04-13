@@ -167,7 +167,12 @@ class abstract_topology(object):
         self._perform_cse()
         self._initialize_toplogy_reqs()
                 
-    
+    def save(self):
+        import cloudpickle
+        file = '%s.stpl'%self.name
+        with open(file,'wb') as f:
+            cloudpickle.dump(self, f)
+
     def _initialize_toplogy_reqs(self):
         self.param_config.assemble_base_layer()
         self.param_config.assemble_equalities()

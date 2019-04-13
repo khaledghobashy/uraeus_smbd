@@ -21,7 +21,7 @@ def create():
     template.add_joint.revolute('rev_rocker','rbs_rocker','vbs_ground')
     template.add_joint.spherical('sph_coupler_crank','rbs_coupler','rbs_crank')
     template.add_joint.universal('uni_coupler_rocker','rbs_coupler','rbs_rocker')
-    template.add_joint_actuator.rotational_actuator('act','jcs_rev_crank')
+    template.add_actuator.rotational_actuator('act','jcs_rev_crank')
 
     # Assembling System
     template.assemble_model()

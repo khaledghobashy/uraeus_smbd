@@ -46,7 +46,7 @@ class abstract_generator(object):
         self.config  = self.mbs.param_config
         self.printer = printer
         
-        self.primary_arguments = self.config.primary_arguments
+        self.primary_arguments = [printer._print(exp) for exp in self.config.primary_arguments]
         
         self.arguments_symbols = [printer._print(exp) for exp in self.mbs.arguments_symbols]
         self.constants_symbols = [printer._print(exp) for exp in self.mbs.constants_symbols]
