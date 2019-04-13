@@ -286,3 +286,50 @@ class configuration(object):
     def _add_relation(self, relation, node, arg_nodes, **kwargs):
         self._config.add_relation(relation, node, arg_nodes, **kwargs)
 
+###############################################################################
+###############################################################################
+
+from source.solvers.python_solver import kds_solver, dds_solver
+import matplotlib.pyplot as plt
+import numpy as np
+
+class simulation(object):
+    
+    def __init__(self, name, assembly_instance, typ='kds'):
+        
+        self.name = name
+        
+        if typ == 'kds':
+            self.soln = kds_solver(assembly_instance)
+        elif typ == 'dds':
+            self.soln = dds_solver(assembly_instance)
+        else:
+            raise ValueError('Bad simulation type argument : %r'%typ)
+    
+    def set_time_array(self, duration, spacing):
+        self.soln.set_time_array(duration, spacing)
+        
+    def solve(self, run_id=None, save=True):
+        run_id = '%s_temp'%self.name if run_id is None else run_id
+        self.soln.solve(run_id, save)
+        
+    def plot(self, y_args, x=None, level='pos'):
+        data = getattr(self.soln, '%s_dataframe'%level)
+        
+        if x is None:
+            x_data = self.soln.time_array 
+        elif isinstance(x, str):
+            x_data = data[x]
+        elif isinstance(x, np.ndarray):
+            x_data = x
+            
+        y_data_list = [data[y] for y in y_args]
+        
+        plt.figure(figsize=(8,4))
+        for y_data in y_data_list:
+            plt.plot(x_data, y_data)
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+        
