@@ -6,19 +6,10 @@ from use_cases.generated_templates.templates import parallel_link_steering
 from use_cases.generated_templates.templates import front_axle_testrig
 
 
-SU = double_wishbone_direct_acting.topology('SU')
-
-ST = parallel_link_steering.topology('ST')
-
-TR = front_axle_testrig.topology('TR')
-
-
-
 class numerical_assembly(object):
 
     def __init__(self):
         self._t = 0
-        self.subsystems = [SU,ST,TR]
 
         self.interface_map = {'SU.vbs_ground': 'ground', 'SU.vbs_chassis': 'ground', 'SU.vbl_steer': 'ST.rbl_rocker', 'SU.vbr_steer': 'ST.rbr_rocker', 'ST.vbs_ground': 'ground', 'ST.vbs_chassis': 'ground', 'TR.vbl_hub': 'SU.rbl_hub', 'TR.vbr_hub': 'SU.rbr_hub', 'TR.vbs_ground': 'ground', 'TR.vbs_chassis': 'ground', 'TR.vbr_upright': 'SU.rbr_upright', 'TR.vbs_steer_gear': 'ST.rbr_rocker', 'TR.vbl_upright': 'SU.rbl_upright'}
         self.indicies_map  = {'ground': 0, 'SU.rbr_uca': 1, 'SU.rbl_uca': 2, 'SU.rbr_lca': 3, 'SU.rbl_lca': 4, 'SU.rbr_upright': 5, 'SU.rbl_upright': 6, 'SU.rbr_upper_strut': 7, 'SU.rbl_upper_strut': 8, 'SU.rbr_lower_strut': 9, 'SU.rbl_lower_strut': 10, 'SU.rbr_tie_rod': 11, 'SU.rbl_tie_rod': 12, 'SU.rbr_hub': 13, 'SU.rbl_hub': 14, 'ST.rbs_coupler': 15, 'ST.rbr_rocker': 16, 'ST.rbl_rocker': 17}
@@ -36,10 +27,16 @@ class numerical_assembly(object):
 
         self.nrows = 79
         self.ncols = 36
+        
+        self.SU = double_wishbone_direct_acting.topology('SU')
+        self.ST = parallel_link_steering.topology('ST')
+        self.TR = front_axle_testrig.topology('TR')
+        
+        self.subsystems = [self.SU, self.ST, self.TR]
 
-        self.initialize_assembly()
+#        self.initialize_assembly()
 
-
+    
     @property
     def t(self):
         return self._t

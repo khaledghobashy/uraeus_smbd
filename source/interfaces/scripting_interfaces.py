@@ -288,6 +288,42 @@ class configuration(object):
 
 ###############################################################################
 ###############################################################################
+from source import pkg_path
+class numerical_subsystem(object):
+    
+    def __init__(self, topology_instance):
+        self.name = topology_instance.prefix[:-1]
+        self.topology = topology_instance
+        
+    def set_configuration_file(self, config_module):
+        self.topology.config = config_module.configuration()
+        
+    def set_configuration_data(self, file):
+        self.topology.config.load_from_csv(pkg_path + file)
+###############################################################################
+###############################################################################
+
+def dummy_init(self):
+    pass
+
+class multibody_system(object):
+    
+    def __init__(self, system):
+        
+        self.system = system.numerical_assembly()
+        self._subsystems = [numerical_subsystem(sub) for sub in self.system.subsystems]
+        self._decorate_subsystems()
+    
+    def _decorate_subsystems(self):
+        container = type('SubSystems', (object,), {'__init__':dummy_init})
+        subsystems = container()
+        for sub in self._subsystems:
+            setattr(subsystems, sub.name, sub)
+        self.subsystems = subsystems
+        
+
+###############################################################################
+###############################################################################
 
 from source.solvers.python_solver import kds_solver, dds_solver
 import matplotlib.pyplot as plt
