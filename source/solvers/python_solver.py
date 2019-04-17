@@ -42,6 +42,7 @@ class abstract_solver(object):
     
     def __init__(self, model):
         self.model = model
+        model.initialize_assembly()
         
         self._nrows = model.nrows
         self._ncols = model.ncols

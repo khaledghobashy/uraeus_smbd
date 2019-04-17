@@ -292,34 +292,31 @@ from source import pkg_path
 class numerical_subsystem(object):
     
     def __init__(self, topology_instance):
-        self.name = topology_instance.prefix[:-1]
-        self.topology = topology_instance
+        self._name = topology_instance.prefix[:-1]
+        self._topology = topology_instance
         
     def set_configuration_file(self, config_module):
-        self.topology.config = config_module.configuration()
+        self._topology.config = config_module.configuration()
         
     def set_configuration_data(self, file):
-        self.topology.config.load_from_csv(pkg_path + file)
+        self._topology.config.load_from_csv(pkg_path + file)
+
 ###############################################################################
 ###############################################################################
 
-def dummy_init(self):
-    pass
+class Subsystems(object):
+    
+    def __init__(self, subsystems_list):
+        for sub in subsystems_list:
+            sub = numerical_subsystem(sub)
+            setattr(self, sub._name, sub)
 
 class multibody_system(object):
     
     def __init__(self, system):
         
-        self.system = system.numerical_assembly()
-        self._subsystems = [numerical_subsystem(sub) for sub in self.system.subsystems]
-        self._decorate_subsystems()
-    
-    def _decorate_subsystems(self):
-        container = type('SubSystems', (object,), {'__init__':dummy_init})
-        subsystems = container()
-        for sub in self._subsystems:
-            setattr(subsystems, sub.name, sub)
-        self.subsystems = subsystems
+        self.system = system.numerical_assembly()        
+        self.Subsystems = Subsystems(self.system.subsystems)
         
 
 ###############################################################################
@@ -331,14 +328,15 @@ import numpy as np
 
 class simulation(object):
     
-    def __init__(self, name, assembly_instance, typ='kds'):
+    def __init__(self, name, model, typ='kds'):
         
         self.name = name
+        self.assembly = model.numerical_assembly()
         
         if typ == 'kds':
-            self.soln = kds_solver(assembly_instance)
+            self.soln = kds_solver(self.assembly)
         elif typ == 'dds':
-            self.soln = dds_solver(assembly_instance)
+            self.soln = dds_solver(self.assembly)
         else:
             raise ValueError('Bad simulation type argument : %r'%typ)
     

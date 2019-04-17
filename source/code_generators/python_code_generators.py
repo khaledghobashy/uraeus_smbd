@@ -629,21 +629,20 @@ class assembly_code_generator(template_code_generator):
                                 
                 {templates_imports}
                 
-                {subsystems}
+                class subsystems(object):
+                    {subsystems}
                 '''
+        indent = 4*' '
         tpl_import_prefix = 'from use_cases.generated_templates.templates'
         templates_imports = '\n'.join(['%s import %s'%(tpl_import_prefix,i)
                                         for i in self.templates])
         
-        subsystems = []
-        for subsys, template in self.subsystems_templates.items():
-            assignment = f'''
-            {subsys} = {template}.topology('{subsys}')
-            '''
-            subsystems.append(assignment)
+        subsystems = ['%s = %s.topology(%r)'%(subsys, template, subsys)\
+                      for subsys, template in self.subsystems_templates.items()]
             
-        subsystems = ''.join(subsystems)
+        subsystems = '\n'.join(subsystems)
         subsystems = textwrap.dedent(subsystems)
+        subsystems = textwrap.indent(subsystems,indent).lstrip()
         text = text.expandtabs()
         text = textwrap.dedent(text)
         text = text.format(templates_imports = templates_imports,
@@ -674,12 +673,9 @@ class assembly_code_generator(template_code_generator):
                         
                         self.nrows = {nrows}
                         self.ncols = {ncols}
-                        
-                        self.initialize_assembly()
-                        
                 '''
         
-        subsystems = ','.join(self.mbs.subsystems.keys())
+        subsystems = ','.join(['subsystems.%s'%i for i in self.mbs.subsystems.keys()])
         interface_map = self.mbs.interface_map
         indicies_map  = self.mbs.nodes_indicies
         text = text.expandtabs()
@@ -748,6 +744,7 @@ class assembly_code_generator(template_code_generator):
     def write_constants_evaluator(self):
         text = '''
                 def eval_constants(self):
+                    {subsystems}
                     {virtuals_map}
                     
                     for sub in self.subsystems:
@@ -758,6 +755,10 @@ class assembly_code_generator(template_code_generator):
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
+        subsystems = '\n'.join(['%s = subsystems.%s'%(i,i) for i in self.mbs.subsystems.keys()])
+        subsystems = textwrap.dedent(subsystems)
+        subsystems = textwrap.indent(subsystems,indent).lstrip()
+
         ground_map = self.mbs.mapped_gen_coordinates[0:2]
         pattern = '|'.join([p._print(i.lhs) for i in ground_map])
 
@@ -780,7 +781,8 @@ class assembly_code_generator(template_code_generator):
         virtuals_map = re.sub(pattern2,sub,virtuals_map)
         virtuals_map = textwrap.indent(virtuals_map,indent).lstrip()
         
-        text = text.format(virtuals_map = virtuals_map)
+        text = text.format(subsystems = subsystems ,
+                           virtuals_map = virtuals_map)
         text = textwrap.indent(text,indent)
         return text
     
@@ -925,7 +927,8 @@ class assembly_code_generator(template_code_generator):
                         qs = {var}[offset:sub.n+offset]
                         sub.set_gen_{func_name}(qs)
                         offset += sub.n
-                        
+                      
+                    {subsystems}
                     {virtuals_map}
                '''
         indent = 4*' '
@@ -940,7 +943,11 @@ class assembly_code_generator(template_code_generator):
         ground_map = '\n'.join([p._print(i) for i in ground_map])
         ground_map = re.sub(pattern,self_inserter,ground_map)
         ground_map = textwrap.indent(ground_map,indent).lstrip()
-        
+
+        subsystems = '\n'.join(['%s = subsystems.%s'%(i,i) for i in self.mbs.subsystems.keys()])
+        subsystems = textwrap.dedent(subsystems)
+        subsystems = textwrap.indent(subsystems,indent).lstrip()
+
         virtuals_map = getattr(self.mbs,'mapped_vir_%s'%func_name)
         pattern1 = '|'.join([p._print(i.lhs) for i in virtuals_map])
         pattern2 = '|'.join([p._print(i.rhs) for i in virtuals_map])
@@ -954,14 +961,14 @@ class assembly_code_generator(template_code_generator):
         text = text.format(func_name = func_name,
                            var = var,
                            ground_map = ground_map,
-                           virtuals_map = virtuals_map)
+                           virtuals_map = virtuals_map,
+                           subsystems = subsystems)
         text = textwrap.indent(text,indent)
         return text
     
     def _write_x_equations(self,func_name):
         text = '''
                 def eval_{func_name}_eq(self):
-
                     {ground_data}
                     
                     for sub in self.subsystems:
@@ -975,7 +982,7 @@ class assembly_code_generator(template_code_generator):
         
         matrix = p._print(getattr(self.mbs,'%s_equations'%func_name)).split('\n')
         rows,cols,ground_data = matrix
-        
+
         pattern = '|'.join([p._print(i) for i in self.mbs.nodes['ground']['arguments_symbols']])
         self_inserter = self._insert_string('self.')
         ground_data = re.sub(pattern,self_inserter,ground_data)

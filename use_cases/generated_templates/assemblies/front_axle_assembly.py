@@ -5,13 +5,19 @@ from use_cases.generated_templates.templates import double_wishbone_direct_actin
 from use_cases.generated_templates.templates import parallel_link_steering
 from use_cases.generated_templates.templates import front_axle_testrig
 
+class subsystems(object):
+    SU = double_wishbone_direct_acting.topology('SU')
+    ST = parallel_link_steering.topology('ST')
+    TR = front_axle_testrig.topology('TR')
+
 
 class numerical_assembly(object):
 
     def __init__(self):
         self._t = 0
+        self.subsystems = [subsystems.SU,subsystems.ST,subsystems.TR]
 
-        self.interface_map = {'SU.vbs_ground': 'ground', 'SU.vbs_chassis': 'ground', 'SU.vbl_steer': 'ST.rbl_rocker', 'SU.vbr_steer': 'ST.rbr_rocker', 'ST.vbs_ground': 'ground', 'ST.vbs_chassis': 'ground', 'TR.vbl_hub': 'SU.rbl_hub', 'TR.vbr_hub': 'SU.rbr_hub', 'TR.vbs_ground': 'ground', 'TR.vbs_chassis': 'ground', 'TR.vbr_upright': 'SU.rbr_upright', 'TR.vbs_steer_gear': 'ST.rbr_rocker', 'TR.vbl_upright': 'SU.rbl_upright'}
+        self.interface_map = {'SU.vbs_chassis': 'ground', 'SU.vbr_steer': 'ST.rbr_rocker', 'SU.vbs_ground': 'ground', 'SU.vbl_steer': 'ST.rbl_rocker', 'ST.vbs_chassis': 'ground', 'ST.vbs_ground': 'ground', 'TR.vbs_ground': 'ground', 'TR.vbr_upright': 'SU.rbr_upright', 'TR.vbr_hub': 'SU.rbr_hub', 'TR.vbl_hub': 'SU.rbl_hub', 'TR.vbs_chassis': 'ground', 'TR.vbs_steer_gear': 'ST.rbr_rocker', 'TR.vbl_upright': 'SU.rbl_upright'}
         self.indicies_map  = {'ground': 0, 'SU.rbr_uca': 1, 'SU.rbl_uca': 2, 'SU.rbr_lca': 3, 'SU.rbl_lca': 4, 'SU.rbr_upright': 5, 'SU.rbl_upright': 6, 'SU.rbr_upper_strut': 7, 'SU.rbl_upper_strut': 8, 'SU.rbr_lower_strut': 9, 'SU.rbl_lower_strut': 10, 'SU.rbr_tie_rod': 11, 'SU.rbl_tie_rod': 12, 'SU.rbr_hub': 13, 'SU.rbl_hub': 14, 'ST.rbs_coupler': 15, 'ST.rbr_rocker': 16, 'ST.rbl_rocker': 17}
 
         self.R_ground  = np.array([[0],[0],[0]],dtype=np.float64)
@@ -27,16 +33,7 @@ class numerical_assembly(object):
 
         self.nrows = 79
         self.ncols = 36
-        
-        self.SU = double_wishbone_direct_acting.topology('SU')
-        self.ST = parallel_link_steering.topology('ST')
-        self.TR = front_axle_testrig.topology('TR')
-        
-        self.subsystems = [self.SU, self.ST, self.TR]
 
-#        self.initialize_assembly()
-
-    
     @property
     def t(self):
         return self._t
@@ -76,28 +73,31 @@ class numerical_assembly(object):
 
     
     def eval_constants(self):
-        SU.config.R_vbs_ground = self.R_ground
-        SU.config.P_vbs_ground = self.P_ground
+        SU = subsystems.SU
+        ST = subsystems.ST
+        TR = subsystems.TR
         SU.config.R_vbs_chassis = self.R_ground
         SU.config.P_vbs_chassis = self.P_ground
-        SU.config.R_vbl_steer = ST.config.R_rbl_rocker
-        SU.config.P_vbl_steer = ST.config.P_rbl_rocker
         SU.config.R_vbr_steer = ST.config.R_rbr_rocker
         SU.config.P_vbr_steer = ST.config.P_rbr_rocker
-        ST.config.R_vbs_ground = self.R_ground
-        ST.config.P_vbs_ground = self.P_ground
+        SU.config.R_vbs_ground = self.R_ground
+        SU.config.P_vbs_ground = self.P_ground
+        SU.config.R_vbl_steer = ST.config.R_rbl_rocker
+        SU.config.P_vbl_steer = ST.config.P_rbl_rocker
         ST.config.R_vbs_chassis = self.R_ground
         ST.config.P_vbs_chassis = self.P_ground
-        TR.config.R_vbl_hub = SU.config.R_rbl_hub
-        TR.config.P_vbl_hub = SU.config.P_rbl_hub
-        TR.config.R_vbr_hub = SU.config.R_rbr_hub
-        TR.config.P_vbr_hub = SU.config.P_rbr_hub
+        ST.config.R_vbs_ground = self.R_ground
+        ST.config.P_vbs_ground = self.P_ground
         TR.config.R_vbs_ground = self.R_ground
         TR.config.P_vbs_ground = self.P_ground
-        TR.config.R_vbs_chassis = self.R_ground
-        TR.config.P_vbs_chassis = self.P_ground
         TR.config.R_vbr_upright = SU.config.R_rbr_upright
         TR.config.P_vbr_upright = SU.config.P_rbr_upright
+        TR.config.R_vbr_hub = SU.config.R_rbr_hub
+        TR.config.P_vbr_hub = SU.config.P_rbr_hub
+        TR.config.R_vbl_hub = SU.config.R_rbl_hub
+        TR.config.P_vbl_hub = SU.config.P_rbl_hub
+        TR.config.R_vbs_chassis = self.R_ground
+        TR.config.P_vbs_chassis = self.P_ground
         TR.config.R_vbs_steer_gear = ST.config.R_rbr_rocker
         TR.config.P_vbs_steer_gear = ST.config.P_rbr_rocker
         TR.config.R_vbl_upright = SU.config.R_rbl_upright
@@ -116,28 +116,31 @@ class numerical_assembly(object):
             sub.set_gen_coordinates(qs)
             offset += sub.n
 
-        SU.R_vbs_ground = self.R_ground
-        SU.P_vbs_ground = self.P_ground
+        SU = subsystems.SU
+        ST = subsystems.ST
+        TR = subsystems.TR
         SU.R_vbs_chassis = self.R_ground
         SU.P_vbs_chassis = self.P_ground
-        SU.R_vbl_steer = ST.R_rbl_rocker
-        SU.P_vbl_steer = ST.P_rbl_rocker
         SU.R_vbr_steer = ST.R_rbr_rocker
         SU.P_vbr_steer = ST.P_rbr_rocker
-        ST.R_vbs_ground = self.R_ground
-        ST.P_vbs_ground = self.P_ground
+        SU.R_vbs_ground = self.R_ground
+        SU.P_vbs_ground = self.P_ground
+        SU.R_vbl_steer = ST.R_rbl_rocker
+        SU.P_vbl_steer = ST.P_rbl_rocker
         ST.R_vbs_chassis = self.R_ground
         ST.P_vbs_chassis = self.P_ground
-        TR.R_vbl_hub = SU.R_rbl_hub
-        TR.P_vbl_hub = SU.P_rbl_hub
-        TR.R_vbr_hub = SU.R_rbr_hub
-        TR.P_vbr_hub = SU.P_rbr_hub
+        ST.R_vbs_ground = self.R_ground
+        ST.P_vbs_ground = self.P_ground
         TR.R_vbs_ground = self.R_ground
         TR.P_vbs_ground = self.P_ground
-        TR.R_vbs_chassis = self.R_ground
-        TR.P_vbs_chassis = self.P_ground
         TR.R_vbr_upright = SU.R_rbr_upright
         TR.P_vbr_upright = SU.P_rbr_upright
+        TR.R_vbr_hub = SU.R_rbr_hub
+        TR.P_vbr_hub = SU.P_rbr_hub
+        TR.R_vbl_hub = SU.R_rbl_hub
+        TR.P_vbl_hub = SU.P_rbl_hub
+        TR.R_vbs_chassis = self.R_ground
+        TR.P_vbs_chassis = self.P_ground
         TR.R_vbs_steer_gear = ST.R_rbr_rocker
         TR.P_vbs_steer_gear = ST.P_rbr_rocker
         TR.R_vbl_upright = SU.R_rbl_upright
@@ -153,28 +156,31 @@ class numerical_assembly(object):
             sub.set_gen_velocities(qs)
             offset += sub.n
 
-        SU.Rd_vbs_ground = self.Rd_ground
-        SU.Pd_vbs_ground = self.Pd_ground
+        SU = subsystems.SU
+        ST = subsystems.ST
+        TR = subsystems.TR
         SU.Rd_vbs_chassis = self.Rd_ground
         SU.Pd_vbs_chassis = self.Pd_ground
-        SU.Rd_vbl_steer = ST.Rd_rbl_rocker
-        SU.Pd_vbl_steer = ST.Pd_rbl_rocker
         SU.Rd_vbr_steer = ST.Rd_rbr_rocker
         SU.Pd_vbr_steer = ST.Pd_rbr_rocker
-        ST.Rd_vbs_ground = self.Rd_ground
-        ST.Pd_vbs_ground = self.Pd_ground
+        SU.Rd_vbs_ground = self.Rd_ground
+        SU.Pd_vbs_ground = self.Pd_ground
+        SU.Rd_vbl_steer = ST.Rd_rbl_rocker
+        SU.Pd_vbl_steer = ST.Pd_rbl_rocker
         ST.Rd_vbs_chassis = self.Rd_ground
         ST.Pd_vbs_chassis = self.Pd_ground
-        TR.Rd_vbl_hub = SU.Rd_rbl_hub
-        TR.Pd_vbl_hub = SU.Pd_rbl_hub
-        TR.Rd_vbr_hub = SU.Rd_rbr_hub
-        TR.Pd_vbr_hub = SU.Pd_rbr_hub
+        ST.Rd_vbs_ground = self.Rd_ground
+        ST.Pd_vbs_ground = self.Pd_ground
         TR.Rd_vbs_ground = self.Rd_ground
         TR.Pd_vbs_ground = self.Pd_ground
-        TR.Rd_vbs_chassis = self.Rd_ground
-        TR.Pd_vbs_chassis = self.Pd_ground
         TR.Rd_vbr_upright = SU.Rd_rbr_upright
         TR.Pd_vbr_upright = SU.Pd_rbr_upright
+        TR.Rd_vbr_hub = SU.Rd_rbr_hub
+        TR.Pd_vbr_hub = SU.Pd_rbr_hub
+        TR.Rd_vbl_hub = SU.Rd_rbl_hub
+        TR.Pd_vbl_hub = SU.Pd_rbl_hub
+        TR.Rd_vbs_chassis = self.Rd_ground
+        TR.Pd_vbs_chassis = self.Pd_ground
         TR.Rd_vbs_steer_gear = ST.Rd_rbr_rocker
         TR.Pd_vbs_steer_gear = ST.Pd_rbr_rocker
         TR.Rd_vbl_upright = SU.Rd_rbl_upright
@@ -190,28 +196,31 @@ class numerical_assembly(object):
             sub.set_gen_accelerations(qs)
             offset += sub.n
 
-        SU.Rdd_vbs_ground = self.Rdd_ground
-        SU.Pdd_vbs_ground = self.Pdd_ground
+        SU = subsystems.SU
+        ST = subsystems.ST
+        TR = subsystems.TR
         SU.Rdd_vbs_chassis = self.Rdd_ground
         SU.Pdd_vbs_chassis = self.Pdd_ground
-        SU.Rdd_vbl_steer = ST.Rdd_rbl_rocker
-        SU.Pdd_vbl_steer = ST.Pdd_rbl_rocker
         SU.Rdd_vbr_steer = ST.Rdd_rbr_rocker
         SU.Pdd_vbr_steer = ST.Pdd_rbr_rocker
-        ST.Rdd_vbs_ground = self.Rdd_ground
-        ST.Pdd_vbs_ground = self.Pdd_ground
+        SU.Rdd_vbs_ground = self.Rdd_ground
+        SU.Pdd_vbs_ground = self.Pdd_ground
+        SU.Rdd_vbl_steer = ST.Rdd_rbl_rocker
+        SU.Pdd_vbl_steer = ST.Pdd_rbl_rocker
         ST.Rdd_vbs_chassis = self.Rdd_ground
         ST.Pdd_vbs_chassis = self.Pdd_ground
-        TR.Rdd_vbl_hub = SU.Rdd_rbl_hub
-        TR.Pdd_vbl_hub = SU.Pdd_rbl_hub
-        TR.Rdd_vbr_hub = SU.Rdd_rbr_hub
-        TR.Pdd_vbr_hub = SU.Pdd_rbr_hub
+        ST.Rdd_vbs_ground = self.Rdd_ground
+        ST.Pdd_vbs_ground = self.Pdd_ground
         TR.Rdd_vbs_ground = self.Rdd_ground
         TR.Pdd_vbs_ground = self.Pdd_ground
-        TR.Rdd_vbs_chassis = self.Rdd_ground
-        TR.Pdd_vbs_chassis = self.Pdd_ground
         TR.Rdd_vbr_upright = SU.Rdd_rbr_upright
         TR.Pdd_vbr_upright = SU.Pdd_rbr_upright
+        TR.Rdd_vbr_hub = SU.Rdd_rbr_hub
+        TR.Pdd_vbr_hub = SU.Pdd_rbr_hub
+        TR.Rdd_vbl_hub = SU.Rdd_rbl_hub
+        TR.Pdd_vbl_hub = SU.Pdd_rbl_hub
+        TR.Rdd_vbs_chassis = self.Rdd_ground
+        TR.Pdd_vbs_chassis = self.Pdd_ground
         TR.Rdd_vbs_steer_gear = ST.Rdd_rbr_rocker
         TR.Pdd_vbs_steer_gear = ST.Pdd_rbr_rocker
         TR.Rdd_vbl_upright = SU.Rdd_rbl_upright
@@ -227,7 +236,6 @@ class numerical_assembly(object):
 
     
     def eval_pos_eq(self):
-
         pos_ground_eq_blocks = [self.R_ground,(-1*self.Pg_ground + self.P_ground)]
 
         for sub in self.subsystems:
@@ -236,7 +244,6 @@ class numerical_assembly(object):
 
     
     def eval_vel_eq(self):
-
         vel_ground_eq_blocks = [np.zeros((3,1),dtype=np.float64),np.zeros((4,1),dtype=np.float64)]
 
         for sub in self.subsystems:
@@ -245,7 +252,6 @@ class numerical_assembly(object):
 
     
     def eval_acc_eq(self):
-
         acc_ground_eq_blocks = [np.zeros((3,1),dtype=np.float64),np.zeros((4,1),dtype=np.float64)]
 
         for sub in self.subsystems:
@@ -254,7 +260,6 @@ class numerical_assembly(object):
 
     
     def eval_jac_eq(self):
-
         jac_ground_eq_blocks = [np.eye(3,dtype=np.float64),np.zeros((3,4),dtype=np.float64),np.zeros((4,3),dtype=np.float64),np.eye(4,dtype=np.float64)]
 
         for sub in self.subsystems:
@@ -263,7 +268,6 @@ class numerical_assembly(object):
 
     
     def eval_mass_eq(self):
-
         mass_ground_eq_blocks = [self.M_ground,self.J_ground]
 
         for sub in self.subsystems:
@@ -272,7 +276,6 @@ class numerical_assembly(object):
 
     
     def eval_frc_eq(self):
-
         frc_ground_eq_blocks = [np.zeros((3,1),dtype=np.float64),np.zeros((4,1),dtype=np.float64)]
 
         for sub in self.subsystems:
