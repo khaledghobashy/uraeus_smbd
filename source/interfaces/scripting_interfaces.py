@@ -28,8 +28,66 @@ def get_file_name(script_path):
     return name
 
 ###############################################################################
-###############################################################################
+###############################################################################    
+class topology_edges_container(object):
+    
+    def __init__(self, mbs):
+        self._mbs = mbs
+        self._decorate_items()
+        
+    @property
+    def _items(self):
+        members = {i:getattr(self,i) for i in dir(self) if not i.startswith('_') and not i.startswith("__")}
+        return members
+    
+    def _decorate_items(self):
+        for attr,obj in self._items.items():
+            setattr(self, attr, self._decorate(obj))
 
+class joints_container(topology_edges_container):
+    def __init__(self, mbs):
+        self.spherical = joints.spherical
+        self.revolute  = joints.revolute
+        self.universal = joints.universal
+        self.translational = joints.translational
+        self.cylinderical  = joints.cylinderical
+        self.tripod = joints.tripod
+        self.fixed  = joints.fixed
+        super().__init__(mbs)
+    
+    def _decorate(self, edge_component):
+        def decorated(*args, **kwargs):
+                self._mbs.add_joint(edge_component, *args, **kwargs)
+        return decorated
+
+    
+class actuators_container(topology_edges_container):
+    def __init__(self, mbs):
+        self.rotational_actuator = joints.rotational_actuator
+        self.absolute_locator = joints.absolute_locator
+        super().__init__(mbs)
+    
+    def _decorate(self, edge_component):
+        if issubclass(edge_component, joints.absolute_locator):
+            def decorated(*args, **kwargs):
+                self._mbs.add_absolute_actuator(edge_component, *args, **kwargs)
+        elif issubclass(edge_component, joints.rotational_actuator):
+            def decorated(*args, **kwargs):
+                self._mbs.add_joint_actuator(edge_component, *args, **kwargs)
+        return decorated
+
+
+class forces_container(topology_edges_container):
+    def __init__(self, mbs):
+        self.internal_force = forces.internal_force
+        super().__init__(mbs)
+    
+    def _decorate(self, edge_component):
+        def decorated(*args, **kwargs):
+                self._mbs.add_force(edge_component, *args, **kwargs)
+        return decorated
+    
+###############################################################################    
 class topology(object):
     
     def __init__(self, script_path):
@@ -37,9 +95,9 @@ class topology(object):
         self.name = get_file_name(script_path)
         self._mbs = topology_classes.template_based_topology(self.name)
         
-        self._decorate_joints()
-        self._decorate_actuators()
-        self._decorate_forces()
+        self._joints = joints_container(self._mbs)
+        self._actuators = actuators_container(self._mbs)
+        self._forces = forces_container(self._mbs)
         
     def add_body(self, *args, **kwargs):
         self._mbs.add_body(*args, **kwargs)
@@ -76,56 +134,6 @@ class topology(object):
             template = pickle.load(f)
         return template
     
-    
-    def _decorate_joints(self):
-        container_name  = 'joints_container'
-        container_items = ['spherical', 'revolute', 'universal', 'translational',
-                           'cylinderical', 'tripod', 'fixed']
-        container = self._decorate_edge_components(container_name, container_items, joints)
-        self._joints = container
-    
-    def _decorate_actuators(self):  
-        container_name  = 'actuators_container'
-        container_items = ['rotational_actuator', 'absolute_locator']
-        container = self._decorate_edge_components(container_name, container_items, joints)
-        self._actuators = container
-    
-    def _decorate_forces(self):    
-        container_name  = 'forces_container'
-        container_items = ['internal_force']
-        container = self._decorate_edge_components(container_name, container_items, forces)
-        self._forces = container
-
-        
-    def _decorate_edge_components(self, container_name, container_items, module):   
-        container_class = type(container_name, (object,), {})
-        def dummy_init(dself): pass
-        container_class.__init__ = dummy_init
-        container_instance = container_class()
-        for name in container_items:
-            component = getattr(module, name)
-            decorated_component = self._decorate_as_edge(component)
-            setattr(container_instance, name, decorated_component)
-        return container_instance
-    
-    def _decorate_as_edge(self, typ):
-        if issubclass(typ, joints.absolute_locator):
-            def decorated(*args, **kwargs):
-                self._mbs.add_absolute_actuator(typ, *args, **kwargs)
-        
-        elif issubclass(typ, joints.rotational_actuator):
-            def decorated(*args, **kwargs):
-                self._mbs.add_joint_actuator(typ, *args, **kwargs)
-        
-        elif issubclass(typ, forces.generic_force):
-            def decorated(*args, **kwargs):
-                self._mbs.add_force(typ, *args, **kwargs)
-        
-        else:
-            def decorated(*args, **kwargs):
-                self._mbs.add_joint(typ, *args, **kwargs)
-        return decorated
-
 
 ###############################################################################
 ###############################################################################
@@ -288,7 +296,7 @@ class configuration(object):
 
 ###############################################################################
 ###############################################################################
-from source import pkg_path
+
 class numerical_subsystem(object):
     
     def __init__(self, topology_instance):
@@ -299,7 +307,12 @@ class numerical_subsystem(object):
         self._topology.config = config_module.configuration()
         
     def set_configuration_data(self, file):
-        self._topology.config.load_from_csv(pkg_path + file)
+        path = os.path.join('configuration_files', file)
+        self._topology.config.load_from_csv(path)
+    
+    @property
+    def config(self):
+        return self._topology.config
 
 ###############################################################################
 ###############################################################################
@@ -331,7 +344,7 @@ class simulation(object):
     def __init__(self, name, model, typ='kds'):
         
         self.name = name
-        self.assembly = model.numerical_assembly()
+        self.assembly = model.system
         
         if typ == 'kds':
             self.soln = kds_solver(self.assembly)
@@ -345,23 +358,32 @@ class simulation(object):
         
     def solve(self, run_id=None, save=True):
         run_id = '%s_temp'%self.name if run_id is None else run_id
-        self.soln.solve(run_id, save)
-        
-    def plot(self, y_args, x=None, level='pos'):
-        data = getattr(self.soln, '%s_dataframe'%level)
+        self.soln.solve(run_id)
+        if save:
+            filename = run_id
+            self.save_results(filename)
+    
+    def save_results(self, filename):
+        path = os.path.join('results', filename)
+        self.soln.pos_dataframe.to_csv('%s.csv'%path, index=True)
+    
+    def plot(self, y_args, x=None):
         
         if x is None:
             x_data = self.soln.time_array 
-        elif isinstance(x, str):
-            x_data = data[x]
+        elif isinstance(x, tuple):
+            x_string, level = x
+            data = getattr(self.soln, '%s_dataframe'%level)
+            x_data = data[x_string]
         elif isinstance(x, np.ndarray):
             x_data = x
-            
-        y_data_list = [data[y] for y in y_args]
         
         plt.figure(figsize=(8,4))
-        for y_data in y_data_list:
+        for y_string, level in y_args:
+            data = getattr(self.soln, '%s_dataframe'%level)
+            y_data = data[y_string]
             plt.plot(x_data, y_data)
+        
         plt.legend()
         plt.grid()
         plt.show()

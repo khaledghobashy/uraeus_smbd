@@ -39,8 +39,8 @@ def create():
     
     template.assemble_model()
     template.save()
-    template.write_python_code()    
-
+    template.write_python_code()
+    
 if __name__ == '__main__':
     create()
 else:

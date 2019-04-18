@@ -80,9 +80,6 @@ class abstract_solver(object):
         self.step_size  = step_size
         
     
-    def save_results(self,filename):
-        self.pos_dataframe.to_csv('results_csv//%s.csv'%filename, index=True)
-
     def _creat_results_dataframes(self):
         columns = self._coordinates_indicies
         
@@ -179,7 +176,7 @@ class abstract_solver(object):
 
 class kds_solver(abstract_solver):
     
-    def solve(self, run_id, save=False):
+    def solve(self, run_id):
         time_array = self.time_array
         dt = self.step_size
         
@@ -214,11 +211,7 @@ class kds_solver(abstract_solver):
             acc_rhs = self._eval_acc_eq()
             self._acc_history[i+1] = solve(A,-acc_rhs)
                     
-        self._creat_results_dataframes()
-        if save:
-            filename = run_id
-            self.save_results(filename)
-            
+        self._creat_results_dataframes()            
 
     def _newton_raphson(self,guess):
         self._set_gen_coordinates(guess)
@@ -266,7 +259,7 @@ class kds_solver(abstract_solver):
 
 class dds_solver(abstract_solver):
     
-    def solve(self, run_id, save=False):
+    def solve(self, run_id):
         time_array = self.time_array
         dt = self.step_size
         bar_length = len(time_array)-1
@@ -333,11 +326,7 @@ class dds_solver(abstract_solver):
             M_hat, Q_hat = self._partioned_system(M, J, Qt, Qd)
             integrator.set_f_params(M_hat, Q_hat)
 
-        
         self._creat_results_dataframes()
-        if save:
-            filename = run_id
-            self.save_results(filename)
 
     def _solve_velocity(self,vdot):
         dof = self.dof
