@@ -103,7 +103,7 @@ class configuration_code_generator(abstract_generator):
         text = '''
                 import numpy as np
                 import pandas as pd
-                from source.solvers.py_numerical_functions import (mirrored, centered, oriented, 
+                from source.numerical_classes.py_numerical_functions import (mirrored, centered, oriented, 
                                                                    cylinder_geometry,
                                                                    composite_geometry,
                                                                    triangular_prism)
@@ -657,6 +657,9 @@ class assembly_code_generator(template_code_generator):
                         self._t = 0
                         self.subsystems = [{subsystems}]
                         
+                        self.nrows = sum([sub.nrows for sub in self.subsystems]) + 2
+                        self.ncols = sum([sub.ncols for sub in self.subsystems]) + 2
+
                         self.interface_map = {interface_map}
                         self.indicies_map  = {indicies_map}
                         
@@ -670,9 +673,6 @@ class assembly_code_generator(template_code_generator):
                         self.gr_rows = np.array([0,1])
                         self.gr_jac_rows = np.array([0,0,1,1])
                         self.gr_jac_cols = np.array([0,1,0,1])
-                        
-                        self.nrows = {nrows}
-                        self.ncols = {ncols}
                 '''
         
         subsystems = ','.join(['subsystems.%s'%i for i in self.mbs.subsystems.keys()])

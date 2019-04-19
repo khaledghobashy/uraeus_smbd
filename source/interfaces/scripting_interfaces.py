@@ -27,6 +27,9 @@ def get_file_name(script_path):
     name = os.path.basename(script_path).split('.')[0]
     return name
 
+import types
+e = types.SimpleNamespace(ro=1)
+
 ###############################################################################
 ###############################################################################    
 class topology_edges_container(object):
@@ -184,6 +187,11 @@ class configuration(object):
     
     @property
     def add_point(self):
+        """
+        Add a spatial point.
+        Availabe Methodes:
+            'UserInput', 'Mirrored', 'Centered', 'Equal_to'
+        """
         return self._point_methods
     
     @property
@@ -335,7 +343,7 @@ class multibody_system(object):
 ###############################################################################
 ###############################################################################
 
-from source.solvers.python_solver import kds_solver, dds_solver
+from source.numerical_classes.python_solver import kds_solver, dds_solver
 import matplotlib.pyplot as plt
 import numpy as np
 

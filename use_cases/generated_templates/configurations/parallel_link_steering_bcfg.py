@@ -1,7 +1,7 @@
 
 import numpy as np
 import pandas as pd
-from source.solvers.py_numerical_functions import (mirrored, centered, oriented, 
+from source.numerical_classes.py_numerical_functions import (mirrored, centered, oriented, 
                                                    cylinder_geometry,
                                                    composite_geometry,
                                                    triangular_prism)

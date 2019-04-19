@@ -11,7 +11,7 @@ def main():
     
     global config
     config = configuration(__file__, model.template)
-    
+
     # Adding Points
     config.add_point.UserInput('ucaf', mirror=True)
     config.add_point.UserInput('ucar', mirror=True)

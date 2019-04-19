@@ -29,8 +29,8 @@ class topology(object):
         self.rbs_coupler = indicies_map[p+'rbs_coupler']
         self.rbr_rocker = indicies_map[p+'rbr_rocker']
         self.rbl_rocker = indicies_map[p+'rbl_rocker']
-        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
+        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
 
     def assemble_template(self,indicies_map, interface_map, rows_offset):
         self.rows_offset = rows_offset
@@ -174,16 +174,16 @@ class topology(object):
 
         a0 = self.Pd_rbr_rocker
         a1 = self.Pd_vbs_chassis
-        a2 = self.Mbar_vbs_chassis_jcr_rocker_ch[:,2:3]
-        a3 = a2.T
-        a4 = self.P_vbs_chassis
-        a5 = A(a4).T
-        a6 = self.Mbar_rbr_rocker_jcr_rocker_ch[:,0:1]
-        a7 = self.P_rbr_rocker
-        a8 = A(a7).T
-        a9 = B(a1,a2)
+        a2 = self.Mbar_rbr_rocker_jcr_rocker_ch[:,0:1]
+        a3 = self.P_rbr_rocker
+        a4 = A(a3).T
+        a5 = self.Mbar_vbs_chassis_jcr_rocker_ch[:,2:3]
+        a6 = B(a1,a5)
+        a7 = a5.T
+        a8 = self.P_vbs_chassis
+        a9 = A(a8).T
         a10 = a0.T
-        a11 = B(a4,a2)
+        a11 = B(a8,a5)
         a12 = self.Mbar_rbr_rocker_jcr_rocker_ch[:,1:2]
         a13 = self.Pd_rbs_coupler
         a14 = self.Pd_rbl_rocker
@@ -194,7 +194,7 @@ class topology(object):
         a19 = A(a18).T
         a20 = B(a1,a15)
         a21 = a14.T
-        a22 = B(a4,a15)
+        a22 = B(a8,a15)
         a23 = self.Mbar_rbl_rocker_jcl_rocker_ch[:,1:2]
         a24 = self.Mbar_rbl_rocker_jcs_rc_cyl[:,0:1]
         a25 = a24.T
@@ -217,12 +217,12 @@ class topology(object):
         a42 = (self.R_rbl_rocker.T + -1*self.R_rbs_coupler.T + multi_dot([a38.T,a19]) + -1*multi_dot([a39.T,a30]))
 
         self.acc_eq_blocks = [(multi_dot([B(a0,self.ubar_rbr_rocker_jcr_rocker_ch),a0]) + -1*multi_dot([B(a1,self.ubar_vbs_chassis_jcr_rocker_ch),a1])),
-        (multi_dot([a3,a5,B(a0,a6),a0]) + multi_dot([a6.T,a8,a9,a1]) + 2*multi_dot([a10,B(a7,a6).T,a11,a1])),
-        (multi_dot([a3,a5,B(a0,a12),a0]) + multi_dot([a12.T,a8,a9,a1]) + 2*multi_dot([a10,B(a7,a12).T,a11,a1])),
+        (multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2*multi_dot([a10,B(a3,a2).T,a11,a1])),
+        (multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2*multi_dot([a10,B(a3,a12).T,a11,a1])),
         (multi_dot([B(a0,self.ubar_rbr_rocker_jcs_rc_sph),a0]) + -1*multi_dot([B(a13,self.ubar_rbs_coupler_jcs_rc_sph),a13])),
         (multi_dot([B(a14,self.ubar_rbl_rocker_jcl_rocker_ch),a14]) + -1*multi_dot([B(a1,self.ubar_vbs_chassis_jcl_rocker_ch),a1])),
-        (multi_dot([a16,a5,B(a14,a17),a14]) + multi_dot([a17.T,a19,a20,a1]) + 2*multi_dot([a21,B(a18,a17).T,a22,a1])),
-        (multi_dot([a16,a5,B(a14,a23),a14]) + multi_dot([a23.T,a19,a20,a1]) + 2*multi_dot([a21,B(a18,a23).T,a22,a1])),
+        (multi_dot([a16,a9,B(a14,a17),a14]) + multi_dot([a17.T,a19,a20,a1]) + 2*multi_dot([a21,B(a18,a17).T,a22,a1])),
+        (multi_dot([a16,a9,B(a14,a23),a14]) + multi_dot([a23.T,a19,a20,a1]) + 2*multi_dot([a21,B(a18,a23).T,a22,a1])),
         (multi_dot([a25,a19,a27,a13]) + multi_dot([a28,a30,a31,a14]) + 2*multi_dot([a21,a32,a33,a13])),
         (multi_dot([a35,a19,a27,a13]) + multi_dot([a28,a30,a36,a14]) + 2*multi_dot([a21,a37,a33,a13])),
         (multi_dot([a25,a19,a40]) + 2*multi_dot([a21,a32,a41]) + multi_dot([a42,a31,a14])),
