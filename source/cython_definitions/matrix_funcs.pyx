@@ -1,5 +1,3 @@
-# distutils: extra_compile_args=-openmp
-# distutils: extra_link_args=-openmp
 
 cimport cython
 cimport numpy as cnp
@@ -14,7 +12,7 @@ ctypedef cnp.float64_t DTYPE_t
 
 @cython.wraparound (False)
 @cython.boundscheck(False)
-cdef void A_cy(double[:,:] arr, double[:,:] result) nogil:
+cdef void A_cy(double[:,:] arr, double[:,:] result):
 
     cdef double e0 = arr[0,0]
     cdef double e1 = arr[1,0]
