@@ -8,6 +8,7 @@ import os
 import re
 import textwrap
 import itertools
+from source import pkg_path
 from source.code_generators.code_printers import numerical_printer
 
 class abstract_generator(object):
@@ -215,14 +216,13 @@ class configuration_code_generator(abstract_generator):
         return text
         
     def write_code_file(self):
-        os.chdir('..\..')
-        path = os.getcwd() + '\\generated_templates\\configurations'
-        os.chdir(path)
+        code_file_path = os.path.join(pkg_path, 'use_cases','generated_templates','configurations')
+        code_file = os.path.join(code_file_path, '%s.py'%self.name)
         
         imports = self.write_imports()
         config_class = self.write_system_class()
         text = '\n'.join([imports,config_class])
-        with open('%s.py'%self.name,'w') as file:
+        with open(code_file, 'w') as file:
             file.write(text)
         
         inputs_dataframe = self.config.create_inputs_dataframe()
@@ -494,14 +494,13 @@ class template_code_generator(abstract_generator):
     
     
     def write_code_file(self):
-        os.chdir('..\..')
-        path = os.getcwd() + '\\generated_templates\\templates'
-        os.chdir(path)
+        code_file_path = os.path.join(pkg_path, 'use_cases','generated_templates','templates')
+        code_file = os.path.join(code_file_path, '%s.py'%self.mbs.name)
         
         imports = self.write_imports()
         system_class = self.write_system_class()
         text = '\n'.join([imports,system_class])
-        with open('%s.py'%self.mbs.name,'w') as file:
+        with open(code_file, 'w') as file:
             file.write(text)
         
         self.write_base_configuration_file()
@@ -907,14 +906,14 @@ class assembly_code_generator(template_code_generator):
         return text
     
     def write_code_file(self):
-        os.chdir('..\..')
-        path = os.getcwd() + '\\generated_templates\\assemblies'
-        os.chdir(path)
+        code_file_path = os.path.join(pkg_path, 'use_cases','generated_templates','assemblies')
+        code_file = os.path.join(code_file_path, '%s.py'%self.mbs.name)
+
         imports = self.write_imports()
         system_class = self.write_system_class()
         
         text = ''.join([imports,system_class])
-        with open('%s.py'%self.mbs.name,'w') as file:
+        with open(code_file, 'w') as file:
             file.write(text)
 
     ###########################################################################
