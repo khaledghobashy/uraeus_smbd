@@ -44,7 +44,7 @@ class abstract_generator(object):
     def __init__(self,mbs,printer=numerical_printer()):
         
         self.mbs     = mbs
-        self.config  = self.mbs.param_config
+        self.config  = self.mbs._config
         self.printer = printer
         
         self.primary_arguments = [printer._print(exp) for exp in self.config.primary_arguments]
@@ -225,8 +225,10 @@ class configuration_code_generator(abstract_generator):
         with open(code_file, 'w') as file:
             file.write(text)
         
+        csv_file_path = os.path.join(code_file_path, 'csv_files')
+        csv_file = os.path.join(csv_file_path, '%s.csv'%self.name)
         inputs_dataframe = self.config.create_inputs_dataframe()
-        inputs_dataframe.to_csv('csv_files\\%s.csv'%self.name)
+        inputs_dataframe.to_csv(csv_file)
 
         
 ###############################################################################

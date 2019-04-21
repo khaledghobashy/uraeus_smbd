@@ -94,9 +94,9 @@ class forces_container(topology_edges_container):
 class topology(object):
     
     def __init__(self, script_path):
-        self.script_path = script_path
-        self.name = get_file_name(script_path)
-        self._mbs = topology_classes.template_based_topology(self.name)
+        self._script_path = script_path
+        self._name = get_file_name(script_path)
+        self._mbs = topology_classes.template_based_topology(self._name)
         
         self._joints = joints_container(self._mbs)
         self._actuators = actuators_container(self._mbs)
@@ -126,7 +126,7 @@ class topology(object):
         self._python_code_gen = numerical_code
     
     def save(self):
-        file = '%s.stpl'%os.path.splitext(self.script_path)[0]
+        file = '%s.stpl'%os.path.splitext(self._script_path)[0]
         with open(file,'wb') as f:
             cloudpickle.dump(self, f)
     
@@ -178,10 +178,10 @@ class assembly(object):
 class configuration(object):
     
     def __init__(self, script_path, model_instance):
-        self.script_path = script_path
-        self.name = get_file_name(script_path)
+        self._script_path = script_path
+        self._name = get_file_name(script_path)
         
-        self._config = abstract_configuration(self.name, model_instance._mbs)
+        self._config = abstract_configuration(self._name, model_instance._mbs)
         self._config.assemble_base_layer()
         self._decorate_methods()
     

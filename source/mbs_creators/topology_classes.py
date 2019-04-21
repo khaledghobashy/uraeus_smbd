@@ -33,11 +33,8 @@ class abstract_topology(object):
 
         self._insert_ground()
         self._set_global_frame()
-        self._param_config = abstract_configuration('%s_bcfg'%name, self)
+        self._config = abstract_configuration('%s_bcfg'%name, self)
     
-    @property
-    def param_config(self):
-        return self._param_config
     @property
     def selected_variant(self):
         return self.graph
@@ -174,8 +171,8 @@ class abstract_topology(object):
             cloudpickle.dump(self, f)
 
     def _initialize_toplogy_reqs(self):
-        self.param_config.assemble_base_layer()
-        self.param_config.assemble_equalities()
+        self._config.assemble_base_layer()
+        self._config.assemble_equalities()
 
     def _perform_cse(self):
         self.pos_rep, self.pos_exp = self._generate_cse(self.pos_equations, 'x')

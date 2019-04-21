@@ -8,8 +8,6 @@ Created on Sat Apr 20 21:32:58 2019
 
 import nbformat as nbf
 
-
-
 nb = nbf.v4.new_notebook()
 text = """\
 # My first automatic Jupyter Notebook
@@ -23,4 +21,3 @@ nb['cells'] = [nbf.v4.new_markdown_cell(text),
                nbf.v4.new_code_cell(code) ]
 
 nbf.write(nb, 'test.ipynb')
-
