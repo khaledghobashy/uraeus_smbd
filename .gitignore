@@ -1,3 +1,4 @@
 /.spyproject
 /.ipynb_checkpoints
 **/__pycache__
+*.cmd
