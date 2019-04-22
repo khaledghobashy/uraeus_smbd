@@ -491,10 +491,12 @@ class template_code_generator(abstract_generator):
         return text
     
     
-    def write_code_file(self, file_path=None):
-        if file_path is None:
+    def write_code_file(self, dir_path=None):
+        if dir_path is None:
             relative_path = 'use_cases.generated_templates.templates'.split('.')
             file_path = os.path.join(pkg_path, *relative_path, self.name)
+        else:
+            file_path = file_path = os.path.join(dir_path, self.name)
         
         imports = self.write_imports()
         system_class = self.write_system_class()

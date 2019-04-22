@@ -126,13 +126,13 @@ class topology(object):
         self._python_code_gen = numerical_code
     
     def save(self):
-        file = '%s.stpl'%os.path.splitext(self._script_path)[0]
+        file = '%s.stpl'%self._name
         with open(file,'wb') as f:
             cloudpickle.dump(self, f)
     
     @staticmethod
-    def reload(script_path):
-        file = '%s.stpl'%os.path.splitext(script_path)[0]
+    def reload(file_path):
+        file = '%s.stpl'%file_path
         with open(file, 'rb') as f:
             template = pickle.load(f)
         return template
