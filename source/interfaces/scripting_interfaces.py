@@ -223,6 +223,11 @@ class configuration(object):
         blender_code_gen = scripter(self)
         blender_code_gen.write_code_file()
         
+    def extract_inputs_to_csv(self):
+        file_path = os.path.join('csv_files', self._name)
+        inputs_dataframe = self._config.create_inputs_dataframe()
+        inputs_dataframe.to_csv('%s.csv'%file_path)
+        
     
     def _decorate_methods(self):
         self._decorate_point_methods()

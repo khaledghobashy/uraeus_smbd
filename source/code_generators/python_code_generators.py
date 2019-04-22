@@ -44,6 +44,7 @@ class abstract_generator(object):
     def __init__(self,mbs,printer=numerical_printer()):
         
         self.mbs     = mbs
+        self.name    = self.mbs.name
         self.config  = self.mbs._config
         self.printer = printer
         
@@ -84,7 +85,7 @@ class abstract_generator(object):
 
 class configuration_code_generator(abstract_generator):
         
-    def __init__(self,config,printer=numerical_printer()):
+    def __init__(self, config, printer=numerical_printer()):
         
         self.config  = config._config
         self.printer = printer
@@ -215,21 +216,16 @@ class configuration_code_generator(abstract_generator):
                            class_helpers = class_helpers)
         return text
         
-    def write_code_file(self):
-        code_file_path = os.path.join(pkg_path, 'use_cases','generated_templates','configurations')
-        code_file = os.path.join(code_file_path, '%s.py'%self.name)
+    def write_code_file(self, file_path=None):
+        if file_path is None:
+            relative_path = 'use_cases.generated_templates.configurations'.split('.')
+            file_path = os.path.join(pkg_path, *relative_path, self.name)
         
         imports = self.write_imports()
         config_class = self.write_system_class()
         text = '\n'.join([imports,config_class])
-        with open(code_file, 'w') as file:
+        with open('%s.py'%file_path, 'w') as file:
             file.write(text)
-        
-        csv_file_path = os.path.join(code_file_path, 'csv_files')
-        csv_file = os.path.join(csv_file_path, '%s.csv'%self.name)
-        inputs_dataframe = self.config.create_inputs_dataframe()
-        inputs_dataframe.to_csv(csv_file)
-
         
 ###############################################################################
 ###############################################################################
@@ -495,15 +491,18 @@ class template_code_generator(abstract_generator):
         return text
     
     
-    def write_code_file(self):
-        code_file_path = os.path.join(pkg_path, 'use_cases','generated_templates','templates')
-        code_file = os.path.join(code_file_path, '%s.py'%self.mbs.name)
+    def write_code_file(self, file_path=None):
+        if file_path is None:
+            relative_path = 'use_cases.generated_templates.templates'.split('.')
+            file_path = os.path.join(pkg_path, *relative_path, self.name)
         
         imports = self.write_imports()
         system_class = self.write_system_class()
         text = '\n'.join([imports,system_class])
-        with open(code_file, 'w') as file:
+        with open('%s.py'%file_path, 'w') as file:
             file.write(text)
+        
+        print('File full path : %s'%file_path)
         
         self.write_base_configuration_file()
     ###########################################################################

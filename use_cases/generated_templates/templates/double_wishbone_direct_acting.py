@@ -40,10 +40,10 @@ class topology(object):
         self.rbl_tie_rod = indicies_map[p+'rbl_tie_rod']
         self.rbr_hub = indicies_map[p+'rbr_hub']
         self.rbl_hub = indicies_map[p+'rbl_hub']
+        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
+        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
         self.vbl_steer = indicies_map[interface_map[p+'vbl_steer']]
         self.vbr_steer = indicies_map[interface_map[p+'vbr_steer']]
-        self.vbs_ground = indicies_map[interface_map[p+'vbs_ground']]
-        self.vbs_chassis = indicies_map[interface_map[p+'vbs_chassis']]
 
     def assemble_template(self,indicies_map, interface_map, rows_offset):
         self.rows_offset = rows_offset

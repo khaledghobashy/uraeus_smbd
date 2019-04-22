@@ -48,41 +48,41 @@ class abstract_topology(object):
     @property
     def constraints_graph(self):
         edges = self.edges
-        condition = lambda e : issubclass(edges[e]['class'],generic_force)
-        filtered = itertools.filterfalse(condition,edges)
+        condition = lambda e : issubclass(edges[e]['class'], generic_force)
+        filtered = itertools.filterfalse(condition, edges)
         return self.graph.edge_subgraph(filtered)
 
     @property
     def forces_graph(self):
         edges = self.edges
-        condition = lambda e : issubclass(edges[e]['class'],generic_force)
-        filtered = filter(condition,edges)
+        condition = lambda e : issubclass(edges[e]['class'], generic_force)
+        filtered = filter(condition, edges)
         return self.graph.edge_subgraph(filtered)
 
     @property
     def bodies(self):
-        bodies = itertools.filterfalse(self._is_virtual_node,self.nodes)
+        bodies = itertools.filterfalse(self._is_virtual_node, self.nodes)
         return list(bodies)
     
     @property
     def virtual_bodies(self):
         condition = self._is_virtual_node
-        virtuals  = filter(condition,self.nodes)
+        virtuals  = filter(condition, self.nodes)
         return set(virtuals)
     
     @property
     def virtual_edges(self):
         condition = self._is_virtual_edge
-        virtuals  = filter(condition,self.edges)
+        virtuals  = filter(condition, self.edges)
         return set(virtuals)
     
     @property
     def nodes_indicies(self):
-        node_index = dict([(n,i) for i,n in enumerate(self.nodes)])
+        node_index = dict([(n, i) for i,n in enumerate(self.nodes)])
         return node_index
     @property
     def edges_indicies(self):
-        edges_index = dict([(n,i) for i,n in enumerate(self.edges)])
+        edges_index = dict([(n, i) for i,n in enumerate(self.edges)])
         return edges_index
 
     @property
@@ -129,7 +129,7 @@ class abstract_topology(object):
         nodes = self.nodes
         for n in self.virtual_bodies:
             obj = nodes[n]['obj']
-            q_virtuals += [obj.R,obj.P,obj.Rd,obj.Pd]
+            q_virtuals += [obj.R, obj.P, obj.Rd, obj.Pd]
         return q_virtuals
 
     @property
@@ -143,14 +143,14 @@ class abstract_topology(object):
         return sum(eq,[])
     
     def draw_constraints_topology(self):
-        plt.figure(figsize=(10,6))
+        plt.figure(figsize=(10, 6))
         graph = nx.Graph(self.constraints_graph)
         nx.draw(graph,with_labels=True)
         plt.show()
         
     def draw_forces_topology(self):
-        plt.figure(figsize=(10,6))
-        nx.draw_spring(self.forces_graph,with_labels=True)
+        plt.figure(figsize=(10, 6))
+        nx.draw_spring(self.forces_graph, with_labels=True)
         plt.show()
     
     def assemble_model(self):
@@ -202,14 +202,14 @@ class abstract_topology(object):
         self.grf = 'ground'
         self.graph.add_node(self.grf, **typ_dict)
     
-    def _is_force_edge(self,e):
+    def _is_force_edge(self, e):
         return issubclass(self.edges[e]['class'], generic_force)
 
-    def _is_virtual_node(self,n):
+    def _is_virtual_node(self, n):
         virtual_flag = self.nodes[n].get('virtual', False)
         return virtual_flag
 
-    def _is_virtual_edge(self,e):
+    def _is_virtual_edge(self, e):
         virtual_flag = self.edges[e].get('virtual', False)
         return virtual_flag
 
@@ -258,7 +258,7 @@ class abstract_topology(object):
             nodes[n]['constants_symbolic_expr'] = []
             
         
-    def _assemble_edge(self,e):
+    def _assemble_edge(self, e):
         nodes = self.nodes
         edges = self.edges
         edge_class = edges[e]['class']
@@ -341,7 +341,7 @@ class abstract_topology(object):
             if self._is_virtual_node(n):
                 continue
             b = nodes[n]['obj']
-            if isinstance(b,bodies.ground):
+            if isinstance(b, bodies.ground):
                 jacobian[row_ind:row_ind+2,i*2:i*2+2] = b.normalized_jacobian.blocks
                 equations[row_ind:row_ind+2,0] = b.normalized_pos_equation.blocks
                 vel_rhs[row_ind:row_ind+2,0]   = b.normalized_vel_equation.blocks
@@ -362,9 +362,9 @@ class abstract_topology(object):
         nodes  = self.nodes
         bodies = self.bodies
         n = 2*len(bodies)
-        matrix = sm.MutableSparseMatrix(n,n,None)
+        matrix = sm.MutableSparseMatrix(n, n, None)
         mass_matricies = [[nodes[i]['obj'].M, nodes[i]['obj'].J] for i in bodies]
-        mass_matricies = sum(mass_matricies,[])
+        mass_matricies = sum(mass_matricies, [])
         for i,m in enumerate(mass_matricies):
             matrix[i,i] = m
         self.mass_equations = matrix
@@ -404,8 +404,8 @@ class abstract_topology(object):
         
     @staticmethod
     def _typ_attr_dict(typ):
-        attr_dict = {'n':typ.n,'nc':typ.nc,'nve':typ.nve,'class':typ,
-                     'mirr':None,'align':'s','virtual':False}
+        attr_dict = {'n':typ.n, 'nc':typ.nc, 'nve':typ.nve, 'class':typ,
+                     'mirr':None, 'align':'s', 'virtual':False}
         return attr_dict
     
     @staticmethod
@@ -485,10 +485,10 @@ class topology(abstract_topology):
             self._edges_keys_map[name] = key
     
     
-    def _add_node_forces(self,n):
+    def _add_node_forces(self, n):
         grf = self.grf
-        self.add_force(gravity_force,'%s_gravity'%n,n,grf)
-        self.add_force(centrifugal_force,'%s_centrifuge'%n,n,grf)
+        self.add_force(gravity_force, '%s_gravity'%n, n, grf)
+        self.add_force(centrifugal_force, '%s_centrifuge'%n, n, grf)
 
 ###############################################################################
 ###############################################################################
@@ -502,8 +502,8 @@ class template_based_topology(topology):
             node2 = ('vbl_%s'%name if virtual else 'rbl_%s'%name)
             super().add_body(node1)
             super().add_body(node2)
-            variant.nodes[node1].update({'mirr':node2,'align':'r'})
-            variant.nodes[node2].update({'mirr':node1,'align':'l'})
+            variant.nodes[node1].update({'mirr':node2, 'align':'r'})
+            variant.nodes[node2].update({'mirr':node1, 'align':'l'})
             if virtual:
                 self._set_body_as_virtual(node1)
                 self._set_body_as_virtual(node2)
@@ -526,8 +526,8 @@ class template_based_topology(topology):
             super().add_joint(typ,name2,body_i_mirr,body_j_mirr)
             joint_edge1 = self._edges_map[name1]
             joint_edge2 = self._edges_map[name2]
-            variant.edges[joint_edge1].update({'mirr':name2,'align':'r'})
-            variant.edges[joint_edge2].update({'mirr':name1,'align':'l'})
+            variant.edges[joint_edge1].update({'mirr':name2, 'align':'r'})
+            variant.edges[joint_edge2].update({'mirr':name1, 'align':'l'})
             if virtual:
                 self._set_joint_as_virtual(joint_edge1)
                 self._set_joint_as_virtual(joint_edge2)
@@ -550,8 +550,8 @@ class template_based_topology(topology):
             super().add_joint_actuator(typ,name2,joint_name2)
             act_edge1 = self._edges_map[name1]
             act_edge2 = self._edges_map[name2]
-            variant.edges[act_edge1].update({'mirr':name2,'align':'r'})
-            variant.edges[act_edge2].update({'mirr':name1,'align':'l'})
+            variant.edges[act_edge1].update({'mirr':name2, 'align':'r'})
+            variant.edges[act_edge2].update({'mirr':name1, 'align':'l'})
         else:
             name = 'mcs_%s'%name
             super().add_joint_actuator(typ,name,joint_name)
