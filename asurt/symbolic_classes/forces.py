@@ -7,11 +7,10 @@ Created on Thu Feb  7 08:43:54 2019
 
 import itertools
 import sympy as sm
-from source.symbolic_classes.abstract_matrices import (vector, G, Skew,
-                                                       zero_matrix, 
-                                                       matrix_symbol)
-from source.symbolic_classes.helper_funcs import body_setter, name_setter
-from source.symbolic_classes.joints import dummy_cylinderical
+
+from .abstract_matrices import vector, G, Skew, zero_matrix, matrix_symbol
+from .helper_funcs import body_setter, name_setter
+from .joints import dummy_cylinderical
 
 
 class generic_force(object):

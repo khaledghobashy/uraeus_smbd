@@ -9,16 +9,15 @@ import sympy as sm
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from source.symbolic_classes.abstract_matrices import (global_frame, 
-                                                       reference_frame,
-                                                       zero_matrix)
-import source.symbolic_classes.bodies as bodies
+from asurt.symbolic_classes.abstract_matrices import (global_frame, reference_frame,
+                                                      zero_matrix)
+import asurt.symbolic_classes.bodies as bodies
 
-from source.symbolic_classes.joints import absolute_locator
-from source.symbolic_classes.algebraic_constraints import joint_actuator
-from source.symbolic_classes.forces import generic_force, gravity_force, centrifugal_force
+from asurt.symbolic_classes.joints import absolute_locator
+from asurt.symbolic_classes.algebraic_constraints import joint_actuator
+from asurt.symbolic_classes.forces import generic_force, gravity_force, centrifugal_force
 
-from source.mbs_creators.configuration_classes import abstract_configuration
+from .configuration_classes import abstract_configuration
 
 ###############################################################################
 

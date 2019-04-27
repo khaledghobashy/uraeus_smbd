@@ -4,12 +4,17 @@ Created on Sun Jan  6 13:23:39 2019
 
 @author: khale
 """
+
+# Standard library imports
 import os
 import re
 import textwrap
 import itertools
-from source import pkg_path
-from source.code_generators.code_printers import numerical_printer
+
+# Local application imports
+from asurt import pkg_path
+from .printer import npsc_printer as printer
+
 
 default_projects_dir = os.path.join(pkg_path, 'use_cases')
 
@@ -43,7 +48,7 @@ class abstract_generator(object):
 
     """
     
-    def __init__(self,mbs,printer=numerical_printer()):
+    def __init__(self,mbs,printer=printer()):
         
         self.mbs     = mbs
         self.name    = self.mbs.name
@@ -87,9 +92,9 @@ class abstract_generator(object):
 
 class configuration_code_generator(abstract_generator):
         
-    def __init__(self, config, printer=numerical_printer()):
+    def __init__(self, config, printer=printer()):
         
-        self.config  = config._config
+        self.config  = config
         self.printer = printer
         self.name = self.config.name
         
@@ -506,10 +511,9 @@ class template_code_generator(abstract_generator):
         text = '\n'.join([imports,system_class])
         with open('%s.py'%file_path, 'w') as file:
             file.write(text)
-        
-        print('File full path : %s'%file_path)
-        
+        print('File full path : %s.py'%file_path)
         self.write_base_configuration_file()
+    
     ###########################################################################
     ###########################################################################
 
@@ -613,7 +617,7 @@ class template_code_generator(abstract_generator):
 
 class assembly_code_generator(template_code_generator):
     
-    def __init__(self,multibody_system,printer=numerical_printer()):
+    def __init__(self,multibody_system,printer=printer()):
         self.mbs  = multibody_system
         self.name = self.mbs.name
         self.printer = printer
@@ -911,16 +915,20 @@ class assembly_code_generator(template_code_generator):
                            lagrg_setter = lagrg_setter)
         return text
     
-    def write_code_file(self):
-        code_file_path = os.path.join(pkg_path, 'use_cases','generated_templates','assemblies')
-        code_file = os.path.join(code_file_path, '%s.py'%self.mbs.name)
+    
+    def write_code_file(self, dir_path=None):
+        if dir_path is None:
+            relative_path = 'generated_templates.assemblies'.split('.')
+            file_path = os.path.join(default_projects_dir, *relative_path, self.name)
+        else:
+            file_path = os.path.join(dir_path, self.name)
 
         imports = self.write_imports()
         system_class = self.write_system_class()
-        
-        text = ''.join([imports,system_class])
-        with open(code_file, 'w') as file:
+        text = ''.join([imports, system_class])
+        with open('%s.py'%file_path, 'w') as file:
             file.write(text)
+        print('File full path : %s.py'%file_path)
 
     ###########################################################################
     def _write_x_setter(self,func_name,var='q'):

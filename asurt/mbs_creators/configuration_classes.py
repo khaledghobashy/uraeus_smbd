@@ -11,7 +11,7 @@ import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from source.symbolic_classes.abstract_matrices import (AbstractMatrix, vector, 
+from asurt.symbolic_classes.abstract_matrices import (AbstractMatrix, vector, 
                                                        quatrenion, matrix_symbol)
 
 ###############################################################################

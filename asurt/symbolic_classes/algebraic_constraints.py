@@ -7,11 +7,12 @@ Created on Tue Jan  1 11:06:05 2019
 
 import itertools
 import sympy as sm
-from source.symbolic_classes.abstract_matrices import (reference_frame,vector, zero_matrix, 
-                                                       B, E, matrix_symbol, Skew)
-from source.symbolic_classes.helper_funcs import body_setter, name_setter
-from source.symbolic_classes.bodies import body
 from IPython.display import display
+
+from .abstract_matrices import (reference_frame, vector, zero_matrix, B, E, 
+                               matrix_symbol, Skew)
+from .bodies import body
+from .helper_funcs import body_setter, name_setter
 
 
 I = sm.Identity(3)

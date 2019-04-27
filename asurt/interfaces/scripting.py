@@ -6,29 +6,39 @@ Created on Wed Mar 27 08:49:16 2019
 """
 import os
 import pickle
+
 import cloudpickle
 import sympy as sm
+import matplotlib.pyplot as plt
+import numpy as np
 
-import source.mbs_creators.topology_classes as topology_classes
-import source.symbolic_classes.joints as joints
-import source.symbolic_classes.forces as forces
-from source.code_generators.python_code_generators import (assembly_code_generator,
-                                                           template_code_generator,
-                                                           configuration_code_generator)
-from source.post_processors.blender.scripter import scripter
+from asurt.code_generators.python import (assembly_code_generator,
+                                          template_code_generator,
+                                          configuration_code_generator)
 
-from source.symbolic_classes.abstract_matrices import vector
-from source.mbs_creators.configuration_classes import (abstract_configuration, 
-                                                       Geometries, Geometry, CR)
+import asurt.mbs_creators.topology_classes as topology_classes
+import asurt.mbs_creators.configuration_classes  as cfg_cls
+
+import asurt.symbolic_classes.joints as joints
+import asurt.symbolic_classes.forces as forces
+
+from asurt.code_generators.blender.generator import script_generator
+from asurt.symbolic_classes.abstract_matrices import vector
+from asurt.numerical_classes.python_solver import kds_solver, dds_solver
 
 ###############################################################################
-
-importer_directory = os.getcwd()
 
 def get_file_name(script_path):
     name = os.path.basename(script_path).split('.')[0]
     return name
 
+def load_stpl_file(proj_dir, template_name):
+    relative_path = 'symbolic_models.templates'.split('.')
+    dir_path = os.path.join(proj_dir, *relative_path, template_name, template_name)    
+    file = '%s.stpl'%dir_path
+    with open(file, 'rb') as f:
+        template = pickle.load(f)
+    return template
 ###############################################################################
 
 class topology_edges_container(object):
@@ -127,19 +137,11 @@ class topology(object):
         dir_path = os.path.join(proj_dir, *relative_path)
         numerical_code = template_code_generator(self._mbs)
         numerical_code.write_code_file(dir_path)
-        self._python_code_gen = numerical_code
     
     def save(self):
         file = '%s.stpl'%self._name
         with open(file,'wb') as f:
             cloudpickle.dump(self, f)
-    
-    @staticmethod
-    def reload(file_path):
-        file = '%s.stpl'%file_path
-        with open(file, 'rb') as f:
-            template = pickle.load(f)
-        return template
     
 
 ###############################################################################
@@ -148,7 +150,7 @@ class topology(object):
 class assembly(object):
     
     def __init__(self, script_path):
-        self.script_path = script_path
+        self._script_path = script_path
         self.name = get_file_name(script_path)
         self._mbs = topology_classes.assembly(self.name)
         
@@ -166,9 +168,12 @@ class assembly(object):
     def assemble_model(self):
         self._mbs.assemble_model()
     
-    def write_python_code(self):
-        code = assembly_code_generator(self._mbs)
-        code.write_code_file()
+    def write_python_code(self, proj_dir):
+        relative_path = 'generated_models.python.assemblies'.split('.')
+        dir_path = os.path.join(proj_dir, *relative_path)
+        numerical_code = assembly_code_generator(self._mbs)
+        numerical_code.write_code_file(dir_path)
+    
     
     def draw_constraints_topology(self):
         self._mbs.draw_constraints_topology()
@@ -185,7 +190,7 @@ class configuration(object):
         self._script_path = script_path
         self._name = get_file_name(script_path)
         
-        self._config = abstract_configuration(self._name, model_instance._mbs)
+        self._config = cfg_cls.abstract_configuration(self._name, model_instance._mbs)
         self._config.assemble_base_layer()
         self._decorate_methods()
     
@@ -221,15 +226,15 @@ class configuration(object):
         self._config.assemble_equalities()
 
     def write_python_code(self, proj_dir):
-        relative_path = 'generated_models.python.configuration'.split('.')
+        relative_path = 'generated_models.python.configurations'.split('.')
         dir_path = os.path.join(proj_dir, *relative_path)
-        numerical_code = configuration_code_generator(self)
+        numerical_code = configuration_code_generator(self._config)
         numerical_code.write_code_file(dir_path)
         
     def write_blender_script(self, proj_dir):
-        relative_path = 'generated_models.blender'.split('.')
+        relative_path = 'generated_models.blender.gen_scripts'.split('.')
         dir_path = os.path.join(proj_dir, *relative_path)
-        blender_code_gen = scripter(self)
+        blender_code_gen = script_generator(self._config)
         blender_code_gen.write_code_file(dir_path)
         
     def extract_inputs_to_csv(self):
@@ -249,31 +254,36 @@ class configuration(object):
         sym = 'hp'
         node_type = vector
         methods = ['Mirrored', 'Centered', 'Equal_to', 'UserInput']
-        self._point_methods = self._decorate_components(node_type, sym, methods, CR)
+        self._point_methods = self._decorate_components(node_type, sym, 
+                                                        methods, cfg_cls.CR)
         
     def _decorate_vector_methods(self):
         sym = 'vc'
         node_type = vector
         methods = ['Mirrored', 'Oriented', 'Equal_to', 'UserInput']
-        self._vector_methods = self._decorate_components(node_type, sym, methods, CR)
+        self._vector_methods = self._decorate_components(node_type, sym, 
+                                                         methods, cfg_cls.CR)
 
     def _decorate_scalar_methods(self):
         sym = ''
         node_type = sm.symbols
         methods = ['Equal_to', 'UserInput']
-        self._scalar_methods = self._decorate_components(node_type, sym, methods, CR)
+        self._scalar_methods = self._decorate_components(node_type, sym, 
+                                                         methods, cfg_cls.CR)
             
     def _decorate_geometry_methods(self):
         sym = 'gm'
-        node_type = Geometry
+        node_type = cfg_cls.Geometry
         methods = ['Composite_Geometry', 'Cylinder_Geometry', 'Triangular_Prism']
-        self._geometry_methods = self._decorate_components(node_type, sym, methods, Geometries)
+        self._geometry_methods = self._decorate_components(node_type, sym, 
+                                                           methods, cfg_cls.Geometries)
 
     def _decorate_relation_methods(self):
         sym = None
         node_type = None
         methods = ['Mirrored', 'Centered', 'Equal_to', 'Oriented', 'UserInput']
-        self._relation_methods = self._decorate_components(node_type, sym, methods, CR)
+        self._relation_methods = self._decorate_components(node_type, sym, 
+                                                           methods, cfg_cls.CR)
 
     def _decorate_components(self, node_type, sym, methods_list, methods_class):   
         container_class = type('container', (object,), {})
@@ -349,17 +359,12 @@ class Subsystems(object):
 class multibody_system(object):
     
     def __init__(self, system):
-        
         self.system = system.numerical_assembly()        
         self.Subsystems = Subsystems(self.system.subsystems)
         
 
 ###############################################################################
 ###############################################################################
-
-from source.numerical_classes.python_solver import kds_solver, dds_solver
-import matplotlib.pyplot as plt
-import numpy as np
 
 class simulation(object):
     

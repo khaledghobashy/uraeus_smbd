@@ -5,8 +5,7 @@ Created on Sun Feb 10 10:28:45 2019
 @author: khaled.ghobashy
 """
 
-from source.symbolic_classes.abstract_matrices import (reference_frame, 
-                                                       vector, B)
+from .abstract_matrices import (reference_frame, vector, B)
 
 def name_setter(obj,name):
     splited_name = name.split('.')

@@ -6,12 +6,11 @@ Created on Tue Jan  1 11:11:10 2019
 """
 
 import sympy as sm
-from source.symbolic_classes.algebraic_constraints import (algebraic_constraints,
-                                                           joint_constructor,
-                                                           joint_actuator,
-                                   spehrical_constraint, dot_product_1, dot_product_2,
-                                   angle_constraint, coordinate_constraint,
-                                   absolute_actuator)
+from .algebraic_constraints import (algebraic_constraints, joint_constructor,
+                                    joint_actuator, spehrical_constraint, 
+                                    dot_product_1, dot_product_2,
+                                    angle_constraint, coordinate_constraint,
+                                    absolute_actuator)
 
 
 class fixed(algebraic_constraints,metaclass=joint_constructor):

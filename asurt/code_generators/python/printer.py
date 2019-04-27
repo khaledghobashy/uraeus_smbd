@@ -5,11 +5,12 @@ Created on Tue Jan  1 12:22:44 2019
 @author: khale
 """
 
+# Third party imports
 import sympy as sm
 import numpy as np
 from sympy.printing.ccode import C99CodePrinter
 
-class numerical_printer(C99CodePrinter):
+class npsc_printer(C99CodePrinter):
 
         
     def _print_ZeroMatrix(self,expr):

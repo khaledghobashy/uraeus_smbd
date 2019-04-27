@@ -8,18 +8,16 @@ import os
 import re
 import textwrap
 import itertools
-from source import pkg_path
-from source.code_generators.code_printers import numerical_printer
 
-default_projects_dir = os.path.join(pkg_path, 'use_cases')
+from ..code_generators.python.printer import npsc_printer
 
-class scripter(object):
+class script_generator(object):
         
-    def __init__(self,config,printer=numerical_printer()):
+    def __init__(self, config, _printer=npsc_printer()):
         
-        self.config  = config._config
+        self.config  = config
         self.name = self.config.name
-        self.printer = printer
+        self.printer = _printer
 
         data = self.config.get_geometries_graph_data()
         self.input_args   = data['input_nodes']
@@ -29,7 +27,7 @@ class scripter(object):
         self.geometries_map = data['geometries_map']
         
         equalities = itertools.chain(self.input_equalities,self.output_equalities)
-        self.args_str = [printer._print(expr.lhs) for expr in equalities]
+        self.args_str = [self.printer._print(expr.lhs) for expr in equalities]
                 
     def write_imports(self):
         text = '''
@@ -66,7 +64,7 @@ class scripter(object):
         pattern = '|'.join([p._print(arg) for arg in self.input_args])
         self_inserter = self._insert_string('self.')
         
-        inputs = '*scale\n'.join([p._print(exp) for exp in inputs])
+        inputs = '\n'.join(['%s*scale'%p._print(exp) for exp in inputs])
         inputs = re.sub(pattern,self_inserter,inputs)
         inputs = textwrap.indent(inputs,indent).lstrip()
                 
@@ -169,16 +167,12 @@ class scripter(object):
         return text
         
     def write_code_file(self, dir_path=None):
-        if dir_path is None:
-            relative_path = 'generated_templates.blender'.split('.')
-            file_path = os.path.join(default_projects_dir, *relative_path, self.name)
-        else:
-            file_path = os.path.join(dir_path, self.name)
+        file_path = os.path.join(dir_path, self.name)
         
         imports = self.write_imports()
         config_class = self.write_system_class()
         text = ''.join([imports,config_class])
-        with open('%s.py'%file_path,'w') as file:
+        with open('%s.py'%file_path, 'w') as file:
             file.write(text)
         
 

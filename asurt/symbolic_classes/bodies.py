@@ -7,9 +7,8 @@ Created on Tue Jan  1 10:57:47 2019
 import itertools
 import sympy as sm
 
-from source.symbolic_classes.abstract_matrices import (reference_frame, vector, 
-                                                       quatrenion, zero_matrix,
-                                                       A, G, E, matrix_symbol)
+from .abstract_matrices import (reference_frame, vector, quatrenion, zero_matrix,
+                                A, G, E, matrix_symbol)
 
 
 class body(reference_frame):
