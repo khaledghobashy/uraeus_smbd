@@ -4,27 +4,23 @@ Created on Wed Mar 27 08:49:16 2019
 
 @author: khaled.ghobashy
 """
+# Standard library imports
 import os
 import pickle
 
+# 3rd party library imports
 import cloudpickle
 import sympy as sm
-import matplotlib.pyplot as plt
-import numpy as np
 
-from asurt.code_generators.python import (assembly_code_generator,
-                                          template_code_generator,
-                                          configuration_code_generator)
+# Local applicataion imports
+import asurt.symbolic.symbolic_classes.joints as joints
+import asurt.symbolic.symbolic_classes.forces as forces
+import asurt.symbolic.mbs_creators.topology_classes as topology_classes
+import asurt.symbolic.mbs_creators.configuration_classes  as cfg_cls
+from asurt.symbolic.symbolic_classes.abstract_matrices import vector
 
-import asurt.mbs_creators.topology_classes as topology_classes
-import asurt.mbs_creators.configuration_classes  as cfg_cls
-
-import asurt.symbolic_classes.joints as joints
-import asurt.symbolic_classes.forces as forces
-
-from asurt.code_generators.blender.generator import script_generator
-from asurt.symbolic_classes.abstract_matrices import vector
-from asurt.numerical_classes.python_solver import kds_solver, dds_solver
+# Local directory imports
+from . import codegens
 
 ###############################################################################
 
@@ -33,12 +29,13 @@ def get_file_name(script_path):
     return name
 
 def load_stpl_file(proj_dir, template_name):
-    relative_path = 'symbolic_models.templates'.split('.')
+    relative_path = 'symenv.templates'.split('.')
     dir_path = os.path.join(proj_dir, *relative_path, template_name, template_name)    
     file = '%s.stpl'%dir_path
     with open(file, 'rb') as f:
         template = pickle.load(f)
     return template
+
 ###############################################################################
 
 class topology_edges_container(object):
@@ -59,7 +56,7 @@ class topology_edges_container(object):
 
 class joints_container(topology_edges_container):
     
-    def __init__(self, mbs):
+    def __init__(self, mbs, _execluded_kwargs=[]):
         self.spherical = joints.spherical
         self.revolute  = joints.revolute
         self.universal = joints.universal
@@ -67,11 +64,16 @@ class joints_container(topology_edges_container):
         self.cylinderical  = joints.cylinderical
         self.tripod = joints.tripod
         self.fixed  = joints.fixed
+        
+        self._execluded_kwargs = _execluded_kwargs
         super().__init__(mbs)
     
     def _decorate(self, edge_component):
         def decorated(*args, **kwargs):
-                self._mbs.add_joint(edge_component, *args, **kwargs)
+            for kw in kwargs:
+                if kw in self._execluded_kwargs:
+                    raise ValueError('%r not allowed here!.'%kw)
+            self._mbs.add_joint(edge_component, *args, **kwargs)
         return decorated
 
     
@@ -103,7 +105,7 @@ class forces_container(topology_edges_container):
     
 ###############################################################################
 
-class topology(object):
+class template_topology(object):
     
     def __init__(self, script_path):
         self._script_path = script_path
@@ -131,18 +133,14 @@ class topology(object):
     
     def assemble_model(self):
         self._mbs.assemble_model()
-        
-    def write_python_code(self, proj_dir):
-        relative_path = 'generated_models.python.templates'.split('.')
-        dir_path = os.path.join(proj_dir, *relative_path)
-        numerical_code = template_code_generator(self._mbs)
-        numerical_code.write_code_file(dir_path)
-    
+            
     def save(self):
         file = '%s.stpl'%self._name
-        with open(file,'wb') as f:
+        with open(file, 'wb') as f:
             cloudpickle.dump(self, f)
     
+    def write_python_code(self, proj_dir):
+        codegens.topology_generators.write_python_code(self._mbs, proj_dir)
 
 ###############################################################################
 ###############################################################################
@@ -151,8 +149,15 @@ class assembly(object):
     
     def __init__(self, script_path):
         self._script_path = script_path
-        self.name = get_file_name(script_path)
-        self._mbs = topology_classes.assembly(self.name)
+        self._name = get_file_name(script_path)
+        self._mbs = topology_classes.assembly(self._name)
+        
+    def add_assembly(self, assm):
+        try :
+            assm = assm._mbs
+        except AttributeError:
+            pass
+        self._mbs.add_assembly(assm)
         
     def add_subsystem(self, subsystem_name, template_instance):
         try :
@@ -169,11 +174,7 @@ class assembly(object):
         self._mbs.assemble_model()
     
     def write_python_code(self, proj_dir):
-        relative_path = 'generated_models.python.assemblies'.split('.')
-        dir_path = os.path.join(proj_dir, *relative_path)
-        numerical_code = assembly_code_generator(self._mbs)
-        numerical_code.write_code_file(dir_path)
-    
+        codegens.assembly_generators.write_python_code(self._mbs, proj_dir)
     
     def draw_constraints_topology(self):
         self._mbs.draw_constraints_topology()
@@ -181,6 +182,47 @@ class assembly(object):
     def draw_interface_graph(self):
         self._mbs.draw_interface_graph()
         
+###############################################################################
+###############################################################################
+
+#class standalone_topology1(template_topology):
+#    
+#    def __init__(self, script_path):
+#        super().__init__(script_path)
+#        self._joints = joints_container(self._mbs, ['virtual'])
+#    
+#    def add_body(self, *args, **kwargs):
+#        if 'virtual' in kwargs:
+#            raise ValueError('virtual kwarg in not allowed here!.')
+#        self._mbs.add_body(*args, **kwargs)
+#    
+#    def _create_assembly(self):
+#        subsys_name = 'MOD'
+#        _assembly = assembly(self._name)
+#        _assembly.add_subsystem(subsys_name, self._mbs)
+#        self._assembly = _assembly
+#    
+#    def assemble_model(self):
+#        super().assemble_model()
+#        self._create_assembly()
+#        self._assembly.assemble_model()
+#
+#    def write_python_code(self, proj_dir):
+#        super().write_python_code(proj_dir)
+#        self._assembly.write_python_code(proj_dir)
+
+class standalone_topology(template_topology):
+    
+    def __init__(self, script_path):
+        self._script_path = script_path
+        self._name = get_file_name(script_path)
+        self._mbs = topology_classes.standalone_topology(self._name)
+        
+        self._joints = joints_container(self._mbs)
+        self._actuators = actuators_container(self._mbs)
+        self._forces = forces_container(self._mbs)
+
+
 ###############################################################################
 ###############################################################################
 
@@ -226,22 +268,20 @@ class configuration(object):
         self._config.assemble_equalities()
 
     def write_python_code(self, proj_dir):
-        relative_path = 'generated_models.python.configurations'.split('.')
-        dir_path = os.path.join(proj_dir, *relative_path)
-        numerical_code = configuration_code_generator(self._config)
-        numerical_code.write_code_file(dir_path)
+        codegens.configuration_generators.write_python_code(self._config, proj_dir)
         
     def write_blender_script(self, proj_dir):
-        relative_path = 'generated_models.blender.gen_scripts'.split('.')
-        dir_path = os.path.join(proj_dir, *relative_path)
-        blender_code_gen = script_generator(self._config)
-        blender_code_gen.write_code_file(dir_path)
-        
+        codegens.visuals_generator.blender(self._config, proj_dir)
+
     def extract_inputs_to_csv(self):
         file_path = os.path.join('csv_files', self._name)
         inputs_dataframe = self._config.create_inputs_dataframe()
         inputs_dataframe.to_csv('%s.csv'%file_path)
-        
+    
+    def save(self):
+        file = '%s.scfg'%self._name
+        with open(file, 'wb') as f:
+            cloudpickle.dump(self, f)
     
     def _decorate_methods(self):
         self._decorate_point_methods()
@@ -326,93 +366,7 @@ class configuration(object):
     def _add_relation(self, relation, node, arg_nodes, **kwargs):
         self._config.add_relation(relation, node, arg_nodes, **kwargs)
 
-###############################################################################
-###############################################################################
-
-class numerical_subsystem(object):
-    
-    def __init__(self, topology_instance):
-        self._name = topology_instance.prefix[:-1]
-        self._topology = topology_instance
-        
-    def set_configuration_file(self, config_module):
-        self._topology.config = config_module.configuration()
-        
-    def set_configuration_data(self, file):
-        path = os.path.join('configuration_files', file)
-        self._topology.config.load_from_csv(path)
-    
-    @property
-    def config(self):
-        return self._topology.config
 
 ###############################################################################
 ###############################################################################
 
-class Subsystems(object):
-    
-    def __init__(self, subsystems_list):
-        for sub in subsystems_list:
-            sub = numerical_subsystem(sub)
-            setattr(self, sub._name, sub)
-
-class multibody_system(object):
-    
-    def __init__(self, system):
-        self.system = system.numerical_assembly()        
-        self.Subsystems = Subsystems(self.system.subsystems)
-        
-
-###############################################################################
-###############################################################################
-
-class simulation(object):
-    
-    def __init__(self, name, model, typ='kds'):
-        
-        self.name = name
-        self.assembly = model.system
-        
-        if typ == 'kds':
-            self.soln = kds_solver(self.assembly)
-        elif typ == 'dds':
-            self.soln = dds_solver(self.assembly)
-        else:
-            raise ValueError('Bad simulation type argument : %r'%typ)
-    
-    def set_time_array(self, duration, spacing):
-        self.soln.set_time_array(duration, spacing)
-        
-    def solve(self, run_id=None, save=True):
-        run_id = '%s_temp'%self.name if run_id is None else run_id
-        self.soln.solve(run_id)
-        if save:
-            filename = run_id
-            self.save_results(filename)
-    
-    def save_results(self, filename):
-        path = os.path.join('results', filename)
-        self.soln.pos_dataframe.to_csv('%s.csv'%path, index=True)
-    
-    def plot(self, y_args, x=None):
-        
-        if x is None:
-            x_data = self.soln.time_array 
-        elif isinstance(x, tuple):
-            x_string, level = x
-            data = getattr(self.soln, '%s_dataframe'%level)
-            x_data = data[x_string]
-        elif isinstance(x, np.ndarray):
-            x_data = x
-        
-        plt.figure(figsize=(8,4))
-        for y_string, level in y_args:
-            data = getattr(self.soln, '%s_dataframe'%level)
-            y_data = data[y_string]
-            plt.plot(x_data, y_data)
-        
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-        
