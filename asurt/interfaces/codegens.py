@@ -10,8 +10,13 @@ import os
 
 # Local applicataion imports
 import asurt.utilities.blender.codegen as bpygen
-from asurt.numenv.python.interfaces.simenv import codegen as pygen
+from asurt.numenv.python.interfaces.projects import codegen as pygen
 
+
+class standalone_generators(object):
+    
+    def write_python_code(mbs, proj_dir):
+        pygen.write_standalone_code(mbs, proj_dir)
 
 class topology_generators(object):
     

@@ -12,10 +12,10 @@ from IPython.display import display
 import sympy as sm
 
 # Local application imports
-from .abstract_matrices import (reference_frame, vector, zero_matrix, B, E, 
+from .matrices import (reference_frame, vector, zero_matrix, B, E, 
                                matrix_symbol, Skew)
 from .bodies import body
-from .helper_funcs import body_setter, name_setter
+from .helpers import body_setter, name_setter
 
 
 I = sm.Identity(3)

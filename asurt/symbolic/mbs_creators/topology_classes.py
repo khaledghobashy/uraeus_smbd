@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 # Local application imports
-from ..symbolic_classes.abstract_matrices import (global_frame, reference_frame,
-                                                  zero_matrix)
+from ..symbolic_classes.matrices import (global_frame, reference_frame,
+                                         zero_matrix)
 from ..symbolic_classes import bodies
 from ..symbolic_classes.joints import absolute_locator
 from ..symbolic_classes.algebraic_constraints import joint_actuator
@@ -25,20 +25,34 @@ from ..symbolic_classes.forces import generic_force, gravity_force, centrifugal_
 
 class abstract_topology(object):
     
-    def __init__(self,name):
-        
+    def __init__(self, name):
         self.name = name
         self.graph = nx.MultiDiGraph(name=name)
         self._edges_map = {}
         self._edges_keys_map = {}
-
+        self.variants = {'base':self.graph}
+        self._selected_variant = self.graph
         self._insert_ground()
         self._set_global_frame()
-#        self._config = abstract_configuration('%s_bcfg'%name, self)
+    
+    def create_subvariant(self, name, parent=None):
+        if parent is None:
+            parent = 'base'
+        parent_graph = self.variants[parent]
+        graph = nx.MultiDiGraph(name = name)
+        graph.add_nodes_from(parent_graph.nodes(data=True))
+        graph.add_edges_from(parent_graph.edges(data=True, keys=True))
+        self.variants[name] = graph
+        self.selected_variant = name
+        
     
     @property
     def selected_variant(self):
-        return self.graph
+        return self._selected_variant
+    @selected_variant.setter
+    def selected_variant(self, name):
+        self._selected_variant = self.variants[name]
+    
     @property
     def nodes(self):
         return self.selected_variant.nodes
@@ -48,17 +62,19 @@ class abstract_topology(object):
     
     @property
     def constraints_graph(self):
+        graph = self.selected_variant
         edges = self.edges
         condition = lambda e : issubclass(edges[e]['class'], generic_force)
         filtered = itertools.filterfalse(condition, edges)
-        return self.graph.edge_subgraph(filtered)
+        return graph.edge_subgraph(filtered)
 
     @property
     def forces_graph(self):
+        graph = self.selected_variant
         edges = self.edges
         condition = lambda e : issubclass(edges[e]['class'], generic_force)
         filtered = filter(condition, edges)
-        return self.graph.edge_subgraph(filtered)
+        return graph.edge_subgraph(filtered)
 
     @property
     def bodies(self):
@@ -180,7 +196,7 @@ class abstract_topology(object):
         self.mass_rep, self.mass_exp = self._generate_cse(self.mass_equations, 'm')
 
     def _get_topology_attr(self, name):
-        graph = self.graph
+        graph = self.selected_variant
         nodes_attr = nx.get_node_attributes(graph, name).values()
         edges_attr = nx.get_edge_attributes(graph, name).values()
         container  = itertools.chain(nodes_attr, edges_attr)
@@ -280,7 +296,8 @@ class abstract_topology(object):
     
 
     def _remove_virtual_edges(self):
-        self.graph.remove_edges_from(self.virtual_edges)
+        graph = self.selected_variant
+        graph.remove_edges_from(self.virtual_edges)
     
     def _store_constaints_index(self):
         self._actuators_indicies = {}
@@ -574,7 +591,7 @@ class template_based_topology(topology):
             variant.edges[act_edge].update({'mirr':name})
     
     def add_force(self, typ, name, body_i, body_j, mirrored=False):
-        variant = self.graph
+        variant = self.selected_variant
         if mirrored:
             body_i_mirr = self.nodes[body_i]['mirr']
             body_j_mirr = self.nodes[body_j]['mirr']
@@ -647,16 +664,21 @@ class subsystem(abstract_topology):
         self._set_global_frame()
         self.template = template
         self.graph = self.template.graph.copy()
+        self.variants = {'base':self.graph}
+        self._selected_variant = self.graph
         self._virtual_bodies = []
         if name != '':
             self._relable()
     
     def _relable(self):
+        graph = self._selected_variant
         def label(x): return '%s.%s'%(self.name, x)
         labels_map = {i:label(i) for i in self.template.nodes}
-        self.graph = nx.relabel_nodes(self.graph, labels_map)
-        mirr_maped = {k:label(v) for k, v in self.nodes(data='mirr')}
-        nx.set_node_attributes(self.graph, mirr_maped, 'mirr')
+        graph = nx.relabel_nodes(graph, labels_map)
+        
+        mirr_maped = {k:label(v) for k, v in graph.nodes(data='mirr')}
+        nx.set_node_attributes(graph, mirr_maped, 'mirr')
+        self.graph = self._selected_variant = graph
     
 ###############################################################################
 ###############################################################################
@@ -670,6 +692,8 @@ class assembly(abstract_topology):
         self.subsystems = {}
         self.assemblies = {}
         self._interface_map = {}
+        self.variants = {'base':self.graph}
+        self._selected_variant = self.graph
         self._set_global_frame()
         self._insert_ground()
 

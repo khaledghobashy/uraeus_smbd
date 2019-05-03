@@ -27,7 +27,7 @@ def progress_bar(steps,i):
     length=(100*(1+i)//(4*steps))
     percentage=100*(1+i)//steps
     sys.stdout.write("Progress: ")
-    sys.stdout.write("[%-25s] %d%%, (%s/%s) steps." % ('='*length,percentage,i+1, steps+1))
+    sys.stdout.write("[%-25s] %d%%, (%s/%s) steps." % ('='*length,percentage,i+1, steps))
     sys.stdout.flush()
 
 def scipy_matrix_assembler(data,rows,cols,shape):
@@ -43,14 +43,13 @@ class abstract_solver(object):
     def __init__(self, model):
         self.model = model
         model.initialize()
+        q0 = model.q0
+        model.set_gen_coordinates(q0)
         
         self._nrows = model.nrows
         self._ncols = model.ncols
         self._jac_shape = (self._nrows,self._ncols)
         
-        q0 = model.q0
-        model.set_gen_coordinates(q0)
-                
         self._pos_history = {0: q0}
         self._vel_history = {0: np.zeros_like(q0)}
         self._acc_history = {}
@@ -58,12 +57,12 @@ class abstract_solver(object):
         sorted_coordinates = {v:k for k,v in model.indicies_map.items()}
         self._coordinates_indicies = []
         for name in sorted_coordinates.values():
-            self._coordinates_indicies += ['%s.%s'%(name,i) 
-            for i in ['x','y','z','e0','e1','e2','e3']]
+            self._coordinates_indicies += ['%s.%s'%(name, i) 
+            for i in ['x', 'y', 'z', 'e0', 'e1', 'e2', 'e3']]
             
         self.reactions_indicies = []
         for name in model.reactions_indicies:
-            self.reactions_indicies += ['%s.%s'%(name,i) 
+            self.reactions_indicies += ['%s.%s'%(name, i) 
             for i in ['x','y','z']]
     
     def set_time_array(self, duration, spacing):
@@ -90,7 +89,13 @@ class abstract_solver(object):
         self.reactions_dataframe = pd.DataFrame(
                 data = np.concatenate(list(self.values.values()),1).T,
                 columns = self.reactions_indicies)
-
+    
+    def _initialize_model(self):
+        model = self.model
+        model.initialize()
+        q0 = model.q0
+        model.set_gen_coordinates(q0)
+    
     def _creat_results_dataframes(self):
         columns = self._coordinates_indicies
         
@@ -200,6 +205,7 @@ class abstract_solver(object):
 class kds_solver(abstract_solver):
     
     def solve(self, run_id):
+        self._initialize_model()
         time_array = self.time_array
         dt = self.step_size
         
@@ -257,6 +263,7 @@ class kds_solver(abstract_solver):
 class dds_solver(abstract_solver):
     
     def solve(self, run_id):
+        self._initialize_model()
         time_array = self.time_array
         dt = self.step_size
         bar_length = len(time_array)-1

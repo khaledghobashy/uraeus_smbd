@@ -38,7 +38,7 @@ Currently, the tool provides:
 #### Numerical Code Generation and Model Simulation
 
 - A python code-generator that creates an object-oriented code structure of the symbolic systems.
-- A python solver that can be used to solve for *Kinematically Driven Systems* -systems driven by motion actuators- using the NumPy and SciPy libraries for numerical evaluation.
+- A python solver that can be used to solve for *Kinematically  and Dynamically Driven Systems* using the NumPy and SciPy libraries for numerical evaluation.
 
 #### 3D Visualization
 
@@ -76,7 +76,7 @@ The topology of the system is represented as a multi-directed graph, where each 
 
 The tool achieves this by making heavy use the [NetworkX](https://networkx.github.io/documentation/stable/index.html) python package to create topology graphs and to construct the governing equations of the system. The equations themselves are represented symbolically by using [SymPy](https://www.sympy.org/en/index.html), which is a Python library for symbolic mathematics.
 
-The combination of both, NetworkX and SymPy, provides the tool with a very simple, easy-to-use and convenient interface for the process of model creation and topology design, where the user only focuses on the validity of the system topology in hand as he thinks only in terms of the topological components - bodies, joints, actuators and forces-, without the burden of frequent numerical inputs for each component, or how the actual system is configured in space. In short, the tool divide the typical model creation process in halves, the system topology design and the system configuration assignment.
+The combination of both, NetworkX and SymPy, provides the tool with a very simple, easy-to-use and convenient interface for the process of model creation and topology design, where the user only focuses on the validity of the system topology in hand, as he thinks only in terms of the topological components - bodies, joints, actuators and forces-, without the burden of frequent numerical inputs for each component, or how the actual system is configured in space. In short, the tool divide the typical model creation process in halves, the system topology design and the system configuration assignment.
 
 #### Code Generation and Model Simulation
 

@@ -1009,6 +1009,7 @@ class assembly_codegen(template_codegen):
         text = textwrap.indent(text,indent)
         return text
     
+    
     def _write_x_equations(self,func_name):
         text = '''
                 def eval_{func_name}_eq(self):
@@ -1024,11 +1025,13 @@ class assembly_codegen(template_codegen):
         text = textwrap.dedent(text)
         
         matrix = p._print(getattr(self.mbs,'%s_equations'%func_name)).split('\n')
-        rows,cols,ground_data = matrix
-
-        pattern = '|'.join([p._print(i) for i in self.mbs.nodes['ground']['arguments_symbols']])
+        rows, cols, ground_data = matrix
+        
+        symbols = itertools.chain(self.mbs.nodes['ground']['arguments_symbols'],
+                                  self.mbs.nodes['ground']['constants_symbols'])
+        pattern = '|'.join([p._print(i) for i in symbols])
         self_inserter = self._insert_string('self.')
-        ground_data = re.sub(pattern,self_inserter,ground_data)
+        ground_data = re.sub(pattern, self_inserter, ground_data)
                 
         ground_data = textwrap.indent(ground_data,indent).lstrip()
         ground_data = '%s_ground_eq_blocks = %s'%(func_name,ground_data.lstrip())

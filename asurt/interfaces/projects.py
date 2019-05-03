@@ -42,10 +42,11 @@ def _nbtext_parser(text, formats):
 
 _template_nbtext = """\
 $markdown
-# {system_title}
+# SYMBOLIC STUDY
+## **{system_title}**
 ----------------
 $markdown
-## SYSTEM DISCRIPTION
+### STUDY DISCRIPTION
 ---------------------
 $markdown
 _Double click to write a discription here ..._
@@ -127,6 +128,7 @@ config.assemble_model()
 config.extract_inputs_to_csv()
 $code
 config.write_python_code(project_dir)
+$code
 config.write_blender_script(project_dir)
 $code
 
@@ -134,14 +136,16 @@ $code
 
 class topology_project(object):
     
-    def __init__(self, template_name):
+    def __init__(self, template_name, typ='s'):
         self.name = template_name
-        relative_path  = 'symbolic_models.templates'.split('.')
+        assert typ in 'st', '%r not a valid input. %r or %r is expected'%(typ,'r','s')
+        relative_path  = ['templates'] if typ == 't' else ['standalones']
         self.directory = os.path.join(*relative_path, template_name)
     
     def create_project(self):
         self._create_directories()
         self._write_notebook_text()
+        print('Project %r created at %r'%(self.name, self.directory))
     
     def _create_directories(self):
         directory = self.directory
@@ -155,10 +159,10 @@ class topology_project(object):
             file.write('#')
     
     def _write_notebook_text(self):
-        
+        project_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
         formats = {'system_name': self.name,
                    'system_title': self.name.upper(),
-                   'project_dir': os.getcwd()}
+                   'project_dir': project_dir}
         cells = _nbtext_parser(_template_nbtext, formats)
         
         nb = nbf.v4.new_notebook()
@@ -166,16 +170,18 @@ class topology_project(object):
         
         notebook_path = os.path.join(self.directory, self.name)
         nbf.write(nb, '%s.ipynb'%notebook_path)
+        
 
 ###############################################################################
 ###############################################################################
 
 _assm_nbtext = """\
 $markdown
-# {system_title}
-----------------
+# SYMBOLIC STUDY
+## **{system_title}**
+-----------------
 $markdown
-## SYSTEM DISCRIPTION
+### STUDY DISCRIPTION
 ---------------------
 $markdown
 _Double click to write a discription here ..._
@@ -196,14 +202,14 @@ $markdown
 ----------------------
 $
 $code
-# template_1 = sui.load_stpl_file(project_dir, 'template_name')
+# template_1 = sui.load_template(project_dir, 'template_name')
 $
 $markdown
 ## CREATING ASSEMBLY
 --------------------
 $
 $code
-# model = sui.assembly({system_name})
+# model = sui.assembly('{system_name}')
 $
 $markdown
 ### CREATING SUBSYSTEMS
@@ -232,7 +238,7 @@ class assembly_project(object):
     
     def __init__(self, name):
         self.name = name
-        relative_path  = 'symbolic_models.assemblies'.split('.')
+        relative_path  = 'assemblies'.split('.')
         self.directory = os.path.join(*relative_path, self.name)
     
     def create_project(self):
@@ -250,10 +256,10 @@ class assembly_project(object):
             file.write('#')
     
     def _write_notebook_text(self):
-        
+        project_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
         formats = {'system_name': self.name,
                    'system_title': self.name.upper(),
-                   'project_dir': os.getcwd()}
+                   'project_dir': project_dir}
         cells = _nbtext_parser(_assm_nbtext, formats)
         
         nb = nbf.v4.new_notebook()

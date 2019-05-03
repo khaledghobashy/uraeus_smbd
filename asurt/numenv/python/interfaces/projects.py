@@ -69,6 +69,12 @@ def _nbtext_parser(text, formats):
 
 class codegen(object):
     
+    def write_standalone_code(mbs, proj_dir):
+        relative_path = 'numenv.python.models.standalones'.split('.')
+        dir_path = os.path.join(proj_dir, *relative_path)
+        numerical_code = template_codegen(mbs)
+        numerical_code.write_code_file(dir_path)
+    
     def write_template_code(mbs, proj_dir):
         relative_path = 'numenv.python.models.templates'.split('.')
         dir_path = os.path.join(proj_dir, *relative_path)
@@ -92,10 +98,11 @@ class codegen(object):
 
 _simulation_nbtext = """\
 $markdown
-# {system_title}
-----------------
+# SIMULATION STUDY
+## **{system_title}**
+-----------------
 $markdown
-## SYSTEM DISCRIPTION
+### STUDY DISCRIPTION
 ---------------------
 $markdown
 _Double click to write a discription here ..._
@@ -103,66 +110,83 @@ $markdown
 -----------------------------------------------
 $code
 import sys
-pkg_path = None
+pkg_path = ''
 sys.path.append(pkg_path)
 $
 $code
 project_dir = '{project_dir}'
 $code
-import asurt.interfaces.scripting as sui
+import numpy as np
+from asurt.numenv.python.interfaces.scripting import multibody_system, simulation
 $
 $markdown
-## IMPORTING TOPLOGIES
-----------------------
+## ASSEMBLY IMPORT & CONFIGURATION ASSIGNMENT
+---------------------------------------------
 $
 $code
-# template_1 = sui.load_stpl_file(project_dir, 'template_name')
+#import asurt_projects.numenv.python.models.assemblies as models
+#import asurt_projects.numenv.python.models.standalones as models
+#import asurt_projects.numenv.python.models.configurations as configs
+$code
+#model = multibody_system(models.'model_name')
+$code
+#model.Subsystems.'SUB1'.set_configuration_file(configs.'configuration1')
+#model.Subsystems.'SUB2'.set_configuration_file(configs.'configuration2')
+
+$code
+
+$markdown
+## SETTING MODEL ACTUATION FUNCTIONS
+------------------------------------
+$
+$code
+#model.Subsystems.'SUB1'.config.'ACTUATOR' = lambda t : 25.4*np.sin(t)
 $
 $markdown
-## CREATING ASSEMBLY
---------------------
+## MODEL CONFIGURATIONS
+-----------------------
+$markdown
+### CONFIGURATION VARIANT #1
+$markdown
+#### SETTING CONFIGURATION DATA
 $
 $code
-# model = sui.assembly({system_name})
+#model.Subsystems.'SUB1'.set_configuration_data('configuration_1.csv')
 $
 $markdown
-### CREATING SUBSYSTEMS
+#### CREATING A SIMULATION INSTANCE
 $
 $code
-#model.add_subsystem('SUBSYSTEM_INITIALS', template)
-$
-$markdown
-### ASSIGNING VIRTUAL BODIES
-$
-$code
-#model.assign_virtual_body('SU1.vbr_body', 'SU2.rbr_body')
+#sim1 = simulation('v1', model, 'kds')
+#sim1.set_time_array(2*np.pi, 100)
+#sim1.solve()
 $
 $markdown
-### ASSEMBLING AND SAVING STSYEM
+#### RESULTS' PLOTS
+$code
+#sim1.plot([('SUB.body.x', 'pos'), ('SUB.body.x', 'vel')])
+#sim1.plot([('SUB.body.y', 'pos'), ('SUB.body.y', 'vel')])
 $
-$code
-model.assemble_model()
-$code
-model.draw_constraints_topology()
-$code
-model.write_python_code(project_dir)
 """
 
 class simulation_project(object):
     
     def __init__(self, name):
         self.name = name
-        relative_path  = 'symbolic_models.assemblies'.split('.')
+        relative_path  = 'simulations'.split('.')
         self.directory = os.path.join(*relative_path, self.name)
     
     def create_project(self):
         self._create_directories()
         self._write_notebook_text()
+        print('Project %r created at %r'%(self.name, self.directory))
     
     def _create_directories(self):
         directory = self.directory
         try:
             os.mkdir(directory)
+            os.mkdir(os.path.join(directory, 'configuration_files'))
+            os.mkdir(os.path.join(directory, 'results'))
         except FileExistsError:
             raise FileExistsError('Project Already Exists!')
         init_file = os.path.join(directory, '__init__.py')
@@ -170,15 +194,15 @@ class simulation_project(object):
             file.write('#')
     
     def _write_notebook_text(self):
-        
+        project_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
         formats = {'system_name': self.name,
                    'system_title': self.name.upper(),
-                   'project_dir': os.getcwd()}
+                   'project_dir': project_dir}
         cells = _nbtext_parser(_simulation_nbtext, formats)
         
         nb = nbf.v4.new_notebook()
         nb['cells'] = cells
         
-        notebook_path = os.path.join(self.directory, self.name)
+        notebook_path = os.path.join(self.directory, 'SIM_%s'%self.name)
         nbf.write(nb, '%s.ipynb'%notebook_path)
 

@@ -17,7 +17,7 @@ import asurt.symbolic.symbolic_classes.joints as joints
 import asurt.symbolic.symbolic_classes.forces as forces
 import asurt.symbolic.mbs_creators.topology_classes as topology_classes
 import asurt.symbolic.mbs_creators.configuration_classes  as cfg_cls
-from asurt.symbolic.symbolic_classes.abstract_matrices import vector
+from asurt.symbolic.symbolic_classes.matrices import vector
 
 # Local directory imports
 from . import codegens
@@ -28,14 +28,17 @@ def get_file_name(script_path):
     name = os.path.basename(script_path).split('.')[0]
     return name
 
-def load_stpl_file(proj_dir, template_name):
-    relative_path = 'symenv.templates'.split('.')
-    dir_path = os.path.join(proj_dir, *relative_path, template_name, template_name)    
-    file = '%s.stpl'%dir_path
+def load_pickled_data(file):
     with open(file, 'rb') as f:
-        template = pickle.load(f)
-    return template
+        instance = pickle.load(f)
+    return instance
 
+def load_template(project_dir, file_name):
+    relative_file_path = 'symenv.templates'.split('.')
+    file = os.path.join(project_dir, *relative_file_path, file_name, file_name)
+    instance = load_pickled_data('%s.stpl'%file)
+    return instance
+    
 ###############################################################################
 
 class topology_edges_container(object):
@@ -145,6 +148,24 @@ class template_topology(object):
 ###############################################################################
 ###############################################################################
 
+class standalone_topology(template_topology):
+    
+    def __init__(self, script_path):
+        self._script_path = script_path
+        self._name = get_file_name(script_path)
+        self._mbs = topology_classes.standalone_topology(self._name)
+        
+        self._joints = joints_container(self._mbs)
+        self._actuators = actuators_container(self._mbs)
+        self._forces = forces_container(self._mbs)
+    
+    def write_python_code(self, proj_dir):
+        codegens.standalone_generators.write_python_code(self._mbs, proj_dir)
+    
+
+###############################################################################
+###############################################################################
+
 class assembly(object):
     
     def __init__(self, script_path):
@@ -172,6 +193,11 @@ class assembly(object):
     
     def assemble_model(self):
         self._mbs.assemble_model()
+        
+    def save(self):
+        file = '%s.sasm'%self._name
+        with open(file, 'wb') as f:
+            cloudpickle.dump(self, f)
     
     def write_python_code(self, proj_dir):
         codegens.assembly_generators.write_python_code(self._mbs, proj_dir)
@@ -182,47 +208,6 @@ class assembly(object):
     def draw_interface_graph(self):
         self._mbs.draw_interface_graph()
         
-###############################################################################
-###############################################################################
-
-#class standalone_topology1(template_topology):
-#    
-#    def __init__(self, script_path):
-#        super().__init__(script_path)
-#        self._joints = joints_container(self._mbs, ['virtual'])
-#    
-#    def add_body(self, *args, **kwargs):
-#        if 'virtual' in kwargs:
-#            raise ValueError('virtual kwarg in not allowed here!.')
-#        self._mbs.add_body(*args, **kwargs)
-#    
-#    def _create_assembly(self):
-#        subsys_name = 'MOD'
-#        _assembly = assembly(self._name)
-#        _assembly.add_subsystem(subsys_name, self._mbs)
-#        self._assembly = _assembly
-#    
-#    def assemble_model(self):
-#        super().assemble_model()
-#        self._create_assembly()
-#        self._assembly.assemble_model()
-#
-#    def write_python_code(self, proj_dir):
-#        super().write_python_code(proj_dir)
-#        self._assembly.write_python_code(proj_dir)
-
-class standalone_topology(template_topology):
-    
-    def __init__(self, script_path):
-        self._script_path = script_path
-        self._name = get_file_name(script_path)
-        self._mbs = topology_classes.standalone_topology(self._name)
-        
-        self._joints = joints_container(self._mbs)
-        self._actuators = actuators_container(self._mbs)
-        self._forces = forces_container(self._mbs)
-
-
 ###############################################################################
 ###############################################################################
 

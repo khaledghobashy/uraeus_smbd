@@ -6,6 +6,7 @@ Created on Wed Mar 27 08:49:16 2019
 """
 # Standard library imports
 import os
+import pickle
 
 # 3rd party library imports
 import numpy as np
@@ -13,6 +14,13 @@ import matplotlib.pyplot as plt
 
 # Local applicataion imports
 from ..solvers.solvers import kds_solver, dds_solver
+
+###############################################################################
+
+def load_pickled_data(file):
+    with open(file, 'rb') as f:
+        instance = pickle.load(f)
+    return instance
 
 ###############################################################################
 class numerical_subsystem(object):

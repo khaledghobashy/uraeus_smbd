@@ -15,8 +15,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Local application imports
-from ..symbolic_classes.abstract_matrices import (AbstractMatrix, vector, 
-                                                  quatrenion, matrix_symbol)
+from ..symbolic_classes.matrices import (AbstractMatrix, vector, quatrenion, 
+                                         matrix_symbol)
 
 ###############################################################################
 ###############################################################################

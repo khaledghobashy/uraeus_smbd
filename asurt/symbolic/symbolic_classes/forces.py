@@ -12,8 +12,8 @@ import itertools
 import sympy as sm
 
 # Local application imports
-from .abstract_matrices import vector, G, Skew, zero_matrix, matrix_symbol
-from .helper_funcs import body_setter, name_setter
+from .matrices import vector, G, Skew, zero_matrix, matrix_symbol
+from .helpers import body_setter, name_setter
 from .joints import dummy_cylinderical
 
 
