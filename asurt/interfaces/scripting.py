@@ -38,6 +38,12 @@ def load_template(project_dir, file_name):
     file = os.path.join(project_dir, *relative_file_path, file_name, file_name)
     instance = load_pickled_data('%s.stpl'%file)
     return instance
+
+def load_assembly(project_dir, file_name):
+    relative_file_path = 'symenv.assemblies'.split('.')
+    file = os.path.join(project_dir, *relative_file_path, file_name, file_name)
+    instance = load_pickled_data('%s.sasm'%file)
+    return instance
     
 ###############################################################################
 

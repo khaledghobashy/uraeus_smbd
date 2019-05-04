@@ -264,13 +264,28 @@ class zero_matrix(sm.MatrixSymbol):
     """
     is_ZeroMatrix = True
     
-    def __new__(cls,m,n):
-        sym = r'{Z_{%sx%s}}'%(m,n)
-        return super().__new__(cls,sym,m,n)
+    def __new__(cls, m, n):
+        sym = r'{Z_{%sx%s}}'%(m, n)
+        return super().__new__(cls, sym, m ,n)
     def __init__(self,m,n):
         self.sym = super().name
         self._args = (m,n)
-        
+    
+    @property
+    def name(self):
+        return self.sym
+    
+    @property
+    def args(self):
+        return super().args
+    
+    @property
+    def func(self):
+        return zero_matrix
+    @property
+    def shape(self):
+        return self._args
+    
     def _latex(self,expr):
         return self.sym
     def _ccode(self,expr,**kwargs):
@@ -280,12 +295,6 @@ class zero_matrix(sm.MatrixSymbol):
     
     def doit(self):
         return self
-    @property
-    def func(self):
-        return zero_matrix
-    @property
-    def shape(self):
-        return self._args
 
 
 ###############################################################################
@@ -491,8 +500,8 @@ class reference_frame(object):
         reference frame.
     """
     
-    _is_global_set  = False
-    global_frame = None
+    _is_global_set  = True
+    global_frame = global_frame()
     
     @classmethod
     def set_global_frame(cls,global_instance):

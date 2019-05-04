@@ -92,15 +92,37 @@ Several benefits of the adopted approach can be stated here, but the major theme
 
 ## Installation
 
-### Cloning
+*This part assumes a valid python 3.x environment is already installed. If new to scientific computing in python, [Anaconda](https://www.anaconda.com/download/) is a recommended free python distribution from Continuum Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for scientific computing, which provides a nice coherent platform with most of the needed tools.*
 
-*TBD ...*
+### Git
+
+As the tool is still under continuous development, cloning this repository is a more versatile way to test and play with it, until a more stable first release is released. This can be done via the following git commands from the command line.
+
+```bash
+git clone https://github.com/khaledghobashy/asurt_cdt_symbolic.git
+```
+
+```
+git pull origin master
+```
+
+An alternative to cloning is downloading the repository as a **zip** file and extract it on your machine.
+
+*TBC ...*
+
+### Colab
+
+*TBD...*
 
 ## Usage Example
 
-*TBD ...*
+Playing with the components
 
 ## Implementation Details
+
+*TBD ...*
+
+## Theoretical Basis
 
 *TBD ...*
 
