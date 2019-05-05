@@ -354,6 +354,18 @@ class dot_product_2(object):
         obj._jacobian_j.append(jacobian[1])
         
 ###############################################################################
+
+class cos(sm.cos):
+    @property
+    def T(self):
+        return sm.transpose(self)
+
+class sin(sm.cos):
+    @property
+    def T(self):
+        return sm.transpose(self)
+
+
 class angle_constraint(object):
     nc = 1
     
@@ -374,13 +386,13 @@ class angle_constraint(object):
         
         Pdi = obj.Pdi
         Pdj = obj.Pdj
-        Z = zero_matrix(1,3)
+        Z = zero_matrix(1, 3)
         
-        c = sm.cos(obj.act_func('t'))*sm.Identity(1)
-        s = sm.sin(obj.act_func('t'))*sm.Identity(1)
+        c = cos(obj.act_func('t'))
+        s = sin(obj.act_func('t'))
         
         pos_level_equation = (v3.T*v2)*c - (v1.T*v2)*s
-        vel_level_equation = zero_matrix(1,1)        
+        vel_level_equation = zero_matrix(1, 1)        
         acc_level_equation =   (c*v3.T - s*v1.T)*B(Pdj,v2_bar)*obj.Pdj \
                              + v2.T*(c*B(Pdi,v3_bar) - s*B(Pdi,v1_bar))*Pdi \
                              + 2*(c*B(obj.Pi,v3_bar)*Pdi - s*B(obj.Pi,v1_bar)*Pdi).T*(B(obj.Pj,v2_bar)*Pdj)
