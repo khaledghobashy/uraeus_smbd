@@ -355,17 +355,6 @@ class dot_product_2(object):
         
 ###############################################################################
 
-class cos(sm.cos):
-    @property
-    def T(self):
-        return sm.transpose(self)
-
-class sin(sm.cos):
-    @property
-    def T(self):
-        return sm.transpose(self)
-
-
 class angle_constraint(object):
     nc = 1
     
@@ -388,8 +377,8 @@ class angle_constraint(object):
         Pdj = obj.Pdj
         Z = zero_matrix(1, 3)
         
-        c = cos(obj.act_func('t'))
-        s = sin(obj.act_func('t'))
+        c = sm.cos(obj.act_func('t'))
+        s = sm.sin(obj.act_func('t'))
         
         pos_level_equation = (v3.T*v2)*c - (v1.T*v2)*s
         vel_level_equation = zero_matrix(1, 1)        
@@ -440,29 +429,6 @@ class coordinate_constraint(object):
         obj._jacobian_i.append(jacobian[0])
         obj._jacobian_j.append(jacobian[1])
             
-#class coordinate_constraint(object):
-#    
-#    nc  = 1
-#    
-#    def __init__(self):
-#        pass
-#    
-#    def construct(self,obj):
-#        pos_level_equation = obj.Ri[obj.i,0]
-#        vel_level_equation = zero_matrix(1,1)
-#        acc_level_equation = zero_matrix(1,1)
-#        
-#        jac = sm.MatrixSymbol('J_%s'%obj.name,1,3)
-#            
-#        jacobian = ([jac,zero_matrix(1,4)], 
-#                    [zero_matrix(1,3),zero_matrix(1,4)])
-#       
-#        obj._pos_level_equations.append(pos_level_equation)
-#        obj._vel_level_equations.append(vel_level_equation)
-#        obj._acc_level_equations.append(acc_level_equation)
-#        
-#        obj._jacobian_i.append(jacobian[0])
-#        obj._jacobian_j.append(jacobian[1])
 
 ###############################################################################
 ###############################################################################
@@ -500,8 +466,8 @@ class actuator(algebraic_constraints):
         super().__init__(*args)
         
     def _construct_actuation_functions(self):
-        self.t = t = sm.symbols('t')
-        self.act_func = sm.Function('%sAF_%s'%(self.prefix,self.id_name))
+        self.t = t = sm.symbols('t', integer=True)
+        self.act_func = sm.Function('%sAF_%s'%(self.prefix,self.id_name), integer=True)
         self._pos_function = self.act_func(t)
         self._vel_function = sm.diff(self._pos_function,t)
         self._acc_function = sm.diff(self._pos_function,t,t)
