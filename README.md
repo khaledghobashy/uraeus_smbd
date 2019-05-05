@@ -92,9 +92,15 @@ Several benefits of the adopted approach can be stated here, but the major theme
 
 ## Installation
 
-*This part assumes a valid python 3.x environment is already installed. If new to scientific computing in python, [Anaconda](https://www.anaconda.com/download/) is a recommended free python distribution from Continuum Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for scientific computing, which provides a nice coherent platform with most of the needed tools.*
+### Colab
 
-### Git
+*TBD...*
+
+### Using the tool on your machine.
+
+*The tool needs a valid python 3.x environment. If new to scientific computing in python, [Anaconda](https://www.anaconda.com/download/) is a recommended free python distribution from Continuum Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for scientific computing, which provides a nice coherent platform with most of the needed tools.*
+
+#### Git
 
 As the tool is still under continuous development, cloning this repository is a more versatile way to test and play with it, until a more stable first release is released. This can be done via the following git commands from the command line.
 
@@ -110,10 +116,6 @@ An alternative to cloning is downloading the repository as a **zip** file and ex
 
 *TBC ...*
 
-### Colab
-
-*TBD...*
-
 ## Usage Example
 
 Playing with the components
@@ -128,5 +130,5 @@ Playing with the components
 
 ## License
 
-*TBD ...*
+The tool is distributed with the 3-clause BSD license.
 
