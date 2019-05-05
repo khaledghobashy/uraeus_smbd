@@ -244,7 +244,11 @@ class template_codegen(abstract_generator):
                 from numpy.linalg import multi_dot
                 from scipy.misc import derivative
                 
-                from asurt.numenv.python.numerics.matrix_funcs import A, B, G, E, triad, skew_matrix as skew
+                try:
+                    from asurt.numenv.python.numerics.matrix_funcs import A, B, G, E, triad, skew_matrix as skew
+                except ModuleNotFoundError:
+                    print('Falling back to python defined matrix functions')
+                    from asurt.numenv.python.numerics.misc import A, B, G, E, triad, skew_matrix as skew
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
