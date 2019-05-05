@@ -639,7 +639,7 @@ class matrix_symbol(sm.MatrixSymbol):
         # appropriat arguments (name,m,n)
         if format_as:
             name = format_as
-        return super(matrix_symbol,cls).__new__(cls,name,m,n)
+        return super(matrix_symbol,cls).__new__(cls, name, m, n)
     
     def __init__(self,name,m,n, format_as=None):
         self._raw_name = name

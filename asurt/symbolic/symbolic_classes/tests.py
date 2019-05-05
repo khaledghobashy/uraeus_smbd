@@ -7,20 +7,18 @@ Created on Sat May  4 14:41:26 2019
 """
 
 from asurt.symbolic.symbolic_classes import matrices
-from asurt.symbolic.symbolic_classes import algebraic_constraints as cons
 from asurt.symbolic.symbolic_classes import bodies
 from asurt.symbolic.symbolic_classes import joints
+from asurt.symbolic.symbolic_classes import forces
 
 frame = matrices.global_frame('global')
-#matrices.reference_frame.global_frame = frame
-#cons.reference_frame.global_frame = frame
-#bodies.reference_frame.global_frame = frame
-#
+
 a = bodies.body('a')
 b = bodies.body('b')
 
-j = joints.revolute('j')
-j.body_i = a
-j.body_j = b
-j.construct()
+j = joints.revolute('j', a, b)
+
+f = forces.internal_force('f', a, b)
+
+
 

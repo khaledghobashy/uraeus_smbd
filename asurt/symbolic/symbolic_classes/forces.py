@@ -172,13 +172,13 @@ class internal_force(generic_force):
         format_ = (self.prefix,self.id_name)
         self.LF = matrix_symbol('%s%s_FL'%format_,1,1)
 
-        self.Fs = sm.Function('Fs_%s'%name)#('dx')
-        self.Fd = sm.Function('Fd_%s'%name)#('dv')
-        self.Fa = sm.Function('Fa_%s'%name)#('dv')
+        self.Fs = sm.Function('Fs_%s'%name, integer=True)#('dx')
+        self.Fd = sm.Function('Fd_%s'%name, integer=True)#('dv')
+        self.Fa = sm.Function('Fa_%s'%name, integer=True)#('dv')
         
-        self.Ts = sm.Function('Ts_%s'%name)
-        self.Td = sm.Function('Td_%s'%name)
-        self.Ta = sm.Function('Ta_%s'%name)
+        self.Ts = sm.Function('Ts_%s'%name, integer=True)
+        self.Td = sm.Function('Td_%s'%name, integer=True)
+        self.Ta = sm.Function('Ta_%s'%name, integer=True)
                 
     @property
     def Qi(self):

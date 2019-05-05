@@ -57,7 +57,10 @@ Currently, the tool provides:
 
 
 ## Background
+### The Whats and Hows ?
+
 #### What is Computational Dynamics?
+
 Computational Dynamics is a rapidly developing field that brings together applied mathematics (especially numerical analysis), computer science, and scientific or engineering applications. Multibody Dynamics can be considered as a sub-field of computational dynamics.
 #### What is the problem to be solved?
 The primary interest in multibody dynamics is to analyze the system behavior for given inputs. In analogy with control systems; a multi-body system can be thought as a **_system_** subjected to some **_inputs_** producing some **_outputs_**. These three parts of the problem are dependent on the analyst end goal of the analysis and simulation. 
@@ -92,13 +95,15 @@ Several benefits of the adopted approach can be stated here, but the major theme
 
 ## Installation
 
-### Colab
+### Using the tool on [Colab](https://colab.research.google.com)
 
-*TBD...*
+Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. So, if you do not have an up and running python environment, you still can check out the tool and create multibody systems seamlessly. 
+
+[This](https://colab.research.google.com/drive/1-ezP5MaL9rZTN2c0zXEDUABiRi2Lp9_A) is a notebook that clones this repository and creates a valid environment for the tool on Colab. The notebook walks you a step by step through the process of building and simulating a **Spatial Four-Bar** mechanism.
 
 ### Using the tool on your machine.
 
-*The tool needs a valid python 3.x environment. If new to scientific computing in python, [Anaconda](https://www.anaconda.com/download/) is a recommended free python distribution from Continuum Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for scientific computing, which provides a nice coherent platform with most of the needed tools.*
+The tool needs a valid python 3.6+ environment. If new to scientific computing in python, [Anaconda](https://www.anaconda.com/download/) is a recommended free python distribution from Continuum Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for scientific computing, which provides a nice coherent platform with most of the tools needed.
 
 #### Git
 
@@ -112,13 +117,41 @@ git clone https://github.com/khaledghobashy/asurt_cdt_symbolic.git
 git pull origin master
 ```
 
-An alternative to cloning is downloading the repository as a **zip** file and extract it on your machine.
+Or alternatively, download the repository as a **zip** file and extract it on your machine.
 
-*TBC ...*
+Then, if creating a new python session to use the tool, add the directory path where the tool exists to the python system path.
 
-## Usage Example
+```python
+import sys
+pkg_path = 'path/to/asurt_cdt_symbolic'
+if pkg_path not in sys.path:
+    sys.path.append(pkg_path)
 
-Playing with the components
+# the package can now be imported as asurt
+# from asurt.interfaces.scripting import standalone_topology
+```
+
+
+
+#### Pip
+
+*tbd*
+
+#### Conda
+
+*tbd*
+
+## Usage Examples
+
+### Symbolic Components
+
+$$
+Matrix([
+[                                                                      (-Fd_f((({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(-1/2)*({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(B({P_{a}}, {\bar{u}^{a}_{f}})*{\dot{P}_{a}} - B({P_{b}}, {\bar{u}^{b}_{f}})*{\dot{P}_{b}} + {\dot{R}_{a}} - {\dot{R}_{b}})) + Fs_f(-(({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(1/2) + f_FL))*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}})*(({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(-1/2)],
+[2*G({P_{a}}).T*((-Fd_f((({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(-1/2)*({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(B({P_{a}}, {\bar{u}^{a}_{f}})*{\dot{P}_{a}} - B({P_{b}}, {\bar{u}^{b}_{f}})*{\dot{P}_{b}} + {\dot{R}_{a}} - {\dot{R}_{b}})) + Fs_f(-(({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(1/2) + f_FL))*Skew(A({P_{a}})*{\bar{u}^{a}_{f}}).T*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}})*(({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(-1/2) + {{T}^{a}_{f}})]])
+$$
+
+
 
 ## Implementation Details
 
