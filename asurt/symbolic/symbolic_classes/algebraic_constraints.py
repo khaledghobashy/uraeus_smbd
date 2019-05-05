@@ -376,8 +376,8 @@ class angle_constraint(object):
         Pdj = obj.Pdj
         Z = zero_matrix(1,3)
         
-        c = sm.cos(obj.act_func('t'))
-        s = sm.sin(obj.act_func('t'))
+        c = sm.cos(obj.act_func('t'))*sm.Identity(1)
+        s = sm.sin(obj.act_func('t'))*sm.Identity(1)
         
         pos_level_equation = (v3.T*v2)*c - (v1.T*v2)*s
         vel_level_equation = zero_matrix(1,1)        
