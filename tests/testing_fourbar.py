@@ -4,7 +4,6 @@ Created on Sun May  5 10:07:05 2019
 
 @author: khaled.ghobashy
 """
-from IPython.display import display, display_latex
 
 from asurt.symbolic.symbolic_classes import bodies
 from asurt.symbolic.symbolic_classes import joints
@@ -21,8 +20,6 @@ c = joints.universal('c', l2, l3)
 d = joints.revolute('d', l3, ground)
 
 ground.global_frame.draw_tree()
-
-display(a.pos_level_equations)
 
 
 #from asurt.interfaces.scripting import standalone_topology

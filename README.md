@@ -141,43 +141,24 @@ if pkg_path not in sys.path:
 
 *...*
 
-## Usage Examples
+## Usage Examples & Tutorials
 
-### Symbolic Components
+This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modeling process.
 
-The tool provides the typical components used to build an arbitrary multibody system, such as bodies, joints and forces. Here, we will use these components directly to build a **Spatial Four-Bar** mechanism.
+#### Symbolic Model Creation
 
-```python
-# Adding the package path to the system path
-import sys
-pkg_path = 'path/to/asurt_cdt_symbolic'
-if pkg_path not in sys.path:
-    sys.path.append(pkg_path)
+- Getting Started. (GitHub|Colab)
+- Standalone Topology - "spatial four-bar mechanism". (GitHub|Colab)
+- Template-Based Topology - "double-wishbone vehicle suspension". (GitHub|Colab)
+- Symbolic Assembly - "vehicle front-axle assembly". (GitHub|Colab)
 
-# Importing the bodies and joints modules
-from asurt.symbolic.symbolic_classes import bodies
-from asurt.symbolic.symbolic_classes import joints
+#### Numerical Simulation
 
-# Creating a ground
-ground = bodies.ground()
+- Spatial Four-Bar. (GitHub|Colab)
+- Front-Axle Assembly. (GitHub|Colab)
 
-# Creating the three moving links
-l1 = bodies.body('l1')
-l2 = bodies.body('l2')
-l3 = bodies.body('l3')
+#### 3D Visualization
 
-# Creating the joints connecting the bodies
-a = joints.revolute('a', ground, l1)
-b = joints.spherical('b', l1, l2)
-c = joints.universal('c', l2, l3)
-d = joints.revolute('d', l3, ground)
-
-```
-
-After running the previous script, you can interactively check each component equations, for example, below is the position level equations of joint ***a***,  
-$$
-\left[\begin{matrix}{A({P_{ground}})} {\bar{u}^{ground}_{a}} - {A({P_{l1}})} {\bar{u}^{l1}_{a}} + {R_{ground}} - {R_{l1}}\\\left({\hat{i}_{{\bar{M}^{ground}_{a}}}}\right)^{T} \left({A({P_{ground}})}\right)^{T} {A({P_{l1}})} {\hat{k}_{{\bar{M}^{l1}_{a}}}}\\\left({\hat{j}_{{\bar{M}^{ground}_{a}}}}\right)^{T} \left({A({P_{ground}})}\right)^{T} {A({P_{l1}})} {\hat{k}_{{\bar{M}^{l1}_{a}}}}\end{matrix}\right]
-$$
 
 
 ## Implementation Details
