@@ -127,7 +127,7 @@ pkg_path = 'path/to/asurt_cdt_symbolic'
 if pkg_path not in sys.path:
     sys.path.append(pkg_path)
 
-# the package can now be imported as asurt
+# the package can now be imported as asurt, e.g. :
 # from asurt.interfaces.scripting import standalone_topology
 ```
 
@@ -135,22 +135,49 @@ if pkg_path not in sys.path:
 
 #### Pip
 
-*tbd*
+*...*
 
 #### Conda
 
-*tbd*
+*...*
 
 ## Usage Examples
 
 ### Symbolic Components
 
-$$
-Matrix([
-[                                                                      (-Fd_f((({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(-1/2)*({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(B({P_{a}}, {\bar{u}^{a}_{f}})*{\dot{P}_{a}} - B({P_{b}}, {\bar{u}^{b}_{f}})*{\dot{P}_{b}} + {\dot{R}_{a}} - {\dot{R}_{b}})) + Fs_f(-(({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(1/2) + f_FL))*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}})*(({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(-1/2)],
-[2*G({P_{a}}).T*((-Fd_f((({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(-1/2)*({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(B({P_{a}}, {\bar{u}^{a}_{f}})*{\dot{P}_{a}} - B({P_{b}}, {\bar{u}^{b}_{f}})*{\dot{P}_{b}} + {\dot{R}_{a}} - {\dot{R}_{b}})) + Fs_f(-(({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(1/2) + f_FL))*Skew(A({P_{a}})*{\bar{u}^{a}_{f}}).T*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}})*(({R_{a}}.T - {R_{b}}.T + {\bar{u}^{a}_{f}}.T*A({P_{a}}).T - {\bar{u}^{b}_{f}}.T*A({P_{b}}).T)*(A({P_{a}})*{\bar{u}^{a}_{f}} - A({P_{b}})*{\bar{u}^{b}_{f}} + {R_{a}} - {R_{b}}))**(-1/2) + {{T}^{a}_{f}})]])
-$$
+The tool provides the typical components used to build an arbitrary multibody system, such as bodies, joints and forces. Here, we will use these components directly to build a **Spatial Four-Bar** mechanism.
 
+```python
+# Adding the package path to the system path
+import sys
+pkg_path = 'path/to/asurt_cdt_symbolic'
+if pkg_path not in sys.path:
+    sys.path.append(pkg_path)
+
+# Importing the bodies and joints modules
+from asurt.symbolic.symbolic_classes import bodies
+from asurt.symbolic.symbolic_classes import joints
+
+# Creating a ground
+ground = bodies.ground()
+
+# Creating the three moving links
+l1 = bodies.body('l1')
+l2 = bodies.body('l2')
+l3 = bodies.body('l3')
+
+# Creating the joints connecting the bodies
+a = joints.revolute('a', ground, l1)
+b = joints.spherical('b', l1, l2)
+c = joints.universal('c', l2, l3)
+d = joints.revolute('d', l3, ground)
+
+```
+
+After running the previous script, you can interactively check each component equations, for example, below is the position level equations of joint ***a***,  
+$$
+\left[\begin{matrix}{A({P_{ground}})} {\bar{u}^{ground}_{a}} - {A({P_{l1}})} {\bar{u}^{l1}_{a}} + {R_{ground}} - {R_{l1}}\\\left({\hat{i}_{{\bar{M}^{ground}_{a}}}}\right)^{T} \left({A({P_{ground}})}\right)^{T} {A({P_{l1}})} {\hat{k}_{{\bar{M}^{l1}_{a}}}}\\\left({\hat{j}_{{\bar{M}^{ground}_{a}}}}\right)^{T} \left({A({P_{ground}})}\right)^{T} {A({P_{l1}})} {\hat{k}_{{\bar{M}^{l1}_{a}}}}\end{matrix}\right]
+$$
 
 
 ## Implementation Details

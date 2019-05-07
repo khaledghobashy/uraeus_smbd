@@ -4,21 +4,41 @@ Created on Sun May  5 10:07:05 2019
 
 @author: khaled.ghobashy
 """
+from IPython.display import display, display_latex
 
-from asurt.interfaces.scripting import standalone_topology
+from asurt.symbolic.symbolic_classes import bodies
+from asurt.symbolic.symbolic_classes import joints
 
-model = standalone_topology('fourbar')
+ground = bodies.ground()
 
-model.add_body('crank')
-model.add_body('conct')
-model.add_body('rockr')
+l1 = bodies.body('l1')
+l2 = bodies.body('l2')
+l3 = bodies.body('l3')
 
-model.add_joint.revolute('a', 'ground', 'rbs_crank')
-model.add_joint.spherical('b', 'rbs_crank', 'rbs_conct')
-model.add_joint.universal('c', 'rbs_conct', 'rbs_rockr')
-model.add_joint.revolute('d', 'rbs_rockr', 'ground')
+a = joints.revolute('a', ground, l1)
+b = joints.spherical('b', l1, l2)
+c = joints.universal('c', l2, l3)
+d = joints.revolute('d', l3, ground)
 
-model.add_actuator.rotational_actuator('act','jcs_a')
+ground.global_frame.draw_tree()
+
+display(a.pos_level_equations)
 
 
-model.assemble_model()
+#from asurt.interfaces.scripting import standalone_topology
+#
+#model = standalone_topology('fourbar')
+#
+#model.add_body('crank')
+#model.add_body('conct')
+#model.add_body('rockr')
+#
+#model.add_joint.revolute('a', 'ground', 'rbs_crank')
+#model.add_joint.spherical('b', 'rbs_crank', 'rbs_conct')
+#model.add_joint.universal('c', 'rbs_conct', 'rbs_rockr')
+#model.add_joint.revolute('d', 'rbs_rockr', 'ground')
+#
+#model.add_actuator.rotational_actuator('act','jcs_a')
+#
+#
+#model.assemble_model()
