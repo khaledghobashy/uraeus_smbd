@@ -6,3 +6,4 @@
 /examples/**/csv_files
 /examples/**/results
 /examples/**/numenv
+/examples/**/*.py
