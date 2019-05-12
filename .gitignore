@@ -1,4 +1,8 @@
-/.spyproject
-/.ipynb_checkpoints
+**/.spyproject
+**/.ipynb_checkpoints
 **/__pycache__
-*.cmd
+**/*.cmd
+/examples/**/*.stpl
+/examples/**/csv_files
+/examples/**/results
+/examples/**/numenv
