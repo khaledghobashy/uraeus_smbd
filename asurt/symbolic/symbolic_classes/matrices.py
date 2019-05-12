@@ -359,7 +359,7 @@ class global_frame(object):
     matrix level and not its elements.
     
     """
-        
+
     def __init__(self,name=''):
         self.name = name+'_grf'
         self.references_tree = nx.DiGraph(name=name)
@@ -508,7 +508,7 @@ class reference_frame(object):
         cls._is_global_set = True
         cls.global_frame = global_instance
     
-    def __new__(cls, name, parent=None,format_as=None):
+    def __new__(cls, name, parent=None,format_as=None, **kwargs):
         """
         Overloading the original __new__ method to check whether a global_frame
         exists or not, and creat one if no global_frame exists.
@@ -626,25 +626,25 @@ class reference_frame(object):
         return self._raw_name
 
     def _set_base_vectors(self):
-        self.i = base_vector(self,'i')
-        self.j = base_vector(self,'j')
-        self.k = base_vector(self,'k')
+        self.i = base_vector(self, 'i')
+        self.j = base_vector(self, 'j')
+        self.k = base_vector(self, 'k')
     
 ###############################################################################
 ###############################################################################
 class matrix_symbol(sm.MatrixSymbol):
     
-    def __new__(cls,name,m,n, format_as=None):
+    def __new__(cls, name, m, n, format_as=None):
         # Oveloading the MatrixSymbol __new__ method to supply it with the 
-        # appropriat arguments (name,m,n)
+        # appropriat arguments (name, m, n)
         if format_as:
             name = format_as
         return super(matrix_symbol,cls).__new__(cls, name, m, n)
     
-    def __init__(self,name,m,n, format_as=None):
+    def __init__(self, name, m, n, format_as=None):
         self._raw_name = name
         self._formated_name = super().name
-        self._args = (name,m,n,self._formated_name)
+        self._args = (name, m, n, self._formated_name)
     
     @property
     def name(self):

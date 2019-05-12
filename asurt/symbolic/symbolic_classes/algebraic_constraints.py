@@ -366,25 +366,26 @@ class angle_constraint(object):
         v2 = 'i'
         v3 = 'j'
         
-        v1_bar = getattr(obj.mi_bar,v1)
+        v1_bar = getattr(obj.mi_bar, v1)
         v1     = v1_bar.express()
-        v2_bar = getattr(obj.mj_bar,v2)
+        v2_bar = getattr(obj.mj_bar, v2)
         v2     = v2_bar.express()
-        v3_bar = getattr(obj.mi_bar,v3)
+        v3_bar = getattr(obj.mi_bar, v3)
         v3     = v3_bar.express()
         
         Pdi = obj.Pdi
         Pdj = obj.Pdj
         Z = zero_matrix(1, 3)
         
-        c = sm.cos(obj.act_func('t'))
-        s = sm.sin(obj.act_func('t'))
+        theta = obj.act_func(obj.t)
+        c = sm.cos(theta)
+        s = sm.sin(theta)
         
         pos_level_equation = (v3.T*v2)*c - (v1.T*v2)*s
         vel_level_equation = zero_matrix(1, 1)        
-        acc_level_equation =   (c*v3.T - s*v1.T)*B(Pdj,v2_bar)*obj.Pdj \
+        acc_level_equation =   (c*v3.T - s*v1.T)*B(Pdj, v2_bar)*obj.Pdj \
                              + v2.T*(c*B(Pdi,v3_bar) - s*B(Pdi,v1_bar))*Pdi \
-                             + 2*(c*B(obj.Pi,v3_bar)*Pdi - s*B(obj.Pi,v1_bar)*Pdi).T*(B(obj.Pj,v2_bar)*Pdj)
+                             + 2*(c*B(obj.Pi,v3_bar)*Pdi - s*B(obj.Pi,v1_bar)*Pdi).T * (B(obj.Pj,v2_bar)*Pdj)
         
         jacobian = ([Z, v2.T*(c*B(obj.Pi,v3_bar) - s*B(obj.Pi,v1_bar))],
                     [Z, (c*v3.T - s*v1.T)*B(obj.Pj,v2_bar)])
@@ -466,11 +467,11 @@ class actuator(algebraic_constraints):
         super().__init__(*args)
         
     def _construct_actuation_functions(self):
-        self.t = t = sm.symbols('t', integer=True)
-        self.act_func = sm.Function('%sAF_%s'%(self.prefix,self.id_name), integer=True)
+        self.t = t = sm.symbols('t', real=True)
+        self.act_func = sm.Function('%sAF_%s'%(self.prefix, self.id_name))
         self._pos_function = self.act_func(t)
-        self._vel_function = sm.diff(self._pos_function,t)
-        self._acc_function = sm.diff(self._pos_function,t,t)
+        self._vel_function = sm.diff(self._pos_function, t)
+        self._acc_function = sm.diff(self._vel_function, t)
             
     
     @property
@@ -492,11 +493,11 @@ class actuator(algebraic_constraints):
 
 class joint_actuator(actuator):
     
-    def __init__(self,name,joint=None):
+    def __init__(self, name, joint=None):
         if joint is not None:
             body_i = joint.body_i
             body_j = joint.body_j
-            super().__init__(joint.name,body_i,body_j)
+            super().__init__(joint.name, body_i, body_j)
             self._name = name
         else:
             super().__init__(name)
@@ -504,21 +505,21 @@ class joint_actuator(actuator):
     def _create_reactions_equalities(self):
         self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e
         jacobian_i = self.jacobian_i
-        Qi_eq = sm.Eq(self.Qi,-jacobian_i.T*self.L)
-        Fi_eq = sm.Eq(self.Fi,self.Qi[0:3,0])
-        Ti_e_eq = sm.Eq(self.Ti_e,self.Qi[3:7,0])
-        Ti_eq = sm.Eq(self.Ti,self.Ti_eq)
-        self._reactions_equalities = [Qi_eq,Fi_eq,Ti_e_eq,Ti_eq]
+        Qi_eq = sm.Eq(self.Qi, -jacobian_i.T*self.L)
+        Fi_eq = sm.Eq(self.Fi, self.Qi[0:3,0])
+        Ti_e_eq = sm.Eq(self.Ti_e, self.Qi[3:7,0])
+        Ti_eq = sm.Eq(self.Ti, self.Ti_eq)
+        self._reactions_equalities = [Qi_eq, Fi_eq, Ti_e_eq, Ti_eq]
     
 ###############################################################################
 ###############################################################################
 
 class absolute_actuator(actuator):
     
-    coordinates_map = {'x':0,'y':1,'z':2}
+    coordinates_map = {'x':0, 'y':1, 'z':2}
     
-    def __init__(self,name,body_i=None,body_j=None,coordinate='z'):
+    def __init__(self, name, body_i=None, body_j=None, coordinate='z'):
         self.coordinate = coordinate
         self.i = self.coordinates_map[self.coordinate]
-        super().__init__(name,body_i,body_j)
+        super().__init__(name, body_i, body_j)
         

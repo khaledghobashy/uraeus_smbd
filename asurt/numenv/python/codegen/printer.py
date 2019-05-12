@@ -14,10 +14,10 @@ class npsc_printer(C99CodePrinter):
 
         
     def _print_ZeroMatrix(self,expr):
-        return 'np.zeros(%s,dtype=np.float64)'%(expr.shape)
+        return 'np.zeros(%s, dtype=np.float64)'%(expr.shape)
     
     def _print_zero_matrix(self,expr):
-        return 'np.zeros(%s,dtype=np.float64)'%(expr.shape)
+        return 'np.zeros(%s, dtype=np.float64)'%(expr.shape)
         
     def _print_AbstractMatrix(self,expr):
         args = ','.join([self._print(i) for i in expr.args])
@@ -92,7 +92,7 @@ class npsc_printer(C99CodePrinter):
     
     def _print_Identity(self,expr):
         shape = expr.args[0]
-        return 'np.eye(%s,dtype=np.float64)'%shape
+        return 'np.eye(%s, dtype=np.float64)'%shape
     
     def _print_MatExpr(self,expr):
         return '%s'%expr._ccode()
@@ -132,11 +132,11 @@ class npsc_printer(C99CodePrinter):
     
     def _print_MutableDenseMatrix(self,expr):
         elements = expr.tolist()
-        return 'np.array(%s,dtype=np.float64)'%(elements)
+        return 'np.array(%s, dtype=np.float64)'%(elements)
     
     def _print_ImmutableDenseMatrix(self,expr):
         elements = expr.tolist()
-        return 'np.array(%s,dtype=np.float64)'%(elements)
+        return 'np.array(%s, dtype=np.float64)'%(elements)
     
     def _print_MutableSparseMatrix(self,expr):
         rows = []
@@ -164,10 +164,10 @@ class npsc_printer(C99CodePrinter):
     def _print_transpose(self,expr):
         return '%s'%(*[self._print(i) for i in expr.args],)
 
-    def _print_Derivative(self,expr):
+    def _print_Derivative(self, expr):
         func = expr.args[0].__class__.__name__
 #        func = self._print(func).strip(str(func.args))
-        return 'derivative(%s,t,0.1,%s)'%(func,expr.args[1][1])
+        return 'derivative(%s, t, 0.1, %s)'%(func, expr.args[1][1])
     
     def _print_Lambda(self, obj):
         args, expr = obj.args

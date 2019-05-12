@@ -170,15 +170,16 @@ class internal_force(generic_force):
         super().__init__(name,body_i,body_j)
         self.joint = dummy_cylinderical(name,body_i,body_j)
         format_ = (self.prefix,self.id_name)
-        self.LF = matrix_symbol('%s%s_FL'%format_,1,1)
+#        self.LF = matrix_symbol('%s%s_FL'%format_,1,1)
+        self.LF = sm.symbols('%s%s_FL'%format_, real=True)
 
-        self.Fs = sm.Function('Fs_%s'%name, integer=True)#('dx')
-        self.Fd = sm.Function('Fd_%s'%name, integer=True)#('dv')
-        self.Fa = sm.Function('Fa_%s'%name, integer=True)#('dv')
+        self.Fs = sm.Function('Fs_%s'%name)#, commutative=True)
+        self.Fd = sm.Function('Fd_%s'%name)#, commutative=True)
+        self.Fa = sm.Function('Fa_%s'%name)#, commutative=True)
         
-        self.Ts = sm.Function('Ts_%s'%name, integer=True)
-        self.Td = sm.Function('Td_%s'%name, integer=True)
-        self.Ta = sm.Function('Ta_%s'%name, integer=True)
+        self.Ts = sm.Function('Ts_%s'%name)#, commutative=True)
+        self.Td = sm.Function('Td_%s'%name)#, commutative=True)
+        self.Ta = sm.Function('Ta_%s'%name)#, commutative=True)
                 
     @property
     def Qi(self):
@@ -186,9 +187,10 @@ class internal_force(generic_force):
         distance    = sm.sqrt(dij.T*dij)
         unit_vector = dij/distance
         
-        defflection = self.LF - distance
-        velocity    = unit_vector.T*self.joint.dijd
-             
+        defflection = self.LF - distance[0,0]
+        velocity    = (unit_vector.T*self.joint.dijd)
+        velocity    = sm.sqrt(velocity.T*velocity)[0,0]
+
         self.Fi = unit_vector*(self.Fs(defflection) - self.Fd(velocity))
         Ti_e = 2*G(self.Pi).T*(self.Ti + Skew(self.ui).T*self.Fi)
         

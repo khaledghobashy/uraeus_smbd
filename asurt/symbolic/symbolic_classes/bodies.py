@@ -87,7 +87,7 @@ class body(reference_frame):
     nc  = 1
     nve = 1
     
-    def __init__(self,name):
+    def __init__(self, name):
         self._name = name
         super().__init__(name)
         
@@ -180,10 +180,10 @@ class ground(body):
     nc  = 7
     nve = 2
     
-    def __new__(cls,*args):
+    def __new__(cls, *args, **kwargs):
         name = 'ground'
-        return super().__new__(cls,name)
-    def __init__(self,*args):
+        return super().__new__(cls, name)
+    def __init__(self, *args, **kwargs):
         name = 'ground'
         super().__init__(name)
         self.P_ground = quatrenion('Pg_%s'%self.name, format_as=r'{Pg_{%s}}'%self.name)

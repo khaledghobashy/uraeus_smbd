@@ -6,7 +6,6 @@ Created on Wed Mar 27 08:49:16 2019
 """
 # Standard library imports
 import os
-import pickle
 
 # 3rd party library imports
 import cloudpickle
@@ -30,7 +29,7 @@ def get_file_name(script_path):
 
 def load_pickled_data(file):
     with open(file, 'rb') as f:
-        instance = pickle.load(f)
+        instance = cloudpickle.load(f)
     return instance
 
 def load_template(project_dir, file_name):

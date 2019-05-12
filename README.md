@@ -1,9 +1,9 @@
-# ASURT - CDT
+# ASURT - MBDT
 
-**ASU Racing Team - Computational Dynamics Tool**
+**ASU Racing Team - Multi-Body Dynamics Tool**
 
 ## Description
-**asurt_cdt** is a python package developed for the creation, simulation and visualization of multibody systems.
+**asurt_mbdt** is a python package developed for the creation, simulation and visualization of multibody systems.
 
 A multibody system is hereby defined as *a finite number of material bodies connected in an arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies*. Practitioners of multibody dynamics study the generation and solution of the equations governing the motion of such systems [1].
 
@@ -145,31 +145,34 @@ if pkg_path not in sys.path:
 
 This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modeling process.
 
-#### Symbolic Model Creation
-
 - Getting Started. (GitHub|Colab)
+
+#### Standalone Studies
+
 - Standalone Topology - "spatial four-bar mechanism". (GitHub|Colab)
+- Standalone Topology - "spatial slider-crank mechanism". (GitHub|Colab)
+
+#### Template-Based Studies
+
+##### Vehicle Front Axle
+
 - Template-Based Topology - "double-wishbone vehicle suspension". (GitHub|Colab)
 - Symbolic Assembly - "vehicle front-axle assembly". (GitHub|Colab)
-
-#### Numerical Simulation
-
-- Spatial Four-Bar. (GitHub|Colab)
-- Front-Axle Assembly. (GitHub|Colab)
+- Numerical Simulation - "vehicle front axle kinematics". (GitHub|Colab)
 
 #### 3D Visualization
 
-
+*To be discussed ...*
 
 ## Implementation Details
 
-*TBD ...*
+*To be discussed ...*
 
 ## Theoretical Basis
 
-*TBD ...*
+*To be discussed ...*
 
 ## License
 
-The tool is distributed with the 3-clause BSD license.
+**ASURT-MBDT** is distributed under the 3-clause BSD license.
 

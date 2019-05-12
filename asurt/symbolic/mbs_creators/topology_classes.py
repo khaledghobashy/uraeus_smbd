@@ -433,9 +433,10 @@ class abstract_topology(object):
         return attr_dict
     
     @staticmethod
-    def _generate_cse(equations,symbol):
+    def _generate_cse(equations, symbol):
+        t = sm.symbols('t', real=True)
         cse_symbols = sm.iterables.numbered_symbols(symbol)
-        reduced_equations = sm.cse(equations,symbols=cse_symbols,ignore=(sm.S('t'),))
+        reduced_equations = sm.cse(equations,symbols=cse_symbols,ignore=(t,))
         return reduced_equations
 
             

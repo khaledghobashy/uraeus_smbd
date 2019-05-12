@@ -110,8 +110,8 @@ class configuration_codegen(abstract_generator):
     def write_imports(self):
         text = '''
                 import numpy as np
-                import pandas as pd
                 
+                from asurt.numenv.python.numerics.numcls import num_config
                 from asurt.numenv.python.numerics.misc import (mirrored, centered, oriented,
                                                                cylinder_geometry,
                                                                composite_geometry,
@@ -123,7 +123,7 @@ class configuration_codegen(abstract_generator):
         
     def write_class_init(self):
         text = '''                
-                class configuration(object):
+                class configuration(num_config):
 
                     def __init__(self):
                         {inputs}                       
@@ -155,22 +155,8 @@ class configuration_codegen(abstract_generator):
                 def qd(self):
                     qd = {velocities}
                     return qd
-                                        
-                def load_from_csv(self,csv_file):
-                    dataframe = pd.read_csv(csv_file,index_col=0)
-                    for ind in dataframe.index:
-                        value = getattr(self,ind)
-                        if isinstance(value, np.ndarray):
-                            shape = value.shape
-                            v = np.array(dataframe.loc[ind],dtype=np.float64)
-                            v = np.resize(v,shape)
-                            setattr(self,ind,v)
-                        else:
-                            v = dataframe.loc[ind][0]
-                            setattr(self,ind,v)
-                    self._set_arguments()
-                
-                def _set_arguments(self):
+                                                        
+                def evaluate(self):
                     {outputs}
                     {pass_text}
                 '''
@@ -188,12 +174,12 @@ class configuration_codegen(abstract_generator):
         
         pass_text = ('pass' if len(outputs)==0 else '')
         
-        coordinates = ','.join(self.gen_coordinates_sym)
+        coordinates = ',\n'.join(self.gen_coordinates_sym)
         coordinates = re.sub(pattern,self_inserter,coordinates)
         coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
         coordinates = textwrap.indent(coordinates,indent).lstrip()
         
-        velocities = ','.join(self.gen_velocities_sym)
+        velocities = ',\n'.join(self.gen_velocities_sym)
         velocities = re.sub(pattern,self_inserter,velocities)
         velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
         velocities = textwrap.indent(velocities,indent).lstrip()
@@ -223,7 +209,7 @@ class configuration_codegen(abstract_generator):
                            class_helpers = class_helpers)
         return text
     
-    def write_code_file(self, dir_path):
+    def write_code_file(self, dir_path=''):
         file_path = os.path.join(dir_path, self.name)
         imports = self.write_imports()
         config_class = self.write_system_class()
@@ -247,6 +233,7 @@ class template_codegen(abstract_generator):
                 try:
                     from asurt.numenv.python.numerics.matrix_funcs import A, B, G, E, triad, skew_matrix as skew
                 except ModuleNotFoundError:
+                    print('Failed importing compiled matrices!')
                     print('Falling back to python defined matrix functions')
                     from asurt.numenv.python.numerics.misc import A, B, G, E, triad, skew_matrix as skew
                 '''
@@ -506,7 +493,7 @@ class template_codegen(abstract_generator):
         return text
     
     
-    def write_code_file(self, dir_path):
+    def write_code_file(self, dir_path=''):
         file_path = os.path.join(dir_path, self.name)
         imports = self.write_imports()
         system_class = self.write_system_class()
@@ -667,6 +654,7 @@ class assembly_codegen(template_codegen):
         self.mapped_gen_accelerations = flatten_equalities(mbs, 'mapped_gen_accelerations')
         self.mapped_vir_accelerations = flatten_equalities(mbs, 'mapped_vir_accelerations')
     
+        
     def write_imports(self):
         text = '''
                 import numpy as np
@@ -726,9 +714,7 @@ class assembly_codegen(template_codegen):
         text = textwrap.dedent(text)
         text = text.format(subsystems = subsystems,
                            interface_map = interface_map,
-                           indicies_map  = indicies_map,
-                           nrows = self.mbs.nve,
-                           ncols = 2*len(self.mbs.nodes))
+                           indicies_map  = indicies_map)
         return text
 
     def write_class_helpers(self):
@@ -950,12 +936,7 @@ class assembly_codegen(template_codegen):
         return text
     
     
-    def write_code_file(self, dir_path):
-#        if dir_path is None:
-#            relative_path = 'generated_templates.assemblies'.split('.')
-#            file_path = os.path.join(default_projects_dir, *relative_path, self.name)
-#        else:
-#            file_path = os.path.join(dir_path, self.name)
+    def write_code_file(self, dir_path=''):
         file_path = os.path.join(dir_path, self.name)
         imports = self.write_imports()
         system_class = self.write_system_class()
@@ -1044,4 +1025,222 @@ class assembly_codegen(template_codegen):
                            ground_data = ground_data)
         text = textwrap.indent(text,indent)
         return text
+
+###############################################################################
+###############################################################################
+
+class assembly_codegen2(abstract_generator):
     
+    def __init__(self, multibody_system, printer=printer()):
+        self.mbs  = multibody_system
+        self.printer = printer
+        
+        self._interface_assembly_instance()
+        
+        self.templates = []
+        self.subsystems_templates = {}
+        
+        for sub_name, system in self.subsystems.items():
+            topology_name = system.template.name
+            self.subsystems_templates[sub_name] = topology_name
+            if topology_name not in self.templates:
+                self.templates.append(topology_name)
+    
+    
+    def _interface_assembly_instance(self):
+        mbs = self.mbs
+        self.name = mbs.name
+        self.subsystems    = flatten_assembly(mbs, 'subsystems')
+        self.interface_map = flatten_assembly(mbs, 'interface_map')
+        self.nodes_indicies = mbs.nodes_indicies
+        self.mapped_gen_coordinates = flatten_equalities(mbs, 'mapped_gen_coordinates')
+        self.mapped_vir_coordinates = flatten_equalities(mbs, 'mapped_vir_coordinates')
+        self.mapped_gen_velocities  = flatten_equalities(mbs, 'mapped_gen_velocities')
+        self.mapped_vir_velocities  = flatten_equalities(mbs, 'mapped_vir_velocities')
+        self.mapped_gen_accelerations = flatten_equalities(mbs, 'mapped_gen_accelerations')
+        self.mapped_vir_accelerations = flatten_equalities(mbs, 'mapped_vir_accelerations')
+    
+        
+    def write_imports(self):
+        text = '''
+                import numpy as np
+                from asurt.numenv.python.numerics.numcls import num_assm
+
+                {templates_imports}
+                
+                class subsystems(object):
+                    {subsystems}
+                '''
+        indent = 4*' '
+        tpl_import_prefix = 'from ..templates'
+        templates_imports = '\n'.join(['%s import %s'%(tpl_import_prefix,i)
+                                        for i in self.templates])
+        
+        subsystems = ['%s = %s.topology(%r)'%(subsys, template, subsys)\
+                      for subsys, template in self.subsystems_templates.items()]
+            
+        subsystems = '\n'.join(subsystems)
+        subsystems = textwrap.dedent(subsystems)
+        subsystems = textwrap.indent(subsystems,indent).lstrip()
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = text.format(templates_imports = templates_imports,
+                           subsystems = subsystems)
+        return text
+
+    def write_class_init(self):
+        text = '''                
+                class topology(num_assm):
+                    
+                    def __init__(self):
+                        subsystems = {subsystems}
+                        interface_map = {interface_map} 
+                        indicies_map  = {indicies_map} 
+                        super().__init__(subsystems, interface_map, indicies_map)
+                    
+                    def _map_coordinates(self):
+                        pass
+                    def _map_velocities(self):
+                        pass
+                    def _map_accelerations(self):
+                        pass
+               '''
+        
+        subsystems = ','.join(['subsystems.%s'%i for i in self.subsystems.keys()])
+        interface_map = self.interface_map
+        indicies_map  = self.nodes_indicies
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = text.format(subsystems = subsystems,
+                           interface_map = interface_map,
+                           indicies_map  = indicies_map)
+        return text
+
+
+    def write_constants_evaluator(self):
+        text = '''
+                def _map_constants(self):
+                    {subsystems}
+                    {virtuals_map}
+                '''
+        indent = 4*' '
+        p = self.printer
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        subsystems = '\n'.join(['%s = subsystems.%s'%(i,i) for i in self.subsystems.keys()])
+        subsystems = textwrap.dedent(subsystems)
+        subsystems = textwrap.indent(subsystems,indent).lstrip()
+
+        ground_map = self.mapped_gen_coordinates[0:2]
+        pattern = '|'.join([p._print(i.lhs) for i in ground_map])
+
+        virtuals_map = self.mapped_vir_coordinates
+        pattern1 = '|'.join([p._print(i.lhs) for i in virtuals_map])
+        pattern2 = '|'.join([p._print(i.rhs) for i in virtuals_map])
+        
+        def sub(x):
+            l = x.group(0).split('.')
+            try:
+                s = '%s.config.%s'%(*l,)
+            except TypeError:
+                s = '%s'%x.group(0)
+            return s
+        self_inserter = self._insert_string('self.')
+        
+        virtuals_map = '\n'.join([p._print(expr) for expr in virtuals_map])
+        virtuals_map = re.sub(pattern,self_inserter,virtuals_map)
+        virtuals_map = re.sub(pattern1,sub,virtuals_map)
+        virtuals_map = re.sub(pattern2,sub,virtuals_map)
+        virtuals_map = textwrap.indent(virtuals_map,indent).lstrip()
+        
+        text = text.format(subsystems = subsystems ,
+                           virtuals_map = virtuals_map)
+        text = textwrap.indent(text,indent)
+        return text
+    
+    def write_coordinates_setter(self):
+        return self._write_x_setter('coordinates','q')
+    
+    def write_velocities_setter(self):
+        return self._write_x_setter('velocities','qd')
+    
+    def write_accelerations_setter(self):
+        return self._write_x_setter('accelerations','qdd')
+    
+    def _write_x_setter(self, func_name, var='q'):
+        text = '''
+                def _map_{func_name}(self,{var}):
+                    {subsystems}
+                    {virtuals_map}
+               '''
+        indent = 4*' '
+        p = self.printer
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        self_inserter = self._insert_string('self.')
+        
+        ground_map = getattr(self,'mapped_gen_%s'%func_name)[0:2]
+        pattern = '|'.join([p._print(i.lhs) for i in ground_map])
+        ground_map = '\n'.join([p._print(i) for i in ground_map])
+        ground_map = re.sub(pattern,self_inserter,ground_map)
+        ground_map = textwrap.indent(ground_map,indent).lstrip()
+
+        subsystems = '\n'.join(['%s = subsystems.%s'%(i,i) for i in self.subsystems.keys()])
+        subsystems = textwrap.dedent(subsystems)
+        subsystems = textwrap.indent(subsystems,indent).lstrip()
+
+        virtuals_map = getattr(self,'mapped_vir_%s'%func_name)
+        pattern1 = '|'.join([p._print(i.lhs) for i in virtuals_map])
+        pattern2 = '|'.join([p._print(i.rhs) for i in virtuals_map])
+        sub = self._insert_string('')
+        virtuals_map = '\n'.join([str(p._print(i)) for i in virtuals_map])
+        virtuals_map = re.sub(pattern,self_inserter,virtuals_map)
+        virtuals_map = re.sub(pattern1,sub,virtuals_map)
+        virtuals_map = re.sub(pattern2,sub,virtuals_map)
+        virtuals_map = textwrap.indent(virtuals_map,indent).lstrip()
+                
+        text = text.format(func_name = func_name,
+                           var = var,
+                           ground_map = ground_map,
+                           virtuals_map = virtuals_map,
+                           subsystems = subsystems)
+        text = textwrap.indent(text,indent)
+        return text
+
+    def write_code_file(self, dir_path=''):
+        file_path = os.path.join(dir_path, self.name)
+        imports = self.write_imports()
+        system_class = self.write_system_class()
+        text = ''.join([imports, system_class])
+        with open('%s.py'%file_path, 'w') as file:
+            file.write(text)
+        print('File full path : %s.py'%file_path)
+        
+    def write_system_class(self):
+        text = '''
+                {class_init}
+                    {constants}
+                    {coord_setter}
+                    {veloc_setter}
+                    {accel_setter}
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        class_init = self.write_class_init()
+        constants = self.write_constants_evaluator()
+        coord_setter = self.write_coordinates_setter()
+        veloc_setter = self.write_velocities_setter()
+        accel_setter = self.write_accelerations_setter()
+        lagrg_setter = self.write_lagrange_setter()
+                
+        text = text.format(class_init = class_init,
+                           constants = constants,
+                           coord_setter = coord_setter,
+                           veloc_setter = veloc_setter,
+                           accel_setter = accel_setter,
+                           lagrg_setter = lagrg_setter)
+        return text
+
