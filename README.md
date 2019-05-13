@@ -1,11 +1,12 @@
-# ASURT - MBDT
+# SMBD
 
-**ASU Racing Team - Multi-Body Dynamics Tool**
+**Symbolic Multi-Body Dynamics** 
 
 ## Description
-**asurt_mbdt** is a python package developed for the creation, simulation and visualization of multibody systems.
 
-A multibody system is hereby defined as *a finite number of material bodies connected in an arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies*. Practitioners of multibody dynamics study the generation and solution of the equations governing the motion of such systems [1].
+**smbd** is a python package developed for the creation, simulation and visualization of multi-body systems.
+
+A multi-body system is hereby defined as *a finite number of material bodies connected in an arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies*. Practitioners of multi-body dynamics study the generation and solution of the equations governing the motion of such systems [1].
 
 ### Audience and Fields of Application
 
@@ -46,6 +47,8 @@ Currently, the tool provides:
 
 - A blender code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
 - A blender add-on that can be easily added to blender's GUI, to facilitate the visualization process of the simulated systems.
+
+*TODO : GIF*
 
 #### Development Environment
 
@@ -99,7 +102,7 @@ Several benefits of the adopted approach can be stated here, but the major theme
 
 Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. So, if you do not have an up and running python environment, you still can check out the tool and create multibody systems seamlessly. 
 
-[This](https://colab.research.google.com/drive/1-ezP5MaL9rZTN2c0zXEDUABiRi2Lp9_A) is a notebook that clones this repository and creates a valid environment for the tool on Colab. The notebook walks you a step by step through the process of building and simulating a **Spatial Four-Bar** mechanism.
+The [examples](https://github.com/khaledghobashy/asurt_mbdt#usage-examples--tutorials) section has several ready-to-use Colab notebooks that walks you through a typical modeling process flow.
 
 ### Using the tool on your machine.
 
@@ -110,7 +113,7 @@ The tool needs a valid python 3.6+ environment. If new to scientific computing i
 As the tool is still under continuous development, cloning this repository is a more versatile way to test and play with it, until a more stable first release is released. This can be done via the following git commands from the command line.
 
 ```bash
-git clone https://github.com/khaledghobashy/asurt_cdt_symbolic.git
+git clone https://github.com/khaledghobashy/smbd.git
 ```
 
 ```
@@ -149,16 +152,17 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 #### Standalone Studies
 
-- Standalone Topology - "spatial four-bar mechanism". (GitHub|Colab)
-- Standalone Topology - "spatial slider-crank mechanism". (GitHub|Colab)
+- Standalone Topology - "spatial four-bar mechanism". ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb)|Colab)
+- Standalone Topology - "spatial slider-crank mechanism". ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb)|Colab)
 
 #### Template-Based Studies
 
-##### Vehicle Front Axle
+##### Vehicle Front Axle. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/tree/master/examples/vehicle_front_axle)|Colab)
 
-- Template-Based Topology - "double-wishbone vehicle suspension". (GitHub|Colab)
-- Symbolic Assembly - "vehicle front-axle assembly". (GitHub|Colab)
-- Numerical Simulation - "vehicle front axle kinematics". (GitHub|Colab)
+- Template-Based Topology - "double-wishbone vehicle suspension". 
+- Template-Based Topology - "suspension actuation test-rig". 
+- Symbolic Assembly - "vehicle front-axle assembly".
+- Numerical Simulation - "vehicle front axle kinematics". 
 
 #### 3D Visualization
 

@@ -5,8 +5,8 @@ Created on Sun May  5 10:07:05 2019
 @author: khaled.ghobashy
 """
 
-#from asurt.symbolic.symbolic_classes import bodies
-#from asurt.symbolic.symbolic_classes import joints
+#from smbd.symbolic.symbolic_classes import bodies
+#from smbd.symbolic.symbolic_classes import joints
 #
 #ground = bodies.ground()
 #
@@ -21,8 +21,8 @@ Created on Sun May  5 10:07:05 2019
 #
 #ground.global_frame.draw_tree()
 
-from asurt.interfaces.scripting import standalone_topology
-from asurt.numenv.python.codegen import generators
+from smbd.interfaces.scripting import standalone_topology
+from smbd.numenv.python.codegen import generators
 
 model = standalone_topology('fourbar')
 
