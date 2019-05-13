@@ -102,7 +102,7 @@ Several benefits of the adopted approach can be stated here, but the major theme
 
 Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. So, if you do not have an up and running python environment, you still can check out the tool and create multibody systems seamlessly. 
 
-The [examples](https://github.com/khaledghobashy/asurt_mbdt#usage-examples--tutorials) section has several ready-to-use Colab notebooks that walks you through a typical modeling process flow.
+The examples section below, has several ready-to-use Colab notebooks that walks you through a typical modeling process flow.
 
 ### Using the tool on your machine.
 
