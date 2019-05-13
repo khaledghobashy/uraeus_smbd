@@ -1,6 +1,4 @@
-# SMBD
-
-**Symbolic Multi-Body Dynamics** 
+# SMBD | Symbolic Multi-Body Dynamics
 
 ## Description
 
