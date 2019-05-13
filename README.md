@@ -150,8 +150,9 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 #### Standalone Studies
 
-- Standalone Topology - "spatial four-bar mechanism". ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb)|Colab)
-- Standalone Topology - "spatial slider-crank mechanism". ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb)|Colab)
+- Spatial Four-bar. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb)|[Colab](https://drive.google.com/file/d/1EPat0uAAaw9sx1i-0tfAK57UTIjMzm_T/view?usp=sharing))
+- Spatial Slider-Crank. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb)|[Colab](https://drive.google.com/file/d/16Uz6Qhzo17hSBRwoKLnfadlO48Ax87Jt/view?usp=sharing))
+- Stewart-Gough Platform. ([GitHub](https://github.com/khaledghobashy/smbd/blob/master/examples/stewart_gough/stewart_gough.ipynb)|[Colab](https://colab.research.google.com/drive/1Nq7jYMUltTLl6uz2HXxuLpqRmSH812x9))
 
 #### Template-Based Studies
 
