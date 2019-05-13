@@ -146,24 +146,24 @@ if pkg_path not in sys.path:
 
 This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modeling process.
 
-- Getting Started. (GitHub|Colab)
+- Getting Started. (GitHub | Colab)
 
-#### Standalone Studies
+### Standalone Studies
 
-- Spatial Four-bar. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb)|[Colab](https://drive.google.com/file/d/1EPat0uAAaw9sx1i-0tfAK57UTIjMzm_T/view?usp=sharing))
-- Spatial Slider-Crank. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb)|[Colab](https://drive.google.com/file/d/16Uz6Qhzo17hSBRwoKLnfadlO48Ax87Jt/view?usp=sharing))
-- Stewart-Gough Platform. ([GitHub](https://github.com/khaledghobashy/smbd/blob/master/examples/stewart_gough/stewart_gough.ipynb)|[Colab](https://colab.research.google.com/drive/1Nq7jYMUltTLl6uz2HXxuLpqRmSH812x9))
+- Spatial Four-bar. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb) | [Colab](https://drive.google.com/file/d/1EPat0uAAaw9sx1i-0tfAK57UTIjMzm_T/view?usp=sharing))
+- Spatial Slider-Crank. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb) | [Colab](https://drive.google.com/file/d/16Uz6Qhzo17hSBRwoKLnfadlO48Ax87Jt/view?usp=sharing))
+- Stewart-Gough Platform. ([GitHub](https://github.com/khaledghobashy/smbd/blob/master/examples/stewart_gough/stewart_gough.ipynb) | [Colab](https://colab.research.google.com/drive/1Nq7jYMUltTLl6uz2HXxuLpqRmSH812x9))
 
-#### Template-Based Studies
+### Template-Based Studies
 
-##### Vehicle Front Axle. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/tree/master/examples/vehicle_front_axle)|Colab)
+#### Vehicle Front Axle. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/tree/master/examples/vehicle_front_axle) | Colab)
 
 - Template-Based Topology - "double-wishbone vehicle suspension". 
 - Template-Based Topology - "suspension actuation test-rig". 
 - Symbolic Assembly - "vehicle front-axle assembly".
 - Numerical Simulation - "vehicle front axle kinematics". 
 
-#### 3D Visualization
+### 3D Visualization
 
 *To be discussed ...*
 
