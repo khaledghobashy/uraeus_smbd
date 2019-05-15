@@ -157,15 +157,15 @@ if pkg_path not in sys.path:
 
 ## Usage Examples & Tutorials
 
-This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modeling process.
+This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modeling process. The [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples) directory in this repository is planned to include updated versions of working models that can be statically viewed on github, downloaded on your machine or to be ran directly on Colab.
 
 - Getting Started. (GitHub | Colab)
 
 ### Standalone Studies
 
-- **Spatial Four-bar**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb))
-- **Spatial Slider-Crank**. ( [**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb)| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb))
-- Stewart-Gough Platform. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb) 
+- **Spatial Four-bar**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb) | [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb))
+- **Spatial Slider-Crank**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb))
+- **Stewart-Gough Platform**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/stewart_gough/stewart_gough.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/stewart_gough/stewart_gough.ipynb#scrollTo=A5aeLp5S45eh))
 
 ### Template-Based Studies
 
@@ -190,5 +190,5 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 ## License
 
-**ASURT-MBDT** is distributed under the 3-clause BSD license.
+**SMBD** is distributed under the 3-clause BSD license.
 
