@@ -12,6 +12,41 @@ import nbformat as nbf
 
 ###############################################################################
 
+def create_project_dirs():
+    dirs = os.listdir()
+    for d in ['csv_files', 'results']:
+        if d not in dirs:
+            os.mkdir(d)
+            print('Created Directory %s'%d)
+    if '__init__.py' not in dirs:
+        with open('__init__.py', 'w') as file:
+            file.write('#')
+        print('Created __init__.py file')
+    
+
+def initialize_project(projects_dir, project_name):
+    """
+    Creating a directory to hold the model files.
+    """
+    existing_projects = os.listdir(projects_dir)
+    project_dir  = os.path.join(projects_dir, project_name)
+        
+    if project_name not in existing_projects:
+        os.mkdir(project_dir)
+        print('Created project %s'%project_dir)
+        os.chdir(project_dir)
+        print('Changed working directory to %s'%project_dir)
+        create_project_dirs()
+        
+    elif os.path.basename(os.getcwd()) == project_name:
+        print('Current working dir : %s'%os.getcwd())
+        create_project_dirs()
+    else:
+        os.chdir(project_dir)
+        print('Changed working directory to %s'%project_dir)
+        create_project_dirs()
+
+
 def _nbtext_parser(text, formats):
     text = text.format(**formats)
     nb_cells = []
