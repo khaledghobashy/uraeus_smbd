@@ -14,12 +14,12 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 # Local application imports
-from ..symbolic_classes.matrices import (global_frame, reference_frame,
+from ..components.matrices import (global_frame, reference_frame,
                                          zero_matrix)
-from ..symbolic_classes import bodies
-from ..symbolic_classes.joints import absolute_locator
-from ..symbolic_classes.algebraic_constraints import joint_actuator
-from ..symbolic_classes.forces import generic_force, gravity_force, centrifugal_force
+from ..components import bodies
+from ..components.joints import absolute_locator
+from ..components.algebraic_constraints import joint_actuator
+from ..components.forces import generic_force, gravity_force, centrifugal_force
 
 ###############################################################################
 

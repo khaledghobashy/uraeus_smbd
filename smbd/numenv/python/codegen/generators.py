@@ -428,7 +428,8 @@ class template_codegen(abstract_generator):
                 
         equations_text = textwrap.indent(equations_text,indent).lstrip() 
         
-        reactions = ','.join(['%r:self.%s'%(i,i) for i in self.joint_reactions_sym])
+        reactions = ',\n'.join(['%r : self.%s'%(i,i) for i in self.joint_reactions_sym])
+        reactions = textwrap.indent(reactions, 5*indent).lstrip()
         reactions = '{%s}'%reactions
         
         text = text.format(equations_text = equations_text,

@@ -12,11 +12,11 @@ import cloudpickle
 import sympy as sm
 
 # Local applicataion imports
-import smbd.symbolic.symbolic_classes.joints as joints
-import smbd.symbolic.symbolic_classes.forces as forces
-import smbd.symbolic.mbs_creators.topology_classes as topology_classes
-import smbd.symbolic.mbs_creators.configuration_classes  as cfg_cls
-from smbd.symbolic.symbolic_classes.matrices import vector
+import smbd.symbolic.components.joints as joints
+import smbd.symbolic.components.forces as forces
+import smbd.symbolic.systems.topology_classes as topology_classes
+import smbd.symbolic.systems.configuration_classes  as cfg_cls
+from smbd.symbolic.components.matrices import vector
 
 # Local directory imports
 from . import codegens

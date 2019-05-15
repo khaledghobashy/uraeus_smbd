@@ -22,7 +22,7 @@ def solve(A,b):
     x = np.reshape(x,shape)
     return x
 
-def progress_bar(steps,i):
+def progress_bar(steps, i):
     sys.stdout.write('\r')
     length=(100*(1+i)//(4*steps))
     percentage=100*(1+i)//steps
@@ -30,10 +30,10 @@ def progress_bar(steps,i):
     sys.stdout.write("[%-25s] %d%%, (%s/%s) steps." % ('='*length,percentage,i+1, steps))
     sys.stdout.flush()
 
-def scipy_matrix_assembler(data,rows,cols,shape):
-    mat = sc.empty(shape,dtype=np.object)
-    mat[rows,cols] = data
-    return sc.sparse.bmat(mat,format='csc')
+def scipy_matrix_assembler(data, rows, cols, shape):
+    mat = sc.empty(shape, dtype=np.object)
+    mat[rows, cols] = data
+    return sc.sparse.bmat(mat, format='csc')
 
 ###############################################################################
 ###############################################################################
@@ -60,9 +60,9 @@ class abstract_solver(object):
             self._coordinates_indicies += ['%s.%s'%(name, i) 
             for i in ['x', 'y', 'z', 'e0', 'e1', 'e2', 'e3']]
             
-        self.reactions_indicies = []
+        self._reactions_indicies = []
         for name in model.reactions_indicies:
-            self.reactions_indicies += ['%s.%s'%(name, i) 
+            self._reactions_indicies += ['%s.%s'%(name, i) 
             for i in ['x','y','z']]
     
     def set_time_array(self, duration, spacing):
@@ -78,17 +78,23 @@ class abstract_solver(object):
         self.step_size  = step_size
         
     def eval_reactions(self):
-        self.reactions = {}
-        for i in range(len(self.time_array)):            
+        self._reactions = {}
+        time_array = self.time_array
+        bar_length = len(time_array)
+        print('\nEvaluating System Constraints Reactions:')
+        for i, t in enumerate(time_array):
+            progress_bar(bar_length, i)
+            self._set_time(t)
             lamda = self._eval_lagrange_multipliers(i)
             self._eval_reactions_eq(lamda)
-            self.reactions[i] = self.model.reactions
+            self._reactions[i] = self.model.reactions
         
-        self.values = {i:np.concatenate(list(v.values())) for i,v in self.reactions.items()}
+        self.values = {i:np.concatenate(list(v.values())) for i,v in self._reactions.items()}
         
         self.reactions_dataframe = pd.DataFrame(
                 data = np.concatenate(list(self.values.values()),1).T,
-                columns = self.reactions_indicies)
+                columns = self._reactions_indicies)
+        self.reactions_dataframe['time'] = time_array
     
     def _initialize_model(self):
         model = self.model
@@ -109,25 +115,25 @@ class abstract_solver(object):
                 data = np.concatenate(list(self._acc_history.values()),1).T,
                 columns = columns)
         
-        time_array = self.time_array[:self.pos_dataframe.shape[0]]
+        time_array = self.time_array
         self.pos_dataframe['time'] = time_array
         self.vel_dataframe['time'] = time_array
         self.acc_dataframe['time'] = time_array
     
-    def _assemble_equations(self,data):
+    def _assemble_equations(self, data):
         mat = np.concatenate(data)
         return mat
     
-    def _set_time(self,t):
+    def _set_time(self, t):
         self.model.t = t
     
-    def _set_gen_coordinates(self,q):
+    def _set_gen_coordinates(self, q):
         self.model.set_gen_coordinates(q)
     
-    def _set_gen_velocities(self,qd):
+    def _set_gen_velocities(self, qd):
         self.model.set_gen_velocities(qd)
     
-    def _set_gen_accelerations(self,qdd):
+    def _set_gen_accelerations(self, qdd):
         self.model.set_gen_accelerations(qdd)
     
     def _eval_pos_eq(self):
@@ -153,7 +159,7 @@ class abstract_solver(object):
         rows = self.model.jac_rows
         cols = self.model.jac_cols
         data = self.model.jac_eq_blocks
-        mat = scipy_matrix_assembler(data,rows,cols,self._jac_shape)
+        mat = scipy_matrix_assembler(data, rows, cols, self._jac_shape)
         return mat
     
     def _eval_mass_eq(self):
@@ -161,7 +167,7 @@ class abstract_solver(object):
         data = self.model.mass_eq_blocks
         n = self.model.ncols
         rows = cols = np.arange(n)
-        mat = scipy_matrix_assembler(data,rows,cols,(n,n))
+        mat = scipy_matrix_assembler(data, rows, cols, (n,n))
         return mat.A
     
     def _eval_frc_eq(self):
@@ -174,12 +180,12 @@ class abstract_solver(object):
         self.model.set_lagrange_multipliers(lamda)
         self.model.eval_reactions_eq()
     
-    def _newton_raphson(self,guess):
+    def _newton_raphson(self, guess):
         self._set_gen_coordinates(guess)
         
         A = self._eval_jac_eq()
         b = self._eval_pos_eq()
-        delta_q = solve(A,-b)
+        delta_q = solve(A, -b)
         
         itr=0
         while np.linalg.norm(delta_q)>1e-5:
@@ -188,11 +194,11 @@ class abstract_solver(object):
             
             self._set_gen_coordinates(guess)
             b = self._eval_pos_eq()
-            delta_q = solve(A,-b)
+            delta_q = solve(A, -b)
             
             if itr%5==0 and itr!=0:
                 A = self._eval_jac_eq()
-                delta_q = solve(A,-b)
+                delta_q = solve(A, -b)
             if itr>50:
                 print("Iterations exceded \n")
                 break
@@ -211,17 +217,17 @@ class kds_solver(abstract_solver):
         
         A = self._eval_jac_eq()
         vel_rhs = self._eval_vel_eq()
-        v0 = solve(A,-vel_rhs)
+        v0 = solve(A, -vel_rhs)
         self._set_gen_velocities(v0)
         self._vel_history[0] = v0
         
         acc_rhs = self._eval_acc_eq()
-        self._acc_history[0] = solve(A,-acc_rhs)
+        self._acc_history[0] = solve(A, -acc_rhs)
         
         print('\nRunning System Kinematic Analysis:')
         bar_length = len(time_array)-1
         for i,t in enumerate(time_array[1:]):
-            progress_bar(bar_length,i)
+            progress_bar(bar_length, i)
             self._set_time(t)
 
             g =   self._pos_history[i] \

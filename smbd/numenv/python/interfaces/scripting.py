@@ -23,39 +23,14 @@ def load_pickled_data(file):
     return instance
 
 ###############################################################################
-class numerical_subsystem(object):
-    
-    def __init__(self, topology_instance):
-        self._name = topology_instance.prefix[:-1]
-        self._topology = topology_instance
-        
-    def set_configuration_file(self, config_module):
-        self._topology.config = config_module.configuration()
-        
-    def set_configuration_data(self, file):
-        path = os.path.join('configuration_files', file)
-        self._topology.config.load_from_csv(path)
-    
-    @property
-    def config(self):
-        return self._topology.config
-
 ###############################################################################
-###############################################################################
-
-class Subsystems(object):
-    
-    def __init__(self, subsystems_list):
-        for sub in subsystems_list:
-            sub = numerical_subsystem(sub)
-            setattr(self, sub._name, sub)
 
 class multibody_system(object):
     
     def __init__(self, system):
-        self.system = system.topology()
+        self.topology = system.topology()
         try:
-            self.Subsystems = Subsystems(self.system.subsystems)
+            self.Subsystems = system.subsystems
         except AttributeError:
             pass
         
@@ -66,7 +41,7 @@ class simulation(object):
     
     def __init__(self, name, model, typ='kds'):
         self.name = name
-        self.assembly = model.system
+        self.assembly = model.topology
         if typ == 'kds':
             self.soln = kds_solver(self.assembly)
         elif typ == 'dds':
@@ -87,6 +62,9 @@ class simulation(object):
     def save_results(self, filename):
         path = os.path.join('results', filename)
         self.soln.pos_dataframe.to_csv('%s.csv'%path, index=True)
+        
+    def eval_reactions(self):
+        self.soln.eval_reactions()
     
     def plot(self, y_args, x=None):
         

@@ -12,7 +12,7 @@ import itertools
 import sympy as sm
 
 # Local application imports
-from .matrices import vector, G, Skew, zero_matrix, matrix_symbol
+from .matrices import vector, G, Skew, zero_matrix
 from .helpers import body_setter, name_setter
 from .joints import dummy_cylinderical
 
@@ -40,8 +40,8 @@ class generic_force(object):
     def body_i(self):
         return self._body_i
     @body_i.setter
-    def body_i(self,body_i):
-        body_setter(self,body_i,'i')
+    def body_i(self, body_i):
+        body_setter(self, body_i, 'i')
         self.Gi  = body_i.G
         self._construct_force_i()
     
@@ -49,8 +49,8 @@ class generic_force(object):
     def body_j(self):
         return self._body_j
     @body_j.setter
-    def body_j(self,body_j):
-        body_setter(self,body_j,'j')
+    def body_j(self, body_j):
+        body_setter(self, body_j, 'j')
         self.Gj  = body_j.G
         self._construct_force_j()
         
@@ -86,23 +86,23 @@ class generic_force(object):
         
     def _construct_force_i(self):
         bname = self.body_i.id_name
-        F_format = (self.prefix,'F',bname,self.id_name)
-        T_format = (self.prefix,'T',bname,self.id_name)
+        F_format = (self.prefix, 'F', bname, self.id_name)
+        T_format = (self.prefix, 'T', bname, self.id_name)
         F_raw_name, F_frm_name = self._formatter(*F_format)
         T_raw_name, T_frm_name = self._formatter(*T_format)
-        self.Fi   = vector(F_raw_name,format_as=F_frm_name)
-        self.Ti   = vector(T_raw_name,format_as=T_frm_name)
-        self.Ti_e = 2*G(self.Pi).T*(self.Ti + Skew(self.ui).T*self.Fi)
+        self.Fi   = vector(F_raw_name, format_as=F_frm_name)
+        self.Ti   = vector(T_raw_name, format_as=T_frm_name)
+        self.Ti_e = 2*G(self.Pi).T * (self.Ti + Skew(self.ui).T*self.Fi)
     
     def _construct_force_j(self):
         bname = self.body_j.id_name
-        F_format = (self.prefix,'F',bname,self.id_name)
-        T_format = (self.prefix,'T',bname,self.id_name)
+        F_format = (self.prefix, 'F', bname, self.id_name)
+        T_format = (self.prefix, 'T', bname, self.id_name)
         F_raw_name, F_frm_name = self._formatter(*F_format)
         T_raw_name, T_frm_name = self._formatter(*T_format)
-        self.Fj   = vector(F_raw_name,format_as=F_frm_name)
-        self.Tj   = vector(T_raw_name,format_as=T_frm_name)
-        self.Tj_e = 2*G(self.Pj).T*(self.Tj + Skew(self.uj).T*self.Fj)
+        self.Fj   = vector(F_raw_name, format_as=F_frm_name)
+        self.Tj   = vector(T_raw_name, format_as=T_frm_name)
+        self.Tj_e = 2*G(self.Pj).T * (self.Tj + Skew(self.uj).T*self.Fj)
     
     @staticmethod
     def _formatter(*args):
@@ -166,20 +166,19 @@ class centrifugal_force(generic_force):
 
 class internal_force(generic_force):
     
-    def __init__(self,name,body_i=None,body_j=None):
-        super().__init__(name,body_i,body_j)
-        self.joint = dummy_cylinderical(name,body_i,body_j)
-        format_ = (self.prefix,self.id_name)
-#        self.LF = matrix_symbol('%s%s_FL'%format_,1,1)
+    def __init__(self, name, body_i=None, body_j=None):
+        super().__init__(name, body_i, body_j)
+        self.joint = dummy_cylinderical(name, body_i, body_j)
+        format_ = (self.prefix, self.id_name)
         self.LF = sm.symbols('%s%s_FL'%format_, real=True)
 
-        self.Fs = sm.Function('Fs_%s'%name)#, commutative=True)
-        self.Fd = sm.Function('Fd_%s'%name)#, commutative=True)
-        self.Fa = sm.Function('Fa_%s'%name)#, commutative=True)
+        self.Fs = sm.Function('UF_%s_Fs'%name)#, commutative=True)
+        self.Fd = sm.Function('UF_%s_Fd'%name)#, commutative=True)
+        self.Fa = sm.Function('UF_%s_Fa'%name)#, commutative=True)
         
-        self.Ts = sm.Function('Ts_%s'%name)#, commutative=True)
-        self.Td = sm.Function('Td_%s'%name)#, commutative=True)
-        self.Ta = sm.Function('Ta_%s'%name)#, commutative=True)
+        self.Ts = sm.Function('UF_%s_Ts'%name)#, commutative=True)
+        self.Td = sm.Function('UF_%s_Td'%name)#, commutative=True)
+        self.Ta = sm.Function('UF_%s_Ta'%name)#, commutative=True)
                 
     @property
     def Qi(self):

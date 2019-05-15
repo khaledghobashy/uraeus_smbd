@@ -65,8 +65,21 @@ Currently, the tool provides:
 Computational Dynamics is a rapidly developing field that brings together applied mathematics (especially numerical analysis), computer science, and scientific or engineering applications. Multibody Dynamics can be considered as a sub-field of computational dynamics.
 #### What is the problem to be solved?
 The primary interest in multibody dynamics is to analyze the system behavior for given inputs. In analogy with control systems; a multi-body system can be thought as a **_system_** subjected to some **_inputs_** producing some **_outputs_**. These three parts of the problem are dependent on the analyst end goal of the analysis and simulation. 
-#### How is the system physics abstracted mathematically and computationally?
-To keep it as simple as possible. An unconstrained body in space is normally defined using 6 generalized coordinates defining its location and orientation. For example, a system of 10 bodies requires 60 generalized coordinates to be fully defined, which in turn requires 60 independent equations to be solved for these  -unknown- generalized coordinates.
+#### How is the system physics abstracted mathematically?
+An unconstrained body in space is normally defined using 6 generalized coordinates defining its location and orientation. For example, a system of 10 bodies requires 60 generalized coordinates to be fully defined, which in turn requires 60 *independent equations* to be solved for these  -unknown- generalized coordinates.
+
+The way we achieve a solution for the system is dependent on the type of study we are performing. Mainly we have **four types** of analysis that are of interest for a given multi-body system. These are:
+
+- **Kinematic Analysis**
+  *"How does the whole system move if we moved this particular body ?"*
+- **Inverse Dynamic Analysis**
+  *"What are the forces needed to achieve this motion we just did ?"*
+- **Equilibrium Analysis**
+  *"How does the system look if we did nothing ?"*
+- **Dynamic Analysis**
+  *"Now we gave it a force, how does it behave ?"*
+
+Each analysis type -or question- can be modeled by a set of algebraic and/or differential equations that can be solved for the system generalized states (positions, velocities and accelerations). A more detailed discussion of each analysis type will be provided in another documentation.
 
 ### Approach
 The philosophy of the tool is to isolate the model creation process form the actual numerical and computational representation of the system that will be used in the simulation process. This is done through the ideas of symbolic computing and code-generation as well be shown below.
