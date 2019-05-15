@@ -11,7 +11,7 @@ import os
 import nbformat as nbf
 
 ###############################################################################
-
+    
 def create_project_dirs():
     dirs = os.listdir()
     for d in ['csv_files', 'results']:
@@ -24,7 +24,7 @@ def create_project_dirs():
         print('Created __init__.py file')
     
 
-def initialize_project(projects_dir, project_name):
+def initialize_project(project_name, projects_dir):
     """
     Creating a directory to hold the model files.
     """
