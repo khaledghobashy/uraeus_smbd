@@ -163,9 +163,9 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 ### Standalone Studies
 
-- Spatial Four-bar. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb) | [Colab](https://drive.google.com/file/d/1EPat0uAAaw9sx1i-0tfAK57UTIjMzm_T/view?usp=sharing))
-- Spatial Slider-Crank. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb) | [Colab](https://drive.google.com/file/d/16Uz6Qhzo17hSBRwoKLnfadlO48Ax87Jt/view?usp=sharing))
-- Stewart-Gough Platform. ([GitHub](https://github.com/khaledghobashy/smbd/blob/master/examples/stewart_gough/stewart_gough.ipynb) | [Colab](https://colab.research.google.com/drive/1Nq7jYMUltTLl6uz2HXxuLpqRmSH812x9))
+- **Spatial Four-bar**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb))
+- **Spatial Slider-Crank**. ( [**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb)| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb))
+- Stewart-Gough Platform. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb) 
 
 ### Template-Based Studies
 
