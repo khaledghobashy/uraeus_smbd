@@ -139,7 +139,7 @@ class template_topology(object):
     def add_force(self):
         return self._forces
     
-    def assemble_model(self):
+    def assemble(self):
         self._mbs.assemble_model()
             
     def save(self):
@@ -196,7 +196,7 @@ class assembly(object):
     def assign_virtual_body(self, virtual_node, actual_node):
         self._mbs.assign_virtual_body(virtual_node, actual_node)
     
-    def assemble_model(self):
+    def assemble(self):
         self._mbs.assemble_model()
         
     def save(self):
@@ -254,7 +254,7 @@ class configuration(object):
     def assign_geometry_to_body(self, body, geo, eval_inertia=True, mirror=False):
         self._config.assign_geometry_to_body(body, geo, eval_inertia, mirror)
     
-    def assemble_model(self):
+    def assemble(self):
         self._config.assemble_equalities()
 
     def write_python_code(self, proj_dir):
