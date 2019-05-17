@@ -197,6 +197,7 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 ## References
 [1]: McPhee, J.J. Nonlinear Dyn (1996) 9: 73. https://doi.org/10.1007/BF01833294
+
 [2]: <https://colab.research.google.com/notebooks/welcome.ipynb>
 
 ## License
