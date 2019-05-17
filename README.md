@@ -49,7 +49,7 @@ Currently, the tool provides:
 - A blender code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
 - A blender add-on that can be easily added to blender's GUI, to facilitate the visualization process of the simulated systems.
 
-#### Development Environment
+#### Extensible Development Environment
 
 - Easy construction of new, user-defined joints and actuators.
 - A modular development environment that adopts the *"programming to an interface instead of an implementation"* concept, resulting in a flexible, loosely-coupled code structure. 
@@ -65,9 +65,9 @@ Currently, the tool provides:
 </br>
 ![Blender Gif](readme_materials/gif/fourbar.gif)
 
-------
+---------------------------------------------------
 
-
+---------------------------------------------------
 
 ## Background
 ### The Whats and The Hows ?
@@ -119,6 +119,9 @@ Several benefits of the adopted approach can be stated here, but the major theme
 - Natural adoption of the template-based modeling theme that emerges from the use of network-graphs to represent the system, which allows convenient assemblage of several graphs to form a new system. 
 - Uncoupled simulation environment, where the symbolic equations generated form the designed topology is free to be written in any programming language with any desired numerical libraries.
 
+---------------------------------------------------
+
+---------------------------------------------------
 ## Installation
 
 ### Using the tool on [Colab](https://colab.research.google.com)
@@ -167,6 +170,9 @@ if pkg_path not in sys.path:
 
 *To Do*
 
+---------------------------------------------------
+
+---------------------------------------------------
 ## Usage Examples & Tutorials
 
 This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modeling process. The [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples) directory in this repository is planned to include updated versions of working models that can be statically viewed on github, downloaded on your machine or to be ran directly on Colab.
@@ -192,6 +198,9 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 *To be discussed ...*
 
+---------------------------------------------------
+
+---------------------------------------------------
 ## Implementation Details
 
 *The **Implementation Details** will be provided in a separate documentation and linked here*
