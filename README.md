@@ -6,6 +6,7 @@
 
 A multi-body system is hereby defined as *a finite number of material bodies connected in an arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies*. Practitioners of multi-body dynamics study the generation and solution of the equations governing the motion of such systems [1].
 
+---------------------------------------------------
 ### Audience and Fields of Application
 
 Initially, the main targeted audience was the **Formula Student** community. The motive was *encouraging a deeper understanding of the modeling processes and the underlying theories used in other commercial software packages*, which is a way of giving back to the community, and supporting the concept of *"knowledge share"* adopted there by exposing it to the open-source community as well.
@@ -20,6 +21,8 @@ Fields of application include any domain that deals with the study of interconne
 - Robotics.
 - Biomechanics.
 - .. etc.
+
+---------------------------------------------------
 
 ### Features 
 
@@ -50,6 +53,8 @@ Currently, the tool provides:
 
 - Easy construction of new, user-defined joints and actuators.
 - A modular development environment that adopts the *"programming to an interface instead of an implementation"* concept, resulting in a flexible, loosely-coupled code structure. 
+
+---------------------------------------------------
 
 ### Visualization Samples
 **Double-Wishbone Bell-Crank Actuated Front-Axle**
