@@ -48,9 +48,11 @@ Currently, the tool provides:
 
 ##### Animation Samples
 **Double-Wishbone Bell-Crank Actuated Front-Axle**
+</br>
 ![Blender Gif](readme_materials/gif/frontaxle.gif)
 
 **Spatial Fourbar Mechanism**
+</br>
 ![Blender Gif](readme_materials/gif/fourbar.gif)
 
 #### Development Environment
