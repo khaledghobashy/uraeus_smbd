@@ -201,6 +201,10 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 ---------------------------------------------------
 
 ---------------------------------------------------
+## Roadmap
+
+*To be discussed ...*
+
 ## Implementation Details
 
 *The **Implementation Details** will be provided in a separate documentation and linked here*
@@ -208,6 +212,10 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 ## Theoretical Basis
 
 *The **Theoretical Basis** will be provided in a separate documentation and linked here*
+
+## Support
+
+As the tool is developed and maintained by one developer for now, if you have any inquiries, do not hesitate to contact me at khaled.ghobashy@live.com or kh.ghobashy@gmail.com
 
 ## References
 [1] : McPhee, J.J. Nonlinear Dyn (1996) 9: 73. https://doi.org/10.1007/BF01833294
