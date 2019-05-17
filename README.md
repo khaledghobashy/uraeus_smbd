@@ -156,7 +156,7 @@ pkg_path = 'path/to/smbd'
 if pkg_path not in sys.path:
     sys.path.append(pkg_path)
 
-# the package can now be imported as asurt, e.g. :
+# the package can now be imported as smbd, e.g. :
 # from smbd.interfaces.scripting import standalone_topology
 ```
 
