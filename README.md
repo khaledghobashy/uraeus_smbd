@@ -197,5 +197,5 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 ## License
 
-**SMBD** is distributed under the 3-clause BSD license. See the [LICENSE.txt](LICENSE) file for details.
+**SMBD** is distributed under the 3-clause BSD license. See the [LICENSE](LICENSE) file for details.
 
