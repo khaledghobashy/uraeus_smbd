@@ -4,7 +4,7 @@
 
 **smbd** is a python package developed for the creation, simulation and visualization of multi-body systems.
 
-A multi-body system is hereby defined as *a finite number of material bodies connected in an arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies*. Practitioners of multi-body dynamics study the generation and solution of the equations governing the motion of such systems [^1].
+A multi-body system is hereby defined as *a finite number of material bodies connected in an arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies*. Practitioners of multi-body dynamics study the generation and solution of the equations governing the motion of such systems [1].
 
 ### Audience and Fields of Application
 
@@ -118,7 +118,7 @@ Several benefits of the adopted approach can be stated here, but the major theme
 
 ### Using the tool on [Colab](https://colab.research.google.com)
 
-Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [^2]. So, if you do not have an up and running python environment, you still can check out the tool and create multibody systems seamlessly. 
+Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. So, if you do not have an up and running python environment, you still can check out the tool and create multibody systems seamlessly. 
 
 The examples section below, has several ready-to-use Colab notebooks that walks you through a typical modeling process flow.
 
@@ -196,8 +196,8 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 *The **Theoretical Basis** will be provided in a separate documentation and linked here*
 
 ## References
-[^1]: McPhee, J.J. Nonlinear Dyn (1996) 9: 73. https://doi.org/10.1007/BF01833294
-[^2]: <https://colab.research.google.com/notebooks/welcome.ipynb>
+[1]: McPhee, J.J. Nonlinear Dyn (1996) 9: 73. https://doi.org/10.1007/BF01833294
+[2]: <https://colab.research.google.com/notebooks/welcome.ipynb>
 
 ## License
 
