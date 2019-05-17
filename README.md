@@ -176,7 +176,7 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 ### Template-Based Studies
 
-#### Vehicle Front Axle. ([GitHub](https://github.com/khaledghobashy/asurt_mbdt/tree/master/examples/vehicle_front_axle) | Colab)
+#### Vehicle Front Axle. ([GitHub](https://github.com/khaledghobashy/smbd/tree/master/examples/vehicle_front_axle) | Colab)
 
 - Template-Based Topology - "double-wishbone vehicle suspension". 
 - Template-Based Topology - "suspension actuation test-rig". 
