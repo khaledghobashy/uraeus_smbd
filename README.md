@@ -46,12 +46,11 @@ Currently, the tool provides:
 - A blender code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
 - A blender add-on that can be easily added to blender's GUI, to facilitate the visualization process of the simulated systems.
 
-##### Animation Samples
-**Double-Wishbone Bell-Crank Actuated Front-Axle**
+*Double-Wishbone Bell-Crank Actuated Front-Axle*
 </br>
 ![Blender Gif](readme_materials/gif/frontaxle.gif)
 
-**Spatial Fourbar Mechanism**
+*Spatial Fourbar Mechanism*
 </br>
 ![Blender Gif](readme_materials/gif/fourbar.gif)
 
