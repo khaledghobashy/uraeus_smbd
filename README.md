@@ -46,18 +46,19 @@ Currently, the tool provides:
 - A blender code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
 - A blender add-on that can be easily added to blender's GUI, to facilitate the visualization process of the simulated systems.
 
-*Double-Wishbone Bell-Crank Actuated Front-Axle*
-</br>
-![Blender Gif](readme_materials/gif/frontaxle.gif)
-
-*Spatial Fourbar Mechanism*
-</br>
-![Blender Gif](readme_materials/gif/fourbar.gif)
-
 #### Development Environment
 
 - Easy construction of new, user-defined joints and actuators.
 - A modular development environment that adopts the *"programming to an interface instead of an implementation"* concept, resulting in a flexible, loosely-coupled code structure. 
+
+### Visualization Samples
+**Double-Wishbone Bell-Crank Actuated Front-Axle**
+</br>
+![Blender Gif](readme_materials/gif/frontaxle.gif)
+
+**Spatial Fourbar Mechanism**
+</br>
+![Blender Gif](readme_materials/gif/fourbar.gif)
 
 ------
 
