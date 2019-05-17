@@ -58,8 +58,8 @@ class bpy_scene(object):
 
         fps = 24
         total_time = arr[-1,-1]
-        bpy.context.scene.render.frame_map_old = (i/total_time)/fps
-        bpy.context.scene.render.frame_map_new = 1
+        bpy.context.scene.render.frame_map_old = (i/total_time)
+        bpy.context.scene.render.frame_map_new = fps
         bpy.context.scene.frame_end = fps*total_time
 
     
