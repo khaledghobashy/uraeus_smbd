@@ -196,9 +196,9 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 *The **Theoretical Basis** will be provided in a separate documentation and linked here*
 
 ## References
-[1]: McPhee, J.J. Nonlinear Dyn (1996) 9: 73. https://doi.org/10.1007/BF01833294
+[1] : McPhee, J.J. Nonlinear Dyn (1996) 9: 73. https://doi.org/10.1007/BF01833294
 
-[2]: <https://colab.research.google.com/notebooks/welcome.ipynb>
+[2] : https://colab.research.google.com/notebooks/welcome.ipynb
 
 ## License
 
