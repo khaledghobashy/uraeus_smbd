@@ -1,4 +1,4 @@
-# SMBD | Symbolic Multi-Body Dynamics
+# **SMBD** | Symbolic Multi-Body Dynamics
 
 ## Description
 
@@ -65,7 +65,7 @@ Currently, the tool provides:
 
 
 ## Background
-### The Whats and Hows ?
+### The Whats and The Hows ?
 
 #### What is Computational Dynamics?
 
@@ -77,13 +77,13 @@ An unconstrained body in space is normally defined using 6 generalized coordinat
 
 The way we achieve a solution for the system is dependent on the type of study we are performing. Mainly we have **four types** of analysis that are of interest for a given multi-body system. These are:
 
-- **Kinematic Analysis**
+- **Kinematic Analysis**</br>
   *"How does the whole system move if we moved this particular body ?"*
-- **Inverse Dynamic Analysis**
+- **Inverse Dynamic Analysis**</br>
   *"What are the forces needed to achieve this motion we just did ?"*
-- **Equilibrium Analysis**
+- **Equilibrium Analysis**</br>
   *"How does the system look if we did nothing ?"*
-- **Dynamic Analysis**
+- **Dynamic Analysis**</br>
   *"Now we gave it a force, how does it behave ?"*
 
 Each analysis type -or question- can be modeled by a set of algebraic and/or differential equations that can be solved for the system generalized states (positions, velocities and accelerations). A more detailed discussion of each analysis type will be provided in another documentation.
@@ -134,7 +134,7 @@ As the tool is still under continuous development, cloning this repository is a 
 git clone https://github.com/khaledghobashy/smbd.git
 ```
 
-```
+```bash
 git pull origin master
 ```
 
@@ -156,11 +156,11 @@ if pkg_path not in sys.path:
 
 #### Pip
 
-*...*
+*To Do.*
 
 #### Conda
 
-*...*
+*To Do*
 
 ## Usage Examples & Tutorials
 
@@ -189,13 +189,13 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 ## Implementation Details
 
-*To be discussed ...*
+*The **Implementation Details** will be provided in a separate documentation and linked here*
 
 ## Theoretical Basis
 
-*To be discussed ...*
+*The **Theoretical Basis** will be provided in a separate documentation and linked here*
 
 ## License
 
-**SMBD** is distributed under the 3-clause BSD license.
+**SMBD** is distributed under the 3-clause BSD license. See the [LICENSE.txt](LICENSE.txt) file for details.
 
