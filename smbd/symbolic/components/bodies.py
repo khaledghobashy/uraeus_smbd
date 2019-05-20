@@ -19,9 +19,11 @@ from .matrices import (reference_frame, vector, quatrenion, zero_matrix,
 __all__ = ['body','ground']
 
 class body(reference_frame):
-    """A rigid body class.
+    r"""
     
-    TODO
+    A class that represents an un-constrained rigid body object in 3D in a 
+    symbolic form, where all the body parameters and equations are generated 
+    automatically in a symbolic format.
     
     Parameters
     ----------
@@ -66,20 +68,55 @@ class body(reference_frame):
     normalized_pos_equation : sympy.MatrixExpr
         The normalization equation of the euler-parameters quatrenion at the
         position level.
+    
     normalized_vel_equation : sympy.MatrixExpr
         The normalization equation of the euler-parameters quatrenion at the
         velocity level.
+    
     normalized_acc_equation : sympy.MatrixExpr
         The normalization equation of the euler-parameters quatrenion at the
         acceleration level.
+    
     normalized_jacobian : list (of sympy.MatrixExpr)
         The jacobian of the normalization equation of the euler-parameters 
         quatrenion relative to the vector of euler-parameters.
+        
+    arguments_symbols : list (of symbolic objects)
+        A list containing the symbolic mathematical objects that should be 
+        nuemrically defined by the user in a numerical simulation session.
     
-    arguments : list
-        A list storing the [`R, P, Rd, Pd`] variables.
-    constants : list
-        An empty list just for code completeness in development code uses.
+    runtime_symbols : list (of symbolic objects)
+        A list containing the symbolic mathematical objects that changes during
+        the run-time of a nuemric simulation's "solve" method.
+         
+    constants_symbolic_expr : list (of sympy equalities)
+        A list containing sympy equalities representing the values of internal
+        class symbolic constants that are evaluated from other symbolic 
+        variables.
+    
+    constants_numeric_expr : list (of sympy equalities)
+        A list containing sympy equalities representing the values of internal
+        class symbolic constants that are evaluated directly from numerical 
+        values.
+    
+    constants_symbols : list (of symbolic objects)
+        A list containing all the symbolic mathematical objects that represent 
+        constants for the given body instance.
+      
+    Notes
+    -----
+    An un-constraied body in space is typically defined using 6 generalized 
+    coordinates representing its' location and orientation. In cartesian 
+    coordinate system, body location is simply defined by the $$(x,y,z)$$ 
+    coordinates of a reference point on the body -normally the center-of-mass -
+    , where the body orientation can be defined in various ways, such as the 
+    directional cosines matrix, euler-angles and euler-parameters.
+    
+    The package uses euler-parameters -which is a 4D unit quaternion- to 
+    represents a given body orientation in space. This makes the generalized 
+    coordinates used to fully define a body in space to be 7, instead of 6, 
+    it also adds an algebraic equation to the constraints that ensures the 
+    unity/normalization of the body quaternion.
         
     """
     
@@ -96,7 +133,7 @@ class body(reference_frame):
         self.prefix  = '.'.join(splited_name[:-1])
         self.prefix  = (self.prefix+'.' if self.prefix!='' else self.prefix)
         
-        format_ = (self.prefix,self.id_name)
+        format_ = (self.prefix, self.id_name)
         
         self.R  = vector('%sR_%s'%format_, format_as=r'{%sR_{%s}}'%format_)
         self.P  = quatrenion('%sP_%s'%format_, format_as=r'{%sP_{%s}}'%format_)
@@ -128,20 +165,21 @@ class body(reference_frame):
     
     @property
     def q(self):
-        return sm.BlockMatrix([[self.R],[self.P]])
+        return sm.BlockMatrix([[self.R], [self.P]])
     @property
     def qd(self):
-        return sm.BlockMatrix([[self.Rd],[self.Pd]])
+        return sm.BlockMatrix([[self.Rd], [self.Pd]])
     @property
     def qdd(self):
-        return sm.BlockMatrix([[self.Rdd],[self.Pdd]])
+        return sm.BlockMatrix([[self.Rdd], [self.Pdd]])
         
     @property
     def arguments_symbols(self):
-        return [self.R,self.P,self.Rd,self.Pd,self.Rdd,self.Pdd,self.m,self.Jbar]
+        return [self.R, self.P, self.Rd, self.Pd, self.Rdd, self.Pdd,
+                self.m, self.Jbar]
     @property
     def runtime_symbols(self):
-        return [self.R,self.P,self.Rd,self.Pd,self.Rdd,self.Pdd]
+        return [self.R, self.P, self.Rd, self.Pd, self.Rdd, self.Pdd]
     @property
     def constants_symbolic_expr(self):
         return []
@@ -196,7 +234,7 @@ class ground(body):
     
     @property
     def arguments_symbols(self):
-        return [self.R,self.P,self.Rd,self.Pd,self.Rdd,self.Pdd]
+        return [self.R, self.P, self.Rd, self.Pd, self.Rdd, self.Pdd]
     
     @property
     def constants_numeric_expr(self):
