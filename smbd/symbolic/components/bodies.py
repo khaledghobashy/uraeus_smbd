@@ -151,7 +151,7 @@ class body(reference_frame):
         self.normalized_pos_equation = (self.P.T*self.P) - sm.Identity(1)
         self.normalized_vel_equation = zero_matrix(1,1)
         self.normalized_acc_equation = 2*(self.Pd.T*self.Pd)
-        self.normalized_jacobian = [zero_matrix(1,3), 2*self.P.T]
+        self.normalized_jacobian = [zero_matrix(1, 3), 2*self.P.T]
                         
         self.m = sm.symbols('m_%s'%self.id_name)
         self.M = self.m*sm.Identity(3)
@@ -195,23 +195,11 @@ class body(reference_frame):
 
 
 class ground(body):
-    """A representation of the gorund as a special case of a rigid body class.
+    """
+    A representation of the gorund as a special case of the body class. This 
+    adds the needed constraint equations that makes the ground fixed in the
+    global reference frame.
     
-    TODO
-        
-    Attributes
-    ----------
-    n : int
-        Number of generalized coordinates used to define the body configuration.
-    nc : int
-        Number of scalar constraint equations (euler-parameters normalization
-        and grounding constraints).
-    nve : int
-        Number of vetor constraint equations (euler-parameters normalization
-        and grounding constraints).
-    
-    P_ground :  quatrenion
-        A symbolic matrix that represents the fixed orientation of ground.
     """
     
     n   = 7
