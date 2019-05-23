@@ -179,9 +179,44 @@ class internal_force(generic_force):
         self.Ts = sm.Function('UF_%s_Ts'%name)#, commutative=True)
         self.Td = sm.Function('UF_%s_Td'%name)#, commutative=True)
         self.Ta = sm.Function('UF_%s_Ta'%name)#, commutative=True)
+        
+        self._construct_force_vector()
                 
     @property
     def Qi(self):
+#        dij = self.joint.dij
+#        distance    = sm.sqrt(dij.T*dij)
+#        unit_vector = dij/distance
+#        
+#        defflection = self.LF - distance[0,0]
+#        velocity    = (unit_vector.T*self.joint.dijd)
+#        velocity    = sm.sqrt(velocity.T*velocity)[0,0]
+#
+#        self.Fi = unit_vector*(self.Fs(defflection) - self.Fd(velocity))
+#        Ti_e = 2*G(self.Pi).T*(self.Ti + Skew(self.ui).T*self.Fi)
+#        
+#        force_vector = sm.BlockMatrix([[self.Fi], [Ti_e]])
+        return self._Qi
+    
+    @property
+    def Qj(self):
+#        self.Fj = -self.Fi
+#        Tj_e = 2*G(self.Pj).T*(self.Tj + Skew(self.uj).T*self.Fj)
+#        force_vector = sm.BlockMatrix([[self.Fj], [Tj_e]])
+        return self._Qj
+    
+    @property
+    def arguments_symbols(self):
+        configuration_args = self.joint.arguments_symbols[1:3]
+        forces_args = [self.Fs, self.Fd, self.LF, self.Ti, self.Tj]
+        return configuration_args + forces_args
+    @property
+    def constants_symbolic_expr(self):
+        return self.joint.constants_symbolic_expr[2:4]
+    
+    
+    def _construct_force_vector(self):
+        
         dij = self.joint.dij
         distance    = sm.sqrt(dij.T*dij)
         unit_vector = dij/distance
@@ -193,24 +228,12 @@ class internal_force(generic_force):
         self.Fi = unit_vector*(self.Fs(defflection) - self.Fd(velocity))
         Ti_e = 2*G(self.Pi).T*(self.Ti + Skew(self.ui).T*self.Fi)
         
-        force_vector = sm.BlockMatrix([[self.Fi], [Ti_e]])
-        return force_vector
-    
-    @property
-    def Qj(self):
+        self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
+        
         self.Fj = -self.Fi
         Tj_e = 2*G(self.Pj).T*(self.Tj + Skew(self.uj).T*self.Fj)
-        force_vector = sm.BlockMatrix([[self.Fj], [Tj_e]])
-        return force_vector
-    
-    @property
-    def arguments_symbols(self):
-        configuration_args = self.joint.arguments_symbols[1:3]
-        forces_args = [self.Fs,self.Fd,self.LF,self.Ti,self.Tj]
-        return configuration_args + forces_args
-    @property
-    def constants_symbolic_expr(self):
-        return self.joint.constants_symbolic_expr[2:4]
+        self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
+        
 
 ###############################################################################
 ###############################################################################
