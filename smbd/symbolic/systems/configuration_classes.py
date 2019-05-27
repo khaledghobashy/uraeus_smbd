@@ -183,11 +183,18 @@ class Triangular_Prism(Simple_geometry):
         self.arg3 = arg3
         self.l = l
 
+class Sphere_Geometry(Simple_geometry):
+    
+    def __init__(self, arg1, arg2):
+        self.arg1 = arg1
+        self.arg2 = arg2
+
 class Geometries(object):
     
     Triangular_Prism   = Triangular_Prism
     Cylinder_Geometry  = Cylinder_Geometry
     Composite_Geometry = Composite_Geometry
+    Sphere_Geometry    = Sphere_Geometry
 
 ###############################################################################
 ###############################################################################

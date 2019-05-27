@@ -304,7 +304,10 @@ class configuration(object):
     def _decorate_geometry_methods(self):
         sym = 'gm'
         node_type = cfg_cls.Geometry
-        methods = ['Composite_Geometry', 'Cylinder_Geometry', 'Triangular_Prism']
+        methods = ['Composite_Geometry', 
+                   'Cylinder_Geometry', 
+                   'Triangular_Prism',
+                   'Sphere_Geometry']
         self._geometry_methods = self._decorate_components(node_type, sym, 
                                                            methods, cfg_cls.Geometries)
 

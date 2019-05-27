@@ -78,6 +78,19 @@ def triangular_prism(p1,p2,p3,thickness=10):
     return geometry(R,P,m,J)
 
 
+def sphere_geometry(point, raduis):
+    
+    vol = np.pi*(4/3) * raduis**3 * 1e-3
+    m   = 7.9*vol
+    Jp  = (2/5) * m * raduis**2
+    
+    R = point
+    J = np.diag([Jp, Jp, Jp])
+    P = np.array([[1],[0],[0],[0]],dtype=np.float64)
+    
+    return geometry(R, P, m, J)
+
+
 def composite_geometry(*geometries):
     
     # composite body total mass as the sum of it's subcomponents

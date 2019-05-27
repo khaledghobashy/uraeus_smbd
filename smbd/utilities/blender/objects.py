@@ -166,5 +166,3 @@ class composite_geometry(object):
     pass
 
 
-
-
