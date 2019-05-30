@@ -19,6 +19,8 @@ from .helpers import body_setter, name_setter
 
 
 I = sm.Identity(3)
+I1 = sm.Identity(1)
+
 
 class algebraic_constraints(object):
     
@@ -310,7 +312,7 @@ class dot_product_1(object):
         Z = zero_matrix(1,3)
         
         pos_level_equation = v1.T*v2
-        vel_level_equation = zero_matrix(1,1)
+        vel_level_equation = zero_matrix(1, 1)
         acc_level_equation =   v1.T*B(Pdj,v2_bar)*Pdj \
                              + v2.T*B(Pdi,v1_bar)*Pdi \
                              + 2*(B(obj.Pi,v1_bar)*Pdi).T*(B(obj.Pj,v2_bar)*Pdj)
@@ -344,11 +346,12 @@ class dot_product_2(object):
         dijd = obj.dijd
         
         pos_level_equation = v.T*dij
-        vel_level_equation = zero_matrix(1,1)
-        acc_level_equation =   v.T*( B(Pdi,obj.ui_bar)*Pdi - B(Pdj,obj.uj_bar)*Pdj ) \
-                             + dij.T*B(Pdi,v_bar)*Pdi \
-                             + 2*(B(obj.Pi,v_bar)*Pdi).T*dijd
-        jacobian = ([ v.T, dij.T*B(obj.Pi,v_bar) + v.T*obj.Bui], 
+        vel_level_equation = zero_matrix(1, 1)
+        acc_level_equation =   v.T*( B(Pdi, obj.ui_bar)*Pdi - B(Pdj, obj.uj_bar)*Pdj ) \
+                             + dij.T*B(Pdi, v_bar)*Pdi \
+                             + 2*(B(obj.Pi, v_bar)*Pdi).T*dijd
+        
+        jacobian = ([ v.T, dij.T*B(obj.Pi, v_bar) + v.T*obj.Bui], 
                     [-v.T, -v.T*obj.Buj])
         
         obj._pos_level_equations.append(pos_level_equation)
@@ -403,6 +406,42 @@ class angle_constraint(object):
         obj._jacobian_j.append(jacobian[1])
 
 ###############################################################################
+
+class distance_constraint(object):
+    
+    nc  = 1
+    
+    def __init__(self):
+        pass
+    
+    def construct(self,obj):
+        dij = obj.dij
+        Pdi = obj.Pdi
+        Pdj = obj.Pdj
+        dijd = obj.dijd
+        
+        distance = obj.act_func(obj.t)
+        
+        pos_level_equation = sm.sqrt(dij.T*dij) - I1*distance
+        
+        vel_level_equation = zero_matrix(1, 1)
+        
+        acc_level_equation =   2*dij.T * (B(Pdi, obj.ui_bar)*Pdi - B(Pdj, obj.uj_bar)*Pdj) \
+                             + 2*dijd.T*dijd
+        
+        jacobian = ([ (2*dij.T) * I,  (2*dij.T) * obj.Bui] ,
+                    [-(2*dij.T) * I, -(2*dij.T) * obj.Buj])
+        
+        obj._pos_level_equations.append(pos_level_equation)
+        obj._vel_level_equations.append(vel_level_equation)
+        obj._acc_level_equations.append(acc_level_equation)
+        
+        obj._jacobian_i.append(jacobian[0])
+        obj._jacobian_j.append(jacobian[1])
+            
+
+###############################################################################
+
 class coordinate_constraint(object):
     
     nc  = 1
@@ -419,7 +458,7 @@ class coordinate_constraint(object):
         Pdi = obj.Pdi
 
         pos_level_equation = (Ri + Ai*ui_bar - C)[i,:]
-        vel_level_equation = zero_matrix(1,1)
+        vel_level_equation = zero_matrix(1, 1)
         acc_level_equation = (B(Pdi,ui_bar)*Pdi)[i,:]
         
         J_R = I[i,:]
@@ -441,7 +480,7 @@ class coordinate_constraint(object):
 
 class actuator(algebraic_constraints):
     
-    def __init__(self,*args):
+    def __init__(self, *args):
         super().__init__(*args)
         
     def _construct_actuation_functions(self):
@@ -454,13 +493,16 @@ class actuator(algebraic_constraints):
     
     @property
     def pos_level_equations(self):
-        return sm.BlockMatrix([sm.Identity(1)*self._pos_level_equations[0] - sm.Identity(1)*self._pos_function])
+        return sm.BlockMatrix([  self._pos_level_equations[0] \
+                               - I1 * self._pos_function])
     @property
     def vel_level_equations(self):
-        return sm.BlockMatrix([sm.Identity(1)*self._vel_level_equations[0] - sm.Identity(1)*self._vel_function])
+        return sm.BlockMatrix([  self._vel_level_equations[0] \
+                               - I1 * self._vel_function])
     @property
     def acc_level_equations(self):
-        return sm.BlockMatrix([sm.Identity(1)*self._acc_level_equations[0] - sm.Identity(1)*self._acc_function])
+        return sm.BlockMatrix([  self._acc_level_equations[0] \
+                               - I1 * self._acc_function])
     
     @property
     def arguments_symbols(self):
@@ -476,7 +518,7 @@ class joint_actuator(actuator):
             self.joint = joint
             body_i = joint.body_i
             body_j = joint.body_j
-            super().__init__(name, body_i, body_j)
+            super().__init__(joint.name, body_i, body_j)
 #            self._name = name
         else:
             super().__init__(name)
