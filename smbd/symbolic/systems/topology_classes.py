@@ -436,7 +436,7 @@ class abstract_topology(object):
     def _generate_cse(equations, symbol):
         t = sm.symbols('t', real=True)
         cse_symbols = sm.iterables.numbered_symbols(symbol)
-        reduced_equations = sm.cse(equations,symbols=cse_symbols,ignore=(t,))
+        reduced_equations = sm.cse(equations, symbols=cse_symbols, ignore=(t,))
         return reduced_equations
 
             

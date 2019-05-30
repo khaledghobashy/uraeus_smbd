@@ -35,11 +35,11 @@ model.add_joint.spherical('b', 'rbs_crank', 'rbs_conct')
 model.add_joint.universal('c', 'rbs_conct', 'rbs_rockr')
 model.add_joint.revolute('d', 'rbs_rockr', 'ground')
 
-model.add_actuator.rotational_actuator('act','jcs_a')
-model.add_actuator.absolute_locator('abs','rbs_crank','x')
+model.add_actuator.absolute_locator('abs','rbs_crank', 'x')
+model.add_actuator.rotational_actuator('act', 'jcs_a')
 
 
-model.assemble_model()
+model.assemble()
 model.save()
 
 code = generators.template_codegen(model._mbs)

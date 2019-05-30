@@ -112,7 +112,8 @@ class configuration_codegen(abstract_generator):
                 from smbd.numenv.python.numerics.misc import (mirrored, centered, oriented,
                                                                cylinder_geometry,
                                                                composite_geometry,
-                                                               triangular_prism)
+                                                               triangular_prism,
+                                                               sphere_geometry)
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)

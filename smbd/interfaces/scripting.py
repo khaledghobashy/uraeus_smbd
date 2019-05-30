@@ -78,30 +78,30 @@ class joints_container(topology_edges_container):
     
     def _decorate(self, edge_component):
         def decorated(*args, **kwargs):
-            for kw in kwargs:
-                if kw in self._execluded_kwargs:
-                    raise ValueError('%r not allowed here!.'%kw)
             self._mbs.add_joint(edge_component, *args, **kwargs)
         return decorated
 
     
 class actuators_container(topology_edges_container):
+    
     def __init__(self, mbs):
         self.rotational_actuator = joints.rotational_actuator
         self.absolute_locator = joints.absolute_locator
+        self.translational_actuator = joints.translational_actuator
         super().__init__(mbs)
     
     def _decorate(self, edge_component):
         if issubclass(edge_component, joints.absolute_locator):
             def decorated(*args, **kwargs):
                 self._mbs.add_absolute_actuator(edge_component, *args, **kwargs)
-        elif issubclass(edge_component, joints.rotational_actuator):
+        else:# issubclass(edge_component, joints.rotational_actuator):
             def decorated(*args, **kwargs):
                 self._mbs.add_joint_actuator(edge_component, *args, **kwargs)
         return decorated
 
 
 class forces_container(topology_edges_container):
+    
     def __init__(self, mbs):
         self.internal_force = forces.internal_force
         super().__init__(mbs)

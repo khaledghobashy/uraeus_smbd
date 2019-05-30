@@ -11,7 +11,8 @@ from smbd.utilities.numerics.spatial_alg import (skew_matrix, triad, mirrored,
                                                   oriented, centered)
 from smbd.utilities.numerics.geometries import (cylinder_geometry, 
                                                  composite_geometry,
-                                                 triangular_prism)
+                                                 triangular_prism,
+                                                 sphere_geometry)
 import pandas as pd
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt

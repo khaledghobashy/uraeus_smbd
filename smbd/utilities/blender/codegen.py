@@ -37,7 +37,8 @@ class script_generator(object):
                 from smbd.utilities.numerics.spatial_alg import centered, mirrored
                 from smbd.utilities.blender.objects import (cylinder_geometry,
                                                              composite_geometry,
-                                                             triangular_prism)
+                                                             triangular_prism,
+                                                             sphere_geometry)
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
