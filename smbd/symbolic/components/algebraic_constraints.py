@@ -22,7 +22,7 @@ I = sm.Identity(3)
 I1 = sm.Identity(1)
 
 
-class algebraic_constraints(object):
+class abstract_joint(object):
     
     def_axis = 1
     def_locs = 1
@@ -478,7 +478,7 @@ class coordinate_constraint(object):
 ###############################################################################
 ###############################################################################
 
-class actuator(algebraic_constraints):
+class abstract_actuator(abstract_joint):
     
     def __init__(self, *args):
         super().__init__(*args)
@@ -511,7 +511,7 @@ class actuator(algebraic_constraints):
 ###############################################################################
 ###############################################################################
 
-class joint_actuator(actuator):
+class joint_actuator(abstract_actuator):
     
     def __init__(self, name, joint=None):
         if joint is not None:
@@ -563,7 +563,7 @@ class joint_actuator(actuator):
 ###############################################################################
 ###############################################################################
 
-class absolute_actuator(actuator):
+class absolute_actuator(abstract_actuator):
     
     coordinates_map = {'x':0, 'y':1, 'z':2}
     

@@ -6,14 +6,14 @@ Created on Tue Jan  1 11:11:10 2019
 """
 
 import sympy as sm
-from .algebraic_constraints import (algebraic_constraints, joint_constructor,
+from .algebraic_constraints import (abstract_joint, joint_constructor,
                                     joint_actuator, spehrical_constraint, 
                                     dot_product_1, dot_product_2,
                                     angle_constraint, coordinate_constraint,
                                     absolute_actuator, distance_constraint)
 
 
-class fixed(algebraic_constraints, metaclass=joint_constructor):
+class fixed(abstract_joint, metaclass=joint_constructor):
     def_axis = 1
     def_locs = 1
     vector_equations = [spehrical_constraint(),
@@ -22,13 +22,13 @@ class fixed(algebraic_constraints, metaclass=joint_constructor):
                         dot_product_1('i','j')]
 
 
-class spherical(algebraic_constraints, metaclass=joint_constructor):
+class spherical(abstract_joint, metaclass=joint_constructor):
     def_axis = 1
     def_locs = 1
     vector_equations = [spehrical_constraint()]
 
 
-class revolute(algebraic_constraints, metaclass=joint_constructor):
+class revolute(abstract_joint, metaclass=joint_constructor):
     def_axis = 1
     def_locs = 1
     vector_equations = [spehrical_constraint(),
@@ -36,7 +36,7 @@ class revolute(algebraic_constraints, metaclass=joint_constructor):
                         dot_product_1('j','k')]
 
 
-class cylinderical(algebraic_constraints, metaclass=joint_constructor):
+class cylinderical(abstract_joint, metaclass=joint_constructor):
     def_axis = 1
     def_locs = 1
     vector_equations = [dot_product_1('i','k'),
@@ -45,7 +45,7 @@ class cylinderical(algebraic_constraints, metaclass=joint_constructor):
                         dot_product_2('j')]
     
 
-class translational(algebraic_constraints, metaclass=joint_constructor):
+class translational(abstract_joint, metaclass=joint_constructor):
     def_axis = 1
     def_locs = 1
     vector_equations = [dot_product_1('i','k'),
@@ -55,14 +55,14 @@ class translational(algebraic_constraints, metaclass=joint_constructor):
                         dot_product_1('i','j')]
 
 
-class universal(algebraic_constraints, metaclass=joint_constructor):
+class universal(abstract_joint, metaclass=joint_constructor):
     def_axis = 2
     def_locs = 1
     vector_equations = [spehrical_constraint(),
                         dot_product_1('i','i')]
     
 
-class tripod(algebraic_constraints, metaclass=joint_constructor):
+class tripod(abstract_joint, metaclass=joint_constructor):
     def_axis = 1
     def_locs = 1
     vector_equations = [dot_product_1('i','j'),
@@ -93,7 +93,7 @@ class absolute_locator(absolute_actuator, metaclass=joint_constructor):
 
 
 
-class dummy_cylinderical(algebraic_constraints, metaclass=joint_constructor):
+class dummy_cylinderical(abstract_joint, metaclass=joint_constructor):
     def_axis = 1
     def_locs = 2
     vector_equations = [dot_product_1('i','k'),
