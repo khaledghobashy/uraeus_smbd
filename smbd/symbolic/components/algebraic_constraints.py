@@ -12,8 +12,8 @@ from IPython.display import display
 import sympy as sm
 
 # Local application imports
-from .matrices import (reference_frame, vector, zero_matrix, B, E, 
-                               matrix_symbol, Skew)
+from .matrices import (reference_frame, vector, zero_matrix, B, E, Skew,
+                       matrix_symbol)
 from .bodies import body
 from .helpers import body_setter, name_setter
 
@@ -520,7 +520,9 @@ class joint_actuator(abstract_actuator):
             body_i = joint.body_i
             body_j = joint.body_j
             super().__init__(joint.name, body_i, body_j)
-#            self._name = name
+            self._name = name
+            self._create_reactions_args()
+            self._create_reactions_equalities()
         else:
             super().__init__(name)
     
@@ -533,6 +535,33 @@ class joint_actuator(abstract_actuator):
         Ti_eq = sm.Eq(self.Ti, self.Ti_eq)
         self._reactions_equalities = [Qi_eq, Fi_eq, Ti_e_eq, Ti_eq]
         
+#    def _create_local_equalities(self):
+#        # Overide original method to make use of the joint markers and local
+#        # equalities
+#        self._sym_constants = []
+#        j = self.joint
+#        mi_bar_eq = sm.Eq(self.mi_bar.A, j.mi_bar.A)
+#        mj_bar_eq = sm.Eq(self.mj_bar.A, j.mj_bar.A)
+#        markers_equalities = [mi_bar_eq, mj_bar_eq]
+#        self._sym_constants += markers_equalities
+#
+#        if self.def_locs == 0:
+#            location_equalities = []
+#
+#        elif self.def_locs == 1:
+#            loc  = self.loc_1
+#            ui_bar_eq = sm.Eq(self.ui_bar, loc.express(self.body_i) - self.Ri.express(self.body_i))
+#            uj_bar_eq = sm.Eq(self.uj_bar, loc.express(self.body_j) - self.Rj.express(self.body_j))
+#            location_equalities = [ui_bar_eq,uj_bar_eq]
+#
+#        elif self.def_locs == 2: 
+#            loc1 = self.loc_1
+#            loc2 = self.loc_2
+#            ui_bar_eq = sm.Eq(self.ui_bar, loc1.express(self.body_i) - self.Ri.express(self.body_i))
+#            uj_bar_eq = sm.Eq(self.uj_bar, loc2.express(self.body_j) - self.Rj.express(self.body_j))
+#            location_equalities = [ui_bar_eq,uj_bar_eq]
+#
+#        self._sym_constants += location_equalities
     
 ###############################################################################
 ###############################################################################
@@ -571,5 +600,4 @@ class joint_constructor(type):
         
         return super(joint_constructor, mcls).__new__(mcls, name, tuple(bases), attrs)
 
-###############################################################################
 

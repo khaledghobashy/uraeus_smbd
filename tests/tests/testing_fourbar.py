@@ -21,7 +21,7 @@ Created on Sun May  5 10:07:05 2019
 #
 #ground.global_frame.draw_tree()
 
-from smbd.interfaces.scripting import standalone_topology
+from smbd.interfaces.scripting import standalone_topology, configuration
 from smbd.numenv.python.codegen import generators
 
 model = standalone_topology('fourbar')
@@ -40,7 +40,34 @@ model.add_actuator.rotational_actuator('act', 'jcs_a')
 
 
 model.assemble()
-model.save()
+
+
+config = configuration('%s_cfg'%model._name, model)
+config.add_point.UserInput('a')
+config.add_point.UserInput('b')
+config.add_point.UserInput('c')
+config.add_point.UserInput('d')
+
+config.add_vector.UserInput('x')
+config.add_vector.UserInput('y')
+config.add_vector.UserInput('z')
+
+config.add_relation.Equal_to('pt1_jcs_a', ('hps_a',))
+config.add_relation.Equal_to('pt1_jcs_b', ('hps_b',))
+config.add_relation.Equal_to('pt1_jcs_c', ('hps_c',))
+config.add_relation.Equal_to('pt1_jcs_d', ('hps_d',))
+
+config.add_relation.Oriented('ax1_jcs_c', ('hps_b', 'hps_c'))
+config.add_relation.Oriented('ax2_jcs_c', ('hps_c', 'hps_b'))
+
+config.add_relation.Equal_to('ax1_jcs_a', ('vcs_x',))
+config.add_relation.Equal_to('ax1_jcs_b', ('vcs_z',))
+config.add_relation.Equal_to('ax1_jcs_d', ('vcs_y',))
+
+config.assemble()
+
+config_code = generators.configuration_codegen(config._config)
+config_code.write_code_file()
 
 code = generators.template_codegen(model._mbs)
 code.write_code_file()
