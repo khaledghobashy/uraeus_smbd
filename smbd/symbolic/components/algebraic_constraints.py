@@ -540,11 +540,11 @@ class joint_actuator(abstract_actuator):
 
 class absolute_actuator(abstract_actuator):
     
-    coordinates_map = {'x':0, 'y':1, 'z':2}
+    _coordinates_map = {'x':0, 'y':1, 'z':2}
     
     def __init__(self, name, body_i=None, body_j=None, coordinate='z'):
         self.coordinate = coordinate
-        self.i = self.coordinates_map[self.coordinate]
+        self.i = self._coordinates_map[self.coordinate]
         super().__init__(name, body_i, body_j)
         
 ###############################################################################
