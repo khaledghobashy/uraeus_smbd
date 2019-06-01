@@ -51,12 +51,12 @@ num_model.topology.config.ax1_jcs_a = np.array([[0],[0],[1]], dtype=np.float64)
 num_model.topology.config.pt1_mcs_act = np.array([[0],[0],[0]], dtype=np.float64)
 num_model.topology.config.ax1_mcs_act = np.array([[0],[0],[1]], dtype=np.float64)
 
-num_model.topology.config.UF_jcs_a = lambda t : 50*np.sin(t)
+num_model.topology.config.UF_mcs_act = lambda t : 50*np.sin(t)
 
 sim1 = simulation('sim1', num_model, 'kds')
 sim1.set_time_array(2*np.pi, 100)
 sim1.solve(save=False)
 
 
-sim1.soln.pos_dataframe.plot(x='time', y='rbs_body.z')
+sim1.soln.pos_dataframe.plot(x='time', y='rbs_body.z', grid=True)
 

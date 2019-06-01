@@ -15,7 +15,7 @@ class configuration(num_config):
     def __init__(self):
         self.ax1_jcs_a = np.array([[0], [0], [0]], dtype=np.float64)
         self.pt1_jcs_a = np.array([[0], [0], [0]], dtype=np.float64)
-        self.UF_jcs_a = lambda t : 0.0
+        self.UF_mcs_act = lambda t : 0.0
         self.R_ground = np.array([[0], [0], [0]], dtype=np.float64)
         self.P_ground = np.array([[0], [0], [0], [0]], dtype=np.float64)
         self.Rd_ground = np.array([[0], [0], [0]], dtype=np.float64)

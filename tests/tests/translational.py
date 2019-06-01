@@ -28,7 +28,7 @@ class topology(object):
         self.ncols = 2*2
         self.rows = np.arange(self.nrows)
 
-        reactions_indicies = ['F_ground_jcs_a', 'T_ground_jcs_a', 'F_ground_jcs_a', 'T_ground_jcs_a']
+        reactions_indicies = ['F_ground_jcs_a', 'T_ground_jcs_a', 'F_ground_mcs_act', 'T_ground_mcs_act']
         self.reactions_indicies = ['%s%s'%(self.prefix,i) for i in reactions_indicies]
 
     
@@ -100,7 +100,7 @@ class topology(object):
     
     def set_lagrange_multipliers(self,Lambda):
         self.L_jcs_a = Lambda[0:5,0:1]
-        self.L_jcs_a = Lambda[5:6,0:1]
+        self.L_mcs_act = Lambda[5:6,0:1]
 
     
     def eval_pos_eq(self):
@@ -124,7 +124,7 @@ class topology(object):
         multi_dot([x0,x3,x9]),
         multi_dot([x7,x3,x9]),
         multi_dot([x0,x3,x5,self.Mbar_rbs_body_jcs_a[:,1:2]]),
-        (-1*config.UF_jcs_a(t)*x10 + multi_dot([self.Mbar_ground_jcs_a[:,2:3].T,x3,x9])),
+        (-1*config.UF_mcs_act(t)*x10 + multi_dot([self.Mbar_ground_jcs_a[:,2:3].T,x3,x9])),
         x8,
         (x1 + -1*self.Pg_ground),
         (-1*x10 + multi_dot([x4.T,x4]))]
@@ -141,7 +141,7 @@ class topology(object):
         v0,
         v0,
         v0,
-        (v0 + -1*derivative(config.UF_jcs_a, t, 0.1, 1)*np.eye(1, dtype=np.float64)),
+        (v0 + -1*derivative(config.UF_mcs_act, t, 0.1, 1)*np.eye(1, dtype=np.float64)),
         np.zeros((3,1),dtype=np.float64),
         np.zeros((4,1),dtype=np.float64),
         v0]
@@ -151,42 +151,42 @@ class topology(object):
         config = self.config
         t = self.t
 
-        a0 = self.Mbar_rbs_body_jcs_a[:,2:3]
+        a0 = self.Mbar_ground_jcs_a[:,0:1]
         a1 = a0.T
-        a2 = self.P_rbs_body
+        a2 = self.P_ground
         a3 = A(a2).T
-        a4 = self.Pd_ground
-        a5 = self.Mbar_ground_jcs_a[:,0:1]
+        a4 = self.Pd_rbs_body
+        a5 = self.Mbar_rbs_body_jcs_a[:,2:3]
         a6 = B(a4,a5)
         a7 = a5.T
-        a8 = self.P_ground
+        a8 = self.P_rbs_body
         a9 = A(a8).T
-        a10 = self.Pd_rbs_body
+        a10 = self.Pd_ground
         a11 = B(a10,a0)
-        a12 = a4.T
-        a13 = B(a8,a5).T
-        a14 = B(a2,a0)
+        a12 = a10.T
+        a13 = B(a2,a0).T
+        a14 = B(a8,a5)
         a15 = self.Mbar_ground_jcs_a[:,1:2]
-        a16 = B(a4,a15)
-        a17 = a15.T
-        a18 = B(a8,a15).T
+        a16 = a15.T
+        a17 = B(a10,a15)
+        a18 = B(a2,a15).T
         a19 = self.ubar_ground_jcs_a
         a20 = self.ubar_rbs_body_jcs_a
-        a21 = (multi_dot([B(a4,a19),a4]) + -1*multi_dot([B(a10,a20),a10]))
-        a22 = (self.Rd_ground + -1*self.Rd_rbs_body + multi_dot([B(a8,a19),a4]) + -1*multi_dot([B(a2,a20),a10]))
-        a23 = (self.R_ground.T + -1*self.R_rbs_body.T + multi_dot([a19.T,a9]) + -1*multi_dot([a20.T,a3]))
+        a21 = (multi_dot([B(a10,a19),a10]) + -1*multi_dot([B(a4,a20),a4]))
+        a22 = (self.Rd_ground + -1*self.Rd_rbs_body + multi_dot([B(a2,a19),a10]) + -1*multi_dot([B(a8,a20),a4]))
+        a23 = (self.R_ground.T + -1*self.R_rbs_body.T + multi_dot([a19.T,a3]) + -1*multi_dot([a20.T,a9]))
         a24 = self.Mbar_rbs_body_jcs_a[:,1:2]
         a25 = self.Mbar_ground_jcs_a[:,2:3]
 
-        self.acc_eq_blocks = [(multi_dot([a1,a3,a6,a4]) + multi_dot([a7,a9,a11,a10]) + 2*multi_dot([a12,a13,a14,a10])),
-        (multi_dot([a1,a3,a16,a4]) + multi_dot([a17,a9,a11,a10]) + 2*multi_dot([a12,a18,a14,a10])),
-        (multi_dot([a7,a9,a21]) + 2*multi_dot([a12,a13,a22]) + multi_dot([a23,a6,a4])),
-        (multi_dot([a17,a9,a21]) + 2*multi_dot([a12,a18,a22]) + multi_dot([a23,a16,a4])),
-        (multi_dot([a24.T,a3,a6,a4]) + multi_dot([a7,a9,B(a10,a24),a10]) + 2*multi_dot([a12,a13,B(a2,a24),a10])),
-        (-1*derivative(config.UF_jcs_a, t, 0.1, 2)*np.eye(1, dtype=np.float64) + multi_dot([a25.T,a9,a21]) + 2*multi_dot([a12,B(a8,a25).T,a22]) + multi_dot([a23,B(a4,a25),a4])),
+        self.acc_eq_blocks = [(multi_dot([a1,a3,a6,a4]) + multi_dot([a7,a9,a11,a10]) + 2*multi_dot([a12,a13,a14,a4])),
+        (multi_dot([a16,a3,a6,a4]) + multi_dot([a7,a9,a17,a10]) + 2*multi_dot([a12,a18,a14,a4])),
+        (multi_dot([a1,a3,a21]) + 2*multi_dot([a12,a13,a22]) + multi_dot([a23,a11,a10])),
+        (multi_dot([a16,a3,a21]) + 2*multi_dot([a12,a18,a22]) + multi_dot([a23,a17,a10])),
+        (multi_dot([a1,a3,B(a4,a24),a4]) + multi_dot([a24.T,a9,a11,a10]) + 2*multi_dot([a12,a13,B(a8,a24),a4])),
+        (-1*derivative(config.UF_mcs_act, t, 0.1, 2)*np.eye(1, dtype=np.float64) + multi_dot([a25.T,a3,a21]) + 2*multi_dot([a12,B(a2,a25).T,a22]) + multi_dot([a23,B(a10,a25),a10])),
         np.zeros((3,1),dtype=np.float64),
         np.zeros((4,1),dtype=np.float64),
-        2*multi_dot([a10.T,a10])]
+        2*multi_dot([a4.T,a4])]
 
     
     def eval_jac_eq(self):
@@ -284,13 +284,13 @@ class topology(object):
         self.F_ground_jcs_a = Q_ground_jcs_a[0:3,0:1]
         Te_ground_jcs_a = Q_ground_jcs_a[3:7,0:1]
         self.T_ground_jcs_a = (-1*multi_dot([skew(multi_dot([A(self.P_ground),self.ubar_ground_jcs_a])),self.F_ground_jcs_a]) + 0.5*multi_dot([E(self.P_ground),Te_ground_jcs_a]))
-        Q_ground_jcs_a = -1*multi_dot([np.bmat([[multi_dot([A(self.P_ground),self.Mbar_ground_jcs_a[:,2:3]])],[(multi_dot([B(self.P_ground,self.Mbar_ground_jcs_a[:,2:3]).T,(-1*self.R_rbs_body + multi_dot([A(self.P_ground),self.ubar_ground_jcs_a]) + -1*multi_dot([A(self.P_rbs_body),self.ubar_rbs_body_jcs_a]) + self.R_ground)]) + multi_dot([B(self.P_ground,self.ubar_ground_jcs_a).T,A(self.P_ground),self.Mbar_ground_jcs_a[:,2:3]]))]]),self.L_jcs_a])
-        self.F_ground_jcs_a = Q_ground_jcs_a[0:3,0:1]
-        Te_ground_jcs_a = Q_ground_jcs_a[3:7,0:1]
-        self.T_ground_jcs_a = 0.5*multi_dot([E(self.P_ground),Te_ground_jcs_a])
+        Q_ground_mcs_act = -1*multi_dot([np.bmat([[multi_dot([A(self.P_ground),self.Mbar_ground_jcs_a[:,2:3]])],[(multi_dot([B(self.P_ground,self.Mbar_ground_jcs_a[:,2:3]).T,(-1*self.R_rbs_body + multi_dot([A(self.P_ground),self.ubar_ground_jcs_a]) + -1*multi_dot([A(self.P_rbs_body),self.ubar_rbs_body_jcs_a]) + self.R_ground)]) + multi_dot([B(self.P_ground,self.ubar_ground_jcs_a).T,A(self.P_ground),self.Mbar_ground_jcs_a[:,2:3]]))]]),self.L_mcs_act])
+        self.F_ground_mcs_act = Q_ground_mcs_act[0:3,0:1]
+        Te_ground_mcs_act = Q_ground_mcs_act[3:7,0:1]
+        self.T_ground_mcs_act = 0.5*multi_dot([E(self.P_ground),Te_ground_mcs_act])
 
         self.reactions = {'F_ground_jcs_a' : self.F_ground_jcs_a,
                         'T_ground_jcs_a' : self.T_ground_jcs_a,
-                        'F_ground_jcs_a' : self.F_ground_jcs_a,
-                        'T_ground_jcs_a' : self.T_ground_jcs_a}
+                        'F_ground_mcs_act' : self.F_ground_mcs_act,
+                        'T_ground_mcs_act' : self.T_ground_mcs_act}
 

@@ -387,22 +387,27 @@ class topology(object):
         self.F_ground_jcs_a = Q_ground_jcs_a[0:3,0:1]
         Te_ground_jcs_a = Q_ground_jcs_a[3:7,0:1]
         self.T_ground_jcs_a = (-1*multi_dot([skew(multi_dot([A(self.P_ground),self.ubar_ground_jcs_a])),self.F_ground_jcs_a]) + 0.5*multi_dot([E(self.P_ground),Te_ground_jcs_a]))
+        
         Q_ground_mcs_act = -1*multi_dot([np.bmat([[np.zeros((1,3),dtype=np.float64).T],[multi_dot([(-1*sin(config.UF_jcs_a(t))*B(self.P_ground,self.Mbar_ground_jcs_a[:,0:1]).T + cos(config.UF_jcs_a(t))*B(self.P_ground,self.Mbar_ground_jcs_a[:,1:2]).T),A(self.P_rbs_crank),self.Mbar_rbs_crank_jcs_a[:,0:1]])]]),self.L_mcs_act])
         self.F_ground_mcs_act = Q_ground_mcs_act[0:3,0:1]
         Te_ground_mcs_act = Q_ground_mcs_act[3:7,0:1]
         self.T_ground_mcs_act = 0.5*multi_dot([E(self.P_ground),Te_ground_mcs_act])
+        
         Q_rbs_crank_mcs_abs = -1*multi_dot([np.bmat([[np.eye(3, dtype=np.float64)[0:1,0:3].T],[B(self.P_rbs_crank,self.ubar_rbs_crank_mcs_abs)[0:1,0:4].T]]),self.L_mcs_abs])
         self.F_rbs_crank_mcs_abs = Q_rbs_crank_mcs_abs[0:3,0:1]
         Te_rbs_crank_mcs_abs = Q_rbs_crank_mcs_abs[3:7,0:1]
         self.T_rbs_crank_mcs_abs = (-1*multi_dot([skew(multi_dot([A(self.P_rbs_crank),self.ubar_rbs_crank_mcs_abs])),self.F_rbs_crank_mcs_abs]) + 0.5*multi_dot([E(self.P_rbs_crank),Te_rbs_crank_mcs_abs]))
+        
         Q_rbs_crank_jcs_b = -1*multi_dot([np.bmat([[np.eye(3, dtype=np.float64)],[B(self.P_rbs_crank,self.ubar_rbs_crank_jcs_b).T]]),self.L_jcs_b])
         self.F_rbs_crank_jcs_b = Q_rbs_crank_jcs_b[0:3,0:1]
         Te_rbs_crank_jcs_b = Q_rbs_crank_jcs_b[3:7,0:1]
         self.T_rbs_crank_jcs_b = (-1*multi_dot([skew(multi_dot([A(self.P_rbs_crank),self.ubar_rbs_crank_jcs_b])),self.F_rbs_crank_jcs_b]) + 0.5*multi_dot([E(self.P_rbs_crank),Te_rbs_crank_jcs_b]))
+        
         Q_rbs_conct_jcs_c = -1*multi_dot([np.bmat([[np.eye(3, dtype=np.float64),np.zeros((1,3),dtype=np.float64).T],[B(self.P_rbs_conct,self.ubar_rbs_conct_jcs_c).T,multi_dot([B(self.P_rbs_conct,self.Mbar_rbs_conct_jcs_c[:,0:1]).T,A(self.P_rbs_rockr),self.Mbar_rbs_rockr_jcs_c[:,0:1]])]]),self.L_jcs_c])
         self.F_rbs_conct_jcs_c = Q_rbs_conct_jcs_c[0:3,0:1]
         Te_rbs_conct_jcs_c = Q_rbs_conct_jcs_c[3:7,0:1]
         self.T_rbs_conct_jcs_c = (-1*multi_dot([skew(multi_dot([A(self.P_rbs_conct),self.ubar_rbs_conct_jcs_c])),self.F_rbs_conct_jcs_c]) + 0.5*multi_dot([E(self.P_rbs_conct),Te_rbs_conct_jcs_c]))
+        
         Q_rbs_rockr_jcs_d = -1*multi_dot([np.bmat([[np.eye(3, dtype=np.float64),np.zeros((1,3),dtype=np.float64).T,np.zeros((1,3),dtype=np.float64).T],[B(self.P_rbs_rockr,self.ubar_rbs_rockr_jcs_d).T,multi_dot([B(self.P_rbs_rockr,self.Mbar_rbs_rockr_jcs_d[:,0:1]).T,A(self.P_ground),self.Mbar_ground_jcs_d[:,2:3]]),multi_dot([B(self.P_rbs_rockr,self.Mbar_rbs_rockr_jcs_d[:,1:2]).T,A(self.P_ground),self.Mbar_ground_jcs_d[:,2:3]])]]),self.L_jcs_d])
         self.F_rbs_rockr_jcs_d = Q_rbs_rockr_jcs_d[0:3,0:1]
         Te_rbs_rockr_jcs_d = Q_rbs_rockr_jcs_d[3:7,0:1]
