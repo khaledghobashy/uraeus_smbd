@@ -89,46 +89,38 @@ class abstract_generator(object):
 
 class template_codegen(abstract_generator):
     
-    def write_imports(self):
+            
+    def write_header_class(self):
         text = '''
                 #include <iostream>
                 #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
                 
-                #include "euler_parameters.h"
-                
-                '''
-        text = text.expandtabs()
-        text = textwrap.dedent(text)
-        return text
-        
-    def write_class_init(self):
-        text = '''
-                class topology
+                #include "AbstractClasses.hpp"
+
+
+                class Topology : public AbstractTopology
                 {{
-                private:
-                    {coordinates}
-                    
-                    {velocities}
-                    
-                    {accelerations}
-                    
-                    {constants}
-                    
-                    void set_mapping(struct&, struct&);
+                public:
+                    {bodies}
                     
                 public:
-                    std::string prefix = "" ;
-                    double t = 0.0 ;
-                    int n = {n} ;
-                    int nc = {nc} ;
-                    int nrows = {nve} ;
-                    int ncols = 2*{nodes} ;
+                    {coordinates}
                     
-                    Eigen::VectorXd q(n);
-                    Eigen::VectorXd qd(n);
+                public:
+                    {velocities}
                     
+                public:
+                    {accelerations}
+                
+                public:    
+                    {constants}
+                
+                public:
+                
+                    Topology(std::string prefix);
+                
                     void initialize();
-                    void assemble(struct&, struct&, int);
+                    void assemble(Dict_SI, Dict_SS, int);
                     void set_initial_states();
                     void eval_constants();
                     
@@ -137,101 +129,153 @@ class template_codegen(abstract_generator):
                     void eval_acc_equations();
                     void eval_jac_equations();
                     
-                    void set_coordinates();
-                    void set_velocities();
-                    void set_accelerations();
-                    
+                    void set_gen_coordinates(Eigen::VectorXd);
+                    void set_gen_velocities(Eigen::VectorXd);
+                    void set_gen_accelerations(Eigen::VectorXd);
+                
+                private:
+                    void set_mapping(Dict_SI, Dict_SS);
+                
+                
                 }};
-
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
-        coordinates = '\n'.join(['Eigen::VectorXd %s ;'%i for i in self.gen_coordinates_sym])
-        coordinates = textwrap.indent(coordinates, 4*' ').lstrip()
+        p = self.printer
         
-        velocities = '\n'.join(['Eigen::VectorXd %s ;'%i for i in self.gen_velocities_sym])
+        bodies_indices = '\n'.join(['int %s ;'%i for i in self.bodies])
+        bodies_indices = textwrap.indent(bodies_indices, 4*' ').lstrip()
+
+        
+        coordinates = '\n'.join([p._print(i.lhs, declare=True) for i in self.gen_coordinates_exp])
+        coordinates = textwrap.indent(coordinates, 4*' ').lstrip()
+
+        velocities = '\n'.join([p._print(i.lhs, declare=True) for i in self.gen_velocities_exp])
         velocities = textwrap.indent(velocities, 4*' ').lstrip()
 
-        accelerations = '\n'.join(['Eigen::VectorXd %s ;'%i for i in self.gen_accelerations_sym])
+        accelerations = '\n'.join([p._print(i.lhs, declare=True) for i in self.gen_accelerations_exp])
         accelerations = textwrap.indent(accelerations, 4*' ').lstrip()
 
-        constants = '\n'.join(['const Eigen::MatrixXd %s ;'%i for i in self.constants_symbols])
+        constants = '\n'.join([p._print(i, declare=True) for i in self.mbs.constants_symbols])
         constants = textwrap.indent(constants, 4*' ').lstrip()
         
-        reactions = ['%s'%i for i in self.joint_reactions_sym]
-
-        text = text.format(n = self.mbs.n,
-                           nc = self.mbs.nc,
-                           nve = self.mbs.nve,
-                           nodes = len(self.mbs.bodies),
-                           reactions = reactions,
-                           indicies_map  = self.mbs.nodes_indicies,
+        text = text.format(bodies = bodies_indices,
                            coordinates = coordinates,
                            velocities = velocities,
                            accelerations = accelerations,
-                           constants = constants)
+                           constants = constants)        
         return text
-
-    def write_template_assembler(self):
-        text = '''
+    
+    def write_header_file(self, dir_path=''):
+        file_path = os.path.join(dir_path, self.name)
+        system_class = self.write_header_class()
+        with open('%s.hpp'%file_path, 'w') as file:
+            file.write(system_class)
+        print('File full path : %s.hpp'%file_path)
         
-                void initialize()
-                {
-                    this->t = 0
-                    this->assemble(this->indicies_map, {{}}, 0)
-                    this->set_initial_states()
-                    this->eval_constants()
-                
-                };
+    
+    
+    def write_class_constructor(self):
+        text = '''
+                Topology::Topology(std::string prefix)
+                {{
+                    this-> prefix = prefix;
+                    this-> n = {n};
+                    this-> nc = {nc};
+                    this-> nrows = {nve};
+                    this-> ncols = 2*{nodes};
+                    this-> rows = Eigen::VectorXd::LinSpaced(this->nrows, 0, this->nrows-1);
                     
-                                
-                void assemble(struct& indicies_map, struct& interface_map, int rows_offset)
-                {
-                    this->rows_offset = rows_offset
-                    this->set_mapping(indicies_map, interface_map)
-                    this->rows += this->rows_offset
-                    this->jac_rows = np.array({jac_rows})
-                    this->jac_rows += this->rows_offset
-                    this->jac_cols = [{jac_cols}]
-                };
-                    
-                
-                void set_initial_states()
-                {
-                    this->set_gen_coordinates(this->config.q)
-                    this->set_gen_velocities(this->config.qd)
-                    this->q0 = this->config.q
-                };
-                
-                
-                void set_mapping(struct& indicies_map, stuct& interface_map)
-                {
-                    p = this->prefix
-                    {maped}
-                    {virtuals}
-                };
+                    {indicies_map}
+                }};
                 
                '''
-        
-        indent = 4*' '
+        indent = ''
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
-        nodes = '\n'.join(['%s = indicies_map[p+%r]'%('self.%s'%i,i) for i in self.bodies])
-        nodes = textwrap.indent(nodes,indent).lstrip()
+        indicies_map = '\n'.join(['this-> indicies_map[prefix + "%s"] = %s;'%(n,i) for i,n in enumerate(self.bodies)])
+        indicies_map = textwrap.indent(indicies_map, 4*' ').lstrip()
         
-        virtuals = '\n'.join(['%s = indicies_map[interface_map[p+%r]]'%('self.%s'%i,i) for i in self.mbs.virtual_bodies])
-        virtuals = textwrap.indent(virtuals,indent).lstrip()
+        text = text.format(n = self.mbs.n,
+                           nc = self.mbs.nc,
+                           nve = self.mbs.nve,
+                           nodes = len(self.bodies),
+                           indicies_map = indicies_map)
+        text = textwrap.indent(text,indent)
+        
+        return text
+        
+        
+    def write_template_assembler(self):
+        text = '''
+                void Topology::initialize()
+                {{
+                    Dict_SS interface_map;
+                    this->t = 0;
+                    this->assemble(this->indicies_map, interface_map, 0);
+                    this->set_initial_states();
+                    this->eval_constants();
+                    
+                }};
+                    
+                                
+                void Topology::assemble(Dict_SI indicies_map, Dict_SS interface_map, int rows_offset)
+                {{
+                    this-> set_mapping(indicies_map, interface_map);
+                    this-> rows += (rows_offset * Eigen::VectorXd::Ones(this ->rows.size()) );
+                    
+                    this-> jac_rows.resize({nnz});
+                    this-> jac_rows << {jac_rows};
+                    this-> jac_rows += (rows_offset * Eigen::VectorXd::Ones(this ->jac_rows.size()) );
+                    
+                    this-> jac_cols.resize({nnz});
+                    this-> jac_cols << {jac_cols};
+                }};
+                    
+                
+                void Topology::set_initial_states()
+                {{
+                    this-> set_gen_coordinates(this-> config.q);
+                    this-> set_gen_velocities(this-> config.qd);
+                    this-> q0 = this-> config.q;
+                }};
+                
+                
+                void Topology::set_mapping(Dict_SI indicies_map, Dict_SS interface_map)
+                {{
+                    std::string p = this-> prefix;
+                    
+                    {indicies_map}
+                    
+                    {virtuals}
+                }};
+                
+               '''
+        
+        indent = ''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        indicies_map = '\n'.join(['%s = indicies_map[p+"%s"];'%('this-> %s'%i, i) for i in self.bodies])
+        indicies_map = textwrap.indent(indicies_map, indent).lstrip()
+        
+        virtuals = '\n'.join(['%s = indicies_map[interface_map[p+"%s"];'%('this-> %s'%i, i) for i in self.mbs.virtual_bodies])
+        virtuals = textwrap.indent(virtuals, indent).lstrip()
         
         ind_body = {v:k for k,v in self.mbs.nodes_indicies.items()}
         rows, cols, data = zip(*self.mbs.jac_equations.row_list())
-        string_cols = [('self.%s*2'%ind_body[i//2] if i%2==0 else 'self.%s*2+1'%ind_body[i//2]) for i in cols]
-        string_cols_text = ', '.join(string_cols)
+        string_cols = [('this-> %s*2'%ind_body[i//2] if i%2==0 else 'this-> %s*2+1'%ind_body[i//2]) for i in cols]
+        string_cols_text = ', \n'.join(string_cols)
+        string_cols_text = textwrap.indent(string_cols_text, 6*4*' ').lstrip()
         
-        text = text.format(maped = nodes,
+        jac_rows = str(rows)
+        
+        text = text.format(nnz = len(data),
+                           indicies_map = indicies_map,
                            virtuals = virtuals,
-                           jac_rows = list(rows),
+                           jac_rows = jac_rows[1:-1],
                            jac_cols = string_cols_text)
         text = textwrap.indent(text,indent)
         return text

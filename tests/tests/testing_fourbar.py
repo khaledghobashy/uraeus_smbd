@@ -23,6 +23,7 @@ Created on Sun May  5 10:07:05 2019
 
 from smbd.interfaces.scripting import standalone_topology, configuration
 from smbd.numenv.python.codegen import generators
+from smbd.numenv.cpp_eigen.codegen import generators as cppgen
 
 model = standalone_topology('fourbar')
 
@@ -71,3 +72,11 @@ config_code.write_code_file()
 
 code = generators.template_codegen(model._mbs)
 code.write_code_file()
+
+cppcode = cppgen.template_codegen(model._mbs)
+cppcode.write_header_file()
+print(cppcode.write_class_constructor())
+print(cppcode.write_template_assembler())
+
+
+

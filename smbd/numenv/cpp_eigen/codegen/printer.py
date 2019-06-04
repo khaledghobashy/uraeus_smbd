@@ -34,25 +34,59 @@ class printer(CXX11CodePrinter):
     def _print_Equal_to(self, expr):
         return '%s'%self._print(expr.args[0])
     
-    def _print_matrix_symbol(self, expr):
-        return '%s'%expr._raw_name
+    def _print_matrix_symbol(self, expr, declare=False):
+        name = expr._raw_name
+        if declare:
+            output = 'Eigen::Matrix<double, %s, %s> %s ;'%(*expr.shape, name)
+        else:
+            output = '%s'%name
+        return output
     
-    def _print_dcm(self,expr):
-        return '%s'%expr._raw_name
+    def _print_dcm(self, expr, declare=False):
+        name = expr._raw_name
+        if declare:
+            output = 'Eigen::Matrix%sd %s ;'%(expr.shape[0], name)
+        else:
+            output = '%s'%name
+        return output
     
     def _print_base_vector(self, expr, **kwargs):
         m = expr.frame.name
         index = expr.slice[0]
         return '%s.col(%s)'%(m, index)
     
-    def _print_vector(self,expr):
-        return '%s'%expr._raw_name
+    def _print_vector(self, expr, declare=False):
+        name = expr._raw_name
+        if declare:
+            output = 'Eigen::Vector3d %s ;'%name
+        else:
+            output = '%s'%name
+        return output
     
-    def _print_quatrenion(self,expr):
-        return '%s'%expr._raw_name
+    def _print_quatrenion(self, expr, declare=False):
+        name = expr._raw_name
+        if declare:
+            output = 'Eigen::Vector4d %s ;'%name
+        else:
+            output = '%s'%name
+        return output
+    
+    def _print_MatrixSymbol(self, expr, declare=False, **kwargs):
+        if declare:
+            output = 'Eigen::Matrix<double, %s, %s> %s ;'%(*expr.shape, expr.name)
+        else:
+            output = super()._print_MatrixSymbol(expr, **kwargs)
+        return output
+    
+    def _print_Symbol(self, expr, declare=False, **kwargs):
+        if declare:
+            output = 'double %s;'%expr.name
+        else:
+            output = super(CXX11CodePrinter, self)._print_Symbol(expr, **kwargs)
+        return output
     
     def _print_Mul(self,expr):
-        return '*'.join([self._print(i) for i in expr.args])
+        return ' * '.join([self._print(i) for i in expr.args])
     
     def _print_MatMul(self,expr):
         scalars = []
