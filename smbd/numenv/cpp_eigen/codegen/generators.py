@@ -6,3 +6,514 @@ Created on Mon Jun  3 21:41:25 2019
 @author: khaledghobashy
 """
 
+# Standard library imports
+import os
+import re
+import textwrap
+import itertools
+
+# Local application imports
+from .printer import printer
+
+
+class abstract_generator(object):
+    """
+    A C++ code-generator class that generates numerical code with an OOP
+    structure using Eigen Library.
+    
+    Parameters
+    ----------
+    mbs : topology
+        An instance of a topology class.
+    
+    Methods
+    -------
+    write_code_file()
+        Write the structured code-files in a .py file format. These code-files
+        are saved in the corresponding sub-directory in the //generated_templates
+        directory.
+        
+    Notes
+    -----
+    This generator structures the numerical code of the system as follows:
+        - Creating a 'model_name'.py file that is designed  be used as an 
+          imported  module. The file is saved in a sub-directory inside the
+          'generated_templates' directory.
+        - This module contains one class only, the 'topology' class.
+        - This class provides the interface to be used either directly by the 
+          python_solver or indirectly by the assembly class that assembles 
+          several 'topology' classes together.
+
+    """
+    
+    def __init__(self,mbs, printer=printer()):
+        
+        self.mbs     = mbs
+        self.printer = printer
+        self.name    = self.mbs.name
+                
+        self.arguments_symbols = [printer._print(exp) for exp in self.mbs.arguments_symbols]
+        self.constants_symbols = [printer._print(exp) for exp in self.mbs.constants_symbols]
+        self.runtime_symbols   = [printer._print(exp) for exp in self.mbs.runtime_symbols]
+        
+        self.primary_arguments = self.arguments_symbols
+        
+        self.constants_symbolic_expr = self.mbs.constants_symbolic_expr
+        self.constants_numeric_expr  = self.mbs.constants_numeric_expr
+        
+        self.gen_coordinates_exp = self.mbs.mapped_gen_coordinates
+        self.gen_coordinates_sym = [printer._print(exp.lhs) for exp in self.gen_coordinates_exp]
+
+        self.gen_velocities_exp  = self.mbs.mapped_gen_velocities
+        self.gen_velocities_sym  = [printer._print(exp.lhs) for exp in self.gen_velocities_exp]
+        
+        self.gen_accelerations_exp  = self.mbs.mapped_gen_accelerations
+        self.gen_accelerations_sym  = [printer._print(exp.lhs) for exp in self.gen_accelerations_exp]
+        
+        self.lagrange_multipliers_exp  = self.mbs.mapped_lagrange_multipliers
+        self.lagrange_multipliers_sym  = [printer._print(exp.lhs) for exp in self.lagrange_multipliers_exp]
+
+        self.joint_reactions_sym = [printer._print(exp) for exp in self.mbs.reactions_symbols]
+
+        self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.virtual_coordinates]
+                
+        self.bodies = self.mbs.bodies
+
+    @staticmethod
+    def _insert_string(string):
+        def inserter(x): return string + x.group(0)
+        return inserter
+
+###############################################################################
+###############################################################################
+
+class template_codegen(abstract_generator):
+    
+    def write_imports(self):
+        text = '''
+                #include <iostream>
+                #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
+                
+                #include "euler_parameters.h"
+                
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        return text
+        
+    def write_class_init(self):
+        text = '''
+                class topology
+                {{
+                private:
+                    {coordinates}
+                    
+                    {velocities}
+                    
+                    {accelerations}
+                    
+                    {constants}
+                    
+                    void set_mapping(struct&, struct&);
+                    
+                public:
+                    std::string prefix = "" ;
+                    double t = 0.0 ;
+                    int n = {n} ;
+                    int nc = {nc} ;
+                    int nrows = {nve} ;
+                    int ncols = 2*{nodes} ;
+                    
+                    Eigen::VectorXd q(n);
+                    Eigen::VectorXd qd(n);
+                    
+                    void initialize();
+                    void assemble(struct&, struct&, int);
+                    void set_initial_states();
+                    void eval_constants();
+                    
+                    void eval_pos_equations();
+                    void eval_vel_equations();
+                    void eval_acc_equations();
+                    void eval_jac_equations();
+                    
+                    void set_coordinates();
+                    void set_velocities();
+                    void set_accelerations();
+                    
+                }};
+
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        coordinates = '\n'.join(['Eigen::VectorXd %s ;'%i for i in self.gen_coordinates_sym])
+        coordinates = textwrap.indent(coordinates, 4*' ').lstrip()
+        
+        velocities = '\n'.join(['Eigen::VectorXd %s ;'%i for i in self.gen_velocities_sym])
+        velocities = textwrap.indent(velocities, 4*' ').lstrip()
+
+        accelerations = '\n'.join(['Eigen::VectorXd %s ;'%i for i in self.gen_accelerations_sym])
+        accelerations = textwrap.indent(accelerations, 4*' ').lstrip()
+
+        constants = '\n'.join(['const Eigen::MatrixXd %s ;'%i for i in self.constants_symbols])
+        constants = textwrap.indent(constants, 4*' ').lstrip()
+        
+        reactions = ['%s'%i for i in self.joint_reactions_sym]
+
+        text = text.format(n = self.mbs.n,
+                           nc = self.mbs.nc,
+                           nve = self.mbs.nve,
+                           nodes = len(self.mbs.bodies),
+                           reactions = reactions,
+                           indicies_map  = self.mbs.nodes_indicies,
+                           coordinates = coordinates,
+                           velocities = velocities,
+                           accelerations = accelerations,
+                           constants = constants)
+        return text
+
+    def write_template_assembler(self):
+        text = '''
+        
+                void initialize()
+                {
+                    this->t = 0
+                    this->assemble(this->indicies_map, {{}}, 0)
+                    this->set_initial_states()
+                    this->eval_constants()
+                
+                };
+                    
+                                
+                void assemble(struct& indicies_map, struct& interface_map, int rows_offset)
+                {
+                    this->rows_offset = rows_offset
+                    this->set_mapping(indicies_map, interface_map)
+                    this->rows += this->rows_offset
+                    this->jac_rows = np.array({jac_rows})
+                    this->jac_rows += this->rows_offset
+                    this->jac_cols = [{jac_cols}]
+                };
+                    
+                
+                void set_initial_states()
+                {
+                    this->set_gen_coordinates(this->config.q)
+                    this->set_gen_velocities(this->config.qd)
+                    this->q0 = this->config.q
+                };
+                
+                
+                void set_mapping(struct& indicies_map, stuct& interface_map)
+                {
+                    p = this->prefix
+                    {maped}
+                    {virtuals}
+                };
+                
+               '''
+        
+        indent = 4*' '
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        nodes = '\n'.join(['%s = indicies_map[p+%r]'%('self.%s'%i,i) for i in self.bodies])
+        nodes = textwrap.indent(nodes,indent).lstrip()
+        
+        virtuals = '\n'.join(['%s = indicies_map[interface_map[p+%r]]'%('self.%s'%i,i) for i in self.mbs.virtual_bodies])
+        virtuals = textwrap.indent(virtuals,indent).lstrip()
+        
+        ind_body = {v:k for k,v in self.mbs.nodes_indicies.items()}
+        rows, cols, data = zip(*self.mbs.jac_equations.row_list())
+        string_cols = [('self.%s*2'%ind_body[i//2] if i%2==0 else 'self.%s*2+1'%ind_body[i//2]) for i in cols]
+        string_cols_text = ', '.join(string_cols)
+        
+        text = text.format(maped = nodes,
+                           virtuals = virtuals,
+                           jac_rows = list(rows),
+                           jac_cols = string_cols_text)
+        text = textwrap.indent(text,indent)
+        return text
+    
+    def write_constants_eval(self):
+        text = '''
+                def eval_constants(self):
+                    config = self.config
+                    
+                    {num_constants}
+                    
+                    {sym_constants}
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        printer = self.printer
+        indent = 4*' '
+                
+        config_pattern_iter = itertools.chain(self.arguments_symbols,
+                                              self.virtual_coordinates)
+        config_pattern = '|'.join(config_pattern_iter)
+        config_inserter = self._insert_string('config.')
+        
+        self_pattern_iter = itertools.chain(self.constants_symbols)
+        self_pattern = '|'.join(self_pattern_iter)
+        self_inserter = self._insert_string('self.')
+        
+        sym_constants = self.constants_symbolic_expr
+        sym_constants_text = '\n'.join((printer._print(i) for i in sym_constants))
+        sym_constants_text = re.sub(config_pattern, config_inserter, sym_constants_text)
+        sym_constants_text = re.sub(self_pattern, self_inserter, sym_constants_text)
+        sym_constants_text = textwrap.indent(sym_constants_text, indent).lstrip()
+        
+        num_constants_list = self.constants_numeric_expr
+        num_constants_text = '\n'.join((printer._print(i) for i in num_constants_list))
+        num_constants_text = re.sub(config_pattern, config_inserter, num_constants_text)
+        num_constants_text = re.sub(self_pattern, self_inserter, num_constants_text)
+        num_constants_text = textwrap.indent(num_constants_text, indent).lstrip()
+
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = text.format(sym_constants = sym_constants_text,
+                           num_constants = num_constants_text)
+        text = textwrap.indent(text,indent)
+        return text
+
+    def write_coordinates_setter(self):
+        return self._write_x_setter('gen_coordinates','q')
+    
+    def write_velocities_setter(self):
+        return self._write_x_setter('gen_velocities','qd')
+    
+    def write_accelerations_setter(self):
+        return self._write_x_setter('gen_accelerations','qdd')
+    
+    def write_lagrange_setter(self):
+        return self._write_x_setter('lagrange_multipliers','Lambda')
+        
+    def write_pos_equations(self):
+        return self._write_x_equations('pos')
+    
+    def write_vel_equations(self):
+        return self._write_x_equations('vel')
+    
+    def write_acc_equations(self):
+        return self._write_x_equations('acc')
+    
+    def write_jac_equations(self):
+        return self._write_x_equations('jac')
+    
+    def write_forces_equations(self):
+        return self._write_x_equations('frc')
+    
+    def write_mass_equations(self):
+        return self._write_x_equations('mass')
+    
+    def write_reactions_equations(self):
+        text = '''
+                def eval_reactions_eq(self):
+                    config  = self.config
+                    t = self.t
+                    
+                    {equations_text}
+                    
+                    self.reactions = {reactions}
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        indent = 4*' '
+        p = self.printer
+        
+        equations = self.mbs.reactions_equalities
+        equations_text = '\n'.join([p._print(expr) for expr in equations])
+        
+        self_pattern = itertools.chain(self.runtime_symbols,
+                                       self.constants_symbols,
+                                       self.joint_reactions_sym,
+                                       self.lagrange_multipliers_sym)
+        self_pattern = '|'.join(self_pattern)
+        self_inserter = self._insert_string('self.')
+        equations_text = re.sub(self_pattern,self_inserter,equations_text)
+        
+        config_pattern = set(self.primary_arguments) - set(self.runtime_symbols)
+        config_pattern = '|'.join([r'%s'%i for i in config_pattern])
+        config_inserter = self._insert_string('config.')
+        equations_text = re.sub(config_pattern,config_inserter,equations_text)
+                
+        equations_text = textwrap.indent(equations_text,indent).lstrip() 
+        
+        reactions = ',\n'.join(['%r : self.%s'%(i,i) for i in self.joint_reactions_sym])
+        reactions = textwrap.indent(reactions, 5*indent).lstrip()
+        reactions = '{%s}'%reactions
+        
+        text = text.format(equations_text = equations_text,
+                           reactions = reactions)
+        text = textwrap.indent(text,indent)
+        return text
+
+
+    def write_system_class(self):
+        text = '''
+                {class_init}
+                    {assembler}
+                    {constants}
+                    {coord_setter}
+                    {veloc_setter}
+                    {accel_setter}
+                    {lagrg_setter}
+                    {eval_pos}
+                    {eval_vel}
+                    {eval_acc}
+                    {eval_jac}
+                    {eval_mass}
+                    {eval_frc}
+                    {eval_rct}
+                '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        class_init = self.write_class_init()
+        assembler  = self.write_template_assembler()
+        constants  = self.write_constants_eval()
+        coord_setter = self.write_coordinates_setter()
+        veloc_setter = self.write_velocities_setter()
+        accel_setter = self.write_accelerations_setter()
+        lagrg_setter = self.write_lagrange_setter()
+        
+        eval_pos = self.write_pos_equations()
+        eval_vel = self.write_vel_equations()
+        eval_acc = self.write_acc_equations()
+        eval_jac = self.write_jac_equations()
+        eval_frc = self.write_forces_equations()
+        eval_mass = self.write_mass_equations()
+        eval_rct = self.write_reactions_equations()
+        
+        text = text.format(class_init = class_init,
+                           assembler = assembler,
+                           constants = constants,
+                           eval_pos = eval_pos,
+                           eval_vel = eval_vel,
+                           eval_acc = eval_acc,
+                           eval_jac = eval_jac,
+                           eval_frc = eval_frc,
+                           eval_rct = eval_rct,
+                           eval_mass = eval_mass,
+                           coord_setter = coord_setter,
+                           veloc_setter = veloc_setter,
+                           accel_setter = accel_setter,
+                           lagrg_setter = lagrg_setter)
+        return text
+    
+    
+    def write_code_file(self, dir_path=''):
+        file_path = os.path.join(dir_path, self.name)
+        imports = self.write_imports()
+        system_class = self.write_system_class()
+        text = '\n'.join([imports,system_class])
+        with open('%s.py'%file_path, 'w') as file:
+            file.write(text)
+        print('File full path : %s.py'%file_path)
+    
+    ###########################################################################
+    ###########################################################################
+
+    def _write_x_setter(self,func_name,var='q'):
+        text = '''
+                def set_%s(self,%s):
+                    {equalities}
+               '''%(func_name,var)
+        
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        p = self.printer
+        indent = 4*' '
+        
+        symbolic_equality  = getattr(self,'%s_exp'%func_name)
+        
+        if len(symbolic_equality) !=0:
+            pattern = '|'.join(getattr(self,'%s_sym'%func_name))
+            self_inserter = self._insert_string('self.')
+            
+            numerical_equality = '\n'.join([p._print(i) for i in symbolic_equality])
+            numerical_equality = re.sub(pattern,self_inserter,numerical_equality)
+            numerical_equality = textwrap.indent(numerical_equality,indent).lstrip()
+        else:
+            numerical_equality = 'pass'
+        
+        text = text.format(equalities = numerical_equality)
+        text = textwrap.indent(text,indent)
+        return text
+    
+    def _write_x_equations(self,eq_initial):
+        text = '''
+                def eval_{eq_initial}_eq(self):
+                    config = self.config
+                    t = self.t
+
+                    {replacements}
+
+                    self.{eq_initial}_eq_blocks = [{expressions}]
+                '''
+        
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        printer = self.printer
+        indent = 4*' '
+                
+        # Geting the optimized equations' vector/matrix from the topology class.
+        # The expected format is two lists [replacements] and [expressions].
+        replacements_list = getattr(self.mbs,'%s_rep'%eq_initial)
+        expressions_list  = getattr(self.mbs,'%s_exp'%eq_initial)
+        # Extracting the vector/matrix from the returned expressions list.
+        vector_expr = expressions_list[0]
+        # Extracting the Non-Zero values of the vector/matrix.
+        vector_data = [i[-1] for i in vector_expr.row_list()]
+        
+        # Extract the numerical format of the replacements and expressions into
+        # a list of string expressions.
+        num_repl_list = [printer._print(exp) for exp in replacements_list]
+        num_expr_list = [printer._print(exp) for exp in vector_data]
+        
+        # Joining the extracted strings to form a valid text block.
+        num_repl_text = '\n'.join(num_repl_list)
+        num_expr_text = ',\n'.join(num_expr_list)
+
+        # Creating a regex pattern of strings that represents the variables
+        # which need to be perfixed by a 'self.' to be referenced correctly.
+        self_pattern = itertools.chain(self.runtime_symbols,
+                                       self.constants_symbols)
+        self_pattern = '|'.join(self_pattern)
+        
+        # Creating a regex pattern of strings that represents the variables
+        # which need to be perfixed by a 'config.' to be referenced correctly.
+        config_pattern = set(self.primary_arguments) - set(self.runtime_symbols)
+        config_pattern = '|'.join([r'%s'%i for i in config_pattern])
+        
+        # Performing the regex substitution with 'self.'.
+        self_inserter = self._insert_string('self.')
+        num_repl_text = re.sub(self_pattern,self_inserter,num_repl_text)
+        num_expr_text = re.sub(self_pattern,self_inserter,num_expr_text)
+        
+        # Performing the regex substitution with 'config.'.
+        config_inserter = self._insert_string('config.')
+        num_repl_text = re.sub(config_pattern,config_inserter,num_repl_text)
+        num_expr_text = re.sub(config_pattern,config_inserter,num_expr_text)
+        
+        # Indenting the text block for propper class and function indentation.
+        num_repl_text = textwrap.indent(num_repl_text,indent).lstrip() 
+        num_expr_text = textwrap.indent(num_expr_text,indent).lstrip()
+        
+        text = text.format(eq_initial  = eq_initial,
+                           replacements = num_repl_text,
+                           expressions  = num_expr_text)
+        text = textwrap.indent(text,indent)
+        return text
+    
+
+###############################################################################
+###############################################################################
+
+

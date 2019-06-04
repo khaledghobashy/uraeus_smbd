@@ -13,7 +13,7 @@ from smbd.numenv.python.numerics.misc import (mirrored, centered, oriented,
 class configuration(num_config):
 
     def __init__(self):
-        self.UF_jcs_a = lambda t : 0.0
+        self.UF_mcs_act = lambda t : 0.0
         self.pt1_mcs_abs = np.array([[0], [0], [0]], dtype=np.float64)
         self.UF_mcs_abs = lambda t : 0.0
         self.R_ground = np.array([[0], [0], [0]], dtype=np.float64)
