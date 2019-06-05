@@ -36,8 +36,8 @@ model.add_joint.spherical('b', 'rbs_crank', 'rbs_conct')
 model.add_joint.universal('c', 'rbs_conct', 'rbs_rockr')
 model.add_joint.revolute('d', 'rbs_rockr', 'ground')
 
-model.add_actuator.absolute_locator('abs','rbs_crank', 'x')
-model.add_actuator.rotational_actuator('act', 'jcs_a')
+#model.add_actuator.absolute_locator('abs','rbs_crank', 'x')
+#model.add_actuator.rotational_actuator('act', 'jcs_a')
 
 
 model.assemble()
@@ -75,10 +75,7 @@ code.write_code_file()
 
 cppcode = cppgen.template_codegen(model._mbs)
 cppcode.write_header_file()
-print(cppcode.write_class_constructor())
-print(cppcode.write_template_assembler())
-print(cppcode.write_coordinates_setter())
-print(cppcode.write_pos_equations())
+cppcode.write_source_file()
 
 
 

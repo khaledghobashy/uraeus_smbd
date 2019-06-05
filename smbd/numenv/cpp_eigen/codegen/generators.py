@@ -87,6 +87,28 @@ class abstract_generator(object):
 ###############################################################################
 ###############################################################################
 
+class configuration_codegen(abstract_generator):
+        
+    def __init__(self, config, printer=printer()):
+        
+        self.config  = config
+        self.printer = printer
+        self.name = self.config.name
+        
+        self.config_vars = [printer._print(i) for i in self.config.arguments_symbols]
+        self.input_args  = self.config.input_equalities
+        self.output_args = self.config.intermediat_equalities \
+                         + self.config.output_equalities
+        
+        self.gen_coordinates_sym = [printer._print(exp.lhs) 
+        for exp in self.config.topology.mapped_gen_coordinates]
+        self.gen_velocities_sym  = [printer._print(exp.lhs) 
+        for exp in self.config.topology.mapped_gen_velocities]
+        
+
+###############################################################################
+###############################################################################
+
 class template_codegen(abstract_generator):
     
             
@@ -96,6 +118,14 @@ class template_codegen(abstract_generator):
                 #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
                 
                 #include "AbstractClasses.hpp"
+                
+                class Configuration : public AbstractConfiguration
+                {{
+                
+                public:
+                    {primary_arguments}
+                    
+                }};
 
 
                 class Topology : public AbstractTopology
@@ -118,23 +148,25 @@ class template_codegen(abstract_generator):
                 public:
                 
                     Topology(std::string prefix);
+                    
+                    Configuration config;
                 
                     void initialize();
-                    void assemble(Dict_SI, Dict_SS, int);
+                    void assemble(Dict_SI &indicies_map, Dict_SS &interface_map, int rows_offset);
                     void set_initial_states();
                     void eval_constants();
                     
-                    void eval_pos_equations();
-                    void eval_vel_equations();
-                    void eval_acc_equations();
-                    void eval_jac_equations();
+                    void eval_pos_eq();
+                    void eval_vel_eq();
+                    void eval_acc_eq();
+                    void eval_jac_eq();
                     
-                    void set_gen_coordinates(Eigen::VectorXd);
-                    void set_gen_velocities(Eigen::VectorXd);
-                    void set_gen_accelerations(Eigen::VectorXd);
+                    void set_gen_coordinates(Eigen::VectorXd &q);
+                    void set_gen_velocities(Eigen::VectorXd &qd);
+                    void set_gen_accelerations(Eigen::VectorXd &qdd);
                 
                 private:
-                    void set_mapping(Dict_SI, Dict_SS);
+                    void set_mapping(Dict_SI &indicies_map, Dict_SS &interface_map);
                 
                 
                 }};
@@ -144,23 +176,27 @@ class template_codegen(abstract_generator):
         
         p = self.printer
         
+        primary_aruments = '\n'.join(['%s ;'%p._print(i, declare=True) for i in self.mbs.arguments_symbols])
+        primary_aruments = textwrap.indent(primary_aruments, 4*' ').lstrip()
+        
         bodies_indices = '\n'.join(['int %s ;'%i for i in self.bodies])
         bodies_indices = textwrap.indent(bodies_indices, 4*' ').lstrip()
 
         
-        coordinates = '\n'.join([p._print(i.lhs, declare=True) for i in self.gen_coordinates_exp])
+        coordinates = '\n'.join(['%s ;'%p._print(i.lhs, declare=True) for i in self.gen_coordinates_exp])
         coordinates = textwrap.indent(coordinates, 4*' ').lstrip()
 
-        velocities = '\n'.join([p._print(i.lhs, declare=True) for i in self.gen_velocities_exp])
+        velocities = '\n'.join(['%s ;'%p._print(i.lhs, declare=True) for i in self.gen_velocities_exp])
         velocities = textwrap.indent(velocities, 4*' ').lstrip()
 
-        accelerations = '\n'.join([p._print(i.lhs, declare=True) for i in self.gen_accelerations_exp])
+        accelerations = '\n'.join(['%s ;'%p._print(i.lhs, declare=True) for i in self.gen_accelerations_exp])
         accelerations = textwrap.indent(accelerations, 4*' ').lstrip()
 
-        constants = '\n'.join([p._print(i, declare=True) for i in self.mbs.constants_symbols])
+        constants = '\n'.join(['%s ;'%p._print(i, declare=True) for i in self.mbs.constants_symbols])
         constants = textwrap.indent(constants, 4*' ').lstrip()
         
-        text = text.format(bodies = bodies_indices,
+        text = text.format(primary_arguments = primary_aruments,
+                           bodies = bodies_indices,
                            coordinates = coordinates,
                            velocities = velocities,
                            accelerations = accelerations,
@@ -173,9 +209,57 @@ class template_codegen(abstract_generator):
         with open('%s.hpp'%file_path, 'w') as file:
             file.write(system_class)
         print('File full path : %s.hpp'%file_path)
+    
+    
+    def write_source_file(self, dir_path=''):
+        file_path = os.path.join(dir_path, self.name)
+        system_class = self.write_source_content()
+        with open('%s.cpp'%file_path, 'w') as file:
+            file.write(system_class)
+        print('File full path : %s.cpp'%file_path)
+
+
+    def write_source_content(self):
+        text = '''
+                #include <iostream>
+                #include <map>
+                #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
+                
+                #include "{file_name}.hpp"
+                #include "euler_parameters.hpp"
+                
+                {constructor}
+                
+                {assemblers}
+                
+                {setters}
+                
+                {evaluators}
+                
+               '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
         
-    
-    
+        constructor = self.write_class_constructor()
+        assemblers  = self.write_template_assembler()
+        
+        setters = ''.join([self.write_coordinates_setter(),
+                           self.write_velocities_setter(),
+                           self.write_accelerations_setter()])
+            
+        evaluators = ''.join([self.write_constants_eval(),
+                              self.write_pos_equations(),
+                              self.write_vel_equations(),
+                              self.write_acc_equations()])
+        
+        text = text.format(file_name = self.name,
+                           constructor = constructor,
+                           assemblers = assemblers,
+                           setters = setters,
+                           evaluators = evaluators)
+        return text
+
+
     def write_class_constructor(self):
         text = '''
                 Topology::Topology(std::string prefix)
@@ -187,10 +271,15 @@ class template_codegen(abstract_generator):
                     this-> ncols = 2*{nodes};
                     this-> rows = Eigen::VectorXd::LinSpaced(this->nrows, 0, this->nrows-1);
                     
+                    this-> pos_eq.resize(this-> nc);
+                    this-> vel_eq.resize(this-> nc);
+                    this-> acc_eq.resize(this-> nc);
+                    
                     {indicies_map}
                 }};
                 
                '''
+        
         indent = ''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -221,7 +310,7 @@ class template_codegen(abstract_generator):
                 }};
                     
                                 
-                void Topology::assemble(Dict_SI indicies_map, Dict_SS interface_map, int rows_offset)
+                void Topology::assemble(Dict_SI &indicies_map, Dict_SS &interface_map, int rows_offset)
                 {{
                     this-> set_mapping(indicies_map, interface_map);
                     this-> rows += (rows_offset * Eigen::VectorXd::Ones(this ->rows.size()) );
@@ -231,7 +320,8 @@ class template_codegen(abstract_generator):
                     this-> jac_rows += (rows_offset * Eigen::VectorXd::Ones(this ->jac_rows.size()) );
                     
                     this-> jac_cols.resize({nnz});
-                    this-> jac_cols << {jac_cols};
+                    this-> jac_cols << 
+                        {jac_cols};
                 }};
                     
                 
@@ -243,7 +333,7 @@ class template_codegen(abstract_generator):
                 }};
                 
                 
-                void Topology::set_mapping(Dict_SI indicies_map, Dict_SS interface_map)
+                void Topology::set_mapping(Dict_SI &indicies_map, Dict_SS &interface_map)
                 {{
                     std::string p = this-> prefix;
                     
@@ -259,7 +349,7 @@ class template_codegen(abstract_generator):
         text = textwrap.dedent(text)
         
         indicies_map = '\n'.join(['%s = indicies_map[p+"%s"];'%('this-> %s'%i, i) for i in self.bodies])
-        indicies_map = textwrap.indent(indicies_map, indent).lstrip()
+        indicies_map = textwrap.indent(indicies_map, 4*' ').lstrip()
         
         virtuals = '\n'.join(['%s = indicies_map[interface_map[p+"%s"];'%('this-> %s'%i, i) for i in self.mbs.virtual_bodies])
         virtuals = textwrap.indent(virtuals, indent).lstrip()
@@ -268,7 +358,7 @@ class template_codegen(abstract_generator):
         rows, cols, data = zip(*self.mbs.jac_equations.row_list())
         string_cols = [('this-> %s*2'%ind_body[i//2] if i%2==0 else 'this-> %s*2+1'%ind_body[i//2]) for i in cols]
         string_cols_text = ', \n'.join(string_cols)
-        string_cols_text = textwrap.indent(string_cols_text, 6*4*' ').lstrip()
+        string_cols_text = textwrap.indent(string_cols_text, 8*' ').lstrip()
         
         jac_rows = str(rows)
         
@@ -282,18 +372,20 @@ class template_codegen(abstract_generator):
     
     def write_constants_eval(self):
         text = '''
-                def eval_constants(self):
-                    config = self.config
+                void Topology::eval_constants()
+                {{
+                    auto &config = this-> config;
                     
                     {num_constants}
                     
                     {sym_constants}
+                }};
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
         printer = self.printer
-        indent = 4*' '
+        indent = ''
                 
         config_pattern_iter = itertools.chain(self.arguments_symbols,
                                               self.virtual_coordinates)
@@ -302,19 +394,19 @@ class template_codegen(abstract_generator):
         
         self_pattern_iter = itertools.chain(self.constants_symbols)
         self_pattern = '|'.join(self_pattern_iter)
-        self_inserter = self._insert_string('self.')
+        self_inserter = self._insert_string('this-> ')
         
         sym_constants = self.constants_symbolic_expr
         sym_constants_text = '\n'.join((printer._print(i) for i in sym_constants))
         sym_constants_text = re.sub(config_pattern, config_inserter, sym_constants_text)
         sym_constants_text = re.sub(self_pattern, self_inserter, sym_constants_text)
-        sym_constants_text = textwrap.indent(sym_constants_text, indent).lstrip()
+        sym_constants_text = textwrap.indent(sym_constants_text, 4*' ').lstrip()
         
         num_constants_list = self.constants_numeric_expr
         num_constants_text = '\n'.join((printer._print(i) for i in num_constants_list))
         num_constants_text = re.sub(config_pattern, config_inserter, num_constants_text)
         num_constants_text = re.sub(self_pattern, self_inserter, num_constants_text)
-        num_constants_text = textwrap.indent(num_constants_text, indent).lstrip()
+        num_constants_text = textwrap.indent(num_constants_text, 4*' ').lstrip()
 
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -396,75 +488,13 @@ class template_codegen(abstract_generator):
         text = textwrap.indent(text,indent)
         return text
 
-
-    def write_system_class(self):
-        text = '''
-                {class_init}
-                    {assembler}
-                    {constants}
-                    {coord_setter}
-                    {veloc_setter}
-                    {accel_setter}
-                    {lagrg_setter}
-                    {eval_pos}
-                    {eval_vel}
-                    {eval_acc}
-                    {eval_jac}
-                    {eval_mass}
-                    {eval_frc}
-                    {eval_rct}
-                '''
-        text = text.expandtabs()
-        text = textwrap.dedent(text)
-        
-        class_init = self.write_class_init()
-        assembler  = self.write_template_assembler()
-        constants  = self.write_constants_eval()
-        coord_setter = self.write_coordinates_setter()
-        veloc_setter = self.write_velocities_setter()
-        accel_setter = self.write_accelerations_setter()
-        lagrg_setter = self.write_lagrange_setter()
-        
-        eval_pos = self.write_pos_equations()
-        eval_vel = self.write_vel_equations()
-        eval_acc = self.write_acc_equations()
-        eval_jac = self.write_jac_equations()
-        eval_frc = self.write_forces_equations()
-        eval_mass = self.write_mass_equations()
-        eval_rct = self.write_reactions_equations()
-        
-        text = text.format(class_init = class_init,
-                           assembler = assembler,
-                           constants = constants,
-                           eval_pos = eval_pos,
-                           eval_vel = eval_vel,
-                           eval_acc = eval_acc,
-                           eval_jac = eval_jac,
-                           eval_frc = eval_frc,
-                           eval_rct = eval_rct,
-                           eval_mass = eval_mass,
-                           coord_setter = coord_setter,
-                           veloc_setter = veloc_setter,
-                           accel_setter = accel_setter,
-                           lagrg_setter = lagrg_setter)
-        return text
-    
-    
-    def write_code_file(self, dir_path=''):
-        file_path = os.path.join(dir_path, self.name)
-        imports = self.write_imports()
-        system_class = self.write_system_class()
-        text = '\n'.join([imports,system_class])
-        with open('%s.py'%file_path, 'w') as file:
-            file.write(text)
-        print('File full path : %s.py'%file_path)
     
     ###########################################################################
     ###########################################################################
 
     def _write_x_setter(self,func_name,var='q'):
         text = '''
-                void Topology::set_%s(Eigen::VectorXd %s)
+                void Topology::set_%s(Eigen::VectorXd &%s)
                 {{
                     {equalities}
                 }};
@@ -497,13 +527,13 @@ class template_codegen(abstract_generator):
         text = '''
                  void Topology::eval_{eq_initial}_eq()
                  {{
-                     auto config = this-> config;
-                     auto t = this-> t;
+                     auto &config = this-> config;
+                     auto &t = this-> t;
 
                      {replacements}
                                         
-                     this-> {eq_initial}_eq.resize({nc});
-                     this-> {eq_initial}_eq << {expressions};
+                     this-> {eq_initial}_eq << 
+                         {expressions};
                  }};
                 '''
         
@@ -524,7 +554,7 @@ class template_codegen(abstract_generator):
         
         # Extract the numerical format of the replacements and expressions into
         # a list of string expressions.
-        num_repl_list = [printer._print(exp) for exp in replacements_list]
+        num_repl_list = [printer._print(exp, declare=True) for exp in replacements_list]
         num_expr_list = [printer._print(exp) for exp in vector_data]
         
         # Joining the extracted strings to form a valid text block.
@@ -554,12 +584,11 @@ class template_codegen(abstract_generator):
         
         # Indenting the text block for propper class and function indentation.
         num_repl_text = textwrap.indent(num_repl_text, 4*' ').lstrip() 
-        num_expr_text = textwrap.indent(num_expr_text, 4*' ').lstrip()
+        num_expr_text = textwrap.indent(num_expr_text, 8*' ').lstrip()
         
         text = text.format(eq_initial  = eq_initial,
                            replacements = num_repl_text,
-                           expressions  = num_expr_text,
-                           nc = self.mbs.nc)
+                           expressions  = num_expr_text)
         text = textwrap.indent(text,indent)
         return text
     

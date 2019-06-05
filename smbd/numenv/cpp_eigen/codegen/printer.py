@@ -37,7 +37,7 @@ class printer(CXX11CodePrinter):
     def _print_matrix_symbol(self, expr, declare=False):
         name = expr._raw_name
         if declare:
-            output = 'Eigen::Matrix<double, %s, %s> %s ;'%(*expr.shape, name)
+            output = 'Eigen::Matrix<double, %s, %s> %s'%(*expr.shape, name)
         else:
             output = '%s'%name
         return output
@@ -45,7 +45,7 @@ class printer(CXX11CodePrinter):
     def _print_dcm(self, expr, declare=False):
         name = expr._raw_name
         if declare:
-            output = 'Eigen::Matrix%sd %s ;'%(expr.shape[0], name)
+            output = 'Eigen::Matrix%sd %s'%(expr.shape[0], name)
         else:
             output = '%s'%name
         return output
@@ -58,7 +58,7 @@ class printer(CXX11CodePrinter):
     def _print_vector(self, expr, declare=False):
         name = expr._raw_name
         if declare:
-            output = 'Eigen::Vector3d %s ;'%name
+            output = 'Eigen::Vector3d %s'%name
         else:
             output = '%s'%name
         return output
@@ -66,21 +66,26 @@ class printer(CXX11CodePrinter):
     def _print_quatrenion(self, expr, declare=False):
         name = expr._raw_name
         if declare:
-            output = 'Eigen::Vector4d %s ;'%name
+            output = 'Eigen::Vector4d %s'%name
         else:
             output = '%s'%name
         return output
     
     def _print_MatrixSymbol(self, expr, declare=False, **kwargs):
         if declare:
-            output = 'Eigen::Matrix<double, %s, %s> %s ;'%(*expr.shape, expr.name)
+            if expr.shape == (3,1):
+                output = 'Eigen::Vector3d %s'%(expr.name)
+            elif expr.shape == (4,1):
+                output = 'Eigen::Vector4d %s'%(expr.name)
+            else:
+                output = 'Eigen::Matrix<double, %s, %s> %s'%(*expr.shape, expr.name)
         else:
             output = super()._print_MatrixSymbol(expr, **kwargs)
         return output
     
     def _print_Symbol(self, expr, declare=False, **kwargs):
         if declare:
-            output = 'double %s;'%expr.name
+            output = 'double %s'%expr.name
         else:
             output = super(CXX11CodePrinter, self)._print_Symbol(expr, **kwargs)
         return output
@@ -136,20 +141,34 @@ class printer(CXX11CodePrinter):
         return '%s'%expr._ccode()
     
     
-    def _print_tuple(self, expr):
+    def _print_tuple(self, expr, declare=False):
         if len(expr)>2:
             return super()._print_tuple(expr)
         else:
-            shape = expr[0].shape
-            lhs_name = str(expr[0])
+            lhs_name = self._print(expr[0], declare=declare)
             rhs_expr = self._print(expr[1])
-            _expr = 'Eigen::MatrixXd %s(%s, %s) = %s ;'%(lhs_name, *shape, rhs_expr)
+            assign_operator = '='
+            if not declare:
+                try:
+                    expr[0].shape
+                    assign_operator = '<<'
+                except AttributeError:
+                    pass
+            _expr = '%s %s %s ;'%(lhs_name, assign_operator, rhs_expr)
             return _expr
     
-    def _print_Equality(self, expr):
-        lhs_name = str(expr.lhs)
+    def _print_Equality(self, expr, declare=False):
+        lhs_name = self._print(expr.lhs, declare=declare)
         rhs_expr = self._print(expr.rhs)
-        _expr = '%s = %s ;'%(lhs_name, rhs_expr)
+        assign_operator = '='
+        if not declare:
+            try:
+                expr.lhs.shape
+                assign_operator = '<<'
+            except AttributeError:
+                pass
+            
+        _expr = '%s %s %s ;'%(lhs_name, assign_operator, rhs_expr)
         return _expr
     
     def _print_MatAdd(self, expr):
@@ -175,9 +194,8 @@ class printer(CXX11CodePrinter):
         return '%s.block(%s, %s)'%(self._print(m), ij_start, ij_shape)
     
     def _print_MutableDenseMatrix(self, expr):
-        elements = expr.values()
-        _expr = ', '.join(elements)
-        return '{%s}'%(_expr)
+        _expr = ', '.join(['%s'%i for i in expr])
+        return '%s'%(_expr)
     
     def _print_ImmutableDenseMatrix(self, expr):
         return self._print_MutableDenseMatrix(expr)
@@ -197,8 +215,12 @@ class printer(CXX11CodePrinter):
         code_block = '\n'.join([rows_print,cols_print,data_print])
         return code_block
     
-    def _print_UndefinedFunction(self,expr):
-        return '%s'%expr
+    def _print_UndefinedFunction(self, expr, declare=False):
+        if declare:
+            output = 'virtual double %s(double)'%expr
+        else:
+            output = '%s'%expr
+        return output
     
     def _print_Function(self,expr):
         func = expr.__class__.__name__
