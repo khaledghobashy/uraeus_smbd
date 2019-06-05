@@ -147,10 +147,9 @@ class printer(CXX11CodePrinter):
             return _expr
     
     def _print_Equality(self, expr):
-        shape = expr.lhs.shape
         lhs_name = str(expr.lhs)
         rhs_expr = self._print(expr.rhs)
-        _expr = 'Eigen::MatrixXd %s(%s, %s) = %s ;'%(lhs_name, *shape, rhs_expr)
+        _expr = '%s = %s ;'%(lhs_name, rhs_expr)
         return _expr
     
     def _print_MatAdd(self, expr):

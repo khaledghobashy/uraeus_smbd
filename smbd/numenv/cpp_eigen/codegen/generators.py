@@ -464,48 +464,54 @@ class template_codegen(abstract_generator):
 
     def _write_x_setter(self,func_name,var='q'):
         text = '''
-                def set_%s(self,%s):
+                void Topology::set_%s(Eigen::VectorXd %s)
+                {{
                     {equalities}
-               '''%(func_name,var)
+                }};
+               '''%(func_name, var)
         
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
         p = self.printer
-        indent = 4*' '
+        indent = ''
         
         symbolic_equality  = getattr(self,'%s_exp'%func_name)
         
         if len(symbolic_equality) !=0:
             pattern = '|'.join(getattr(self,'%s_sym'%func_name))
-            self_inserter = self._insert_string('self.')
+            self_inserter = self._insert_string('this-> ')
             
             numerical_equality = '\n'.join([p._print(i) for i in symbolic_equality])
             numerical_equality = re.sub(pattern,self_inserter,numerical_equality)
-            numerical_equality = textwrap.indent(numerical_equality,indent).lstrip()
+            numerical_equality = textwrap.indent(numerical_equality, 4*' ').lstrip()
         else:
             numerical_equality = 'pass'
         
         text = text.format(equalities = numerical_equality)
         text = textwrap.indent(text,indent)
         return text
+
     
-    def _write_x_equations(self,eq_initial):
+    def _write_x_equations(self, eq_initial):
         text = '''
-                def eval_{eq_initial}_eq(self):
-                    config = self.config
-                    t = self.t
+                 void Topology::eval_{eq_initial}_eq()
+                 {{
+                     auto config = this-> config;
+                     auto t = this-> t;
 
-                    {replacements}
-
-                    self.{eq_initial}_eq_blocks = [{expressions}]
+                     {replacements}
+                                        
+                     this-> {eq_initial}_eq.resize({nc});
+                     this-> {eq_initial}_eq << {expressions};
+                 }};
                 '''
         
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
         printer = self.printer
-        indent = 4*' '
+        indent = ''
                 
         # Geting the optimized equations' vector/matrix from the topology class.
         # The expected format is two lists [replacements] and [expressions].
@@ -537,22 +543,23 @@ class template_codegen(abstract_generator):
         config_pattern = '|'.join([r'%s'%i for i in config_pattern])
         
         # Performing the regex substitution with 'self.'.
-        self_inserter = self._insert_string('self.')
-        num_repl_text = re.sub(self_pattern,self_inserter,num_repl_text)
-        num_expr_text = re.sub(self_pattern,self_inserter,num_expr_text)
+        self_inserter = self._insert_string('this-> ')
+        num_repl_text = re.sub(self_pattern, self_inserter, num_repl_text)
+        num_expr_text = re.sub(self_pattern, self_inserter, num_expr_text)
         
         # Performing the regex substitution with 'config.'.
         config_inserter = self._insert_string('config.')
-        num_repl_text = re.sub(config_pattern,config_inserter,num_repl_text)
-        num_expr_text = re.sub(config_pattern,config_inserter,num_expr_text)
+        num_repl_text = re.sub(config_pattern, config_inserter, num_repl_text)
+        num_expr_text = re.sub(config_pattern, config_inserter, num_expr_text)
         
         # Indenting the text block for propper class and function indentation.
-        num_repl_text = textwrap.indent(num_repl_text,indent).lstrip() 
-        num_expr_text = textwrap.indent(num_expr_text,indent).lstrip()
+        num_repl_text = textwrap.indent(num_repl_text, 4*' ').lstrip() 
+        num_expr_text = textwrap.indent(num_expr_text, 4*' ').lstrip()
         
         text = text.format(eq_initial  = eq_initial,
                            replacements = num_repl_text,
-                           expressions  = num_expr_text)
+                           expressions  = num_expr_text,
+                           nc = self.mbs.nc)
         text = textwrap.indent(text,indent)
         return text
     

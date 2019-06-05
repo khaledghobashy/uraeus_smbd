@@ -209,16 +209,16 @@ class topology(object):
 
         a0 = self.Pd_ground
         a1 = self.Pd_rbs_crank
-        a2 = self.Mbar_rbs_crank_jcs_a[:,2:3]
-        a3 = a2.T
-        a4 = self.P_rbs_crank
-        a5 = A(a4).T
-        a6 = self.Mbar_ground_jcs_a[:,0:1]
-        a7 = self.P_ground
-        a8 = A(a7).T
-        a9 = B(a1,a2)
+        a2 = self.Mbar_ground_jcs_a[:,0:1]
+        a3 = self.P_ground
+        a4 = A(a3).T
+        a5 = self.Mbar_rbs_crank_jcs_a[:,2:3]
+        a6 = B(a1,a5)
+        a7 = a5.T
+        a8 = self.P_rbs_crank
+        a9 = A(a8).T
         a10 = a0.T
-        a11 = B(a4,a2)
+        a11 = B(a8,a5)
         a12 = self.Mbar_ground_jcs_a[:,1:2]
         a13 = np.eye(1, dtype=np.float64)
         a14 = self.Mbar_rbs_crank_jcs_a[:,0:1]
@@ -226,31 +226,31 @@ class topology(object):
         a16 = self.Mbar_ground_jcs_a[:,0:1]
         a17 = self.Pd_rbs_conct
         a18 = self.Pd_rbs_rockr
-        a19 = self.Mbar_rbs_rockr_jcs_c[:,0:1]
-        a20 = self.P_rbs_rockr
-        a21 = A(a20).T
-        a22 = self.Mbar_rbs_conct_jcs_c[:,0:1]
-        a23 = self.P_rbs_conct
+        a19 = self.Mbar_rbs_conct_jcs_c[:,0:1]
+        a20 = self.P_rbs_conct
+        a21 = self.Mbar_rbs_rockr_jcs_c[:,0:1]
+        a22 = self.P_rbs_rockr
+        a23 = A(a22).T
         a24 = a17.T
         a25 = self.Mbar_rbs_rockr_jcs_d[:,0:1]
         a26 = self.Mbar_ground_jcs_d[:,2:3]
         a27 = B(a0,a26)
         a28 = a26.T
         a29 = a18.T
-        a30 = B(a7,a26)
+        a30 = B(a3,a26)
         a31 = self.Mbar_rbs_rockr_jcs_d[:,1:2]
 
         self.acc_eq_blocks = [(multi_dot([B(a0,self.ubar_ground_jcs_a),a0]) + -1*multi_dot([B(a1,self.ubar_rbs_crank_jcs_a),a1])),
-        (multi_dot([a3,a5,B(a0,a6),a0]) + multi_dot([a6.T,a8,a9,a1]) + 2*multi_dot([a10,B(a7,a6).T,a11,a1])),
-        (multi_dot([a3,a5,B(a0,a12),a0]) + multi_dot([a12.T,a8,a9,a1]) + 2*multi_dot([a10,B(a7,a12).T,a11,a1])),
-        (-1*derivative(config.UF_mcs_act, t, 0.1, 2)*a13 + multi_dot([a14.T,a5,(cos(config.UF_mcs_act(t))*B(a0,a15) + -1*sin(config.UF_mcs_act(t))*B(a0,a16)),a0]) + multi_dot([(cos(config.UF_mcs_act(t))*multi_dot([a15.T,a8]) + -1*sin(config.UF_mcs_act(t))*multi_dot([a16.T,a8])),B(a1,a14),a1]) + 2*multi_dot([(cos(config.UF_mcs_act(t))*multi_dot([a10,B(a7,a15).T]) + -1*sin(config.UF_mcs_act(t))*multi_dot([a10,B(a7,a16).T])),B(a4,a14),a1])),
+        (multi_dot([a2.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a2),a0]) + 2*multi_dot([a10,B(a3,a2).T,a11,a1])),
+        (multi_dot([a12.T,a4,a6,a1]) + multi_dot([a7,a9,B(a0,a12),a0]) + 2*multi_dot([a10,B(a3,a12).T,a11,a1])),
+        (-1*derivative(config.UF_mcs_act, t, 0.1, 2)*a13 + multi_dot([a14.T,a9,(cos(config.UF_mcs_act(t))*B(a0,a15) + -1*sin(config.UF_mcs_act(t))*B(a0,a16)),a0]) + multi_dot([(cos(config.UF_mcs_act(t))*multi_dot([a15.T,a4]) + -1*sin(config.UF_mcs_act(t))*multi_dot([a16.T,a4])),B(a1,a14),a1]) + 2*multi_dot([(cos(config.UF_mcs_act(t))*multi_dot([a10,B(a3,a15).T]) + -1*sin(config.UF_mcs_act(t))*multi_dot([a10,B(a3,a16).T])),B(a8,a14),a1])),
         (-1*derivative(config.UF_mcs_abs, t, 0.1, 2)*a13 + multi_dot([B(a1,self.ubar_rbs_crank_mcs_abs),a1])[0:1,0:1]),
         (multi_dot([B(a1,self.ubar_rbs_crank_jcs_b),a1]) + -1*multi_dot([B(a17,self.ubar_rbs_conct_jcs_b),a17])),
         (multi_dot([B(a17,self.ubar_rbs_conct_jcs_c),a17]) + -1*multi_dot([B(a18,self.ubar_rbs_rockr_jcs_c),a18])),
-        (multi_dot([a19.T,a21,B(a17,a22),a17]) + multi_dot([a22.T,A(a23).T,B(a18,a19),a18]) + 2*multi_dot([a24,B(a23,a22).T,B(a20,a19),a18])),
+        (multi_dot([a19.T,A(a20).T,B(a18,a21),a18]) + multi_dot([a21.T,a23,B(a17,a19),a17]) + 2*multi_dot([a24,B(a20,a19).T,B(a22,a21),a18])),
         (multi_dot([B(a18,self.ubar_rbs_rockr_jcs_d),a18]) + -1*multi_dot([B(a0,self.ubar_ground_jcs_d),a0])),
-        (multi_dot([a25.T,a21,a27,a0]) + multi_dot([a28,a8,B(a18,a25),a18]) + 2*multi_dot([a29,B(a20,a25).T,a30,a0])),
-        (multi_dot([a31.T,a21,a27,a0]) + multi_dot([a28,a8,B(a18,a31),a18]) + 2*multi_dot([a29,B(a20,a31).T,a30,a0])),
+        (multi_dot([a25.T,a23,a27,a0]) + multi_dot([a28,a4,B(a18,a25),a18]) + 2*multi_dot([a29,B(a22,a25).T,a30,a0])),
+        (multi_dot([a31.T,a23,a27,a0]) + multi_dot([a28,a4,B(a18,a31),a18]) + 2*multi_dot([a29,B(a22,a31).T,a30,a0])),
         np.zeros((3,1),dtype=np.float64),
         np.zeros((4,1),dtype=np.float64),
         2*multi_dot([a1.T,a1]),

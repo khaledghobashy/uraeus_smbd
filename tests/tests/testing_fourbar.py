@@ -77,6 +77,9 @@ cppcode = cppgen.template_codegen(model._mbs)
 cppcode.write_header_file()
 print(cppcode.write_class_constructor())
 print(cppcode.write_template_assembler())
+print(cppcode.write_coordinates_setter())
+print(cppcode.write_pos_equations())
+
 
 
 
