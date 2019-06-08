@@ -73,12 +73,15 @@ config_code.write_code_file()
 code = generators.template_codegen(model._mbs)
 code.write_code_file()
 
+
+file_path = '/home/khaledghobashy/Documents/smbd/smbd/numenv/cpp_eigen/numerics/tests/fourbar'
+
 cppcode = cppgen.template_codegen(model._mbs)
-cppcode.write_header_file()
-cppcode.write_source_file()
+cppcode.write_header_file(file_path)
+cppcode.write_source_file(file_path)
 
 cfg_cppcode = cppgen.configuration_codegen(config._config)
-cfg_cppcode.write_source_file()
+cfg_cppcode.write_source_file(file_path)
 
 
 

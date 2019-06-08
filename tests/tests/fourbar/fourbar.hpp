@@ -1,9 +1,8 @@
 
-#include <iostream>
 #include <map>
-#include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
-#include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Eigen>
 
+#include "../../euler_parameters.hpp"
+#include "../../spatial_algebra.hpp"
 
 typedef std::map<std::string, std::string> Dict_SS;
 typedef std::map<std::string, int> Dict_SI;
@@ -81,7 +80,7 @@ public:
     Eigen::VectorXd vel_eq;
     Eigen::VectorXd acc_eq;
 
-    Eigen::VectorXd rows = Eigen::VectorXd::LinSpaced(this->nrows, 0, this->nrows-1);
+    Eigen::VectorXd rows = Eigen::VectorXd::LinSpaced(nrows, 0, nrows-1);
 
     Eigen::VectorXd jac_rows;
     Eigen::VectorXd jac_cols;

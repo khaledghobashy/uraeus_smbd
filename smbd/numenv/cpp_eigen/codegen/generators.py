@@ -111,13 +111,6 @@ class configuration_codegen(abstract_generator):
     
     def write_source_content(self):
         text = '''
-                #include <iostream>
-                #include <map>
-                #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
-                
-                #include "spatial_algebra.hpp"
-                #include "geometries.hpp"
-
                 #include "{file_name}.hpp"
                                 
                 {assembler}
@@ -194,11 +187,10 @@ class template_codegen(abstract_generator):
             
     def write_header_class(self):
         text = '''
-                #include <iostream>
                 #include <map>
-                #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
-                #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Eigen>
-
+                
+                #include "../../euler_parameters.hpp"
+                #include "../../spatial_algebra.hpp"
                 
                 typedef std::map<std::string, std::string> Dict_SS;
                 typedef std::map<std::string, int> Dict_SI;
@@ -209,12 +201,10 @@ class template_codegen(abstract_generator):
                 public:
                     Eigen::VectorXd q;
                     Eigen::VectorXd qd;
+                    void set_inital_configuration();                
                 
                 public:
                     {primary_arguments}
-                    
-                public:
-                    void set_inital_configuration();
                     
                 }};
 
@@ -238,28 +228,13 @@ class template_codegen(abstract_generator):
                     Eigen::VectorXd vel_eq;
                     Eigen::VectorXd acc_eq;
                     
-                    Eigen::VectorXd rows = Eigen::VectorXd::LinSpaced(this->nrows, 0, this->nrows-1);
+                    Eigen::VectorXd rows = Eigen::VectorXd::LinSpaced(nrows, 0, nrows-1);
 
                     Eigen::VectorXd jac_rows;
                     Eigen::VectorXd jac_cols;
                     
                     Dict_SI indicies_map;
                     
-                public:
-                    {bodies}
-                    
-                public:
-                    {coordinates}
-                    
-                public:
-                    {velocities}
-                    
-                public:
-                    {accelerations}
-                
-                public:    
-                    {constants}
-                
                 public:
                 
                     Topology(std::string prefix);
@@ -283,6 +258,21 @@ class template_codegen(abstract_generator):
                 private:
                     void set_mapping(Dict_SI &indicies_map, Dict_SS &interface_map);
                 
+                                    
+                public:
+                    {bodies}
+                    
+                public:
+                    {coordinates}
+                    
+                public:
+                    {velocities}
+                    
+                public:
+                    {accelerations}
+                
+                public:    
+                    {constants}
                 
                 }};
                 '''
@@ -340,14 +330,6 @@ class template_codegen(abstract_generator):
 
     def write_source_content(self):
         text = '''
-                #include <iostream>
-                #include <map>
-                #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
-                #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Eigen>
-
-                #include "euler_parameters.hpp"
-                #include "spatial_algebra.hpp"
-
                 #include "{file_name}.hpp"
                 
                 {constructor}
@@ -373,7 +355,8 @@ class template_codegen(abstract_generator):
         evaluators = ''.join([self.write_constants_eval(),
                               self.write_pos_equations(),
                               self.write_vel_equations(),
-                              self.write_acc_equations()])
+                              self.write_acc_equations(),
+                              self.write_jac_equations()])
         
         text = text.format(file_name = self.name,
                            constructor = constructor,

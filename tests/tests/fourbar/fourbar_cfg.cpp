@@ -1,11 +1,4 @@
 
-#include <iostream>
-#include <map>
-#include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
-
-#include "spatial_algebra.hpp"
-#include "geometries.hpp"
-
 #include "fourbar_cfg.hpp"
 
 

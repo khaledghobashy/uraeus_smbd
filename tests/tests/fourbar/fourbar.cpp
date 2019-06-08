@@ -1,12 +1,4 @@
 
-#include <iostream>
-#include <map>
-#include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
-#include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Eigen>
-
-#include "euler_parameters.hpp"
-#include "spatial_algebra.hpp"
-
 #include "fourbar.hpp"
 
 
@@ -14,8 +6,6 @@ Topology::Topology(std::string prefix)
 {
     this-> prefix = prefix;
 
-    this-> q.resize(this-> n);
-    this-> qd.resize(this-> n);
     this-> q0.resize(this-> n);
 
     this-> pos_eq.resize(this-> nc);
@@ -327,6 +317,80 @@ void Topology::eval_acc_eq()
         2 * a1.transpose() * a1,
         2 * a20 * a13,
         2 * a25 * a14;
+};
+
+void Topology::eval_jac_eq()
+{
+    auto &config = this-> config;
+    auto &t = this-> t;
+
+    Eigen::Matrix<double, 3, 3> j0 = Eigen::MatrixXd::Identity(3, 3) ;
+    Eigen::Vector4d j1 = this-> P_ground ;
+    Eigen::Matrix<double, 1, 3> j2 = Eigen::MatrixXd::Zero(1, 3) ;
+    Eigen::Vector3d j3 = this-> Mbar_rbs_crank_jcs_a.col(2) ;
+    Eigen::Matrix<double, 1, 3> j4 = j3.transpose() ;
+    Eigen::Vector4d j5 = this-> P_rbs_crank ;
+    Eigen::Matrix<double, 3, 3> j6 = A(j5).transpose() ;
+    Eigen::Vector3d j7 = this-> Mbar_ground_jcs_a.col(0) ;
+    Eigen::Vector3d j8 = this-> Mbar_ground_jcs_a.col(1) ;
+    Eigen::Matrix<double, 3, 3> j9 = -1 * j0 ;
+    Eigen::Matrix<double, 3, 3> j10 = A(j1).transpose() ;
+    Eigen::Matrix<double, 3, 4> j11 = B(j5, j3) ;
+    Eigen::Vector4d j12 = this-> P_rbs_conct ;
+    Eigen::Vector3d j13 = this-> Mbar_rbs_rockr_jcs_c.col(0) ;
+    Eigen::Vector4d j14 = this-> P_rbs_rockr ;
+    Eigen::Matrix<double, 3, 3> j15 = A(j14).transpose() ;
+    Eigen::Vector3d j16 = this-> Mbar_rbs_conct_jcs_c.col(0) ;
+    Eigen::Vector3d j17 = this-> Mbar_ground_jcs_d.col(2) ;
+    Eigen::Matrix<double, 1, 3> j18 = j17.transpose() ;
+    Eigen::Vector3d j19 = this-> Mbar_rbs_rockr_jcs_d.col(0) ;
+    Eigen::Vector3d j20 = this-> Mbar_rbs_rockr_jcs_d.col(1) ;
+    Eigen::Matrix<double, 3, 4> j21 = B(j1, j17) ;
+
+    this-> jac_eq << 
+        j0,
+        B(j1, this-> ubar_ground_jcs_a),
+        j9,
+        -1 * B(j5, this-> ubar_rbs_crank_jcs_a),
+        j2,
+        j4 * j6 * B(j1, j7),
+        j2,
+        j7.transpose() * j10 * j11,
+        j2,
+        j4 * j6 * B(j1, j8),
+        j2,
+        j8.transpose() * j10 * j11,
+        j0,
+        B(j5, this-> ubar_rbs_crank_jcs_b),
+        j9,
+        -1 * B(j12, this-> ubar_rbs_conct_jcs_b),
+        j0,
+        B(j12, this-> ubar_rbs_conct_jcs_c),
+        j9,
+        -1 * B(j14, this-> ubar_rbs_rockr_jcs_c),
+        j2,
+        j13.transpose() * j15 * B(j12, j16),
+        j2,
+        j16.transpose() * A(j12).transpose() * B(j14, j13),
+        j9,
+        -1 * B(j1, this-> ubar_ground_jcs_d),
+        j0,
+        B(j14, this-> ubar_rbs_rockr_jcs_d),
+        j2,
+        j19.transpose() * j15 * j21,
+        j2,
+        j18 * j10 * B(j14, j19),
+        j2,
+        j20.transpose() * j15 * j21,
+        j2,
+        j18 * j10 * B(j14, j20),
+        j0,
+        Eigen::MatrixXd::Zero(3, 4),
+        Eigen::MatrixXd::Zero(4, 3),
+        Eigen::MatrixXd::Identity(4, 4),
+        2 * j5.transpose(),
+        2 * j12.transpose(),
+        2 * j14.transpose();
 };
 
 
