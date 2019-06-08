@@ -215,12 +215,12 @@ class topology(object):
         a18 = self.P_rbs_rockr
         a19 = A(a18).T
         a20 = a13.T
-        a21 = self.Mbar_ground_jcs_d[:,2:3]
-        a22 = a21.T
-        a23 = self.Mbar_rbs_rockr_jcs_d[:,0:1]
-        a24 = B(a0,a21)
+        a21 = self.Mbar_rbs_rockr_jcs_d[:,0:1]
+        a22 = self.Mbar_ground_jcs_d[:,2:3]
+        a23 = B(a0,a22)
+        a24 = a22.T
         a25 = a14.T
-        a26 = B(a3,a21)
+        a26 = B(a3,a22)
         a27 = self.Mbar_rbs_rockr_jcs_d[:,1:2]
 
         self.acc_eq_blocks = [(multi_dot([B(a0,self.ubar_ground_jcs_a),a0]) + -1*multi_dot([B(a1,self.ubar_rbs_crank_jcs_a),a1])),
@@ -230,8 +230,8 @@ class topology(object):
         (multi_dot([B(a13,self.ubar_rbs_conct_jcs_c),a13]) + -1*multi_dot([B(a14,self.ubar_rbs_rockr_jcs_c),a14])),
         (multi_dot([a15.T,A(a16).T,B(a14,a17),a14]) + multi_dot([a17.T,a19,B(a13,a15),a13]) + 2*multi_dot([a20,B(a16,a15).T,B(a18,a17),a14])),
         (multi_dot([B(a14,self.ubar_rbs_rockr_jcs_d),a14]) + -1*multi_dot([B(a0,self.ubar_ground_jcs_d),a0])),
-        (multi_dot([a22,a4,B(a14,a23),a14]) + multi_dot([a23.T,a19,a24,a0]) + 2*multi_dot([a25,B(a18,a23).T,a26,a0])),
-        (multi_dot([a22,a4,B(a14,a27),a14]) + multi_dot([a27.T,a19,a24,a0]) + 2*multi_dot([a25,B(a18,a27).T,a26,a0])),
+        (multi_dot([a21.T,a19,a23,a0]) + multi_dot([a24,a4,B(a14,a21),a14]) + 2*multi_dot([a25,B(a18,a21).T,a26,a0])),
+        (multi_dot([a27.T,a19,a23,a0]) + multi_dot([a24,a4,B(a14,a27),a14]) + 2*multi_dot([a25,B(a18,a27).T,a26,a0])),
         np.zeros((3,1),dtype=np.float64),
         np.zeros((4,1),dtype=np.float64),
         2*multi_dot([a1.T,a1]),

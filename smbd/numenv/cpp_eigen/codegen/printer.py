@@ -22,10 +22,10 @@ class printer(CXX11CodePrinter):
         return _expr
         
     def _print_AbstractMatrix(self, expr):
-        args = ','.join([self._print(i) for i in expr.args])
+        args = ', '.join([self._print(i) for i in expr.args])
         name = expr.__class__.__name__
         name = (name.lower() if len(name)>1 else name)
-        return '%s(%s)'%(name,args)
+        return '%s(%s)'%(name, args)
     
     def _print_Simple_geometry(self, expr):
         expr_lowerd = expr.__class__.__name__.lower()
@@ -33,6 +33,18 @@ class printer(CXX11CodePrinter):
     
     def _print_Equal_to(self, expr):
         return '%s'%self._print(expr.args[0])
+    
+    def _print_Oriented(self, expr):
+        name = 'oriented'
+        args = ', '.join([self._print(i) for i in expr.args])
+        output = '%s({%s})'%(name, args)
+        return output
+    
+    def _print_Centered(self, expr):
+        name = 'centered'
+        args = ', '.join([self._print(i) for i in expr.args])
+        output = '%s({%s})'%(name, args)
+        return output
     
     def _print_matrix_symbol(self, expr, declare=False):
         name = expr._raw_name

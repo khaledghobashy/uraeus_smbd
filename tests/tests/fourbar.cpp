@@ -2,19 +2,21 @@
 #include <iostream>
 #include <map>
 #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
+#include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Eigen>
+
+#include "euler_parameters.hpp"
+#include "spatial_algebra.hpp"
 
 #include "fourbar.hpp"
-#include "euler_parameters.hpp"
 
 
 Topology::Topology(std::string prefix)
 {
     this-> prefix = prefix;
-    this-> n = 28;
-    this-> nc = 27;
-    this-> nrows = 14;
-    this-> ncols = 2*4;
-    this-> rows = Eigen::VectorXd::LinSpaced(this->nrows, 0, this->nrows-1);
+
+    this-> q.resize(this-> n);
+    this-> qd.resize(this-> n);
+    this-> q0.resize(this-> n);
 
     this-> pos_eq.resize(this-> nc);
     this-> vel_eq.resize(this-> nc);
@@ -25,7 +27,6 @@ Topology::Topology(std::string prefix)
     this-> indicies_map[prefix + "rbs_conct"] = 2;
     this-> indicies_map[prefix + "rbs_rockr"] = 3;
 };
-
 
 
 
@@ -120,6 +121,31 @@ void Topology::set_mapping(Dict_SI &indicies_map, Dict_SS &interface_map)
 
 
 
+void Configuration::set_inital_configuration()
+{
+    this-> q.resize(28);
+    this-> q << 
+        this-> R_ground, 
+        this-> P_ground, 
+        this-> R_rbs_crank, 
+        this-> P_rbs_crank, 
+        this-> R_rbs_conct, 
+        this-> P_rbs_conct, 
+        this-> R_rbs_rockr, 
+        this-> P_rbs_rockr;
+
+    this-> qd.resize(28);
+    this-> qd << 
+        this-> Rd_ground, 
+        this-> Pd_ground, 
+        this-> Rd_rbs_crank, 
+        this-> Pd_rbs_crank, 
+        this-> Rd_rbs_conct, 
+        this-> Pd_rbs_conct, 
+        this-> Rd_rbs_rockr, 
+        this-> Pd_rbs_rockr;
+};
+
 void Topology::set_gen_coordinates(Eigen::VectorXd &q)
 {
     this-> R_ground << q.block(0,0, 3,1) ;
@@ -178,7 +204,7 @@ void Topology::eval_constants()
     this-> ubar_rbs_crank_jcs_b << (A(config.P_rbs_crank).transpose() * config.pt1_jcs_b + -1 * A(config.P_rbs_crank).transpose() * config.R_rbs_crank) ;
     this-> ubar_rbs_conct_jcs_b << (A(config.P_rbs_conct).transpose() * config.pt1_jcs_b + -1 * A(config.P_rbs_conct).transpose() * config.R_rbs_conct) ;
     this-> Mbar_rbs_conct_jcs_c << A(config.P_rbs_conct).transpose() * triad(config.ax1_jcs_c) ;
-    this-> Mbar_rbs_rockr_jcs_c << A(config.P_rbs_rockr).transpose() * triad(config.ax2_jcs_c,triad(config.ax1_jcs_c).block(0,1, 3,1)) ;
+    this-> Mbar_rbs_rockr_jcs_c << A(config.P_rbs_rockr).transpose() * triad(config.ax2_jcs_c, triad(config.ax1_jcs_c).block(0,1, 3,1)) ;
     this-> ubar_rbs_conct_jcs_c << (A(config.P_rbs_conct).transpose() * config.pt1_jcs_c + -1 * A(config.P_rbs_conct).transpose() * config.R_rbs_conct) ;
     this-> ubar_rbs_rockr_jcs_c << (A(config.P_rbs_rockr).transpose() * config.pt1_jcs_c + -1 * A(config.P_rbs_rockr).transpose() * config.R_rbs_rockr) ;
     this-> Mbar_rbs_rockr_jcs_d << A(config.P_rbs_rockr).transpose() * triad(config.ax1_jcs_d) ;
@@ -263,12 +289,12 @@ void Topology::eval_acc_eq()
     Eigen::Vector4d a3 = this-> P_ground ;
     Eigen::Matrix<double, 3, 3> a4 = A(a3).transpose() ;
     Eigen::Vector3d a5 = this-> Mbar_rbs_crank_jcs_a.col(2) ;
-    Eigen::Matrix<double, 3, 4> a6 = B(a1,a5) ;
+    Eigen::Matrix<double, 3, 4> a6 = B(a1, a5) ;
     Eigen::Matrix<double, 1, 3> a7 = a5.transpose() ;
     Eigen::Vector4d a8 = this-> P_rbs_crank ;
     Eigen::Matrix<double, 3, 3> a9 = A(a8).transpose() ;
     Eigen::Matrix<double, 1, 4> a10 = a0.transpose() ;
-    Eigen::Matrix<double, 3, 4> a11 = B(a8,a5) ;
+    Eigen::Matrix<double, 3, 4> a11 = B(a8, a5) ;
     Eigen::Vector3d a12 = this-> Mbar_ground_jcs_a.col(1) ;
     Eigen::Vector4d a13 = this-> Pd_rbs_conct ;
     Eigen::Vector4d a14 = this-> Pd_rbs_rockr ;
@@ -278,24 +304,24 @@ void Topology::eval_acc_eq()
     Eigen::Vector4d a18 = this-> P_rbs_rockr ;
     Eigen::Matrix<double, 3, 3> a19 = A(a18).transpose() ;
     Eigen::Matrix<double, 1, 4> a20 = a13.transpose() ;
-    Eigen::Vector3d a21 = this-> Mbar_ground_jcs_d.col(2) ;
-    Eigen::Matrix<double, 1, 3> a22 = a21.transpose() ;
-    Eigen::Vector3d a23 = this-> Mbar_rbs_rockr_jcs_d.col(0) ;
-    Eigen::Matrix<double, 3, 4> a24 = B(a0,a21) ;
+    Eigen::Vector3d a21 = this-> Mbar_rbs_rockr_jcs_d.col(0) ;
+    Eigen::Vector3d a22 = this-> Mbar_ground_jcs_d.col(2) ;
+    Eigen::Matrix<double, 3, 4> a23 = B(a0, a22) ;
+    Eigen::Matrix<double, 1, 3> a24 = a22.transpose() ;
     Eigen::Matrix<double, 1, 4> a25 = a14.transpose() ;
-    Eigen::Matrix<double, 3, 4> a26 = B(a3,a21) ;
+    Eigen::Matrix<double, 3, 4> a26 = B(a3, a22) ;
     Eigen::Vector3d a27 = this-> Mbar_rbs_rockr_jcs_d.col(1) ;
 
     this-> acc_eq << 
-        (B(a0,this-> ubar_ground_jcs_a) * a0 + -1 * B(a1,this-> ubar_rbs_crank_jcs_a) * a1),
-        (a2.transpose() * a4 * a6 * a1 + a7 * a9 * B(a0,a2) * a0 + 2 * a10 * B(a3,a2).transpose() * a11 * a1),
-        (a12.transpose() * a4 * a6 * a1 + a7 * a9 * B(a0,a12) * a0 + 2 * a10 * B(a3,a12).transpose() * a11 * a1),
-        (B(a1,this-> ubar_rbs_crank_jcs_b) * a1 + -1 * B(a13,this-> ubar_rbs_conct_jcs_b) * a13),
-        (B(a13,this-> ubar_rbs_conct_jcs_c) * a13 + -1 * B(a14,this-> ubar_rbs_rockr_jcs_c) * a14),
-        (a15.transpose() * A(a16).transpose() * B(a14,a17) * a14 + a17.transpose() * a19 * B(a13,a15) * a13 + 2 * a20 * B(a16,a15).transpose() * B(a18,a17) * a14),
-        (B(a14,this-> ubar_rbs_rockr_jcs_d) * a14 + -1 * B(a0,this-> ubar_ground_jcs_d) * a0),
-        (a22 * a4 * B(a14,a23) * a14 + a23.transpose() * a19 * a24 * a0 + 2 * a25 * B(a18,a23).transpose() * a26 * a0),
-        (a22 * a4 * B(a14,a27) * a14 + a27.transpose() * a19 * a24 * a0 + 2 * a25 * B(a18,a27).transpose() * a26 * a0),
+        (B(a0, this-> ubar_ground_jcs_a) * a0 + -1 * B(a1, this-> ubar_rbs_crank_jcs_a) * a1),
+        (a2.transpose() * a4 * a6 * a1 + a7 * a9 * B(a0, a2) * a0 + 2 * a10 * B(a3, a2).transpose() * a11 * a1),
+        (a12.transpose() * a4 * a6 * a1 + a7 * a9 * B(a0, a12) * a0 + 2 * a10 * B(a3, a12).transpose() * a11 * a1),
+        (B(a1, this-> ubar_rbs_crank_jcs_b) * a1 + -1 * B(a13, this-> ubar_rbs_conct_jcs_b) * a13),
+        (B(a13, this-> ubar_rbs_conct_jcs_c) * a13 + -1 * B(a14, this-> ubar_rbs_rockr_jcs_c) * a14),
+        (a15.transpose() * A(a16).transpose() * B(a14, a17) * a14 + a17.transpose() * a19 * B(a13, a15) * a13 + 2 * a20 * B(a16, a15).transpose() * B(a18, a17) * a14),
+        (B(a14, this-> ubar_rbs_rockr_jcs_d) * a14 + -1 * B(a0, this-> ubar_ground_jcs_d) * a0),
+        (a21.transpose() * a19 * a23 * a0 + a24 * a4 * B(a14, a21) * a14 + 2 * a25 * B(a18, a21).transpose() * a26 * a0),
+        (a27.transpose() * a19 * a23 * a0 + a24 * a4 * B(a14, a27) * a14 + 2 * a25 * B(a18, a27).transpose() * a26 * a0),
         Eigen::MatrixXd::Zero(3, 1),
         Eigen::MatrixXd::Zero(4, 1),
         2 * a1.transpose() * a1,

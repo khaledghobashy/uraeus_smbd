@@ -77,6 +77,9 @@ cppcode = cppgen.template_codegen(model._mbs)
 cppcode.write_header_file()
 cppcode.write_source_file()
 
+cfg_cppcode = cppgen.configuration_codegen(config._config)
+cfg_cppcode.write_source_file()
+
 
 
 

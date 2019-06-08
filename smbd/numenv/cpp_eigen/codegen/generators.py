@@ -95,7 +95,10 @@ class configuration_codegen(abstract_generator):
         self.printer = printer
         self.name = self.config.name
         
-        self.config_vars = [printer._print(i) for i in self.config.arguments_symbols]
+        self.primary_args = [printer._print(i) for i in config.topology.arguments_symbols]
+        self.config_vars  = [printer._print(i) for i in self.config.arguments_symbols]
+        self.input_nodes  = self.config.input_nodes
+        
         self.input_args  = self.config.input_equalities
         self.output_args = self.config.intermediat_equalities \
                          + self.config.output_equalities
@@ -105,6 +108,83 @@ class configuration_codegen(abstract_generator):
         self.gen_velocities_sym  = [printer._print(exp.lhs) 
         for exp in self.config.topology.mapped_gen_velocities]
         
+    
+    def write_source_content(self):
+        text = '''
+                #include <iostream>
+                #include <map>
+                #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
+                
+                #include "spatial_algebra.hpp"
+                #include "geometries.hpp"
+
+                #include "{file_name}.hpp"
+                                
+                {assembler}
+                
+               '''
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        assembler  = self.write_template_assembler()
+                
+        text = text.format(file_name = self.name,
+                           assembler = assembler)
+        return text
+    
+    
+    def write_template_assembler(self):
+        text = '''
+                void Configuration::assemble()
+                {{
+                    auto &config = this->config;
+                    
+                    {outputs}
+                }};
+                '''
+        
+        p = self.printer
+        indent = ''
+        
+        outputs = self.output_args
+        
+        self_pattern = '|'.join(self.input_nodes)
+        self_inserter = self._insert_string('this-> ')
+        
+        config_pattern = '|'.join(self.primary_args)
+        config_inserter = self._insert_string('config.')
+
+                
+        outputs = '\n'.join([p._print(exp) for exp in outputs])
+        outputs = re.sub(config_pattern, config_inserter, outputs)
+        outputs = re.sub(self_pattern, self_inserter, outputs)
+        outputs = textwrap.indent(outputs, 4*' ').lstrip()
+                
+#        coordinates = ',\n'.join(self.gen_coordinates_sym)
+#        coordinates = re.sub(pattern, self_inserter, coordinates)
+#        coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
+#        coordinates = textwrap.indent(coordinates,indent).lstrip()
+#        
+#        velocities = ',\n'.join(self.gen_velocities_sym)
+#        velocities = re.sub(pattern,self_inserter,velocities)
+#        velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
+#        velocities = textwrap.indent(velocities,indent).lstrip()
+        
+        
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        text = text.format(outputs = outputs)
+        text = textwrap.indent(text,indent)
+        return text
+
+        
+    def write_source_file(self, dir_path=''):
+        file_path = os.path.join(dir_path, self.name)
+        system_class = self.write_source_content()
+        with open('%s.cpp'%file_path, 'w') as file:
+            file.write(system_class)
+        print('File full path : %s.cpp'%file_path)
+
 
 ###############################################################################
 ###############################################################################
@@ -115,21 +195,56 @@ class template_codegen(abstract_generator):
     def write_header_class(self):
         text = '''
                 #include <iostream>
+                #include <map>
                 #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
+                #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Eigen>
+
                 
-                #include "AbstractClasses.hpp"
+                typedef std::map<std::string, std::string> Dict_SS;
+                typedef std::map<std::string, int> Dict_SI;
                 
-                class Configuration : public AbstractConfiguration
+                class Configuration
                 {{
+                
+                public:
+                    Eigen::VectorXd q;
+                    Eigen::VectorXd qd;
                 
                 public:
                     {primary_arguments}
                     
+                public:
+                    void set_inital_configuration();
+                    
                 }};
 
 
-                class Topology : public AbstractTopology
+
+                class Topology
                 {{
+                
+                public:
+                    const int n = {n};
+                    const int nc = {nc};
+                    const int nrows = {nve};
+                    const int ncols = 2*{nodes};
+                    
+                    std::string prefix;
+                    double t = 0;
+                    
+                    Eigen::VectorXd q0;
+                    
+                    Eigen::VectorXd pos_eq;
+                    Eigen::VectorXd vel_eq;
+                    Eigen::VectorXd acc_eq;
+                    
+                    Eigen::VectorXd rows = Eigen::VectorXd::LinSpaced(this->nrows, 0, this->nrows-1);
+
+                    Eigen::VectorXd jac_rows;
+                    Eigen::VectorXd jac_cols;
+                    
+                    Dict_SI indicies_map;
+                    
                 public:
                     {bodies}
                     
@@ -200,7 +315,11 @@ class template_codegen(abstract_generator):
                            coordinates = coordinates,
                            velocities = velocities,
                            accelerations = accelerations,
-                           constants = constants)        
+                           constants = constants,
+                           n = self.mbs.n,
+                           nc = self.mbs.nc,
+                           nve = self.mbs.nve,
+                           nodes = len(self.bodies))        
         return text
     
     def write_header_file(self, dir_path=''):
@@ -224,9 +343,12 @@ class template_codegen(abstract_generator):
                 #include <iostream>
                 #include <map>
                 #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
-                
-                #include "{file_name}.hpp"
+                #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Eigen>
+
                 #include "euler_parameters.hpp"
+                #include "spatial_algebra.hpp"
+
+                #include "{file_name}.hpp"
                 
                 {constructor}
                 
@@ -243,7 +365,8 @@ class template_codegen(abstract_generator):
         constructor = self.write_class_constructor()
         assemblers  = self.write_template_assembler()
         
-        setters = ''.join([self.write_coordinates_setter(),
+        setters = ''.join([self.write_configuration_setter(),
+                           self.write_coordinates_setter(),
                            self.write_velocities_setter(),
                            self.write_accelerations_setter()])
             
@@ -265,11 +388,8 @@ class template_codegen(abstract_generator):
                 Topology::Topology(std::string prefix)
                 {{
                     this-> prefix = prefix;
-                    this-> n = {n};
-                    this-> nc = {nc};
-                    this-> nrows = {nve};
-                    this-> ncols = 2*{nodes};
-                    this-> rows = Eigen::VectorXd::LinSpaced(this->nrows, 0, this->nrows-1);
+                    
+                    this-> q0.resize(this-> n);
                     
                     this-> pos_eq.resize(this-> nc);
                     this-> vel_eq.resize(this-> nc);
@@ -277,7 +397,6 @@ class template_codegen(abstract_generator):
                     
                     {indicies_map}
                 }};
-                
                '''
         
         indent = ''
@@ -287,11 +406,7 @@ class template_codegen(abstract_generator):
         indicies_map = '\n'.join(['this-> indicies_map[prefix + "%s"] = %s;'%(n,i) for i,n in enumerate(self.bodies)])
         indicies_map = textwrap.indent(indicies_map, 4*' ').lstrip()
         
-        text = text.format(n = self.mbs.n,
-                           nc = self.mbs.nc,
-                           nve = self.mbs.nve,
-                           nodes = len(self.bodies),
-                           indicies_map = indicies_map)
+        text = text.format(indicies_map = indicies_map)
         text = textwrap.indent(text,indent)
         
         return text
@@ -396,17 +511,19 @@ class template_codegen(abstract_generator):
         self_pattern = '|'.join(self_pattern_iter)
         self_inserter = self._insert_string('this-> ')
         
+        num_constants_list = self.constants_numeric_expr
+        num_constants_text = '\n'.join((printer._print(i) for i in num_constants_list))
+        num_constants_text = re.sub(config_pattern, config_inserter, num_constants_text)
+        num_constants_text = re.sub(self_pattern, self_inserter, num_constants_text)
+        num_constants_text = textwrap.indent(num_constants_text, 4*' ').lstrip()
+
+        
         sym_constants = self.constants_symbolic_expr
         sym_constants_text = '\n'.join((printer._print(i) for i in sym_constants))
         sym_constants_text = re.sub(config_pattern, config_inserter, sym_constants_text)
         sym_constants_text = re.sub(self_pattern, self_inserter, sym_constants_text)
         sym_constants_text = textwrap.indent(sym_constants_text, 4*' ').lstrip()
         
-        num_constants_list = self.constants_numeric_expr
-        num_constants_text = '\n'.join((printer._print(i) for i in num_constants_list))
-        num_constants_text = re.sub(config_pattern, config_inserter, num_constants_text)
-        num_constants_text = re.sub(self_pattern, self_inserter, num_constants_text)
-        num_constants_text = textwrap.indent(num_constants_text, 4*' ').lstrip()
 
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -415,6 +532,44 @@ class template_codegen(abstract_generator):
         text = textwrap.indent(text,indent)
         return text
 
+    def write_configuration_setter(self):
+        text = '''
+                void Configuration::set_inital_configuration()
+                {{
+                    this-> q.resize({n});
+                    this-> q << 
+                        {q_equalities};
+                    
+                    this-> qd.resize({n});
+                    this-> qd << 
+                        {qd_equalities};
+                }};
+               '''
+        
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        indent = ''
+                
+        
+        self_inserter = self._insert_string('this-> ')
+        
+        q_pattern = '|'.join(self.gen_coordinates_sym)
+        q_equalities = ', \n'.join(self.gen_coordinates_sym)
+        q_equalities = re.sub(q_pattern, self_inserter, q_equalities)
+        q_equalities = textwrap.indent(q_equalities, 8*' ').lstrip()
+        
+        qd_pattern = '|'.join(self.gen_velocities_sym)
+        qd_equalities = ', \n'.join(self.gen_velocities_sym)
+        qd_equalities = re.sub(qd_pattern, self_inserter, qd_equalities)
+        qd_equalities = textwrap.indent(qd_equalities, 8*' ').lstrip()
+        
+        text = text.format(n = self.mbs.n,
+                           q_equalities = q_equalities,
+                           qd_equalities = qd_equalities)
+        text = textwrap.indent(text, indent)
+        return text
+    
     def write_coordinates_setter(self):
         return self._write_x_setter('gen_coordinates','q')
     

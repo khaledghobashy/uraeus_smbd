@@ -1,11 +1,19 @@
 
 #include <iostream>
+#include <map>
 #include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
+#include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Eigen>
 
-#include "AbstractClasses.hpp"
 
-class Configuration : public AbstractConfiguration
+typedef std::map<std::string, std::string> Dict_SS;
+typedef std::map<std::string, int> Dict_SI;
+
+class Configuration
 {
+
+public:
+    Eigen::VectorXd q;
+    Eigen::VectorXd qd;
 
 public:
     Eigen::Vector3d R_ground ;
@@ -48,11 +56,38 @@ public:
     Eigen::Vector3d ax1_jcs_d ;
     Eigen::Vector3d pt1_jcs_d ;
 
+public:
+    void set_inital_configuration();
+
 };
 
 
-class Topology : public AbstractTopology
+
+class Topology
 {
+
+public:
+    const int n = 28;
+    const int nc = 27;
+    const int nrows = 14;
+    const int ncols = 2*4;
+
+    std::string prefix;
+    double t = 0;
+
+    Eigen::VectorXd q0;
+
+    Eigen::VectorXd pos_eq;
+    Eigen::VectorXd vel_eq;
+    Eigen::VectorXd acc_eq;
+
+    Eigen::VectorXd rows = Eigen::VectorXd::LinSpaced(this->nrows, 0, this->nrows-1);
+
+    Eigen::VectorXd jac_rows;
+    Eigen::VectorXd jac_cols;
+
+    Dict_SI indicies_map;
+
 public:
     int ground ;
     int rbs_crank ;
