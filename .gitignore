@@ -8,4 +8,4 @@
 /examples/**/numenv
 /examples/**/*.py
 /examples/**/*.py
-/numenv/cpp_eigen/numerics/tests
+/smbd/numenv/cpp_eigen/numerics/tests
