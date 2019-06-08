@@ -1,7 +1,4 @@
-#include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
-#include <iostream>
-#include <vector>
-#include <numeric>
+
 #include "spatial_algebra.hpp"
 
 

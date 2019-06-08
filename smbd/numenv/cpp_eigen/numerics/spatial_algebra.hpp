@@ -1,6 +1,9 @@
 # pragma once
 
-# include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
+#include <vector>
+#include <numeric>
+#include "eigen-eigen-323c052e1731/Eigen/Dense"
+#include "eigen-eigen-323c052e1731/Eigen/Eigen"
 
 typedef Eigen::Block<Eigen::Matrix<double, 3, 3, 0, 3, 3>, -1, -1, false> Col; 
 

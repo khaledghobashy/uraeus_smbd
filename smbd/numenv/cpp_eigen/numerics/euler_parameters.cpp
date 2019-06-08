@@ -1,11 +1,9 @@
-#include <iostream>
-#include </home/khaledghobashy/Documents/eigen-eigen-323c052e1731/Eigen/Dense>
+#include "eigen-eigen-323c052e1731/Eigen/Dense"
 
 #include "euler_parameters.hpp"
 
 
 using namespace Eigen;
-using namespace std;
 
 Matrix3d A(const Vector4d &P)
 {
