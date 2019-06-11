@@ -212,21 +212,6 @@ class printer(CXX11CodePrinter):
     def _print_ImmutableDenseMatrix(self, expr):
         return self._print_MutableDenseMatrix(expr)
     
-    def _print_MutableSparseMatrix(self, expr):
-        rows = []
-        cols = []
-        data = []
-        for i,j,v in expr.row_list():
-            rows.append(i)
-            cols.append(j)
-            data.append(v)
-        
-        rows_print = 'np.array([' + ','.join([self._print(i) for i in rows]) + '])'
-        cols_print = 'np.array([' + ','.join([self._print(i) for i in cols]) + '])'
-        data_print = '[' + ','.join([self._print(i) for i in data]) + ']'
-        code_block = '\n'.join([rows_print,cols_print,data_print])
-        return code_block
-    
     def _print_UndefinedFunction(self, expr, declare=False):
         if declare:
             output = 'virtual double %s(double)'%expr
