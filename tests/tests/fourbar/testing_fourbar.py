@@ -84,5 +84,3 @@ cfg_cppcode = cppgen.configuration_codegen(config._config)
 cfg_cppcode.write_source_file(file_path)
 
 
-
-
