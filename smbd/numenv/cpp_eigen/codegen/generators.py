@@ -188,6 +188,7 @@ class template_codegen(abstract_generator):
     def write_header_class(self):
         text = '''
                 #include <map>
+                #include <vector>
                 
                 #include "../../euler_parameters.hpp"
                 #include "../../spatial_algebra.hpp"
@@ -209,16 +210,19 @@ class template_codegen(abstract_generator):
                 }};
 
 
-
+                // Declaring the Topology Class and its numerical objects.
+                // =======================================================
                 class Topology
                 {{
                 
                 public:
-                    const int n = {n};
-                    const int nc = {nc};
-                    const int nrows = {nve};
-                    const int ncols = 2*{nodes};
+                    // Topology constants.
+                    int n = {n};
+                    int nc = {nc};
+                    int nrows = {nve};
+                    int ncols = 2*{nodes};
                     
+                    // Topology variables
                     std::string prefix;
                     double t = 0;
                     
@@ -227,6 +231,9 @@ class template_codegen(abstract_generator):
                     Eigen::VectorXd pos_eq;
                     Eigen::VectorXd vel_eq;
                     Eigen::VectorXd acc_eq;
+                    
+                    std::vector<MatrixXd> jac_eq;
+                    std::vector<MatrixXd> mas_eq;
                     
                     Eigen::VectorXd rows = Eigen::VectorXd::LinSpaced(nrows, 0, nrows-1);
 
@@ -237,20 +244,26 @@ class template_codegen(abstract_generator):
                     
                 public:
                 
-                    Topology(std::string prefix);
+                    // Topology Constructors.
+                    Topology();
+                    Topology(std::string);
                     
+                    // Base Configuration object.
                     Configuration config;
                 
+                    // Topology initializing functions.
                     void initialize();
                     void assemble(Dict_SI &indicies_map, Dict_SS &interface_map, int rows_offset);
                     void set_initial_states();
                     void eval_constants();
                     
+                    // Topology Equations Evaluators.
                     void eval_pos_eq();
                     void eval_vel_eq();
                     void eval_acc_eq();
                     void eval_jac_eq();
                     
+                    // Topology States Setters.
                     void set_gen_coordinates(Eigen::VectorXd &q);
                     void set_gen_velocities(Eigen::VectorXd &qd);
                     void set_gen_accelerations(Eigen::VectorXd &qdd);
@@ -258,19 +271,23 @@ class template_codegen(abstract_generator):
                 private:
                     void set_mapping(Dict_SI &indicies_map, Dict_SS &interface_map);
                 
-                                    
+                // Topology Bodies Indicies from the network graph.                    
                 public:
                     {bodies}
-                    
+                
+                // Topology Generalized Coordinates (R and P vectors).
                 public:
                     {coordinates}
-                    
+                
+                // Topology Generalized Velocities (dR/dt and dP/dt vectors).
                 public:
                     {velocities}
-                    
+                
+                // Topology Generalized Accelerations (dR2/dt2 and dP2/dt2 vectors).
                 public:
                     {accelerations}
                 
+                // Configuration Constants.
                 public:    
                     {constants}
                 
@@ -332,6 +349,8 @@ class template_codegen(abstract_generator):
         text = '''
                 #include "{file_name}.hpp"
                 
+                {configuration_setter}
+                
                 {constructor}
                 
                 {assemblers}
@@ -344,11 +363,12 @@ class template_codegen(abstract_generator):
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
+        configuration_setter = self.write_configuration_setter()
+        
         constructor = self.write_class_constructor()
         assemblers  = self.write_template_assembler()
         
-        setters = ''.join([self.write_configuration_setter(),
-                           self.write_coordinates_setter(),
+        setters = ''.join([self.write_coordinates_setter(),
                            self.write_velocities_setter(),
                            self.write_accelerations_setter()])
             
@@ -359,6 +379,7 @@ class template_codegen(abstract_generator):
                               self.write_jac_equations()])
         
         text = text.format(file_name = self.name,
+                           configuration_setter = configuration_setter,
                            constructor = constructor,
                            assemblers = assemblers,
                            setters = setters,
@@ -368,7 +389,8 @@ class template_codegen(abstract_generator):
 
     def write_class_constructor(self):
         text = '''
-                Topology::Topology(std::string prefix)
+                Topology::Topology(){{}};
+                Topology::Topology(std::string prefix = "")
                 {{
                     this-> prefix = prefix;
                     
@@ -575,13 +597,13 @@ class template_codegen(abstract_generator):
         return self._write_x_equations('acc')
     
     def write_jac_equations(self):
-        return self._write_x_equations('jac')
+        return self._write_x_equations('jac', std_vector=True)
     
     def write_forces_equations(self):
         return self._write_x_equations('frc')
     
     def write_mass_equations(self):
-        return self._write_x_equations('mass')
+        return self._write_x_equations('mass', std_vector=True)
     
     def write_reactions_equations(self):
         text = '''
@@ -661,7 +683,7 @@ class template_codegen(abstract_generator):
         return text
 
     
-    def _write_x_equations(self, eq_initial):
+    def _write_x_equations(self, eq_initial, std_vector=False):
         text = '''
                  void Topology::eval_{eq_initial}_eq()
                  {{
@@ -670,7 +692,7 @@ class template_codegen(abstract_generator):
 
                      {replacements}
                                         
-                     this-> {eq_initial}_eq << 
+                     this-> {eq_initial}_eq {operator} 
                          {expressions};
                  }};
                 '''
@@ -680,11 +702,13 @@ class template_codegen(abstract_generator):
         
         printer = self.printer
         indent = ''
-                
+        
+        operator = '=' if std_vector else '<<'
+        
         # Geting the optimized equations' vector/matrix from the topology class.
         # The expected format is two lists [replacements] and [expressions].
-        replacements_list = getattr(self.mbs,'%s_rep'%eq_initial)
-        expressions_list  = getattr(self.mbs,'%s_exp'%eq_initial)
+        replacements_list = getattr(self.mbs, '%s_rep'%eq_initial)
+        expressions_list  = getattr(self.mbs, '%s_exp'%eq_initial)
         # Extracting the vector/matrix from the returned expressions list.
         vector_expr = expressions_list[0]
         # Extracting the Non-Zero values of the vector/matrix.
@@ -724,9 +748,12 @@ class template_codegen(abstract_generator):
         num_repl_text = textwrap.indent(num_repl_text, 4*' ').lstrip() 
         num_expr_text = textwrap.indent(num_expr_text, 8*' ').lstrip()
         
+        num_expr_text = '{%s}'%num_expr_text if std_vector else num_expr_text
+        
         text = text.format(eq_initial  = eq_initial,
                            replacements = num_repl_text,
-                           expressions  = num_expr_text)
+                           expressions  = num_expr_text,
+                           operator = operator)
         text = textwrap.indent(text,indent)
         return text
     
