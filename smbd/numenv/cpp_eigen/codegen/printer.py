@@ -214,15 +214,15 @@ class printer(CXX11CodePrinter):
     
     def _print_UndefinedFunction(self, expr, declare=False):
         if declare:
-            output = 'virtual double %s(double)'%expr
+            output = 'virtual double %s(const double&)'%expr
         else:
             output = '%s'%expr
         return output
     
-    def _print_Function(self,expr):
+    def _print_Function(self, expr):
         func = expr.__class__.__name__
         args = ','.join([self._print(arg) for arg in expr.args])
-        return '%s(%s)'%(func,args)
+        return '%s(%s)'%(func, args)
         
     def _print_transpose(self, expr):
         return '%s.transpose()'%(*[self._print(i) for i in expr.args],)
@@ -232,8 +232,7 @@ class printer(CXX11CodePrinter):
 
     def _print_Derivative(self, expr):
         func = expr.args[0].__class__.__name__
-#        func = self._print(func).strip(str(func.args))
-        return 'derivative(%s, t, 0.1, %s)'%(func, expr.args[1][1])
+        return 'derivative(%s, t, %s)'%(func, expr.args[1][1])
     
     def _print_Lambda(self, obj):
         args, expr = obj.args
