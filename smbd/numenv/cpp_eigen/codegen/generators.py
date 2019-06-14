@@ -192,6 +192,7 @@ class template_codegen(abstract_generator):
                 
                 #include "../../euler_parameters.hpp"
                 #include "../../spatial_algebra.hpp"
+                #include "../../helpers.hpp"
                 
                 typedef std::map<std::string, std::string> Dict_SS;
                 typedef std::map<std::string, int> Dict_SI;
@@ -253,7 +254,7 @@ class template_codegen(abstract_generator):
                 
                     // Topology initializing functions.
                     void initialize();
-                    void assemble(Dict_SI &indicies_map, Dict_SS &interface_map, int rows_offset);
+                    void assemble(Dict_SI& indicies_map, Dict_SS& interface_map, int rows_offset);
                     void set_initial_states();
                     void eval_constants();
                     
@@ -264,12 +265,12 @@ class template_codegen(abstract_generator):
                     void eval_jac_eq();
                     
                     // Topology States Setters.
-                    void set_gen_coordinates(Eigen::VectorXd &q);
-                    void set_gen_velocities(Eigen::VectorXd &qd);
-                    void set_gen_accelerations(Eigen::VectorXd &qdd);
+                    void set_gen_coordinates(Eigen::VectorXd& q);
+                    void set_gen_velocities(Eigen::VectorXd& qd);
+                    void set_gen_accelerations(Eigen::VectorXd& qdd);
                 
                 private:
-                    void set_mapping(Dict_SI &indicies_map, Dict_SS &interface_map);
+                    void set_mapping(Dict_SI& indicies_map, Dict_SS& interface_map);
                 
                 // Topology Bodies Indicies from the network graph.                    
                 public:
@@ -298,23 +299,28 @@ class template_codegen(abstract_generator):
         
         p = self.printer
         
-        primary_aruments = '\n'.join(['%s ;'%p._print(i, declare=True) for i in self.mbs.arguments_symbols])
+        primary_aruments = '\n'.join(['%s ;'%p._print(i, declare=True) for i in 
+                                      set(self.mbs.arguments_symbols)])
         primary_aruments = textwrap.indent(primary_aruments, 4*' ').lstrip()
         
         bodies_indices = '\n'.join(['int %s ;'%i for i in self.bodies])
         bodies_indices = textwrap.indent(bodies_indices, 4*' ').lstrip()
 
         
-        coordinates = '\n'.join(['%s ;'%p._print(i.lhs, declare=True) for i in self.gen_coordinates_exp])
+        coordinates = '\n'.join(['%s ;'%p._print(i.lhs, declare=True) for i in
+                                 self.gen_coordinates_exp])
         coordinates = textwrap.indent(coordinates, 4*' ').lstrip()
 
-        velocities = '\n'.join(['%s ;'%p._print(i.lhs, declare=True) for i in self.gen_velocities_exp])
+        velocities = '\n'.join(['%s ;'%p._print(i.lhs, declare=True) for i in 
+                                self.gen_velocities_exp])
         velocities = textwrap.indent(velocities, 4*' ').lstrip()
 
-        accelerations = '\n'.join(['%s ;'%p._print(i.lhs, declare=True) for i in self.gen_accelerations_exp])
+        accelerations = '\n'.join(['%s ;'%p._print(i.lhs, declare=True) for i in
+                                   self.gen_accelerations_exp])
         accelerations = textwrap.indent(accelerations, 4*' ').lstrip()
 
-        constants = '\n'.join(['%s ;'%p._print(i, declare=True) for i in self.mbs.constants_symbols])
+        constants = '\n'.join(['%s ;'%p._print(i, declare=True) for i in 
+                               set(self.mbs.constants_symbols)])
         constants = textwrap.indent(constants, 4*' ').lstrip()
         
         text = text.format(primary_arguments = primary_aruments,
@@ -422,15 +428,15 @@ class template_codegen(abstract_generator):
                 void Topology::initialize()
                 {{
                     Dict_SS interface_map;
-                    this->t = 0;
-                    this->assemble(this->indicies_map, interface_map, 0);
-                    this->set_initial_states();
-                    this->eval_constants();
+                    this-> t = 0;
+                    this-> assemble(this-> indicies_map, interface_map, 0);
+                    this-> set_initial_states();
+                    this-> eval_constants();
                     
                 }};
                     
                                 
-                void Topology::assemble(Dict_SI &indicies_map, Dict_SS &interface_map, int rows_offset)
+                void Topology::assemble(Dict_SI& indicies_map, Dict_SS& interface_map, int rows_offset)
                 {{
                     this-> set_mapping(indicies_map, interface_map);
                     this-> rows += (rows_offset * Eigen::VectorXd::Ones(this ->rows.size()) );
@@ -453,9 +459,9 @@ class template_codegen(abstract_generator):
                 }};
                 
                 
-                void Topology::set_mapping(Dict_SI &indicies_map, Dict_SS &interface_map)
+                void Topology::set_mapping(Dict_SI& indicies_map, Dict_SS& interface_map)
                 {{
-                    std::string p = this-> prefix;
+                    auto& p = this-> prefix;
                     
                     {indicies_map}
                     
@@ -494,7 +500,7 @@ class template_codegen(abstract_generator):
         text = '''
                 void Topology::eval_constants()
                 {{
-                    auto &config = this-> config;
+                    auto& config = this-> config;
                     
                     {num_constants}
                     
@@ -687,8 +693,8 @@ class template_codegen(abstract_generator):
         text = '''
                  void Topology::eval_{eq_initial}_eq()
                  {{
-                     auto &config = this-> config;
-                     auto &t = this-> t;
+                     auto& config = this-> config;
+                     auto& t = this-> t;
 
                      {replacements}
                                         
