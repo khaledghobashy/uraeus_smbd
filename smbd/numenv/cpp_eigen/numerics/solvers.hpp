@@ -1,18 +1,5 @@
 #include <vector>
-#include <iostream>
-
-#include "eigen-eigen-323c052e1731/Eigen/Dense"
-#include "eigen-eigen-323c052e1731/Eigen/Eigen"
-#include "eigen-eigen-323c052e1731/Eigen/Sparse"
-#include "eigen-eigen-323c052e1731/Eigen/SparseLU"
-
-
-typedef Eigen::SparseMatrix<double, Eigen::ColMajor> SparseBlock;
-typedef std::vector<int> Indicies;
-typedef std::vector<Eigen::MatrixXd> DataBlocks;
-
-// Declaring helper functions.
-void SparseAssembler(SparseBlock& mat, Indicies& rows, Indicies& cols, DataBlocks& data);
+#include "helpers.hpp"
 
 
 // Declaring and Implementing the Solver class as a template class.
@@ -37,7 +24,7 @@ public:
         model.set_gen_coordinates(model.q0);
         Jacobian.resize(model.nc, model.n);
 
-        for (size_t i = 0; i < model.nc; i++)
+        for (size_t i = 0; i < model.jac_rows.size(); i++)
         {
             jac_rows.push_back(int(model.jac_rows(i)));
             jac_cols.push_back(int(model.jac_cols(i)));        
@@ -127,17 +114,31 @@ void Solver<T>::NewtonRaphson(Eigen::VectorXd &guess)
     auto& model = *this-> model_ptr;
     
     // Creating a SparseSolver object.
+    std::cout << "Declaring SparseLU" << "\n";
     Eigen::SparseLU<SparseBlock> SparseSolver;
 
+    std::cout << "Setting Guess" << "\n";
     this-> set_gen_coordinates(guess);
+    std::cout << "Evaluating Pos_Eq " << "\n";
     auto b = this-> eval_pos_eq();
+    std::cout << "Evaluating Jac_Eq " << "\n";
     auto A = this-> eval_jac_eq();
+    std::cout << "Computing Matrix A " << "\n";
     SparseSolver.compute(A);
+    std::cout << SparseSolver.info() << "\n";
+    /* SparseSolver.analyzePattern(A);
+    if(SparseSolver.info() == Eigen::Success){std::cout << "Done Analyze" << "\n";};
+    std::cout << SparseSolver.info() << "\n";
+    SparseSolver.factorize(A); */
+
+    std::cout << "Solving for Vector b " << "\n";
     Eigen::VectorXd error = SparseSolver.solve(-b);
 
+    std::cout << "Entring While Loop " << "\n";
     int itr = 0;
     while (error.norm() >= 1e-5)
     {
+        std::cout << "Error e = " << error.transpose() << "\n";
         guess += error;
         this-> set_gen_coordinates(guess);
         b = this-> eval_pos_eq();
