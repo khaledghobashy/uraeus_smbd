@@ -1,18 +1,31 @@
-#include "eigen-eigen-323c052e1731/Eigen/Dense"
 
 #include "euler_parameters.hpp"
 
 
-using namespace Eigen;
-
-Matrix3d A(const Vector4d &P)
+Eigen::Matrix3d A(const Eigen::Vector4d& P)
 {
     double e0 = P(0,0);
     double e1 = P(1,0);
     double e2 = P(2,0);
     double e3 = P(3,0);
 
-    Matrix3d A;
+    Eigen::Matrix3d A;
+
+    /**
+     *  
+    result[0,0] = (e0**2+e1**2-e2**2-e3**2)
+    result[0,1] = 2*((e1*e2)-(e0*e3))              
+    result[0,2] = 2*((e1*e3)+(e0*e2))
+    
+    result[1,0] = 2*((e1*e2)+(e0*e3))
+    result[1,1] = e0**2-e1**2+e2**2-e3**2
+    result[1,2] = 2*((e2*e3)-(e0*e1))
+    
+    result[2,0] = 2*((e1*e3)-(e0*e2))
+    result[2,1] = 2*((e2*e3)+(e0*e1))
+    result[2,2] = e0**2-e1**2-e2**2+e3**2
+     * 
+     */
 
     A(0,0) = pow(e0,2) + pow(e1,2) - pow(e2,2) - pow(e3,2);
     A(0,1) = 2*((e1*e2) - (e0*e3));
@@ -30,9 +43,9 @@ Matrix3d A(const Vector4d &P)
 };
 
 
-MatrixXd B(const Vector4d &P, const Vector3d &u)
+Eigen::Matrix<double, 3, 4> B(const Eigen::Vector4d& P, const Eigen::Vector3d& u)
 {
-    Matrix<double, 3, 4> mat;
+    Eigen::Matrix<double, 3, 4> mat;
 
     double e0 = P(0,0);
     double e1 = P(1,0);
