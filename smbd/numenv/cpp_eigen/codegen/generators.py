@@ -111,7 +111,8 @@ class configuration_codegen(abstract_generator):
     
     def write_source_content(self):
         text = '''
-                #include "{file_name}.hpp"
+                #include "smbd/geometries.hpp"
+                #include "smbd/spatial_algebra.hpp"
                                 
                 {assembler}
                 
@@ -128,9 +129,31 @@ class configuration_codegen(abstract_generator):
     
     def write_template_assembler(self):
         text = '''
-                void Configuration::assemble()
+                template<class T>
+                class ConfigurationInputs
                 {{
-                    auto &config = this->config;
+                public:
+                    T* config;
+                    {inputs}
+                
+                public:
+                    ConfigurationInputs(T& config)
+                    {{
+                        this-> config = &config;
+                    }};
+                    
+                    void assemble();
+                
+                }};
+                
+                template<class T>
+                void ConfigurationInputs<T>::assemble()
+                {{
+                    auto& config = *this-> config;
+                    
+                    {primary_inputs}
+                    
+                    {intmd_eq}
                     
                     {outputs}
                 }};
@@ -141,32 +164,41 @@ class configuration_codegen(abstract_generator):
         
         outputs = self.output_args
         
+        
         self_pattern = '|'.join(self.input_nodes)
         self_inserter = self._insert_string('this-> ')
         
         config_pattern = '|'.join(self.primary_args)
         config_inserter = self._insert_string('config.')
-
-                
-        outputs = '\n'.join([p._print(exp) for exp in outputs])
+        
+        inputs = '\n'.join(['%s ;'%p._print(exp.lhs, declare=True) for exp in 
+                              self.input_args])
+        inputs = textwrap.indent(inputs, 4*' ').lstrip()
+        
+        intmd_eq = '\n'.join([p._print(exp, declare=True) for exp in 
+                              self.config.intermediat_equalities])
+        intmd_eq = re.sub(config_pattern, config_inserter, intmd_eq)
+        intmd_eq = re.sub(self_pattern, self_inserter, intmd_eq)
+        intmd_eq = textwrap.indent(intmd_eq, 4*' ').lstrip()
+        
+        direct_inputs = set.intersection(set(self.input_nodes), set(self.primary_args)) 
+        primary_inputs = '\n'.join(['config.%s = this-> %s ;'%(exp,exp) for exp in 
+                              direct_inputs])
+        primary_inputs = textwrap.indent(primary_inputs, 4*' ').lstrip()
+        
+        
+        outputs = '\n'.join([p._print(exp) for exp in 
+                             self.config.output_equalities])
         outputs = re.sub(config_pattern, config_inserter, outputs)
         outputs = re.sub(self_pattern, self_inserter, outputs)
         outputs = textwrap.indent(outputs, 4*' ').lstrip()
-                
-#        coordinates = ',\n'.join(self.gen_coordinates_sym)
-#        coordinates = re.sub(pattern, self_inserter, coordinates)
-#        coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
-#        coordinates = textwrap.indent(coordinates,indent).lstrip()
-#        
-#        velocities = ',\n'.join(self.gen_velocities_sym)
-#        velocities = re.sub(pattern,self_inserter,velocities)
-#        velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
-#        velocities = textwrap.indent(velocities,indent).lstrip()
-        
         
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(outputs = outputs)
+        text = text.format(inputs = inputs,
+                           primary_inputs = primary_inputs,
+                           intmd_eq = intmd_eq,
+                           outputs = outputs)
         text = textwrap.indent(text,indent)
         return text
 
@@ -174,9 +206,9 @@ class configuration_codegen(abstract_generator):
     def write_source_file(self, dir_path=''):
         file_path = os.path.join(dir_path, self.name)
         system_class = self.write_source_content()
-        with open('%s.cpp'%file_path, 'w') as file:
+        with open('%s.hpp'%file_path, 'w') as file:
             file.write(system_class)
-        print('File full path : %s.cpp'%file_path)
+        print('File full path : %s.hpp'%file_path)
 
 
 ###############################################################################
@@ -190,9 +222,9 @@ class template_codegen(abstract_generator):
                 #include <map>
                 #include <vector>
                 
-                #include "../../euler_parameters.hpp"
-                #include "../../spatial_algebra.hpp"
-                #include "../../helpers.hpp"
+                #include "smbd/euler_parameters.hpp"
+                #include "smbd/spatial_algebra.hpp"
+                #include "smbd/helpers.hpp"
                 
                 typedef std::map<std::string, std::string> Dict_SS;
                 typedef std::map<std::string, int> Dict_SI;
@@ -233,8 +265,8 @@ class template_codegen(abstract_generator):
                     Eigen::VectorXd vel_eq;
                     Eigen::VectorXd acc_eq;
                     
-                    std::vector<MatrixXd> jac_eq;
-                    std::vector<MatrixXd> mas_eq;
+                    std::vector<Eigen::MatrixXd> jac_eq;
+                    std::vector<Eigen::MatrixXd> mas_eq;
                     
                     Eigen::VectorXd rows = Eigen::VectorXd::LinSpaced(nrows, 0, nrows-1);
 
@@ -242,6 +274,7 @@ class template_codegen(abstract_generator):
                     Eigen::VectorXd jac_cols;
                     
                     Dict_SI indicies_map;
+                    
                     
                 public:
                 
@@ -405,6 +438,8 @@ class template_codegen(abstract_generator):
                     this-> pos_eq.resize(this-> nc);
                     this-> vel_eq.resize(this-> nc);
                     this-> acc_eq.resize(this-> nc);
+                    
+                    this-> jac_eq.reserve(this-> jac_rows.size());
                     
                     {indicies_map}
                 }};

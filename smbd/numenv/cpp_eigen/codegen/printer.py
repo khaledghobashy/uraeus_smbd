@@ -29,7 +29,11 @@ class printer(CXX11CodePrinter):
     
     def _print_Simple_geometry(self, expr):
         expr_lowerd = expr.__class__.__name__.lower()
-        return '%s(%s)'%(expr_lowerd,(self._print(expr.args)))
+        return '%s%s'%(expr_lowerd, (self._print(expr.args)))
+    
+    def _print_Cylinder_Geometry(self, expr):
+        expr_lowerd = expr.__class__.__name__.lower()
+        return '%s%s'%(expr_lowerd, (self._print(expr.args)))
     
     def _print_Equal_to(self, expr):
         return '%s'%self._print(expr.args[0])
@@ -67,8 +71,13 @@ class printer(CXX11CodePrinter):
         index = expr.slice[0]
         return '%s.col(%s)'%(m, index)
     
-    def _print_vector(self, expr, declare=False):
+    def _print_vector(self, expr, declare=False, hs='rhs'):
         name = expr._raw_name
+        if hs == 'rhs':
+            pass
+        elif hs == 'lhs':
+            declare = True
+            
         if declare:
             output = 'Eigen::Vector3d %s'%name
         else:
@@ -94,6 +103,14 @@ class printer(CXX11CodePrinter):
         else:
             output = super()._print_MatrixSymbol(expr, **kwargs)
         return output
+    
+    def _print_Geometry(self, expr, declare=False, **kwargs):
+        if declare:
+            output = 'auto %s'%expr.name
+        else:
+            output = super(CXX11CodePrinter, self)._print_Symbol(expr, **kwargs)
+        return output
+
     
     def _print_Symbol(self, expr, declare=False, **kwargs):
         if declare:
@@ -188,16 +205,6 @@ class printer(CXX11CodePrinter):
         value = ' + '.join(nested_operations)
         return '(%s)'%value
     
-    def _print_BlockMatrix(self, expr):
-        blocks = []
-        rows,cols = expr.blockshape
-        for r in np.arange(rows):
-            row = []
-            for c in np.arange(cols):
-                row.append(self._print(expr.blocks[r,c]))
-            string = ','.join(row)
-            blocks.append('[%s]'%string)
-        return 'np.bmat([%s])'%(','.join(blocks))
     
     def _print_MatrixSlice(self, expr):
         m, row_slice, col_slice = expr.args
@@ -214,7 +221,7 @@ class printer(CXX11CodePrinter):
     
     def _print_UndefinedFunction(self, expr, declare=False):
         if declare:
-            output = 'virtual double %s(const double&)'%expr
+            output = 'std::function<double(double)> %s'%expr
         else:
             output = '%s'%expr
         return output
