@@ -67,7 +67,7 @@ class project_generator(object):
                 	rm $(BUILD)*.o $(MODEL)    
         '''
         cpp_src = os.path.dirname(__file__)
-        cpp_src = os.path.join(cpp_src, '../numerics')
+        cpp_src = os.path.abspath(os.path.join(cpp_src, '../numerics'))
         
         #text = text.expandtabs()
         text = textwrap.dedent(text)
