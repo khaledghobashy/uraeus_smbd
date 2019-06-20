@@ -15,7 +15,7 @@ from . import generators
 
 class project_generator(object):
     
-    def __init__(self, sym_model, sym_config=None):
+    def __init__(self, sym_model, sym_config):
         
         self.sym_model = sym_model
         self.sym_config = sym_config
@@ -25,10 +25,11 @@ class project_generator(object):
     
     def generate_project(self, parent_dir='', dir_name='', overwrite=False):
         dir_name = self.name if dir_name =='' else dir_name
-        self.parent_dir = os.path.join(parent_dir, dir_name)
+        self.parent_dir = os.path.join(parent_dir,'numenv', 'cpp_eigen', dir_name)
         if overwrite:
             if os.path.exists(self.parent_dir):
                 shutil.rmtree(self.parent_dir)
+        
         self._create_dirs()
         self._write_makefile()
         self._write_mainfile()
@@ -63,8 +64,7 @@ class project_generator(object):
                 	$(CC) $(INC) -c -o $@ $<
                 
                 clear:
-                	rm $(BUILD)*.o $(MODEL)
-        
+                	rm $(BUILD)*.o $(MODEL)    
         '''
         cpp_src = os.path.dirname(__file__)
         cpp_src = os.path.join(cpp_src, '../numerics')
@@ -125,10 +125,6 @@ class project_generator(object):
         mbs_code.write_header_file(src_path)
         mbs_code.write_source_file(src_path)
 
-        if self.sym_config:
-            cfg_code = generators.configuration_codegen(self.sym_config)
-            cfg_code.write_source_file(src_path)
-        else:
-            print('Configuration file was not generated as No configuration Found!')
-        
+        cfg_code = generators.configuration_codegen(self.sym_config)
+        cfg_code.write_source_file(src_path)        
 
