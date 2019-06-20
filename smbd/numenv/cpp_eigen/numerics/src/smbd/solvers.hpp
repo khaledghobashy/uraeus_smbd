@@ -76,7 +76,7 @@ public:
     void NewtonRaphson(Eigen::VectorXd &guess);
     void Solve();
 
-    void ExportResultsCSV(int id);
+    void ExportResultsCSV(std::string location = "", int id = 0);
 };
 
 
@@ -287,14 +287,14 @@ void Solver<T>::Solve()
         ai = SparseSolver.solve(-this-> eval_acc_eq());
         this-> acc_history.emplace_back(ai);
     };
-
+    std::cout << "\n";
 };
 
 
 const static Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", ",");
 
 template<class T>
-void Solver<T>::ExportResultsCSV(int id)
+void Solver<T>::ExportResultsCSV(std::string location, int id)
 {
     // declaring and initializing the needed variables
     auto& name = this-> results_names[id];
@@ -316,7 +316,7 @@ void Solver<T>::ExportResultsCSV(int id)
     };
 
     // Opening the file as a .csv file.
-    results_file.open (name + ".csv");
+    results_file.open (location + name + ".csv");
     
     // Inserting the first line to be the indicies of the system.
     results_file << indicies + "time\n";
@@ -331,7 +331,7 @@ void Solver<T>::ExportResultsCSV(int id)
     };
 
     results_file.close();
-    std::cout << name << " results saved as : " << name + ".csv" << "\n";
+    std::cout << "\n" << name << " results saved as : " << location + name + ".csv" << "\n";
     
 };
 
