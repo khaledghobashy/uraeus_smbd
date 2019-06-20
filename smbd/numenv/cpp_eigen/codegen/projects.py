@@ -98,7 +98,6 @@ class project_generator(object):
                     // assign the configuration inputs needed ...
                     
                     Config.assemble();
-                    model.config.set_inital_configuration();
                     
                     Solver<Topology> Soln(model);
                     Soln.set_time_array(1, 100);

@@ -156,6 +156,8 @@ class configuration_codegen(abstract_generator):
                     {intmd_eq}
                     
                     {outputs}
+
+                    config.set_inital_configuration();
                 }};
                 '''
         
