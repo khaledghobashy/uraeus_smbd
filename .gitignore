@@ -5,9 +5,9 @@
 **/*.o
 **/*.stpl
 **/*.vscode
+/examples/**/numenv
 /examples/**/*.stpl
 /examples/**/csv_files
 /examples/**/results
-/examples/**/numenv
 /smbd/numenv/cpp_eigen/numerics/tests
 /tests
