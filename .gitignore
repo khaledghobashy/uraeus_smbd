@@ -9,7 +9,5 @@
 /examples/**/csv_files
 /examples/**/results
 /examples/**/numenv
-/examples/**/*.py
-/examples/**/*.py
 /smbd/numenv/cpp_eigen/numerics/tests
 /tests
