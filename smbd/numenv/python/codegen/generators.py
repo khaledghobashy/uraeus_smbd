@@ -274,7 +274,6 @@ class template_codegen(abstract_generator):
 
     def write_template_assembler(self):
         text = '''
-        
                 def initialize(self):
                     self.t = 0
                     self.assemble(self.indicies_map, {{}}, 0)

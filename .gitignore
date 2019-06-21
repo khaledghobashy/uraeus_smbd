@@ -2,8 +2,12 @@
 **/.ipynb_checkpoints
 **/__pycache__
 **/*.cmd
+**/*.o
+**/*.stpl
+**/*.vscode
+/examples/**/numenv
 /examples/**/*.stpl
 /examples/**/csv_files
 /examples/**/results
-/examples/**/numenv
-/examples/**/*.py
+/smbd/numenv/cpp_eigen/numerics/tests
+/tests
