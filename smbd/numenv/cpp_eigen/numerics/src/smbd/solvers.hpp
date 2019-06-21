@@ -302,18 +302,26 @@ void Solver<T>::ExportResultsCSV(std::string location, int id)
     auto& model = *this-> model_ptr;
     std::ofstream results_file;
 
+    std::map<int, std::string> ordered_indicies;
+    for (auto x : model.indicies_map)
+    {
+        ordered_indicies[x.second] = x.first;
+    };
+
     // Creating the system indicies string to be used as the fisrt line
     // in the .csv file
     std::string indicies = "";
     std::vector<std::string> coordinates{"x", "y", "z", "e0", "e1", "e2", "e3"};
-    for (auto x : model.indicies_map)
+    for (auto x : ordered_indicies)
     {
-        auto body_name = x.first;
+        auto body_name = x.second;
+        std::cout << body_name << "\n";
         for (auto& coordinate : coordinates)
         {
           indicies += body_name + "." + coordinate + "," ;
         };
     };
+    std::cout << indicies << "\n";
 
     // Opening the file as a .csv file.
     results_file.open (location + name + ".csv");
