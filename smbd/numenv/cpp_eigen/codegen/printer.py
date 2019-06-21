@@ -8,7 +8,6 @@ Created on Mon Jun  3 21:41:36 2019
 
 # Third party imports
 import sympy as sm
-import numpy as np
 from sympy.printing.cxxcode import CXX11CodePrinter
 
 class printer(CXX11CodePrinter):
@@ -32,6 +31,10 @@ class printer(CXX11CodePrinter):
         return '%s%s'%(expr_lowerd, (self._print(expr.args)))
     
     def _print_Cylinder_Geometry(self, expr):
+        expr_lowerd = expr.__class__.__name__.lower()
+        return '%s%s'%(expr_lowerd, (self._print(expr.args)))
+    
+    def _print_Triangular_Prism(self, expr):
         expr_lowerd = expr.__class__.__name__.lower()
         return '%s%s'%(expr_lowerd, (self._print(expr.args)))
     
