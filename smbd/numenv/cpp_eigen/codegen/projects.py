@@ -102,7 +102,7 @@ class project_generator(object):
                     Solver<Topology> Soln(model);
                     Soln.set_time_array(1, 100);
                     Soln.Solve();
-                    Soln.ExportResultsCSV(0);
+                    Soln.ExportResultsCSV("results/", 0);
                 
                 }};
         '''
