@@ -314,13 +314,11 @@ void Solver<T>::ExportResultsCSV(std::string location, int id)
     for (auto x : ordered_indicies)
     {
         auto body_name = x.second;
-        std::cout << body_name << "\n";
         for (auto& coordinate : coordinates)
         {
           indicies += body_name + "." + coordinate + "," ;
         };
     };
-    std::cout << indicies << "\n";
 
     // Opening the file as a .csv file.
     results_file.open (location + name + ".csv");
