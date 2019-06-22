@@ -6,57 +6,70 @@ Created on Wed Jun 19 12:36:49 2019
 @author: khaledghobashy
 """
 
+# Standard library imports
 import os
 import shutil
 import textwrap
 
+# Local applicataion imports
+from smbd import pkg_path
+
+# Local directories imports
 from . import generators
 
 
-class project_generator(object):
+class standalone_project(object):
     
-    def __init__(self, sym_model, sym_config):
+    def __init__(self, parent_dir=''):
         
-        self.sym_model = sym_model
-        self.sym_config = sym_config
+        self.parent_dir = parent_dir
+        self.code_dir = os.path.join(self.parent_dir, 'numenv', 'python')
         
-        self.name = sym_model.name
-    
-    
-    def generate_project(self, parent_dir='', dir_name='', overwrite=False):
-        dir_name = self.name if dir_name =='' else dir_name
-        self.parent_dir = os.path.join(parent_dir,'numenv', 'python', dir_name)
-        if overwrite:
-            if os.path.exists(self.parent_dir):
-                shutil.rmtree(self.parent_dir)
-        
-        self._create_dirs()
-        self._write_mainfile()
-        self._generate_files()
-    
-    
-    def _create_dirs(self):
+    def _create_subdirs(self):
         for d in ['src', 'results']:
-            os.makedirs(os.path.join(self.parent_dir, d))
-            
+            subdir = os.path.join(self.code_dir, d)
+            if not os.path.exists(subdir):
+                os.makedirs(subdir)
+        
     
-    def _write_mainfile(self):
+    def create_dirs(self, overwrite=False):
+        if os.path.exists(self.code_dir):
+            if overwrite:
+                shutil.rmtree(self.code_dir)
+                self._create_subdirs()
+            else:
+                self._create_subdirs()
+            
+        
+    def write_topology_code(self, topology):
+        src_path = os.path.join(self.code_dir, 'src')
+        codegen = generators.template_codegen(topology)
+        codegen.write_code_file(src_path)
+    
+    
+    def write_configuration_code(self, config):
+        src_path = os.path.join(self.code_dir, 'src')
+        codegen = generators.configuration_codegen(config)
+        codegen.write_code_file(src_path)
+        
+    
+    def write_mainfile(self):
         text = '''
                 import numpy as np
                 import pandas as pd
                 
                 try:
-                    from smbd.numenv.python.interfaces.scripting import multibody_system, simulation
+                    from smbd.numenv.python.numerics.systems import multibody_system, simulation
                 except ModuleNotFoundError:
                     import sys
                     sys.path.append('{pkg_path}')
-                    from smbd.numenv.python.interfaces.scripting import multibody_system, simulation
+                    from smbd.numenv.python.numerics.systems import multibody_system, simulation
 
-                import {model_name}, {model_name}_cfg
+                from src import topology, configuration
                 
                 
-                num_model = multibody_system({model_name})
-                num_model.topology.config = {model_name}_cfg.configuration()
+                num_model = multibody_system(topology)
+                num_model.topology.config = configuration.configuration()
                 
                 inputs_df = pd.read_csv('path/to/config.csv', index_col=0)
                 # input the configuration data here ...
@@ -75,28 +88,16 @@ class project_generator(object):
                 sim.set_time_array(1, 100)
                 sim.solve()
             
-        '''
-        pkg_path = os.path.dirname(__file__)
-        pkg_path = os.path.abspath(os.path.join(pkg_path, '../../../../'))
-        
+        '''        
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(model_name = self.name,
-                           pkg_path = pkg_path)
+        text = text.format(pkg_path = pkg_path)
         
         
-        file_path = os.path.join(self.parent_dir, 'src', 'main')
-        with open('%s.py'%file_path, 'w') as file:
+        file_path = os.path.join(self.code_dir, 'main')
+        file_name = '%s.py'%file_path
+        with open(file_name, 'w') as file:
             file.write(text)
-        print('File full path : %s.py'%file_path)
+        print('File full path : %s'%file_name)
         
-        
-    def _generate_files(self):
-        src_path = os.path.join(self.parent_dir, 'src')
-        
-        mbs_code = generators.template_codegen(self.sym_model)
-        mbs_code.write_code_file(src_path)
-
-        cfg_code = generators.configuration_codegen(self.sym_config)
-        cfg_code.write_code_file(src_path)        
-
+    
