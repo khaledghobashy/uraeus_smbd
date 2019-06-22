@@ -6,88 +6,61 @@ Created on Wed Jun 19 12:36:49 2019
 @author: khaledghobashy
 """
 
+# Standard library imports
 import os
 import shutil
 import textwrap
 
+# Local applicataion imports
+from smbd import pkg_path
+
+# Local directories imports
 from . import generators
 
 
-class project_generator(object):
+class standalone_project(object):
     
-    def __init__(self, sym_model, sym_config):
+    def __init__(self, parent_dir=''):
         
-        self.sym_model = sym_model
-        self.sym_config = sym_config
+        self.parent_dir = parent_dir
+        self.code_dir = os.path.join(self.parent_dir, 'numenv', 'cpp_eigen')
         
-        self.name = sym_model.name
-    
-    
-    def generate_project(self, parent_dir='', dir_name='', overwrite=False):
-        dir_name = self.name if dir_name =='' else dir_name
-        self.parent_dir = os.path.join(parent_dir,'numenv', 'cpp_eigen', dir_name)
-        if overwrite:
-            if os.path.exists(self.parent_dir):
-                shutil.rmtree(self.parent_dir)
-        
-        self._create_dirs()
-        self._write_makefile()
-        self._write_mainfile()
-        self._generate_files()
-    
-    
-    def _create_dirs(self):
+    def _create_subdirs(self):
         for d in ['build', 'src', 'results']:
-            os.makedirs(os.path.join(self.parent_dir, d))
-    
-    
-    def _write_makefile(self):
-        text = '''
-                MODEL := {model_name}
-
-                BUILD := build/
-                SRC := src/
-                
-                SMBD_SRC := {cpp_src}/src/
-                SMBD_BUILD := {cpp_src}/build/
-                SMBD_FILES := $(SMBD_BUILD)*.o
-                
-                DEPS := $(BUILD)$(MODEL).o $(SRC)main.cpp $(SRC){model_name}_cfg.hpp $(SMBD_FILES)
-                
-                INC := -I {cpp_src}/src
-                CC := g++
-                
-                $(MODEL): $(DEPS) $(SMBD_SRC)smbd/solvers.hpp
-                	$(CC) $(INC) $(DEPS) -o $(MODEL)
-                
-                $(BUILD)$(MODEL).o: $(SRC)$(MODEL).cpp $(SRC)$(MODEL).hpp 
-                	$(CC) $(INC) -c -o $@ $<
-                
-                clear:
-                	rm $(BUILD)*.o $(MODEL)    
-        '''
-        cpp_src = os.path.dirname(__file__)
-        cpp_src = os.path.abspath(os.path.join(cpp_src, '../numerics'))
-        
-        #text = text.expandtabs()
-        text = textwrap.dedent(text)
-        text = text.format(model_name = self.name,
-                           cpp_src = cpp_src)
-        
-        file_path = os.path.join(self.parent_dir, 'Makefile')
-        with open('%s'%file_path, 'w') as file:
-            file.write(text)
-        print('File full path : %s'%file_path)
+            subdir = os.path.join(self.code_dir, d)
+            if not os.path.exists(subdir):
+                os.makedirs(subdir)
         
     
-    def _write_mainfile(self):
+    def create_dirs(self, overwrite=False):
+        if os.path.exists(self.code_dir):
+            if overwrite:
+                shutil.rmtree(self.code_dir)
+                self._create_subdirs()
+            else:
+                self._create_subdirs()
+        
+    def write_topology_code(self, topology):
+        src_path = os.path.join(self.code_dir, 'src')
+        codegen = generators.template_codegen(topology)
+        codegen.write_header_file(src_path)
+        codegen.write_source_file(src_path)
+            
+    
+    def write_configuration_code(self, config):
+        src_path = os.path.join(self.code_dir, 'src')
+        codegen = generators.configuration_codegen(config)
+        codegen.write_source_file(src_path)
+        
+    
+    def write_mainfile(self, filename='main'):
         text = '''
                 #include <iostream>
                 
                 #include "smbd/solvers.hpp"
                 
-                #include "{model_name}.hpp"
-                #include "{model_name}_cfg.hpp"
+                #include "src/topology.hpp"
+                #include "src/configuration.hpp"
                 
                 
                 int main()
@@ -109,21 +82,53 @@ class project_generator(object):
         
         text = text.expandtabs()
         text = textwrap.dedent(text)
-        text = text.format(model_name = self.name)
         
-        file_path = os.path.join(self.parent_dir, 'src', 'main')
-        with open('%s.cpp'%file_path, 'w') as file:
-            file.write(text)
-        print('File full path : %s.cpp'%file_path)
-        
-        
-    def _generate_files(self):
-        src_path = os.path.join(self.parent_dir, 'src')
-        
-        mbs_code = generators.template_codegen(self.sym_model)
-        mbs_code.write_header_file(src_path)
-        mbs_code.write_source_file(src_path)
+        file_path = os.path.join(self.code_dir, filename)
+        full_name = '%s.cpp'%file_path
+        with open(full_name, 'w') as f:
+            f.write(text)
+        print('File full path : %s'%full_name)
 
-        cfg_code = generators.configuration_codegen(self.sym_config)
-        cfg_code.write_source_file(src_path)        
+        
+    
+    def write_makefile(self):
+        text = '''
+                # Change MODEL, CONFG and MAIN to match the source files you want to build
+                MODEL := topology
+                CONFG := configuration
+                MAIN := main.cpp
 
+                BUILD := build/
+                SRC := src/
+                
+                SMBD_SRC := {cpp_src}/src/
+                SMBD_BUILD := {cpp_src}/build/
+                SMBD_FILES := $(SMBD_BUILD)*.o
+                
+                DEPS := $(BUILD)$(MODEL).o $(MAIN) $(SRC)$(CONFG).hpp $(SMBD_FILES)
+                
+                INC := -I {cpp_src}/src
+                CC := g++
+                
+                $(MODEL): $(DEPS) $(SMBD_SRC)smbd/solvers.hpp
+                	$(CC) $(INC) $(DEPS) -o $(MODEL)
+                
+                $(BUILD)$(MODEL).o: $(SRC)$(MODEL).cpp $(SRC)$(MODEL).hpp 
+                	$(CC) $(INC) -c -o $@ $<
+                
+                clear:
+                	rm $(BUILD)*.o $(MODEL)    
+        '''
+        cpp_src = os.path.dirname(__file__)
+        cpp_src = os.path.abspath(os.path.join(pkg_path, 'numenv', 'cpp_eigen', 'numerics'))
+        
+        text = textwrap.dedent(text)
+        text = text.format(cpp_src = cpp_src)
+        
+        file_path = os.path.join(self.code_dir, 'Makefile')
+        full_name = '%s'%file_path
+        with open(full_name, 'w') as f:
+            f.write(text)
+        print('File full path : %s'%full_name)
+
+    
