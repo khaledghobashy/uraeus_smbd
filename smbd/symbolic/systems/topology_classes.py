@@ -652,6 +652,7 @@ class standalone_topology(template_based_topology):
         typ_dict = self._typ_attr_dict(bodies.ground)
         self.grf = 'ground'
         self.graph.add_node(self.grf, **typ_dict)
+        self.nodes[self.grf]['mirr'] = self.grf
 
 ###############################################################################
 ###############################################################################
