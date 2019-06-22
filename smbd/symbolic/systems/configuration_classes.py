@@ -146,10 +146,6 @@ class Simple_geometry(sm.Function):
         name = '\_'.join(name.split('_'))
         return r'%s%s'%(name, (*self.args,))
     
-#    def _ccode(self, printer):
-#        expr_lowerd = self.__class__.__name__.lower()
-#        args = ','.join([printer._print(i) for i in self.args])
-#        return '%s(%s)'%(expr_lowerd,args)
 
 class Composite_Geometry(Simple_geometry):
     """
