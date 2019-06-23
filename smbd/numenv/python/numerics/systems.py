@@ -52,16 +52,15 @@ class simulation(object):
     def set_time_array(self, duration, spacing):
         self.soln.set_time_array(duration, spacing)
         
-    def solve(self, run_id=None, save=True):
+    def solve(self, run_id=None):
         run_id = '%s_temp'%self.name if run_id is None else run_id
         self.soln.solve(run_id)
-        if save:
-            filename = run_id
-            self.save_results(filename)
     
-    def save_results(self, filename):
-        path = os.path.join('results', filename)
-        self.soln.pos_dataframe.to_csv('%s.csv'%path, index=True)
+    def save_results(self, path, filename):
+        path = os.path.abspath(path)
+        filepath = os.path.join(path, filename)
+        self.soln.pos_dataframe.to_csv('%s.csv'%filepath, index=True)
+        print('results saved as %s.csv at %s'%(filename, path))
         
     def eval_reactions(self):
         self.soln.eval_reactions()

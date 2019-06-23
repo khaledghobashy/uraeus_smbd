@@ -26,7 +26,7 @@ def progress_bar(steps, i):
     sys.stdout.write('\r')
     length=(100*(1+i)//(4*steps))
     percentage=100*(1+i)//steps
-    sys.stdout.write("Progress: ")
+#    sys.stdout.write("Progress: ")
     sys.stdout.write("[%-25s] %d%%, (%s/%s) steps." % ('='*length,percentage,i+1, steps))
     sys.stdout.flush()
 
@@ -245,7 +245,8 @@ class kds_solver(abstract_solver):
 
             acc_rhs = self._eval_acc_eq()
             self._acc_history[i+1] = solve(A,-acc_rhs)
-                    
+        
+        print('\n')
         self._creat_results_dataframes()    
     
     def _eval_lagrange_multipliers(self, i):
@@ -335,7 +336,8 @@ class dds_solver(abstract_solver):
             
             M_hat, Q_hat = self._partioned_system(M, J, Qt, Qd)
             integrator.set_f_params(M_hat, Q_hat)
-
+        
+        print('\n')
         self._creat_results_dataframes()
 
     def _solve_velocity(self,vdot):

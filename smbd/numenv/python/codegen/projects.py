@@ -87,6 +87,7 @@ class standalone_project(object):
                 sim = simulation('sim1', num_model, 'kds')
                 sim.set_time_array(1, 100)
                 sim.solve()
+                sim.save_results('../../config_inputs', 'sim1')
             
         '''        
         text = text.expandtabs()
