@@ -9,5 +9,6 @@
 /examples/**/*.stpl
 /examples/**/csv_files
 /examples/**/results
+/examples/**/config_inputs
 /smbd/numenv/cpp_eigen/numerics/tests
 /tests
