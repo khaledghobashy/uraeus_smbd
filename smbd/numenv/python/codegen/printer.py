@@ -29,6 +29,14 @@ class npsc_printer(C99CodePrinter):
         expr_lowerd = expr.__class__.__name__.lower()
         return '%s(%s)'%(expr_lowerd,(self._print(expr.args)))
     
+    def _print_Cylinder_Geometry(self, expr):
+        expr_lowerd = expr.__class__.__name__.lower()
+        return '%s%s'%(expr_lowerd, (self._print(expr.args)))
+    
+    def _print_Triangular_Prism(self, expr):
+        expr_lowerd = expr.__class__.__name__.lower()
+        return '%s%s'%(expr_lowerd, (self._print(expr.args)))
+    
     def _print_Equal_to(self,expr):
         return '%s'%self._print(expr.args[0])
     

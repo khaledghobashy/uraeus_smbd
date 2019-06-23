@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Local applicataion imports
-from solvers import kds_solver, dds_solver
+from .solvers import kds_solver, dds_solver
 
 ###############################################################################
 

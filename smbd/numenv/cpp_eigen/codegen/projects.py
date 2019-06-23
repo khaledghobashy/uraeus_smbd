@@ -26,7 +26,7 @@ class standalone_project(object):
         self.code_dir = os.path.join(self.parent_dir, 'numenv', 'cpp_eigen')
         
     def _create_subdirs(self):
-        for d in ['build', 'src', 'results']:
+        for d in ['build', 'src', 'results', 'bin']:
             subdir = os.path.join(self.code_dir, d)
             if not os.path.exists(subdir):
                 os.makedirs(subdir)
@@ -64,7 +64,7 @@ class standalone_project(object):
                 
                 
                 int main()
-                {{
+                {
                     Topology model("");
                     auto Config = ConfigurationInputs<Configuration>(model.config);
                     
@@ -75,9 +75,9 @@ class standalone_project(object):
                     Solver<Topology> Soln(model);
                     Soln.set_time_array(1, 100);
                     Soln.Solve();
-                    Soln.ExportResultsCSV("results/", 0);
+                    Soln.ExportResultsCSV("../results/", 0);
                 
-                }};
+                };
         '''
         
         text = text.expandtabs()
@@ -100,6 +100,7 @@ class standalone_project(object):
 
                 BUILD := build/
                 SRC := src/
+                BIN := bin/
                 
                 SMBD_SRC := {cpp_src}/src/
                 SMBD_BUILD := {cpp_src}/build/
@@ -110,8 +111,8 @@ class standalone_project(object):
                 INC := -I {cpp_src}/src
                 CC := g++
                 
-                $(MODEL): $(DEPS) $(SMBD_SRC)smbd/solvers.hpp
-                	$(CC) $(INC) $(DEPS) -o $(MODEL)
+                $(BIN)$(MODEL): $(DEPS) $(SMBD_SRC)smbd/solvers.hpp
+                	$(CC) $(INC) $(DEPS) -o $(BIN)$(MODEL)
                 
                 $(BUILD)$(MODEL).o: $(SRC)$(MODEL).cpp $(SRC)$(MODEL).hpp 
                 	$(CC) $(INC) -c -o $@ $<
@@ -119,11 +120,11 @@ class standalone_project(object):
                 clear:
                 	rm $(BUILD)*.o $(MODEL)    
         '''
-        cpp_src = os.path.dirname(__file__)
-        cpp_src = os.path.abspath(os.path.join(pkg_path, 'numenv', 'cpp_eigen', 'numerics'))
+        cpp_src_rel = os.path.join(*('smbd.numenv.cpp_eigen.numerics'.split('.')))
+        cpp_src_abs = os.path.abspath(os.path.join(pkg_path, cpp_src_rel))
         
         text = textwrap.dedent(text)
-        text = text.format(cpp_src = cpp_src)
+        text = text.format(cpp_src = cpp_src_abs)
         
         file_path = os.path.join(self.code_dir, 'Makefile')
         full_name = '%s'%file_path

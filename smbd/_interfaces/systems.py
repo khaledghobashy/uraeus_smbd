@@ -232,8 +232,8 @@ class configuration(object):
         self.config.assemble_equalities()
 
 
-    def extract_inputs_to_csv(self):
-        file_path = os.path.join('csv_files', self.name)
+    def extract_inputs_to_csv(self, path):
+        file_path = os.path.join(path, self.name)
         inputs_dataframe = self.config.create_inputs_dataframe()
         inputs_dataframe.to_csv('%s.csv'%file_path)
     
