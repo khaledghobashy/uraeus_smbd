@@ -29,7 +29,23 @@ def load_pickled_data(file):
         instance = cloudpickle.load(f)
     return instance
 
+
+class standalone_project(object):
     
+    def __init__(self, parent_dir=''):
+        
+        self.parent_dir = parent_dir
+        self.code_dir = os.path.join(self.parent_dir, 'numenv')
+        
+    def create(self):
+        self._create_common_dirs()
+    
+    def _create_common_dirs(self):
+        for d in ['config_inputs', 'results']:
+            subdir = os.path.join(self.parent_dir, d)
+            if not os.path.exists(subdir):
+                os.makedirs(subdir)
+
 ###############################################################################
 
 class topology_edges_container(object):
