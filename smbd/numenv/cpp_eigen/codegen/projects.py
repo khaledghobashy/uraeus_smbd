@@ -26,19 +26,18 @@ class standalone_project(object):
         self.code_dir = os.path.join(self.parent_dir, 'numenv', 'cpp_eigen')
         
     def _create_subdirs(self):
-        for d in ['build', 'src', 'results', 'bin']:
+        for d in ['build', 'src', 'bin']:
             subdir = os.path.join(self.code_dir, d)
             if not os.path.exists(subdir):
                 os.makedirs(subdir)
-        
     
-    def create_dirs(self, overwrite=False):
+    def create_dirs(self, clean=False):
         if os.path.exists(self.code_dir):
-            if overwrite:
+            if clean:
                 shutil.rmtree(self.code_dir)
                 self._create_subdirs()
-            else:
-                self._create_subdirs()
+                self._create_common_dirs()
+        self._create_subdirs()
         
     def write_topology_code(self, topology):
         src_path = os.path.join(self.code_dir, 'src')
