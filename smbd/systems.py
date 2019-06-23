@@ -8,8 +8,10 @@ Created on Sat Jun 22 20:58:47 2019
 
 from smbd._interfaces.systems import (standalone_topology, 
                                       template_topology, 
-                                      assembly, configuration, load_pickled_data)
+                                      assembly, configuration, 
+                                      load_pickled_data,
+                                      standalone_project)
 
 __all__ = ['standalone_topology', 'template_topology', 'assembly',
-           'configuration', 'load_pickled_data']
+           'configuration', 'load_pickled_data', 'standalone_project']
 
