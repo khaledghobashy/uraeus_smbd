@@ -93,31 +93,43 @@ class standalone_project(object):
     def write_makefile(self):
         text = '''
                 # Change MODEL, CONFG and MAIN to match the source files you want to build
+                # ========================================================================
                 MODEL := topology
                 CONFG := configuration
                 MAIN := main.cpp
+                # ========================================================================
+                
 
-                BUILD := build/
-                SRC := src/
-                BIN := bin/
+                M_BUILD := build/
+                M_SRC := src/
+                M_BIN := bin/
                 
-                SMBD_SRC := {cpp_src}/src/
-                SMBD_BUILD := {cpp_src}/build/
-                SMBD_FILES := $(SMBD_BUILD)*.o
+                NUM_DIR := {cpp_src}
                 
-                DEPS := $(BUILD)$(MODEL).o $(MAIN) $(SRC)$(CONFG).hpp $(SMBD_FILES)
+                SMBD_SRC := $(NUM_DIR)/src
+                SMBD_BUILD := $(NUM_DIR)/build
                 
-                INC := -I {cpp_src}/src
+                SMBD_OBJS = $(SMBD_BUILD)/*.o
+                
+                DEPS := $(M_BUILD)$(MODEL).o $(MAIN) $(M_SRC)$(CONFG).hpp $(SMBD_SRC)/smbd/solvers.hpp
+                
+                INC := -I $(SMBD_SRC)
                 CC := g++
                 
-                $(BIN)$(MODEL): $(DEPS) $(SMBD_SRC)smbd/solvers.hpp
-                	$(CC) $(INC) $(DEPS) -o $(BIN)$(MODEL)
                 
-                $(BUILD)$(MODEL).o: $(SRC)$(MODEL).cpp $(SRC)$(MODEL).hpp 
+                $(M_BIN)$(MODEL): $(DEPS) $(SMBD_OBJS)
+                	$(CC) $(INC) $(M_BUILD)$(MODEL).o $(MAIN) $(SMBD_OBJS) -o $@
+                
+                $(M_BUILD)$(MODEL).o: $(M_SRC)$(MODEL).cpp $(M_SRC)$(MODEL).hpp
                 	$(CC) $(INC) -c -o $@ $<
                 
+                    
+                $(SMBD_BUILD)/%.o: $(SMBD_SRC)/smbd/%.cpp $(SMBD_SRC)/smbd/%.hpp
+                	cd $(SMBD_SRC)/../ && make
+                    
+                
                 clear:
-                	rm $(BUILD)*.o $(MODEL)    
+                	rm $(M_BUILD)*.o $(M_BIN)$(MODEL)
         '''
         cpp_src_rel = os.path.join(*('smbd.numenv.cpp_eigen.numerics'.split('.')))
         cpp_src_abs = os.path.abspath(os.path.join(pkg_path, cpp_src_rel))
