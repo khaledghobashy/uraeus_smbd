@@ -36,18 +36,19 @@ class standalone_project(object):
         
         self.parent_dir = parent_dir
         self.code_dir = os.path.join(self.parent_dir, 'numenv')
-        if self.parent_dir !='':
-            os.chdir(self.parent_dir)
-            print('Current working directory is %s'%os.path.abspath(self.parent_dir))
         
     def create(self):
         self._create_common_dirs()
     
     def _create_common_dirs(self):
-        for d in ['config_inputs', 'results']:
+        for d in ['config_inputs', 'results', 'numenv']:
             subdir = os.path.join(self.parent_dir, d)
             if not os.path.exists(subdir):
                 os.makedirs(subdir)
+        if self.parent_dir !='':
+            os.chdir(self.parent_dir)
+            print('Current working directory is %s'%os.path.abspath(self.parent_dir))
+
 
 ###############################################################################
 
