@@ -49,8 +49,8 @@ The tool aims to provide a full encompassing simulation environments and not onl
 *__Note__:The development of such environments is discussed in a separate documentation for those interested in developing their own.*
 
 The tool currently provides:
-- A numerical simulation environment in python that provides a python solver that can be used to solve for *Kinematically  and Dynamically Driven Systems* using the NumPy and SciPy libraries for numerical evaluation.
-- A numerical simulation environment in C++ that provides a solver that can be used to solve for *Kinematically Driven Systems* using Eigen library as the linear algebra engine and Boost library for other math functionalities. It also generates appropriate makefiles that automates the build process of model executables.
+- A numerical simulation environment in **python** that provides a python solver that can be used to solve for *Kinematically  and Dynamically Driven Systems* using the [NumPy](https://www.numpy.org/) and [SciPy](https://www.scipy.org/index.html) libraries for numerical evaluation.
+- A numerical simulation environment in **C++** that provides a solver that can be used to solve for *Kinematically Driven Systems* using [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) library as the linear algebra engine and selected modules from the [Boost](https://www.boost.org/) library for other math functionalities. It also generates appropriate makefiles that automates the build process of model executables.
 
 #### 3D Visualization
 
