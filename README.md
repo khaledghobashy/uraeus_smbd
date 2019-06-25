@@ -38,14 +38,16 @@ Currently, the tool provides:
 - Creation of symbolic configuration files to facilitate the process of numerical configuration data entry.
 
 #### Numerical Simulation Environments
-The idiology of the tool is to provide a full encompassing simulation environments and not only code-generation. The development of such environments in different languages requires a good grasp of several aspects such as :
+The tool aims to provide a full encompassing simulation environments and not only code-generation. The development of such environments in different languages requires a good grasp of several aspects such as :
 - Good knowledge of the symbolic models' interfaces and structure.
-- Good knowledge of the target lanuage.
-- Appropraite environment archticture/structure that serves the intended usage requirements.
-- Good knowledge of the availabe linear algebra and math libraries for that language.
+- Good knowledge of the target language.
+- Appropriate environment architecture/structure that serves the intended usage requirements.
+- Good knowledge of the available linear algebra and math libraries for that language.
 - Design for minimal dependencies on 3rd parties libraries.
 - Simple API for usage and simple build process for compiled languages. 
-The development of such environments is discussed in a separate documentation for those interested in dveloping their own.
+
+*__Note__:The development of such environments is discussed in a separate documentation for those interested in developing their own.*
+
 The tool currently provides:
 - A numerical simulation environment in python that provides a python solver that can be used to solve for *Kinematically  and Dynamically Driven Systems* using the NumPy and SciPy libraries for numerical evaluation.
 - A numerical simulation environment in C++ that provides a solver that can be used to solve for *Kinematically Driven Systems* using Eigen library as the linear algebra engine and Boost library for other math functionalities. It also generates appropriate makefiles that automates the build process of model executables.
@@ -227,26 +229,38 @@ We then create a symbolic configuration of our symbolic model, but what is this 
 You may have noticed that we did not care explicitly about how our system is configured in space, we did not care about how our bodies or joints are located or oriented or how we can define these configuration parameters, all we cared about is only the topological connectivity. These configuration parameters already got generated automatically based on the used components. For example, the creation of a symbolic body -*body l1* *for example*- generates automatically the following symbolic parameters:
 
 - Body mass ```m_rbs_l1```
-- Inertia Tensor ```Jbar_rbs_l1```
-- Body Location ```R_rbs_l1```
-- Body Orientation ```P_rbs_l1```
-- Body Velocity ```Rd_rbs_l1```
-- Body Orientation Rate ```Pd_rbs_l1```
-- Body Acceleration ```Rdd_rbs_l1```
-- Body Orientation Rate 2 ``Pdd_rbs_l1``
-</br>where the **rbs\_** initial is short for *rigid body single*. If the body is mirrored, the system will create two bodies with the initials **rbr\_** and **rbl\_** for right and left respectively.
 
-The same happens for edges' components -joints, actuators and forces- where each component is responsible for creating its own symbolic configuration parameters.
-These parameters are extracted from the symbolic topology to form a base configuration layer that represents the needed user inputs for a given simulation. The benefit of the symbolic configuration is that we can construct our own layer of inputs that we desire to use in the numerical simulation and define the relations between these inputs and the base parameters extracted from the topology components. This is best shown by example.
-Our fourbar mechanism is simply visualized as three links and a ground that are connected at four distinct points **a**, **b**, **c** and **d**. We can simply get directly the numerical values of these points in space much easier than -for example- getting directly orientation of the axes of the universal joint used to connect **l2** with **l3**. The idea is to formalize symbolic relations between these parameters that evaluates the base parameters based on the easier indirect parameters.
+- Inertia Tensor ```Jbar_rbs_l1```
+
+- Body Location ```R_rbs_l1```
+
+- Body Orientation ```P_rbs_l1```
+
+- Body Velocity ```Rd_rbs_l1```
+
+- Body Orientation Rate ```Pd_rbs_l1```
+
+- Body Acceleration ```Rdd_rbs_l1```
+
+- Body Orientation Rate 2 ```Pdd_rbs_l1```
+
+  where the ```rbs_``` initial is short for *rigid body single*. If the body is mirrored, the system will create two bodies with the initials ```rbr_``` and ```rbl_``` for right and left respectively.
+
+The same happens for edges' components -joints, actuators and forces- where each component is responsible for creating its own configuration symbolic parameters.
+
+These parameters are extracted from the symbolic topology to form the primary configuration layer that represents the needed user inputs for any given simulation. The benefit of the symbolic configuration is that we can construct our own layer of inputs that we desire to use in the numerical simulation and define the relations between these inputs and the primary parameters extracted from the topology components. This is best shown by example.
+Our fourbar mechanism is simply visualized as three links and a ground that are connected at four distinct points, **a**, **b**, **c** and **d**. We can simply get directly the numerical values of these points in space much easier than -for example- getting directly the orientation of the two axes used to define the universal joint used to connect **l2** with **l3**. 
+
+The idea is to construct a directed relational graph that maps the required primary configuration to a set of new configuration parameters that may be easier and more convenient to specify directly.
 
 We start by creating our configuration instance
 ```python
 from smbd.systems import configuration
 config = configuration('%s_cfg'%model_name, sym_model)
 ```
-Now we can check the base configuration parameters extracted by the from the symbolic topology by ```config.config.input_nodes``` which returns a list of strings containing the inputs' parameters names.</br>
-Then we create our desired user inputs.
+Now we can check the primary configuration parameters extracted the from the symbolic topology by ```config.config.input_nodes``` which returns a list of strings containing the inputs' parameters names.
+
+Now, we create our desired user inputs.
 
 ```python
 config.add_point.UserInput('a')
@@ -258,7 +272,7 @@ config.add_vector.UserInput('x')
 config.add_vector.UserInput('y')
 config.add_vector.UserInput('z')
 ```
-After that, we set the relations between the base configuration parameters and our custom configuration inputs.
+After that, we set the relations between the primary configuration parameters and our custom configuration inputs.
 ```python
 config.add_relation.Equal_to('pt1_jcs_a', ('hps_a',))
 config.add_relation.Equal_to('pt1_jcs_b', ('hps_b',))
@@ -272,9 +286,9 @@ config.add_relation.Equal_to('ax1_jcs_a', ('vcs_x',))
 config.add_relation.Equal_to('ax1_jcs_b', ('vcs_z',))
 config.add_relation.Equal_to('ax1_jcs_d', ('vcs_y',))
 ```
-*__Note__: The set of configuration parameters of each component and their naming convention will be discussed in a separate documentation*</br>
+*__Note__: The set of configuration parameters of each component and their naming convention will be discussed in a separate documentation*
 
-The first line of the above code-block adds a relation that sets the location of joint **pt1_jsc_a** to be **Equal_to** the user-input location point **hps_a**, where the fifth line adds a relation that sets the orientation of the first axis of the universal joint **ax1_jsc_c** to be **Oriented** along the user-input location points **hps_b** and **hps_c**. The rest of the statements follows the same convention.
+The first line of the above code-block adds a relation that sets the location of joint ```pt1_jsc_a``` to be ```Equal_to``` the user-input location point ```hps_a```, where the fifth line adds a relation that sets the orientation of the first axis of the universal joint ```ax1_jsc_c``` to be ```Oriented``` along the user-input location points ```hps_b``` and ```hps_c```. The rest of the statements follows the same convention.
 
 An optional and recommended step is to create symbolic geometries and assign these geometries to topology bodies to automatically evaluate the bodies configuration parameters stated earlier. Also this will be used to generate a python-blender script that can be used in blender to create 3D visualizations in blender later.
 ```python
@@ -301,7 +315,7 @@ from smbd.systems import standalone_project
 project = standalone_project(parent_dir='')
 project.create()
 ```
-This will create three directories in the ```parent_dir``` given; these are ```[numenv, results, config_inputs]```.
+This will create three directories inside the ```parent_dir``` given; these are ```/numenv, /results, /config_inputs```.
 Each numerical simulation environment is then responsible for creating its own structure and dependencies.
 
 
@@ -316,7 +330,7 @@ py_project.write_topology_code(sym_model.topology)
 py_project.write_configuration_code(config.config)
 py_project.write_mainfile()
 ```
-The generated code structure will be found under ```numenv/python/``` directory.
+The generated code structure can be found under ```numenv/python/``` directory.
 
 
 
@@ -331,24 +345,27 @@ cpp_project.write_configuration_code(config.config)
 cpp_project.write_mainfile()
 cpp_project.write_makefile()
 ```
-The generated code structure will be found under ```numenv/cpp_eigen/``` directory.
+The generated code structure can be found under ```numenv/cpp_eigen/``` directory.
 And thats it for the symbolic domain.
 
+
+
 #### Python Numerical Simulation.
-Now we use the generated source-code to create a valid simulation instance. We start by several imports
+
+Now we use the generated source-code to create a valid simulation instance. We start with several imports
 ```python
 import pandas as pd
 import numpy as np
 ```
-Then we import the needed function from the python numerical environment.
+Then we import the needed classes and functions from the provided python numerical environment.
 ```python
 from smbd.numenv.python.numerics.systems import multibody_system, simulation
 ```
-And last we import the generated source-code.
+And finally we import the generated source-code.
 ```python
 from numenv.python.src import fourbar, fourbar_cfg
 ```
-Then we start setting our needed instances.
+Now we create our needed instances.
 ```python
 num_model = multibody_system(fourbar)
 num_model.topology.config = fourbar_cfg.configuration()
@@ -399,10 +416,13 @@ The python numerical environment also provides a method to evaluate the constrai
 ```python
 sim.eval_reactions()
 ```
+
+
 #### C++ Numerical Simulation.
+
 *__Note__: The details of the structure of the generated environment code structure and the "how to use" will be discussed in a separate documentation.*
-The C++ simulation environments generates a sample **main.cpp** file that can be filled in with the numerical data directly, as well as a template **Makefile** that can be used to build the model executable easily.
-First, we open the **main.cpp** and edit the ```#include "src/topology.hpp"``` and ```#include "src/configuration.hpp"``` to match our generated code-files names, then we set our numerical configuration data. Finally we save the file as a **new_main.cpp**.
+The C++ simulation environments generates a sample ```main.cpp``` file that can be filled in with the numerical data directly, as well as a template ```Makefile``` that can be used to build the model executable easily.
+First, we open the ```main.cpp``` and edit the ```#include "src/topology.hpp"``` and ```#include "src/configuration.hpp"``` to match our generated code-files names, then we set our numerical configuration data. Finally we save the file as a ```new_main.cpp```.
 
 ```c++
 #include <iostream>
@@ -449,7 +469,7 @@ int main()
 };
 ```
 
-Then we open the generated **Makefile** and edit the first three lines as follows then we save it with the same name -overwriting the original-.
+Then we open the generated ```Makefile``` and edit the first three lines as follows then we save it with the same name -overwriting the original-.
 ```makefile
 # Change MODEL, CONFG and MAIN to match the source files you want to build
 # ========================================================================
@@ -491,8 +511,8 @@ clear:
 	rm $(M_BUILD)*.o $(M_BIN)$(MODEL)
 
 ```
-Then we open a terminal in the directory containing the **Makefile** and run ```bash make```. This will start compiling and build the executable using the **gcc** compiler and saves the executable in the */bin* directory. The executable can be then run via the command ```bash bin/fourbar```
-*__Note__: It should be notted that building the model requires the availabillity of **make** and **gcc** to be carried out successfuly. Most linux machines are already pre-equiped with these by default. Also the building process is only tested on the **gcc** compiler, more tests to be carried out using different compilers on different machines.*
+Then we open a terminal in the directory containing the ```Makefile``` and run ```make```. This will start compiling and build the executable using the ```gcc``` compiler and saves the executable in the ```/bin``` directory. The executable can be then run via the command ```bin/fourbar```
+*__Note__: It should be noted that building the model requires the availability of ```make``` and ```gcc``` to be carried out successfully. Most Linux machines are already pre-equipped with these by default. Also the building process is only tested on the ```gcc``` compiler, more tests to be carried out using different compilers on different machines.*
 
 ### Ready-to-Use Notebooks & Tutorials
 This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modeling process. The [**examples/notebooks**](https://github.com/khaledghobashy/smbd/tree/master/examples/notebooks/) directory in this repository is planned to include updated versions of working models that can be statically viewed on github, downloaded on your machine or to be ran directly on Colab.
