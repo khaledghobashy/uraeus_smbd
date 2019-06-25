@@ -208,7 +208,7 @@ sym_model.add_joint.revolute('d', 'rbs_l3', 'ground')
 # Adding Actuators
 sym_model.add_actuator.rotational_actuator('act', 'jcs_a')
 ```
-And thats it. We have created a symbolic topology that represents our fourbar mechanism. The topology can be visualized by the method ```sym_model.topology.draw_constraints_topology()```
+And thats it; we have just created a symbolic topology that represents our fourbar mechanism. The topology graph of the system can be visualized by the method ```sym_model.topology.draw_constraints_topology()```
 Also we can check the number of constraint equations, generalized coordinates and the estimated degrees of freedom of the system.
 To finalize this step, we call the ```assemble()``` method to construct the governing equations symbolically.
 
@@ -223,7 +223,7 @@ sym_model.topology.pos_equations
 sym_model.topology.jac_equations
 ```
 #### Building the symbolic configuration.
-We then create a symbolic configuration of our symbolic model, but what is this symbolic configuration?. 
+We then create a symbolic configuration of our symbolic model, but what is this symbolic configuration?. </br>
 You may have noticed that we did not care explicitly about how our system is configured in space, we did not care about how our bodies or joints are located or oriented or how we can define these configuration parameters, all we cared about is only the topological connectivity. These configuration parameters already got generated automatically based on the used components. For example, the creation of a symbolic body -*body l1* *for example*- generates automatically the following symbolic parameters:
 
 - Body mass ```m_rbs_l1```
@@ -234,7 +234,7 @@ You may have noticed that we did not care explicitly about how our system is con
 - Body Orientation Rate ```Pd_rbs_l1```
 - Body Acceleration ```Rdd_rbs_l1```
 - Body Orientation Rate 2 ``Pdd_rbs_l1``
-where the **rbs\_** initial is short for *rigid body single*. If the body is mirrored, the system will create two bodies with the initials **rbr\_** and **rbl\_** for right and left respectively.
+</br>where the **rbs\_** initial is short for *rigid body single*. If the body is mirrored, the system will create two bodies with the initials **rbr\_** and **rbl\_** for right and left respectively.
 
 The same happens for edges' components -joints, actuators and forces- where each component is responsible for creating its own symbolic configuration parameters.
 These parameters are extracted from the symbolic topology to form a base configuration layer that represents the needed user inputs for a given simulation. The benefit of the symbolic configuration is that we can construct our own layer of inputs that we desire to use in the numerical simulation and define the relations between these inputs and the base parameters extracted from the topology components. This is best shown by example.
@@ -245,7 +245,7 @@ We start by creating our configuration instance
 from smbd.systems import configuration
 config = configuration('%s_cfg'%model_name, sym_model)
 ```
-Now we can check the base configuration parameters extracted by the from the symbolic topology by ```config.config.input_nodes``` which returns a list of strings containing the inputs' parameters names
+Now we can check the base configuration parameters extracted by the from the symbolic topology by ```config.config.input_nodes``` which returns a list of strings containing the inputs' parameters names.</br>
 Then we create our desired user inputs.
 
 ```python
@@ -272,7 +272,8 @@ config.add_relation.Equal_to('ax1_jcs_a', ('vcs_x',))
 config.add_relation.Equal_to('ax1_jcs_b', ('vcs_z',))
 config.add_relation.Equal_to('ax1_jcs_d', ('vcs_y',))
 ```
-*__Note__: The set of configuration parameters of each component and their naming convention will be discussed in a separate documentation*
+*__Note__: The set of configuration parameters of each component and their naming convention will be discussed in a separate documentation*</br>
+
 The first line of the above code-block adds a relation that sets the location of joint **pt1_jsc_a** to be **Equal_to** the user-input location point **hps_a**, where the fifth line adds a relation that sets the orientation of the first axis of the universal joint **ax1_jsc_c** to be **Oriented** along the user-input location points **hps_b** and **hps_c**. The rest of the statements follows the same convention.
 
 An optional and recommended step is to create symbolic geometries and assign these geometries to topology bodies to automatically evaluate the bodies configuration parameters stated earlier. Also this will be used to generate a python-blender script that can be used in blender to create 3D visualizations in blender later.
@@ -301,7 +302,6 @@ project = standalone_project(parent_dir='')
 project.create()
 ```
 This will create three directories in the ```parent_dir``` given; these are ```[numenv, results, config_inputs]```.
-
 Each numerical simulation environment is then responsible for creating its own structure and dependencies.
 
 
@@ -422,7 +422,7 @@ int main()
     // assign the configuration inputs needed ...
     //=========================================================//
     
-    Config.R_ground << 0, 0, 0 ;
+	Config.R_ground << 0, 0, 0 ;
 	Config.P_ground << 1, 0, 0, 0 ;
 
 	Config.hps_a <<  0, 0, 0 ;
