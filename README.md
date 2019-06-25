@@ -249,6 +249,7 @@ You may have noticed that we did not care explicitly about how our system is con
 The same happens for edges' components -joints, actuators and forces- where each component is responsible for creating its own configuration symbolic parameters.
 
 These parameters are extracted from the symbolic topology to form the primary configuration layer that represents the needed user inputs for any given simulation. The benefit of the symbolic configuration is that we can construct our own layer of inputs that we desire to use in the numerical simulation and define the relations between these inputs and the primary parameters extracted from the topology components. This is best shown by example.
+
 Our fourbar mechanism is simply visualized as three links and a ground that are connected at four distinct points, **a**, **b**, **c** and **d**. We can simply get directly the numerical values of these points in space much easier than -for example- getting directly the orientation of the two axes used to define the universal joint used to connect **l2** with **l3**. 
 
 The idea is to construct a directed relational graph that maps the required primary configuration to a set of new configuration parameters that may be easier and more convenient to specify directly.
@@ -346,6 +347,19 @@ cpp_project.write_mainfile()
 cpp_project.write_makefile()
 ```
 The generated code structure can be found under ```numenv/cpp_eigen/``` directory.
+
+
+
+Also, we can generate a blender-python script that we can use later in 3D visualizations. This is done via
+
+```python
+from smbd.utilities.blender.codegen import script_generator
+bpy_code = script_generator(config.config)
+bpy_code.write_code_file('numenv/')
+```
+
+
+
 And thats it for the symbolic domain.
 
 
