@@ -187,8 +187,35 @@ except ModuleNotFoundError:
 ---------------------------------------------------
 ## Usage Examples & Tutorials
 ### Spatial Fourbar Mechanism
-Below is code sample that walks you through the process of building a standalone symbolic topology and configuration as well as the generation of numerical simulation environments for simulation. The same code is also provided as a .py script and .ipynb notebook in the [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples/) sub-directory.
-#### Building the symbolic topology.
+Below is code sample that walks you through the process of building a standalone symbolic topology and configuration as well as the generation of numerical simulation environments. The same code is also provided as a .py script and .ipynb notebook in the [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples/) sub-directory.
+
+This model will be created as a **standalone** topology and project. What this means is that model topological data is fully encapsulated in one topology graph and no need for any topological data from other external systems, which is the case for **template-based** topologies.
+
+This also means that the project files/database is self-contained, unlike the **template-based** topologies that need to be organized in a shared database.
+
+#### Initializing Project Structure
+
+Currently, a standalone project is structured using three top-level directories inside a given ```parent_dir```; these are
+
+-  ```/numenv``` : 
+  Directory of the numerical environments to be generated.
+- ``` /results``` :
+  Directory to store the results of numerical simulations if needed.
+- ``` /config_inputs``` :
+  Directory to store the numerical inputs used in numerical simulations.
+
+To create a standalone project :
+
+```python
+from smbd.systems import standalone_project
+parent_dir = '' # current working directory
+project = standalone_project(parent_dir)
+project.create()
+```
+
+
+
+#### Building the Symbolic Topology.
 We start by importing the ```standalone_topology``` class from the ```systems``` module to create our symbolic model instance.
 ```python
 from smbd.systems import standalone_topology
@@ -230,23 +257,16 @@ sym_model.topology.jac_equations
 We then create a symbolic configuration of our symbolic model, but what is this symbolic configuration?. </br>
 You may have noticed that we did not care explicitly about how our system is configured in space, we did not care about how our bodies or joints are located or oriented or how we can define these configuration parameters, all we cared about is only the topological connectivity. These configuration parameters already got generated automatically based on the used components. For example, the creation of a symbolic body -*body l1* *for example*- generates automatically the following symbolic parameters:
 
-- Body mass ```m_rbs_l1```
+- ```m_rbs_l1```:  body mass.
+- ```Jbar_rbs_l1```: inertia tensor.
+- ```R_rbs_l1```: body reference point location.
+-  ```Rd_rbs_l1```: body translational velocity.
+-  ```Rdd_rbs_l1```: body translational acceleration.
+- ```P_rbs_l1```: body orientation.
+- ```Pd_rbs_l1```: body orientation 1st  rate of change.
+- ```Pdd_rbs_l1```: body orientation 2nd  rate of change.
 
-- Inertia Tensor ```Jbar_rbs_l1```
-
-- Body Location ```R_rbs_l1```
-
-- Body Orientation ```P_rbs_l1```
-
-- Body Velocity ```Rd_rbs_l1```
-
-- Body Orientation Rate ```Pd_rbs_l1```
-
-- Body Acceleration ```Rdd_rbs_l1```
-
-- Body Orientation Rate 2 ```Pdd_rbs_l1```
-
-  where the ```rbs_``` initial is short for *rigid body single*. If the body is mirrored, the system will create two bodies with the initials ```rbr_``` and ```rbl_``` for right and left respectively.
+where the ```rbs_``` initial is short for *rigid body single*. If the body is mirrored, the system will create two bodies with the initials ```rbr_``` and ```rbl_``` for right and left respectively.
 
 The same happens for edges' components -joints, actuators and forces- where each component is responsible for creating its own configuration symbolic parameters.
 
@@ -309,17 +329,10 @@ config.assign_geometry_to_body('rbs_l3', 'gms_l3')
 The last step is to ```assemble``` the symbolic configuration and extract the updated set of inputs to a .csv file.
 ```python
 config.assemble()
-config.extract_inputs_to_csv('')
+config.extract_inputs_to_csv(parent_dir)
 ```
 #### Generating Simulation Environments.
-Currently the tool provides two fully encapsulating numerical simulation environments in **python** and **C++**. But before generating the code files, we create the common directories structure needed.
-```python
-from smbd.systems import standalone_project
-project = standalone_project(parent_dir='')
-project.create()
-```
-This will create three directories inside the ```parent_dir``` given; these are ```/numenv, /results, /config_inputs```.
-Each numerical simulation environment is then responsible for creating its own structure and dependencies.
+Currently the tool provides two fully encapsulating numerical simulation environments in **python** and **C++**,  where each numerical simulation environment is responsible for creating its own structure and dependencies.
 
 
 
@@ -327,7 +340,7 @@ Each numerical simulation environment is then responsible for creating its own s
 
 ```python
 from smbd.numenv.python.codegen import projects as py_numenv
-py_project = py_numenv.standalone_project(parent_dir='')
+py_project = py_numenv.standalone_project(parent_dir)
 py_project.create_dirs()
 py_project.write_topology_code(sym_model.topology)
 py_project.write_configuration_code(config.config)
@@ -341,7 +354,7 @@ The generated code structure can be found under ```numenv/python/``` directory.
 
 ```python
 from smbd.numenv.cpp_eigen.codegen import projects as cpp_numenv
-cpp_project = cpp_numenv.standalone_project(parent_dir='')
+cpp_project = cpp_numenv.standalone_project(parent_dir)
 cpp_project.create_dirs()
 cpp_project.write_topology_code(sym_model.topology)
 cpp_project.write_configuration_code(config.config)
