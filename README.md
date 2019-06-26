@@ -197,11 +197,11 @@ This also means that the project files/database is self-contained, unlike the **
 
 Currently, a standalone project is structured using three top-level directories inside a given ```parent_dir```; these are
 
--  ```/numenv``` : 
+-  ```/numenv``` : </br>
   Directory of the numerical environments to be generated.
-- ``` /results``` :
+- ``` /results``` :</br>
   Directory to store the results of numerical simulations if needed.
-- ``` /config_inputs``` :
+- ``` /config_inputs``` :</br>
   Directory to store the numerical inputs used in numerical simulations.
 
 To create a standalone project :
