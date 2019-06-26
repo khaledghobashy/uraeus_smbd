@@ -122,5 +122,11 @@ cpp_project.write_configuration_code(config.config)
 cpp_project.write_mainfile()
 cpp_project.write_makefile()
 
+# =============================================================================
+#                       Creating Blender Script
+# =============================================================================
 
+from smbd.utilities.blender.codegen import script_generator
+bpy_code = script_generator(config.config)
+bpy_code.write_code_file('numenv/')
 
