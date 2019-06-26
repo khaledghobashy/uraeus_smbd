@@ -161,13 +161,15 @@ Or alternatively, download the repository as a **zip** file and extract it on yo
 Then, if creating a new python session to use the tool, add the directory path where the tool exists to the python system path.
 
 ```python
-import sys
-pkg_path = 'path/to/smbd'
-if pkg_path not in sys.path:
+try:
+    import smbd
+except ModuleNotFoundError:
+    import sys
+	pkg_path = 'path/to/smbd'
     sys.path.append(pkg_path)
 
 # the package can now be imported as smbd, e.g. :
-# from smbd.interfaces.scripting import standalone_topology
+# from smbd.systems import standalone_topology
 ```
 
 
