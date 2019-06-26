@@ -541,6 +541,7 @@ clear:
 
 ```
 Then we open a terminal in the directory containing the ```Makefile``` and run ```make```. This will start compiling and build the executable using the ```gcc``` compiler and saves the executable in the ```/bin``` directory. The executable can be then run via the command ```bin/fourbar```
+
 *__Note__: It should be noted that building the model requires the availability of ```make``` and ```gcc``` to be carried out successfully. Most Linux machines are already pre-equipped with these by default. Also the building process is only tested on the ```gcc``` compiler, more tests to be carried out using different compilers on different machines.*
 
 ### Ready-to-Use Notebooks & Tutorials
