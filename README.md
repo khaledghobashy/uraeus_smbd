@@ -246,7 +246,7 @@ To finalize this step, we call the ```assemble()``` method to construct the gove
 ```python
 sym_model.assemble()
 ```
-The equations can be then visualized by accessing the appropriate topology attributes.
+We can check the system equations by accessing the appropriate topology attributes.
 ```python
 # Position level constraint equations.
 sym_model.topology.pos_equations
@@ -254,7 +254,7 @@ sym_model.topology.pos_equations
 sym_model.topology.jac_equations
 ```
 #### Building the symbolic configuration.
-We then create a symbolic configuration of our symbolic model, but what is this symbolic configuration?. </br>
+The next step is to create a symbolic configuration of our symbolic model, but what is this symbolic configuration? </br>
 You may have noticed that we did not care explicitly about how our system is configured in space, we did not care about how our bodies or joints are located or oriented or how we can define these configuration parameters, all we cared about is only the topological connectivity. These configuration parameters already got generated automatically based on the used components. For example, the creation of a symbolic body -*body l1* *for example*- generates automatically the following symbolic parameters:
 
 - ```m_rbs_l1```:  body mass.
@@ -471,20 +471,20 @@ int main()
     // assign the configuration inputs needed ...
     //=========================================================//
     
-	Config.R_ground << 0, 0, 0 ;
-	Config.P_ground << 1, 0, 0, 0 ;
+    Config.R_ground << 0, 0, 0 ;
+    Config.P_ground << 1, 0, 0, 0 ;
 
-	Config.hps_a <<  0, 0, 0 ;
-	Config.hps_b <<  0, 0, 200 ;
-	Config.hps_c << -750, -850, 650 ;
-	Config.hps_d << -400, -850, 0 ;
+    Config.hps_a <<  0, 0, 0 ;
+    Config.hps_b <<  0, 0, 200 ;
+    Config.hps_c << -750, -850, 650 ;
+    Config.hps_d << -400, -850, 0 ;
 
-	Config.vcs_x << 1, 0, 0 ;
-	Config.vcs_y << 0, 1, 0 ;
-	Config.vcs_z << 0, 0, 1 ;
+    Config.vcs_x << 1, 0, 0 ;
+    Config.vcs_y << 0, 1, 0 ;
+    Config.vcs_z << 0, 0, 1 ;
 
-	Config.s_links_ro = 20 ;
-	Config.UF_mcs_act = [](double t)->double{return 2*(22/7)*t;};
+    Config.s_links_ro = 20 ;
+    Config.UF_mcs_act = [](double t)->double{return 2*(22/7)*t;};
 
     //=========================================================//
     
