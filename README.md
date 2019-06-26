@@ -375,7 +375,7 @@ bpy_code.write_code_file('numenv/')
 
 
 
-And thats it for the symbolic domain.
+And thats it for the symbolic domain. The full script can be found [here](/examples/scripts/fourbar/fourbar.py).
 
 
 
