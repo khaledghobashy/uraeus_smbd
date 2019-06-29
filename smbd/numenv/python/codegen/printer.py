@@ -37,6 +37,11 @@ class npsc_printer(C99CodePrinter):
         expr_lowerd = expr.__class__.__name__.lower()
         return '%s%s'%(expr_lowerd, (self._print(expr.args)))
     
+    def _print_Sphere_Geometry(self, expr):
+        expr_lowerd = expr.__class__.__name__.lower()
+        args = [self._print(i) for i in expr.args]
+        return '%s(%s, %s)'%(expr_lowerd, *args)
+    
     def _print_Equal_to(self,expr):
         return '%s'%self._print(expr.args[0])
     
