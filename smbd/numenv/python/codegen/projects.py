@@ -39,6 +39,7 @@ class standalone_project(object):
                 self._create_subdirs()
                 self._create_common_dirs()
         self._create_subdirs()
+        self._write_init_file()
             
         
     def write_topology_code(self, topology):
@@ -100,5 +101,17 @@ class standalone_project(object):
         with open(file_name, 'w') as file:
             file.write(text)
         print('File full path : %s'%file_name)
+        
+    
+    def _write_init_file(self):
+        file_path = self.code_dir
+        file_name = '__init__.py'%file_path
+        with open(file_name, 'w') as file:
+            file.write('#')
+        
+        src_path = os.path.join(self.code_dir, 'src')
+        file_name = '__init__.py'%src_path
+        with open(file_name, 'w') as file:
+            file.write('#')
         
     
