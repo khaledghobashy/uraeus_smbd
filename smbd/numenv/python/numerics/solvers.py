@@ -12,14 +12,20 @@ import scipy.integrate
 from scipy.sparse.linalg import spsolve
 import pandas as pd
 
-def solve(A,b):
+def solve1(A,b):
     try:
         A = A.A
     except AttributeError:
         pass
-    x = np.linalg.solve(A,b)
-    shape = (x.shape[0],x.size//x.shape[0])
-    x = np.reshape(x,shape)
+    x = np.linalg.solve(A, b)
+    shape = (x.size, 1)
+    x = np.reshape(x, shape)
+    return x
+
+def solve(A, b):
+    x = spsolve(A, b)
+    shape = (x.size, 1)
+    x = np.reshape(x, shape)
     return x
 
 def progress_bar(steps, i):
@@ -168,7 +174,7 @@ class abstract_solver(object):
         n = self.model.ncols
         rows = cols = np.arange(n)
         mat = scipy_matrix_assembler(data, rows, cols, (n,n))
-        return mat.A
+        return mat
     
     def _eval_frc_eq(self):
         self.model.eval_frc_eq()
@@ -201,6 +207,7 @@ class abstract_solver(object):
                 delta_q = solve(A, -b)
             if itr>50:
                 print("Iterations exceded \n")
+                raise ValueError("Iterations exceded \n")
                 break
             itr+=1
         self.pos = guess
@@ -210,7 +217,12 @@ class abstract_solver(object):
 
 class kds_solver(abstract_solver):
     
-    def solve(self, run_id):
+    def __init__(self, model):
+        super().__init__(model)
+        if self.model.n != self.model.nc:
+            raise ValueError('Model is not fully constrained.')
+    
+    def solve(self, run_id):        
         self._initialize_model()
         time_array = self.time_array
         dt = self.step_size
@@ -267,7 +279,13 @@ class kds_solver(abstract_solver):
 ###############################################################################
 ###############################################################################
 
+
 class dds_solver(abstract_solver):
+    
+    def __init__(self, model):
+        super().__init__(model)
+        if self.model.n == self.model.nc:
+            raise ValueError('Model is fully constrained.')
     
     def solve(self, run_id):
         self._initialize_model()
@@ -282,76 +300,65 @@ class dds_solver(abstract_solver):
         
         pos_t0 = self._pos_history[0]
         vel_t0 = self._vel_history[0]
-        self._get_initial_conditions(pos_t0, vel_t0)
-        
-        integrator = scipy.integrate.ode(self._state_space_model)
-        integrator.set_integrator('lsoda')
-        integrator.set_initial_value(self.y0)
         
         M, J, Qt, Qd = self._eval_augmented_matricies(pos_t0, vel_t0)
-        acc_t0, lamda_t0 = self._solve_augmented_system(M, J, Qt, Qd)
-        M_hat, Q_hat = self._partioned_system(M, J, Qt, Qd)
-        integrator.set_f_params(M_hat, Q_hat)
-        
+        acc_t0, lamda_t0 = self._solve_augmented_system(M, J, Qt, Qd)        
         self._acc_history[0] = acc_t0
         
-        print('\nRunning System Dynamic Analysis:')
-        for i,t in enumerate(time_array[1:]):
-            progress_bar(bar_length,i)
-            self._set_time(t)
-                
-            integrator.integrate(t)
-            yi = integrator.y
-            
-            ind_pos_i = yi[:len(yi)//2]
-            ind_vel_i = yi[len(yi)//2:]
-            
-#            print('time : %s'%integrator.t)
-#            print(dict(zip(self.independent_cord,list(ind_pos_i[:,0]))))
-#            print(dict(zip(self.independent_cord,list(ind_vel_i[:,0]))))
-#            print('\n')
-
-            g = self._pos_history[i] \
-                + self._vel_history[i]*dt \
-                + 0.5*self._acc_history[i]*(dt**2)
-            
-            for c in range(self.dof): 
-                g[np.argmax(self.independent_cols[:,c]),0] = ind_pos_i[c]
-            
-            self._newton_raphson(g)
-            self._pos_history[i+1] = self.pos
-            
-#            vi = self._solve_velocity(ind_vel_i)
-#            self._vel_history[i+1] = vi
-            
-            A = self._eval_jac_eq()
-            vel_rhs = self._eval_vel_eq(ind_vel_i)
-            vi = solve(A,-vel_rhs)
-            self._vel_history[i+1] = vi
-
-            M, J, Qt, Qd = self._eval_augmented_matricies(self.pos, vi)
-            
-            acc_ti, lamda_ti = self._solve_augmented_system(M, J, Qt, Qd)
-            self._acc_history[i+1] = acc_ti            
-            
-            M_hat, Q_hat = self._partioned_system(M, J, Qt, Qd)
-            integrator.set_f_params(M_hat, Q_hat)
+        self.integrator = self._runge_kutta
         
+        print('\nRunning System Dynamic Analysis:')
+        i = 0
+        while i != bar_length:
+            progress_bar(bar_length,i)
+            t = time_array[i]
+            self._set_time(t)
+            self._solve_time_step(t, i, dt)
+            self._extract_independent_coordinates()
+            i += 1
+                    
         print('\n')
         self._creat_results_dataframes()
 
-    def _solve_velocity(self,vdot):
-        dof = self.dof
-        P = self.permutaion_mat
-        J = super()._eval_jac_eq(self).A
-        Jp = J@P.T
-        Jv = Jp[:,-dof:]
-        Ju = Jp[:,:-dof]
-        H = -solve(Ju, Jv)
-        udot = H@vdot
-        qd = np.concatenate([udot,vdot])
-        return P.T@qd
-    
+
+    def _solve_time_step(self, t, i, dt):
+        
+        q   = self._pos_history[i]
+        qd  = self._vel_history[i]
+        
+        q_v   = self.get_indpenednt_q(q)
+        qd_v  = self.get_indpenednt_q(qd)
+        
+        state_vector = np.concatenate([q_v, qd_v])
+        
+        soln = self.integrator(state_vector, t, dt, i)
+        
+        y1 = soln[:self.dof, 0]
+        y2 = soln[self.dof:, 0]
+
+        
+        guess = self._pos_history[i] \
+              + self._vel_history[i]*dt \
+              + 0.5*self._acc_history[i]*(dt**2)
+        
+        for c in range(self.dof): 
+            guess[np.argmax(self.independent_cols[:, c]), 0] = y1[c]
+                        
+        
+        self._newton_raphson(guess)
+        self._pos_history[i+1] = self.pos
+        self._set_gen_coordinates(self.pos)
+        
+        A = self._eval_jac_eq()
+        vel_rhs = self._eval_vel_eq(y2)
+        vi = solve(A, -vel_rhs)
+        self._vel_history[i+1] = vi
+        
+        M, J, Qt, Qd = self._eval_augmented_matricies(self.pos, vi)
+        acc_ti, lamda_ti = self._solve_augmented_system(M, J, Qt, Qd)
+        self._acc_history[i+1] = acc_ti
+        
+        
     
     def _extract_independent_coordinates(self):
         A = super()._eval_jac_eq()
@@ -364,26 +371,19 @@ class dds_solver(abstract_solver):
         self.independent_cols = independent_cols
         self.independent_cord = independent_cord
     
-    def _get_initial_conditions(self,pos_t0, vel_t0):
-        cols = self.independent_cols
-        dof  = self.dof
-        initial_pos = [pos_t0[np.argmax(cols[:,i])] for i in range(dof)]
-        initial_vel = [vel_t0[np.argmax(cols[:,i])] for i in range(dof)]
-        self.y0 =  initial_pos + initial_vel
     
-    
-    def _eval_augmented_matricies(self,q ,qd):
+    def _eval_augmented_matricies(self, q , qd):
         self._set_gen_coordinates(q)
         self._set_gen_velocities(qd)
-        J  = super()._eval_jac_eq().A
+        J  = super()._eval_jac_eq()
         M  = self._eval_mass_eq()
         Qt = self._eval_frc_eq()
         Qd = self._eval_acc_eq()
         return M, J, Qt, Qd
     
     def _solve_augmented_system(self, M, J, Qt, Qd):        
-        A = sc.sparse.bmat([[M,J.T],[J,None]], format='csc')
-        b = np.concatenate([Qt,-Qd])
+        A = sc.sparse.bmat([[M, J.T], [J, None]], format='csc')
+        b = np.concatenate([Qt, -Qd])
         x = solve(A, b)
         n = len(self._coordinates_indicies)
         accelerations = x[:n]
@@ -405,41 +405,66 @@ class dds_solver(abstract_solver):
     
     def _eval_jac_eq(self):
         A = super()._eval_jac_eq()
-        A = A.A
-        A = np.concatenate([A,self.independent_cols.T])
-        return sc.sparse.csc_matrix(A)
+        A = sc.sparse.bmat([[A], [self.independent_cols.T]], format='csc')
+        return A
     
-        
-    def _partioned_system(self, M, J, Q, acc_rhs):
-        P   = self.permutaion_mat
+            
+    def get_indpenednt_q(self, q):
         dof = self.dof
+        P = self.permutaion_mat
+        qp = P@q
+        qv = qp[-dof:,:]
+        return qv
+    
+    
+    def SSODE(self, state_vector, t, i):
+          
+        self._set_time(t)
         
-        Mp = P @ M @ P.T
-        Qp = P@Q
-        Jp = J@P.T
+        y1 = state_vector[:self.dof]
+        y2 = state_vector[self.dof:]
         
-        Jv = Jp[:,-dof:]
-        Ju = Jp[:,:-dof]
+        guess = self._pos_history[i]
+        for c in range(self.dof): 
+            guess[np.argmax(self.independent_cols[:, c]), 0] = y1[c]
+                        
+        self._newton_raphson(guess)
+        self._set_gen_coordinates(self.pos)
         
-        H = -solve(Ju, Jv)
+        A = self._eval_jac_eq()
+        vel_rhs = self._eval_vel_eq(y2)
+        vi = solve(A, -vel_rhs)
+        
+        M, J, Qt, Qd = self._eval_augmented_matricies(self.pos, vi)
+        acc_ti, lamda_ti = self._solve_augmented_system(M, J, Qt, Qd)
+        
+        y3 = self.get_indpenednt_q(acc_ti)
+        
+        rhs_vector = np.concatenate([y2, y3])
+        
+        return rhs_vector
+        
 
-        Mvv = Mp[-dof:, -dof:]
-        Mvu = Mp[-dof:, :-dof]
-        Muu = Mp[:-dof, :-dof]
-        Muv = Mp[:-dof, -dof:]
+    def _forward_euler(self, state_vector, t, h, i):
+        func = self.SSODE
+        f1 = func(state_vector, t, i)
+        yn = state_vector + h*f1 + 0.5*h**2*f1
+        return yn
+    
+    def _runge_kutta(self, state_vector, t, h, i):
+        func = self.SSODE
         
-        Qv = Qp[-dof:]
-        Qu = Qp[:-dof]
+        f1 = h*func(state_vector, t, i)
+        f2 = h*func(state_vector + 0.5*f1, t + 0.5*h, i)
+        f3 = h*func(state_vector + 0.5*f2, t + 0.5*h, i)
+        f4 = h*func(state_vector + f3, t + h, i)
         
-        M_hat = Mvv + (Mvu @ H) + H.T@(Muv + Muu@H)
-        Q_hat = Qv + H.T@Qu - (Mvu + H.T@Muu)@solve(Ju,-acc_rhs)
+        yn = state_vector + (1/6) * (f1 + 2*f2 + 2*f3 + f4)
         
-        return M_hat, Q_hat
+#        print('\n')
+#        print(yn, f1[-1]/h)
+        
+        return yn
+        
 
-    @staticmethod
-    def _state_space_model(t, y, M_hat, Q_hat):
-#        print('IN SSODE : ')
-        v = list(y[len(y)//2:])
-        vdot = list(solve(sc.sparse.csc_matrix(M_hat), Q_hat))
-        dydt = v + vdot
-        return dydt
+
