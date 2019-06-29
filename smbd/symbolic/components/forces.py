@@ -173,7 +173,7 @@ class internal_force(generic_force):
         self.LF = sm.symbols('%s%s_FL'%format_, real=True)
 
         self.Fs = sm.Function('UF_%s_Fs'%name)#, commutative=True)
-        self.Fd = sm.Function('UF_%s_Fd'%name)#, commutative=True)
+        self.Fd = sm.Function('UF_%s_Fd'%name, real=True)#, commutative=True)
         self.Fa = sm.Function('UF_%s_Fa'%name)#, commutative=True)
         
         self.Ts = sm.Function('UF_%s_Ts'%name)#, commutative=True)
@@ -223,9 +223,10 @@ class internal_force(generic_force):
         
         defflection = self.LF - distance[0,0]
         velocity    = (unit_vector.T*self.joint.dijd)
-        velocity    = sm.sqrt(velocity.T*velocity)[0,0]
+        
+        total_force = self.Fs(defflection) - self.Fd(velocity)
 
-        self.Fi = unit_vector*(self.Fs(defflection) - self.Fd(velocity))
+        self.Fi = total_force * unit_vector
         Ti_e = 2*G(self.Pi).T*(self.Ti + Skew(self.ui).T*self.Fi)
         
         self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
