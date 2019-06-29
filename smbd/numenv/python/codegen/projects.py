@@ -104,13 +104,13 @@ class standalone_project(object):
         
     
     def _write_init_file(self):
-        file_path = self.code_dir
-        file_name = '__init__.py'%file_path
+        file_path = os.path.join(self.code_dir, '__init__.py')
+        file_name = file_path
         with open(file_name, 'w') as file:
             file.write('#')
         
-        src_path = os.path.join(self.code_dir, 'src')
-        file_name = '__init__.py'%src_path
+        src_path = os.path.join(self.code_dir, 'src',' __init__.py')
+        file_name = src_path
         with open(file_name, 'w') as file:
             file.write('#')
         

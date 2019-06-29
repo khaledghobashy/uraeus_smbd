@@ -311,7 +311,7 @@ class dds_solver(abstract_solver):
         i = 0
         while i != bar_length:
             progress_bar(bar_length,i)
-            t = time_array[i]
+            t = time_array[i+1]
             self._set_time(t)
             self._solve_time_step(t, i, dt)
             self._extract_independent_coordinates()
