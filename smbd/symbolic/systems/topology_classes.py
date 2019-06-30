@@ -19,7 +19,7 @@ from ..components.matrices import (global_frame, reference_frame,
 from ..components import bodies
 from ..components.joints import absolute_locator
 from ..components.algebraic_constraints import joint_actuator
-from ..components.forces import generic_force, gravity_force, centrifugal_force
+from ..components.forces import abstract_force, gravity_force, centrifugal_force
 
 ###############################################################################
 
@@ -64,7 +64,7 @@ class abstract_topology(object):
     def constraints_graph(self):
         graph = self.selected_variant
         edges = self.edges
-        condition = lambda e : issubclass(edges[e]['class'], generic_force)
+        condition = lambda e : issubclass(edges[e]['class'], abstract_force)
         filtered = itertools.filterfalse(condition, edges)
         return graph.edge_subgraph(filtered)
 
@@ -72,7 +72,7 @@ class abstract_topology(object):
     def forces_graph(self):
         graph = self.selected_variant
         edges = self.edges
-        condition = lambda e : issubclass(edges[e]['class'], generic_force)
+        condition = lambda e : issubclass(edges[e]['class'], abstract_force)
         filtered = filter(condition, edges)
         return graph.edge_subgraph(filtered)
 
@@ -216,7 +216,7 @@ class abstract_topology(object):
         self.graph.add_node(self.grf, **typ_dict)
     
     def _is_force_edge(self, e):
-        return issubclass(self.edges[e]['class'], generic_force)
+        return issubclass(self.edges[e]['class'], abstract_force)
 
     def _is_virtual_node(self, n):
         virtual_flag = self.nodes[n].get('virtual', False)
@@ -445,7 +445,7 @@ class abstract_topology(object):
 
 class topology(abstract_topology):
         
-    def add_body(self,name):
+    def add_body(self, name):
         variant = self.selected_variant
         if name not in variant.nodes():
             attr_dict = self._typ_attr_dict(bodies.body)
@@ -487,7 +487,7 @@ class topology(abstract_topology):
             self._edges_map[name] = (*edge, key)
             self._edges_keys_map[name] = key
     
-    def add_force(self, typ, name, body_i, body_j=None):
+    def add_force(self, typ, name, body_i, body_j):
         assert body_i in self.nodes, 'Body %r does not exist.'%body_i
         assert body_j in self.nodes, 'Body %r does not exist.'%body_j
         variant = self.selected_variant
@@ -591,7 +591,8 @@ class template_based_topology(topology):
             act_edge = self._edges_map[name]
             variant.edges[act_edge].update({'mirr':name})
     
-    def add_force(self, typ, name, body_i, body_j, mirrored=False):
+    def add_force(self, typ, name, body_i, body_j=None, mirrored=False):
+        body_j = self.grf if body_j is None else body_j
         variant = self.selected_variant
         if mirrored:
             body_i_mirr = self.nodes[body_i]['mirr']
@@ -647,6 +648,10 @@ class standalone_topology(template_based_topology):
     
     def add_joint(self, typ, name, body_i, body_j, mirrored=False):
         super().add_joint(typ, name, body_i, body_j, mirrored)
+        
+    def add_force(self, typ, name, body_i, body_j=None, mirrored=False):
+        body_j = self.grf if body_j is None else body_j
+        super().add_force(typ, name, body_i, body_j, mirrored)
     
     def _insert_ground(self):
         typ_dict = self._typ_attr_dict(bodies.ground)
