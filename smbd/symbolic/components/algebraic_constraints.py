@@ -29,12 +29,6 @@ class abstract_joint(object):
     
     def __init__(self, name, body_i=None, body_j=None):
         name_setter(self, name)
-                
-        for i in range(self.def_axis):
-            self._create_joint_def_axis(i+1)
-        for i in range(self.def_locs):
-            self._create_joint_def_loc(i+1)
-        
         self._create_joint_arguments()
                 
         if body_i and body_j:
@@ -93,7 +87,7 @@ class abstract_joint(object):
     
     @property
     def reactions_symbols(self):
-        return [self.Fi,self.Ti]
+        return [self.Fi, self.Ti]
     
     @property
     def arguments_symbols(self):
@@ -128,6 +122,12 @@ class abstract_joint(object):
         setattr(self, 'loc_%s'%i, u)
         
     def _create_joint_arguments(self):
+        
+        for i in range(self.def_axis):
+            self._create_joint_def_axis(i+1)
+        for i in range(self.def_locs):
+            self._create_joint_def_loc(i+1)
+            
         l = []
         for i in range(self.def_axis):
             n = i+1
