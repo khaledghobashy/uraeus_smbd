@@ -17,16 +17,22 @@ from .helpers import body_setter, name_setter
 from .joints import dummy_cylinderical
 
 
-class generic_force(object):
+class abstract_force(object):
     
     n   = 0
     nc  = 0
     nve = 0
     
-    def __init__(self,name,body_i=None,body_j=None):
-        name_setter(self,name)
+    def_axis = 1
+    def_locs = 1
+    
+    def __init__(self, name, body_i=None, body_j=None):
+        name_setter(self, name)
         if body_i : self.body_i = body_i 
         if body_j : self.body_j = body_j
+        
+        self._create_arguments()
+        self._create_local_equalities()
         
     @property
     def name(self):
@@ -63,16 +69,13 @@ class generic_force(object):
     
     @property
     def arguments_symbols(self):
-        config_args = self.joint.arguments_symbols
-        forces_inputs = [self.Fi,self.Ti,self.Fj,self.Tj]
-        args = config_args + forces_inputs
-        return args
+        return self._arguments
     @property
     def runtime_symbols(self):
         return []
     @property
     def constants_symbolic_expr(self):
-        return self.joint.constants_symbolic_expr
+        return self._sym_constants
     @property
     def constants_numeric_expr(self):
         return []
@@ -81,7 +84,62 @@ class generic_force(object):
         constants_expr = itertools.chain(self.constants_symbolic_expr,
                                          self.constants_numeric_expr)
         return [expr.lhs for expr in constants_expr]
+    
+    
+    def _create_def_axis(self, i):
+        format_ = (self.prefix, i, self.id_name)
+        v = vector('%sax%s_%s'%format_)
+        setattr(self, 'axis_%s'%i, v)
+    
+    def _create_def_loc(self, i):
+        format_ = (self.prefix, i, self.id_name)
+        u = vector('%spt%s_%s'%format_)
+        setattr(self, 'loc_%s'%i, u)
+        
+    def _create_arguments(self):
+        
+        for i in range(self.def_axis):
+            self._create_def_axis(i+1)
+        for i in range(self.def_locs):
+            self._create_def_loc(i+1)
+            
+        l = []
+        for i in range(self.def_axis):
+            n = i+1
+            v = getattr(self, 'axis_%s'%n)
+            l.append(v)
+        for i in range(self.def_locs):
+            n = i+1
+            u = getattr(self, 'loc_%s'%n)
+            l.append(u)
+        self._arguments = l
 
+
+    def _create_local_equalities(self):
+        self._sym_constants = []
+        
+        if self.def_axis == 0:
+            axis_equalities = []
+        
+        elif self.def_axis == 1:
+            axis   = self.axis_1
+            axis_bar  = axis.express(self.body_i)
+            axis_bar_eq = sm.Eq(self.vi_bar, axis_bar/sm.sqrt(axis_bar.T*axis_bar))
+            axis_equalities = [axis_bar_eq]
+        else: 
+            raise NotImplementedError
+        self._sym_constants += axis_equalities
+        
+        if self.def_locs == 0:
+            location_equalities = []
+
+        elif self.def_locs == 1:
+            loc  = self.loc_1
+            ui_bar_eq = sm.Eq(self.ui_bar, loc.express(self.body_i) - self.Ri.express(self.body_i))
+            location_equalities = [ui_bar_eq]
+        else: 
+            raise NotImplementedError
+        self._sym_constants += location_equalities
 
         
     def _construct_force_i(self):
@@ -108,23 +166,26 @@ class generic_force(object):
     def _formatter(*args):
         raw_name = '%s%s_%s_%s'%(*args,)
         frm_name = r'{%s{%s}^{%s}_{%s}}'%(*args,)
-        return (raw_name,frm_name)
+        return (raw_name, frm_name)
 
 ###############################################################################
 ###############################################################################
 
-class gravity_force(generic_force):
+class gravity_force(abstract_force):
     
-    def __init__(self,name,body,*args):
+    def_axis = 0
+    def_locs = 0
+    
+    def __init__(self, name, body, *args):
         name = 'gravity'
-        super().__init__(name,body,*args)
+        super().__init__(name, body, *args)
     
     @property
     def Qi(self):
-        return sm.BlockMatrix([[self.Fi], [zero_matrix(4,1)]])
+        return sm.BlockMatrix([[self.Fi], [zero_matrix(4, 1)]])
     @property
     def Qj(self):
-        return sm.BlockMatrix([[zero_matrix(3,1)], [zero_matrix(4,1)]])
+        return sm.BlockMatrix([[zero_matrix(3, 1)], [zero_matrix(4, 1)]])
     
     @property
     def arguments_symbols(self):
@@ -134,17 +195,20 @@ class gravity_force(generic_force):
         return []
     @property
     def constants_numeric_expr(self):
-        gravity = sm.Eq(self.Fi,self.body_i.m*sm.Matrix([0,0,-9.81e3]))
+        gravity = sm.Eq(self.Fi, self.body_i.m*sm.Matrix([0, 0, -9.81e3]))
         return [gravity]
 
 ###############################################################################
 ###############################################################################
 
-class centrifugal_force(generic_force):
+class centrifugal_force(abstract_force):
     
-    def __init__(self,name,body,*args):
+    def_axis = 0
+    def_locs = 0
+    
+    def __init__(self, name, body ,*args):
         name = 'centrifugal'
-        super().__init__(name,body,*args)
+        super().__init__(name, body, *args)
     
     @property
     def Qi(self):
@@ -160,11 +224,77 @@ class centrifugal_force(generic_force):
     @property
     def constants_symbolic_expr(self):
         return []
-        
+
 ###############################################################################
 ###############################################################################
 
-class internal_force(generic_force):
+class force(abstract_force):
+    
+    def_axis = 1
+    def_locs = 1
+    
+    def __init__(self, name, body, *args):
+        super().__init__(name, body, *args)
+        self.t  = sm.symbols('t', real=True)
+        self.Fi = sm.Function('UF_%s'%name)
+
+    
+    @property
+    def Qi(self):
+        force = self.Fi(self.t) * self.vi
+        Ti_e = 2*G(self.Pi).T * (self.Ti + Skew(self.ui).T*force)
+        return sm.BlockMatrix([[force], [Ti_e]])
+    @property
+    def Qj(self):
+        return sm.BlockMatrix([[zero_matrix(3, 1)], [zero_matrix(4, 1)]])
+    
+    @property
+    def arguments_symbols(self):
+        forces_args = [self.Fi, self.axis_1, self.loc_1]
+        return forces_args
+    @property
+    def constants_numeric_expr(self):
+        eq1 = sm.Eq(self.Ti, zero_matrix(3, 1), evaluate=False)
+        return [eq1]
+
+###############################################################################
+###############################################################################
+
+class torque(abstract_force):
+    
+    def_axis = 1
+    def_locs = 0
+    
+    def __init__(self, name, body, *args):
+        super().__init__(name, body, *args)
+        self.t  = sm.symbols('t', real=True)
+        self.Ti = sm.Function('UF_%s'%name)
+
+    @property
+    def Qi(self):
+        torque = self.Ti(self.t) * self.vi
+        Ti_e = 2*G(self.Pi).T * torque 
+        return sm.BlockMatrix([[self.Fi], [Ti_e]])
+    @property
+    def Qj(self):
+        return sm.BlockMatrix([[zero_matrix(3, 1)], [zero_matrix(4, 1)]])
+    
+    @property
+    def arguments_symbols(self):
+        forces_args = [self.Ti, self.axis_1]
+        return forces_args
+    @property
+    def constants_numeric_expr(self):
+        eq1 = sm.Eq(self.Fi, zero_matrix(3, 1), evaluate=False)
+        return [eq1]
+
+###############################################################################
+###############################################################################
+
+class internal_force(abstract_force):
+    
+    def_axis = 0
+    def_locs = 0
     
     def __init__(self, name, body_i=None, body_j=None):
         super().__init__(name, body_i, body_j)
@@ -184,35 +314,25 @@ class internal_force(generic_force):
                 
     @property
     def Qi(self):
-#        dij = self.joint.dij
-#        distance    = sm.sqrt(dij.T*dij)
-#        unit_vector = dij/distance
-#        
-#        defflection = self.LF - distance[0,0]
-#        velocity    = (unit_vector.T*self.joint.dijd)
-#        velocity    = sm.sqrt(velocity.T*velocity)[0,0]
-#
-#        self.Fi = unit_vector*(self.Fs(defflection) - self.Fd(velocity))
-#        Ti_e = 2*G(self.Pi).T*(self.Ti + Skew(self.ui).T*self.Fi)
-#        
-#        force_vector = sm.BlockMatrix([[self.Fi], [Ti_e]])
         return self._Qi
     
     @property
     def Qj(self):
-#        self.Fj = -self.Fi
-#        Tj_e = 2*G(self.Pj).T*(self.Tj + Skew(self.uj).T*self.Fj)
-#        force_vector = sm.BlockMatrix([[self.Fj], [Tj_e]])
         return self._Qj
     
     @property
     def arguments_symbols(self):
         configuration_args = self.joint.arguments_symbols[1:3]
-        forces_args = [self.Fs, self.Fd, self.LF, self.Ti, self.Tj]
+        forces_args = [self.Fs, self.Fd, self.LF]
         return configuration_args + forces_args
     @property
     def constants_symbolic_expr(self):
         return self.joint.constants_symbolic_expr[2:4]
+    @property
+    def constants_numeric_expr(self):
+        eq1 = sm.Eq(self.Ti, zero_matrix(3, 1), evaluate=False)
+        eq2 = sm.Eq(self.Tj, zero_matrix(3, 1), evaluate=False)
+        return [eq1, eq2]
     
     
     def _construct_force_vector(self):
@@ -227,16 +347,14 @@ class internal_force(generic_force):
         total_force = self.Fs(defflection) - self.Fd(velocity)
 
         self.Fi = total_force * unit_vector
-        Ti_e = 2*G(self.Pi).T*(self.Ti + Skew(self.ui).T*self.Fi)
+        Ti_e = 2*G(self.Pi).T * (self.Ti + Skew(self.ui).T*self.Fi)
         
         self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
         
         self.Fj = -self.Fi
-        Tj_e = 2*G(self.Pj).T*(self.Tj + Skew(self.uj).T*self.Fj)
+        Tj_e = 2*G(self.Pj).T * (self.Tj + Skew(self.uj).T*self.Fj)
         self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
         
+        
 
-###############################################################################
-###############################################################################
-    
         
