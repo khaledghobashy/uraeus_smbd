@@ -10,8 +10,10 @@ from smbd._interfaces.systems import (standalone_topology,
                                       template_topology, 
                                       assembly, configuration, 
                                       load_pickled_data,
-                                      standalone_project)
+                                      standalone_project,
+                                      templatebased_project)
 
 __all__ = ['standalone_topology', 'template_topology', 'assembly',
-           'configuration', 'load_pickled_data', 'standalone_project']
+           'configuration', 'load_pickled_data', 'standalone_project',
+           'templatebased_project']
 
