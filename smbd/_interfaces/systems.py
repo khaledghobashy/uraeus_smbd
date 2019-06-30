@@ -49,13 +49,40 @@ class standalone_project(object):
             os.chdir(self.parent_dir)
             print('Current working directory is %s'%os.path.abspath(self.parent_dir))
 
+class templatebased_project(object):
+    
+    def __init__(self, parent_dir=''):
+        
+        self.parent_dir = parent_dir
+        self.code_dir = os.path.join(self.parent_dir, 'numenv')
+        self.symbolic_dir = os.path.join(self.parent_dir, 'symenv')
+        
+    def create(self):
+        self._create_common_dirs()
+        self._create_symbolic_dirs()
+    
+    def _create_common_dirs(self):
+        for d in ['config_inputs', 'results', 'numenv', 'symenv']:
+            subdir = os.path.join(self.parent_dir, d)
+            if not os.path.exists(subdir):
+                os.makedirs(subdir)
+        if self.parent_dir !='':
+            os.chdir(self.parent_dir)
+            print('Current working directory is %s'%os.path.abspath(self.parent_dir))
+    
+    def _create_symbolic_dirs(self):
+        for d in ['templates/scripts', 'templates/objects', 'assemblies/scripts']:
+            subdir = os.path.join(self.symbolic_dir, d)
+            if not os.path.exists(subdir):
+                os.makedirs(subdir)
+
 
 ###############################################################################
 
 class topology_edges_container(object):
     
-    def __init__(self, mbs):
-        self._topology = mbs
+    def __init__(self, topology):
+        self._topology = topology
         self._decorate_items()
         
     @property
@@ -66,11 +93,14 @@ class topology_edges_container(object):
     def _decorate_items(self):
         for attr,obj in self._items.items():
             setattr(self, attr, self._decorate(obj))
+    
+    def _decorate(self, edge_component):
+        raise NotImplementedError
 
 
 class joints_container(topology_edges_container):
     
-    def __init__(self, mbs, _execluded_kwargs=[]):
+    def __init__(self, topology):
         self.spherical = joints.spherical
         self.revolute  = joints.revolute
         self.universal = joints.universal
@@ -79,8 +109,7 @@ class joints_container(topology_edges_container):
         self.tripod = joints.tripod
         self.fixed  = joints.fixed
         
-        self._execluded_kwargs = _execluded_kwargs
-        super().__init__(mbs)
+        super().__init__(topology)
     
     def _decorate(self, edge_component):
         def decorated(*args, **kwargs):
@@ -90,17 +119,17 @@ class joints_container(topology_edges_container):
     
 class actuators_container(topology_edges_container):
     
-    def __init__(self, mbs):
+    def __init__(self, topology):
         self.rotational_actuator = joints.rotational_actuator
         self.absolute_locator = joints.absolute_locator
         self.translational_actuator = joints.translational_actuator
-        super().__init__(mbs)
+        super().__init__(topology)
     
     def _decorate(self, edge_component):
         if issubclass(edge_component, joints.absolute_locator):
             def decorated(*args, **kwargs):
                 self._topology.add_absolute_actuator(edge_component, *args, **kwargs)
-        else:# issubclass(edge_component, joints.rotational_actuator):
+        else:
             def decorated(*args, **kwargs):
                 self._topology.add_joint_actuator(edge_component, *args, **kwargs)
         return decorated
@@ -108,13 +137,15 @@ class actuators_container(topology_edges_container):
 
 class forces_container(topology_edges_container):
     
-    def __init__(self, mbs):
+    def __init__(self, topology):
         self.internal_force = forces.internal_force
-        super().__init__(mbs)
+        self.force = forces.force
+        self.torque = forces.torque
+        super().__init__(topology)
     
     def _decorate(self, edge_component):
         def decorated(*args, **kwargs):
-                self._topology.add_force(edge_component, *args, **kwargs)
+            self._topology.add_force(edge_component, *args, **kwargs)
         return decorated
     
 ###############################################################################
