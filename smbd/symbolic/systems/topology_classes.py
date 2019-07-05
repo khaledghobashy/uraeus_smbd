@@ -510,9 +510,9 @@ class topology(abstract_topology):
 
 class template_based_topology(topology):
     
-    def add_body(self, name, mirrored=False, virtual=False):
+    def add_body(self, name, mirror=False, virtual=False):
         variant = self.selected_variant
-        if mirrored:
+        if mirror:
             node1 = ('vbr_%s'%name if virtual else 'rbr_%s'%name)
             node2 = ('vbl_%s'%name if virtual else 'rbl_%s'%name)
             super().add_body(node1)
@@ -530,9 +530,9 @@ class template_based_topology(topology):
                 self._set_body_as_virtual(node1)
     
     
-    def add_joint(self, typ, name, body_i, body_j, mirrored=False, virtual=False):
+    def add_joint(self, typ, name, body_i, body_j, mirror=False, virtual=False):
         variant = self.selected_variant
-        if mirrored:
+        if mirror:
             body_i_mirr = variant.nodes[body_i]['mirr']
             body_j_mirr = variant.nodes[body_j]['mirr']
             name1 = 'jcr_%s'%name
@@ -554,9 +554,9 @@ class template_based_topology(topology):
             if virtual:
                 self._set_joint_as_virtual(joint_edge)
     
-    def add_joint_actuator(self, typ, name, joint_name, mirrored=False):
+    def add_joint_actuator(self, typ, name, joint_name, mirror=False):
         variant = self.selected_variant
-        if mirrored:
+        if mirror:
             joint_edge1 = self._edges_map[joint_name]
             joint_name2 = variant.edges[joint_edge1]['mirr']
             name1 = 'mcr_%s'%name
@@ -573,9 +573,9 @@ class template_based_topology(topology):
             act_edge = self._edges_map[name]
             variant.edges[act_edge].update({'mirr':name})
     
-    def add_absolute_actuator(self, typ, name, body_i, coordinate, mirrored=False):
+    def add_absolute_actuator(self, typ, name, body_i, coordinate, mirror=False):
         variant = self.selected_variant
-        if mirrored:
+        if mirror:
             body_i_mirr = variant.nodes[body_i]['mirr']
             name1 = 'mcr_%s'%name
             name2 = 'mcl_%s'%name
@@ -591,10 +591,10 @@ class template_based_topology(topology):
             act_edge = self._edges_map[name]
             variant.edges[act_edge].update({'mirr':name})
     
-    def add_force(self, typ, name, body_i, body_j=None, mirrored=False):
+    def add_force(self, typ, name, body_i, body_j=None, mirror=False):
         body_j = self.grf if body_j is None else body_j
         variant = self.selected_variant
-        if mirrored:
+        if mirror:
             body_i_mirr = self.nodes[body_i]['mirr']
             body_j_mirr = self.nodes[body_j]['mirr']
             name1 = 'far_%s'%name
@@ -643,15 +643,15 @@ class template_based_topology(topology):
 
 class standalone_topology(template_based_topology):
     
-    def add_body(self, name, mirrored=False):
-        super().add_body(name, mirrored)
+    def add_body(self, name, mirror=False):
+        super().add_body(name, mirror)
     
-    def add_joint(self, typ, name, body_i, body_j, mirrored=False):
-        super().add_joint(typ, name, body_i, body_j, mirrored)
+    def add_joint(self, typ, name, body_i, body_j, mirror=False):
+        super().add_joint(typ, name, body_i, body_j, mirror)
         
-    def add_force(self, typ, name, body_i, body_j=None, mirrored=False):
+    def add_force(self, typ, name, body_i, body_j=None, mirror=False):
         body_j = self.grf if body_j is None else body_j
-        super().add_force(typ, name, body_i, body_j, mirrored)
+        super().add_force(typ, name, body_i, body_j, mirror)
     
     def _insert_ground(self):
         typ_dict = self._typ_attr_dict(bodies.ground)
