@@ -25,6 +25,7 @@ class npsc_printer(C99CodePrinter):
         name = (name.lower() if len(name)>1 else name)
         return '%s(%s)'%(name,args)
     
+    
     def _print_Simple_geometry(self, expr):
         expr_lowerd = expr.__class__.__name__.lower()
         return '%s(%s)'%(expr_lowerd,(self._print(expr.args)))
