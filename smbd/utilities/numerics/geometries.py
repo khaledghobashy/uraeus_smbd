@@ -21,8 +21,9 @@ def cylinder_geometry(arg1, arg2, ro=10, ri=0):
     l = np.linalg.norm(v)
     frame = triad(v)
     
-    vol = np.pi*(ro**2-ri**2)*l*1e-3
-    m   = 7.9*vol
+    density = 7.9*1e-3
+    vol = np.pi*(ro**2-ri**2)*l
+    m   = density*vol
     Jzz = (m/2)*(ro**2+ri**2)
     Jxx = Jyy = (m/12)*(3*(ro**2+ri**2)+(l**2))
     
@@ -52,7 +53,7 @@ def triangular_prism(p1,p2,p3,thickness=10):
     height = l2*np.sin(theta)
     area   = np.sqrt(pr*(pr-l1)*(pr-l2)*(pr-l3))
     volume = area*thickness
-    density = 7.9
+    density = 7.9*1e-3 #(gm/mm3)
         
     # Creating a centroidal reference frame with z-axis normal to triangle
     # plane and x-axis oriented with the selected base vector v1.
@@ -67,11 +68,11 @@ def triangular_prism(p1,p2,p3,thickness=10):
     Izc = ((l1**3*height)-(l1**2*height*a)+(l1*height*a**2)+(l1*height**3))/36
     
     # Calculating moment of inertia from the moment of area
-    m = density*volume*1e-3
-    J = m*np.diag([float(i) for i in [Ixc,Iyc,Izc]])
+    m = density*volume
+    J = (m/area) * np.diag([float(i) for i in [Ixc,Iyc,Izc]])
     R = centered(p1,p2,p3)
     P = dcm2ep(frame)
-    
+
     J = A(P).T.dot(J).dot(A(P))
     P = np.array([[1],[0],[0],[0]],dtype=np.float64)
     
