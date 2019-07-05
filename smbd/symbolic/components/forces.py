@@ -12,7 +12,8 @@ import itertools
 import sympy as sm
 
 # Local application imports
-from .matrices import vector, G, Skew, zero_matrix
+from .matrices import (vector, G, Skew, zero_matrix,
+                       matrix_function_constructor, Force)
 from .helpers import body_setter, name_setter
 from .joints import dummy_cylinderical
 
@@ -228,6 +229,36 @@ class centrifugal_force(abstract_force):
 ###############################################################################
 ###############################################################################
 
+class generic_force(abstract_force):
+    
+    def_axis = 0
+    def_locs = 1
+    
+    def __init__(self, name, body, *args):
+        super().__init__(name, body, *args)
+        
+        self.Fi = matrix_function_constructor('UF_%s_F'%name, (3, 1))
+        self.Ti = matrix_function_constructor('UF_%s_T'%name, (3, 1))
+        
+        self._Fi_alias = sm.Function('UF_%s_F'%name)
+        self._Ti_alias = sm.Function('UF_%s_T'%name)
+        
+    @property
+    def Qi(self):
+        Ti_e = 2*G(self.Pi).T * (self.Ti() + Skew(self.ui).T*self.Fi())
+        return sm.BlockMatrix([[self.Fi()], [Ti_e]])
+    @property
+    def Qj(self):
+        return sm.BlockMatrix([[zero_matrix(3, 1)], [zero_matrix(4, 1)]])
+    
+    @property
+    def arguments_symbols(self):
+        forces_args = [self._Fi_alias, self._Ti_alias, self.loc_1]
+        return forces_args
+
+###############################################################################
+###############################################################################
+
 class force(abstract_force):
     
     def_axis = 1
@@ -355,6 +386,10 @@ class internal_force(abstract_force):
         Tj_e = 2*G(self.Pj).T * (self.Tj + Skew(self.uj).T*self.Fj)
         self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
         
-        
+###############################################################################
+###############################################################################
+
+       
+
 
         
