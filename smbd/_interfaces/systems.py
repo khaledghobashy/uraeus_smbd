@@ -141,6 +141,7 @@ class forces_container(topology_edges_container):
         self.internal_force = forces.internal_force
         self.force = forces.force
         self.torque = forces.torque
+        self.generic_force = forces.generic_force
         super().__init__(topology)
     
     def _decorate(self, edge_component):
@@ -179,8 +180,8 @@ class template_topology(object):
     def assemble(self):
         self.topology.assemble_model()
             
-    def save(self):
-        file = '%s.stpl'%self.name
+    def save(self, dir_path=''):
+        file = os.path.join(dir_path, '%s.stpl'%self.name)
         with open(file, 'wb') as f:
             cloudpickle.dump(self, f)
     
