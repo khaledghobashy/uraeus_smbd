@@ -47,6 +47,7 @@ class AbstractMatrix(sm.MatrixExpr):
         v = sm.MatrixSlice(self,i,j)
         return v
     
+    
 class A(AbstractMatrix):
     """
     Representaion of symbolic transformation matrix which represents the 
@@ -59,20 +60,34 @@ class A(AbstractMatrix):
         Orientation parameters of the rigid body.
     """
     shape = (3,3)
+    
+    def __init__(self, P):
+        pass
+
     def _latex(self,expr):
         p = self.args[0]
         return r'{A(%s)}'%p.name
 
 
 class G(AbstractMatrix):
+    
     shape = (3,4)
+    
+    def __init__(self, P):
+        pass
+    
     def _latex(self,expr):
         p = self.args[0]
         return r'{G(%s)}'%p.name
     
 
 class E(AbstractMatrix):
+    
     shape = (3,4)
+    
+    def __init__(self, P):
+        pass
+    
     def _latex(self,expr):
         p = self.args[0]
         return r'{E(%s)}'%p.name
@@ -92,10 +107,12 @@ class B(AbstractMatrix):
     """
     
     shape = (3,4)
-    def __init__(self,P,u):
+    
+    def __init__(self, P, u):
         pass
-    def _latex(self,expr):
-        p,u = self.args
+    
+    def _latex(self, expr):
+        p, u = self.args
         return r'{B(%s,%s)}'%(p.name,u.name)
 
 class Triad(AbstractMatrix):
@@ -111,31 +128,51 @@ class Triad(AbstractMatrix):
         X-Axis of the triad.
     """
     
-    def __init__(self,v1,v2=None):
+    def __init__(self, v1, v2=None):
         super().__init__(v1)
 
 class Skew(AbstractMatrix):
-    shape = (3,3)
-    def _latex(self,expr):
-        p = self.args[0]
-        return r'{Skew(%s)}'%p
+    shape = (3, 3)
+    
+    def __init__(self, v):
+        pass
+    
+    def _latex(self, expr):
+        v = self.args[0]
+        return r'{Skew(%s)}'%v
+
 
 class Force(AbstractMatrix):
-    shape = (3,1)
-    def _latex(self,expr):
+    shape = (3, 1)
+    
+    def __init__(self, *args):
+        pass
+
+    def _latex(self, expr):
         name = self.__class__.__name__
-        return r'{%s%s}'%(name,self.args,)
+        return r'{%s%s}'%(name, self.args,)
+
 class Moment(AbstractMatrix):
-    shape = (3,1)
-    def _latex(self,expr):
+    shape = (3, 1)
+    
+    def __init__(self, *args):
+        pass
+
+    def _latex(self, expr):
         name = self.__class__.__name__
-        return r'{%s%s}'%(name,self.args,)
+        return r'{%s%s}'%(name, self.args,)
 
 
-def matrix_function_constructor(cls_name,shape=(3,1),**kwargs):
-    attrs = {'shape':shape}
-    cls = type(cls_name,(AbstractMatrix,),attrs)
-    return cls
+def matrix_function_constructor(cls_name, shape=(3, 1), **kwargs):
+
+    def _cxxcode(obj, expr, **kwargs):
+        return '%s%s'%(cls_name, obj.args,)
+    
+    attrs = {'shape':shape, '_cxxcode':_cxxcode, '_ccode':_cxxcode}
+    _cls = type(cls_name, (AbstractMatrix, ), attrs)
+        
+    return _cls
+
 ###############################################################################
 ###############################################################################
 
@@ -785,6 +822,4 @@ class quatrenion(sm.MatrixSymbol):
                 
 ###############################################################################
 ###############################################################################
-
-
 
