@@ -656,6 +656,14 @@ class assembly_codegen(template_codegen):
     def write_imports(self):
         text = '''
                 import numpy as np
+                from numpy.linalg import multi_dot
+                
+                try:
+                    from smbd.numenv.python.numerics.matrix_funcs import G
+                except ModuleNotFoundError:
+                    from smbd.numenv.python.numerics.misc import G
+
+                
                                 
                 {templates_imports}
                 
@@ -697,12 +705,15 @@ class assembly_codegen(template_codegen):
                         self.P_ground  = np.array([[1],[0],[0],[0]],dtype=np.float64)
                         self.Pg_ground = np.array([[1],[0],[0],[0]],dtype=np.float64)
                         
-                        self.M_ground = np.eye(3,dtype=np.float64)
-                        self.J_ground = np.eye(4,dtype=np.float64)
+                        self.m_ground = np.eye(3,dtype=np.float64)
+                        self.Jbar_ground = np.eye(3,dtype=np.float64)
                         
                         self.gr_rows = np.array([0,1])
                         self.gr_jac_rows = np.array([0,0,1,1])
                         self.gr_jac_cols = np.array([0,1,0,1])
+                        
+                        self.n  = sum([sub.n for sub in self.subsystems]) + 7
+                        self.nc = sum([sub.nc for sub in self.subsystems]) + 7
                 '''
         
         subsystems = ','.join(['subsystems.%s'%i for i in self.subsystems.keys()])
