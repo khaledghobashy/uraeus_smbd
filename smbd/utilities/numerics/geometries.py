@@ -32,7 +32,7 @@ def cylinder_geometry(arg1, arg2, ro=10, ri=0):
     P = dcm2ep(frame)
     J = np.diag([Jxx,Jyy,Jzz])
     
-    J = A(P).T.dot(J).dot(A(P)) # chamged from A(P).dot(J).dot(A(P).T)
+    J = A(P).dot(J).dot(A(P).T) # chamged from A(P).dot(J).dot(A(P).T)
     P = np.array([[1],[0],[0],[0]],dtype=np.float64)
     
     return geometry(R,P,m,J)
@@ -73,7 +73,7 @@ def triangular_prism(p1,p2,p3,thickness=10):
     R = centered(p1,p2,p3)
     P = dcm2ep(frame)
 
-    J = A(P).T.dot(J).dot(A(P))
+    J = A(P).dot(J).dot(A(P).T)
     P = np.array([[1],[0],[0],[0]],dtype=np.float64)
     
     return geometry(R,P,m,J)
