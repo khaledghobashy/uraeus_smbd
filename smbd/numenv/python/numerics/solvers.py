@@ -48,29 +48,29 @@ class abstract_solver(object):
     
     def __init__(self, model):
         self.model = model
-        model.initialize()
-        q0 = model.q0
-        model.set_gen_coordinates(q0)
+        self._initialize_model()
         
         self._nrows = model.nrows
         self._ncols = model.ncols
         self._jac_shape = (self._nrows,self._ncols)
         
-        self._pos_history = {0: q0}
-        self._vel_history = {0: np.zeros_like(q0)}
+        self._pos_history = {0 : model.q0}
+        self._vel_history = {0 : 0*model.q0}
         self._acc_history = {}
+        self._lgr_history = {}
         
-        sorted_coordinates = {v:k for k,v in model.indicies_map.items()}
-        self._coordinates_indicies = []
-        for name in sorted_coordinates.values():
-            self._coordinates_indicies += ['%s.%s'%(name, i) 
-            for i in ['x', 'y', 'z', 'e0', 'e1', 'e2', 'e3']]
-            
-        self._reactions_indicies = []
-        for name in model.reactions_indicies:
-            self._reactions_indicies += ['%s.%s'%(name, i) 
-            for i in ['x','y','z']]
+        self._create_indicies()
+        
     
+    def set_initial_states(self, coordinates, velocities):
+        self._q0 = coordinates
+        self._qd0 = velocities
+        self.model.set_gen_coordinates(self._q0)
+        self.model.set_gen_velocities(self._qd0)
+        self._pos_history = {0 : self._q0}
+        self._vel_history = {0 : self._qd0}
+
+            
     def set_time_array(self, duration, spacing):
         
         if duration > spacing:
@@ -102,12 +102,26 @@ class abstract_solver(object):
                 columns = self._reactions_indicies)
         self.reactions_dataframe['time'] = time_array
     
+    
     def _initialize_model(self):
         model = self.model
         model.initialize()
         q0 = model.q0
         model.set_gen_coordinates(q0)
-    
+
+    def _create_indicies(self):
+        model = self.model
+        sorted_coordinates = {v:k for k,v in model.indicies_map.items()}
+        self._coordinates_indicies = []
+        for name in sorted_coordinates.values():
+            self._coordinates_indicies += ['%s.%s'%(name, i) 
+            for i in ['x', 'y', 'z', 'e0', 'e1', 'e2', 'e3']]
+            
+        self._reactions_indicies = []
+        for name in model.reactions_indicies:
+            self._reactions_indicies += ['%s.%s'%(name, i) 
+            for i in ['x','y','z']]
+
     def _creat_results_dataframes(self):
         columns = self._coordinates_indicies
         
@@ -210,7 +224,8 @@ class abstract_solver(object):
                 raise ValueError("Iterations exceded \n")
                 break
             itr+=1
-        self.pos = guess
+        self._pos = guess
+        self._jac = self._eval_jac_eq()
 
 ###############################################################################
 ###############################################################################
@@ -223,7 +238,6 @@ class kds_solver(abstract_solver):
             raise ValueError('Model is not fully constrained.')
     
     def solve(self, run_id):        
-        self._initialize_model()
         time_array = self.time_array
         dt = self.step_size
         
@@ -247,7 +261,7 @@ class kds_solver(abstract_solver):
                 + 0.5*self._acc_history[i]*(dt**2)
             
             self._newton_raphson(g)
-            self._pos_history[i+1] = self.pos
+            self._pos_history[i+1] = self._pos
             A = self._eval_jac_eq()
             
             vel_rhs = self._eval_vel_eq()
@@ -279,7 +293,6 @@ class kds_solver(abstract_solver):
 ###############################################################################
 ###############################################################################
 
-
 class dds_solver(abstract_solver):
     
     def __init__(self, model):
@@ -288,7 +301,6 @@ class dds_solver(abstract_solver):
             raise ValueError('Model is fully constrained.')
     
     def solve(self, run_id):
-        self._initialize_model()
         time_array = self.time_array
         dt = self.step_size
         bar_length = len(time_array)-1
@@ -304,7 +316,8 @@ class dds_solver(abstract_solver):
         M, J, Qt, Qd = self._eval_augmented_matricies(pos_t0, vel_t0)
         acc_t0, lamda_t0 = self._solve_augmented_system(M, J, Qt, Qd)        
         self._acc_history[0] = acc_t0
-        
+        self._lgr_history[0] = lamda_t0
+
         self.integrator = self._runge_kutta
         
         print('\nRunning System Dynamic Analysis:')
@@ -314,54 +327,55 @@ class dds_solver(abstract_solver):
             t = time_array[i+1]
             self._set_time(t)
             self._solve_time_step(t, i, dt)
-            self._extract_independent_coordinates()
+            self._extract_independent_coordinates(self._jac[:-self.dof,:])
             i += 1
-                    
         print('\n')
         self._creat_results_dataframes()
 
 
     def _solve_time_step(self, t, i, dt):
         
-        q   = self._pos_history[i]
-        qd  = self._vel_history[i]
+        q  = self._pos_history[i]
+        qd = self._vel_history[i]
         
-        q_v   = self.get_indpenednt_q(q)
-        qd_v  = self.get_indpenednt_q(qd)
-        
+        q_v  = self.get_indpenednt_q(q)
+        qd_v = self.get_indpenednt_q(qd)
         state_vector = np.concatenate([q_v, qd_v])
         
-        soln = self.integrator(state_vector, t, dt, i)
-        
+        soln = self.integrator(self.SSODE, state_vector, t, dt, i)
         y1 = soln[:self.dof, 0]
         y2 = soln[self.dof:, 0]
 
-        
         guess = self._pos_history[i] \
               + self._vel_history[i]*dt \
               + 0.5*self._acc_history[i]*(dt**2)
-        
         for c in range(self.dof): 
             guess[np.argmax(self.independent_cols[:, c]), 0] = y1[c]
-                        
         
         self._newton_raphson(guess)
-        self._pos_history[i+1] = self.pos
-        self._set_gen_coordinates(self.pos)
+        A  = self._jac
+        qi = self._pos
         
-        A = self._eval_jac_eq()
         vel_rhs = self._eval_vel_eq(y2)
         vi = solve(A, -vel_rhs)
-        self._vel_history[i+1] = vi
         
-        M, J, Qt, Qd = self._eval_augmented_matricies(self.pos, vi)
+        self._set_gen_coordinates(qi)
+        self._set_gen_velocities(vi)
+        
+        J  = A[:-self.dof,:]
+        M  = self._eval_mass_eq()
+        Qt = self._eval_frc_eq()
+        Qd = self._eval_acc_eq()
         acc_ti, lamda_ti = self._solve_augmented_system(M, J, Qt, Qd)
+        
+        self._pos_history[i+1] = qi
+        self._vel_history[i+1] = vi
         self._acc_history[i+1] = acc_ti
+        self._lgr_history[i+1] = lamda_ti
         
         
-    
-    def _extract_independent_coordinates(self):
-        A = super()._eval_jac_eq()
+    def _extract_independent_coordinates(self, jacobian=None):
+        A = super()._eval_jac_eq() if jacobian is None else jacobian
         rows, cols = A.shape
         permutaion_mat = sc.linalg.lu(A.A.T)[0]
         independent_cols = permutaion_mat[:, rows:]
@@ -429,13 +443,16 @@ class dds_solver(abstract_solver):
             guess[np.argmax(self.independent_cols[:, c]), 0] = y1[c]
                         
         self._newton_raphson(guess)
-        self._set_gen_coordinates(self.pos)
-        
-        A = self._eval_jac_eq()
+        self._set_gen_coordinates(self._pos)
+                
         vel_rhs = self._eval_vel_eq(y2)
-        vi = solve(A, -vel_rhs)
-        
-        M, J, Qt, Qd = self._eval_augmented_matricies(self.pos, vi)
+        vi = solve(self._jac, -vel_rhs)
+        self._set_gen_velocities(vi)
+
+        J  = self._jac[:-self.dof,:]
+        M  = self._eval_mass_eq()
+        Qt = self._eval_frc_eq()
+        Qd = self._eval_acc_eq()
         acc_ti, lamda_ti = self._solve_augmented_system(M, J, Qt, Qd)
         
         y3 = self.get_indpenednt_q(acc_ti)
@@ -444,15 +461,15 @@ class dds_solver(abstract_solver):
         
         return rhs_vector
         
-
-    def _forward_euler(self, state_vector, t, h, i):
-        func = self.SSODE
+    
+    @staticmethod
+    def _forward_euler(func, state_vector, t, h, i):
         f1 = func(state_vector, t, i)
-        yn = state_vector + h*f1 + 0.5*h**2*f1
+        yn = state_vector + h*f1
         return yn
     
-    def _runge_kutta(self, state_vector, t, h, i):
-        func = self.SSODE
+    @staticmethod
+    def _runge_kutta(func, state_vector, t, h, i):
         
         f1 = h*func(state_vector, t, i)
         f2 = h*func(state_vector + 0.5*f1, t + 0.5*h, i)
@@ -460,9 +477,6 @@ class dds_solver(abstract_solver):
         f4 = h*func(state_vector + f3, t + h, i)
         
         yn = state_vector + (1/6) * (f1 + 2*f2 + 2*f3 + f4)
-        
-#        print('\n')
-#        print(yn, f1[-1]/h)
         
         return yn
         
