@@ -47,15 +47,19 @@ class abstract_tire(object):
         
         # Rotational velocity vector of wheel in Global and Local frames.
         AngVel_Hub_GF = 2*G(P_hub)@Pd_hub # Global
-#        AngVel_Hub_LF = 2*E(P_hub)@Pd_hub # Local
+        AngVel_Hub_LF = 2*E(P_hub)@Pd_hub # Local
         
                 
         self._set_SAE_Frame(P_carrier)
         
         # Circumferential Velocity
-        AngVel_Hub_SAE = self.SAE_GF.T.dot(AngVel_Hub_GF)
-        Omega = AngVel_Hub_SAE[1,0]
-        V_C = Omega * np.linalg.norm(R_S)
+#        AngVel_Hub_SAE = self.SAE_GF.T.dot(AngVel_Hub_LF)
+#        Omega = AngVel_Hub_SAE[1,0]
+        Omega = AngVel_Hub_LF[1,0]
+#        V_C = Omega * np.linalg.norm(R_S)
+        V_C_GF  = skew_matrix(-R_S).dot(AngVel_Hub_GF)
+        V_C_SAE = self.SAE_GF.T.dot(V_C_GF)
+        V_C = V_C_SAE[0,0]
         
         
 #        V_wc_SAE = self.SAE_LF.T.dot(A(P_carrier).T).dot(V_wc)
@@ -71,7 +75,7 @@ class abstract_tire(object):
         self.V_C  = V_C
                 
         
-        print('Omega_LF = %s'%Omega)
+        print('Omega = %s'%Omega)
 #        print('AngVel_Hub_LF = %s'%AngVel_Hub_LF.T)
 #        print('V_WC = %s'%V_wc_SAE.T)
 #        print('V_C = %s'%V_C)
@@ -104,16 +108,16 @@ class abstract_tire(object):
         k =  float(self.ui/self.sigma_k)
         a =  float(self.vi/self.sigma_a)
         
-        if abs(Vx) <= self._V_low:
-            kv_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
-            damped = (kv_low/self.C_Fk)*V_sx
-            print('damped_k = %s'%damped)
-            k = k - damped
-            
-            ka_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
-            damped = (ka_low/self.C_Fa)*V_sy
-            print('damped_a = %s'%damped)
-            a = a - damped
+#        if abs(Vx) <= self._V_low:
+#            kv_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
+#            damped = (kv_low/self.C_Fk)*V_sx
+#            print('damped_k = %s'%damped)
+#            k = k - damped
+#            
+#            ka_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
+#            damped = (ka_low/self.C_Fa)*V_sy
+#            print('damped_a = %s'%damped)
+#            a = a - damped
         
         print('ui = %s'%self.ui)
         print('k = %s'%k)
@@ -240,10 +244,12 @@ class brush_model(abstract_tire):
 
         Force = self.Fx*X_SAE_GF + self.Fy*Y_SAE_GF + self.Fz*np.array([[0],[0],[1]])
         self.F = Force
-        self.M = skew_matrix(R_pw_eff).dot(self.F) #+ self.Mz
+#        self.M = skew_matrix(R_pw_eff).dot(self.F) + self.Mz
+        self.My = self.Fx*np.linalg.norm(R_pw_eff)
+        self.M  = (self.My * Y_SAE_GF) + self.Mz
         self.M_SAE = self.SAE_GF.T.dot(self.M)
         self.My_SAE = self.M_SAE[1,0]
-        print('My_SAE = %s'%self.My_SAE)
+        print('My_SAE = %s'%self.My)
         print('M = %s'%(self.M.T))
         
     
