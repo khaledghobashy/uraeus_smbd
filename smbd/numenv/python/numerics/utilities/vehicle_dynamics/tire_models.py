@@ -21,17 +21,19 @@ def normalize(v):
 class abstract_tire(object):
     
     def __init__(self, P_carrier):
-        self._set_SAE_LF(P_carrier)
-        self._set_CPM_integrator(0, 0)
+        self._set_SAE_Frame(P_carrier)
+        self._u_history = [0]
+        self._v_history = [0]
+        self.t = 0
+        self._V_low = 2.5*1e3
+        
+        self.driven = 1
     
     def _process_wheel_kinematics(self, R_hub, P_hub, Rd_hub, Pd_hub, P_carrier):
         
         # Wheel Center Translational Velocity in Global Frame
         V_wc = Rd_hub
         
-        # DCM of wheel carrier in Global Frame
-#        A_carrier = A(P_carrier)
-
         # Penetration Length assuming flat horizontal ground
         self.ru = max(self.R_ul - R_hub[2,0], 0)
         
@@ -45,26 +47,21 @@ class abstract_tire(object):
         
         # Rotational velocity vector of wheel in Global and Local frames.
         AngVel_Hub_GF = 2*G(P_hub)@Pd_hub # Global
-        AngVel_Hub_LF = 2*E(P_hub)@Pd_hub # Local
+#        AngVel_Hub_LF = 2*E(P_hub)@Pd_hub # Local
         
-        
-        # Velocity of Slip point S relative to the wheel center
-#        V_SW = skew_matrix(AngVel_Hub_GF).dot(R_S)
-        
-        # Velocity of Slip point S relative to the global origin in global frame
-#        V_SG = V_wc + V_SW
-        
-        self._set_SAE_LF(P_carrier)
+                
+        self._set_SAE_Frame(P_carrier)
         
         # Circumferential Velocity
-        Omega = AngVel_Hub_LF[1,0]
-        Omega = self.SAE_LF.T.dot(A(P_carrier).T).dot(AngVel_Hub_GF)[1,0]
+        AngVel_Hub_SAE = self.SAE_GF.T.dot(AngVel_Hub_GF)
+        Omega = AngVel_Hub_SAE[1,0]
         V_C = Omega * np.linalg.norm(R_S)
         
         
-        V_wc_SAE = self.SAE_LF.T.dot(A(P_carrier).T).dot(V_wc)
+#        V_wc_SAE = self.SAE_LF.T.dot(A(P_carrier).T).dot(V_wc)
+        V_wc_SAE = self.SAE_GF.T.dot(V_wc)
         
-        V_sx = (V_wc_SAE[0,0] - V_C)
+        V_sx = (V_wc_SAE[0,0] + V_C)
         V_sy =  V_wc_SAE[1,0]
         V_x  = abs(V_wc_SAE[0,0])
         
@@ -72,16 +69,7 @@ class abstract_tire(object):
         self.V_sy = V_sy
         self.V_x  = V_x 
         self.V_C  = V_C
-        
-#        vth = 3000
-#        if  V_x <= vth:
-#            print('SLOW !!')
-#            self.S_lng = (2*V_sx)/(vth + (V_x**2/vth))
-#            self.S_ltr = (2*V_sy)/(vth + (V_x**2/vth))
-#        else:
-#            self.S_lng = -V_sx/V_C
-#            self.S_ltr = V_sy/V_x
-        
+                
         
         print('Omega_LF = %s'%Omega)
 #        print('AngVel_Hub_LF = %s'%AngVel_Hub_LF.T)
@@ -95,7 +83,7 @@ class abstract_tire(object):
 #        print('S_ltr = %s'%self.S_ltr)
 #        print('SlipAngle = %s'%np.arctan(self.S_ltr))
     
-    def _set_SAE_LF(self, P_carrier):
+    def _set_SAE_Frame(self, P_carrier):
         
         A_carrier = A(P_carrier)
         
@@ -107,51 +95,72 @@ class abstract_tire(object):
         y_vec = normalize(y_vec)
         z_vec = np.array([[0],[0],[-1]])
         
-        SAE_frame = np.concatenate([x_vec, y_vec, z_vec], axis=1)
+        self.SAE_GF = np.concatenate([x_vec, y_vec, z_vec], axis=1)
+        print(self.SAE_GF)
+            
     
-        self.SAE_LF = A(P_carrier).T.dot(SAE_frame)
-        self.X_SAE_LF = self.SAE_LF[:,0:1]
-        self.Y_SAE_LF = self.SAE_LF[:,1:2]
-        self.Z_SAE_LF = self.SAE_LF[:,2:3]
+    def _get_transient_slips(self, t, dt, V_sx, V_sy, Vx):
+        self._integrate_CPM(t, dt, V_sx, V_sy, Vx)
+        k =  float(self.ui/self.sigma_k)
+        a =  float(self.vi/self.sigma_a)
         
-    
-    def _integrate_CPM(self, t, V_sx, V_sy, Vx):
-        self.u_intg.set_f_params(V_sx, self.sigma_k, Vx)
-        u = self.u_intg.integrate(t)
-
-        self.v_intg.set_f_params(V_sy, self.sigma_a, Vx)
-        v = self.v_intg.integrate(t)
+        if abs(Vx) <= self._V_low:
+            kv_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
+            damped = (kv_low/self.C_Fk)*V_sx
+            print('damped_k = %s'%damped)
+            k = k - damped
+            
+            ka_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
+            damped = (ka_low/self.C_Fa)*V_sy
+            print('damped_a = %s'%damped)
+            a = a - damped
         
-        self.ui = u
-        self.vi = v
-
-    def _set_CPM_integrator(self, u0, v0):
-        self.u_intg = ode(self._CPM_ODE)
-        self.u_intg.set_integrator('dopri5')
-        self.u_intg.set_initial_value(u0)
-        self.u_intg.set_f_params([0, self.sigma_k, 0])
-        
-        self.v_intg = ode(self._CPM_ODE)
-        self.v_intg.set_integrator('dopri5')
-        self.v_intg.set_initial_value(v0)
-        self.v_intg.set_f_params([0, self.sigma_a, 0])
-    
-    def _CPM_ODE(self, t, y, slip_vel, relx, Vx):
-        Vx = abs(Vx)
-        dudt = -(1/relx)*Vx*y - slip_vel
-        return dudt
-    
-    def _get_transient_slips(self, t, V_sx, V_sy, Vx):
-        self._integrate_CPM(t, V_sx, V_sy, Vx)
-        k = -self.ui/self.sigma_k
-        a = self.vi/self.sigma_a
-        
+        print('ui = %s'%self.ui)
         print('k = %s'%k)
+        print('vi = %s'%self.vi)
         print('a = %s'%a)
         
-        return k, a
+        return k*self.driven, a
+    
+    def _integrate_CPM_RK45(self, h, y, slip_vel, relx, Vx):
+        func = self._CPM_ODE
         
+        f1 = h*func(y, slip_vel, relx, Vx)
+        f2 = h*func(y + 0.5*f1, slip_vel, relx, Vx)
+        f3 = h*func(y + 0.5*f2, slip_vel, relx, Vx)
+        f4 = h*func(y + f3, slip_vel, relx, Vx)
+        
+        dy = (1/6) * (f1 + 2*f2 + 2*f3 + f4)
+        yn = y + dy
+        
+        return yn
+    
+    
+    def _integrate_CPM(self, t, h, V_sx, V_sy, Vx):
+        
+        if self.t <= t:
+            u_old = self._u_history[-1]
+            self.ui = self._integrate_CPM_RK45(h, u_old, V_sx, self.sigma_k, Vx)
+            
+            v_old = self._v_history[-1]
+            self.vi = self._integrate_CPM_RK45(h, v_old, V_sy, self.sigma_a, Vx)
+            
+            self.t += h
+            
+            self._u_history.append(self.ui)
+            self._v_history.append(self.vi)
 
+
+    def _CPM_ODE(self, y, slip_vel, relx, Vx):
+        
+        if False:#(slip_vel + Vx*y/relx)*y < 0:
+            print((slip_vel + (Vx*y)/relx) * y)
+            dydt = 0
+        else:
+            dydt = -(1/relx)*Vx*y - slip_vel
+        return dydt
+
+        
 ###############################################################################
 ###############################################################################
 
@@ -161,72 +170,69 @@ class brush_model(abstract_tire):
         
         self.R_ul = 546
         self.mu = 0.85
-        self.cp = 2000*1e3
+        self.cp = 1500*1e3
         self.a  = 210
         
         self.kz = 650*1e6
-        self.cz = 6*1e6
+        self.cz = 16*1e6
         
         C_fk = (2375*9.81*1e6*0.2)/(3*1e-2)
         C_fa = (150*1e6*1e2)/(np.deg2rad(2))
         C_fx = C_fy = self.cp
         
         self.sigma_k = (C_fk/C_fx)*1e-3
-        self.sigma_a = (C_fa/C_fy)*1e-6
+        self.sigma_a = (C_fa/C_fy)*1e-3
+        
+        self.C_Fk = C_fk
+        self.C_Fa = C_fa
+        
+        self.kv_low = 770*1e3 # 770 Ns/m Damping coefficient at low speeds
         
         super().__init__(P_carrier)
         
     
-    def Eval_Forces(self, R_hub, P_hub, Rd_hub, Pd_hub, P_carrier, t):
+    def Eval_Forces(self, R_hub, P_hub, Rd_hub, Pd_hub, P_carrier, t, dt):
         
         self._process_wheel_kinematics(R_hub, P_hub, Rd_hub, Pd_hub, P_carrier)
         
-        self.Fz = self.kz * self.ru
+        self.Fz = (self.kz * self.ru) - (self.cz * Rd_hub[2,0])
 
-        k, alpha = self._get_transient_slips(t, self.V_sx, self.V_sy, self.V_x)
+        k, alpha = self._get_transient_slips(t, dt, self.V_sx, self.V_sy, self.V_x)
         Theta   = (2/3)*((self.cp * self.a**2)/(self.mu*self.Fz))
-        sigma_x = k/(1+k)# if abs(k)-1 >1e-3 else k
-        sigma_y = alpha/(1+k) #if abs(k)-1 >1e-3 else alpha
+        sigma_x = k/(1+k)
+        sigma_y = alpha/(1+k)
         sigma   = np.sqrt(sigma_x**2 + sigma_y**2)
         TG = Theta*sigma
 
         sigma_vec = np.array([[sigma_x], [sigma_y]])
         
-        if sigma <=1e-3:
+        if sigma <=1e-5:
             self.Fx = 0
             self.Fy = 0
-            self.Mz = 0
-            self._eval_GF_forces(R_hub, P_carrier)
-            print('Tire_Ground Force = %s'%([self.Fx, self.Fy]))
+            self.Mz = np.array([[0], [0], [0]])
         else:
-            pneumatic_trail = (1/3)*self.a * ((1 - 3*abs(TG) + 3*TG**2 - abs(TG)**3) /
-                                         (1 - abs(TG) + (1/3)*TG**2 ))
             if sigma <= 1/Theta:
                 factor = (3*(TG) - 3*(TG)**2 + (TG)**3)
-                force = self.mu * self.Fz * factor
+                force  = self.mu * self.Fz * factor
             else:
                 print('SLIDING !!')
                 force = self.mu*self.Fz
             
             F  = force * normalize(sigma_vec)
-            print('Tire_Ground Force = %s'%F.T)
-            self.Fx = F[0,0] #- (0.02 * self.Fz)
+            xt = (1/3)*self.a * ((1 - 3*abs(TG) + 3*TG**2 - abs(TG)**3) /
+                                 (1 - abs(TG) + (1/3)*TG**2 ))
+            self.Fx = F[0,0]
             self.Fy = F[1,0]
-            self.Mz = (- pneumatic_trail * self.Fy) * np.array([[0],[0],[1]])
-            self._eval_GF_forces(R_hub, P_carrier)
+            self.Mz = (- xt * self.Fy) * np.array([[0], [0], [1]])
+
+        print('Tire_Ground Force = %s'%([self.Fx, self.Fy]))
+        self._eval_GF_forces(R_hub, P_carrier)
 
 
     def _eval_GF_forces(self, R_hub, P_carrier):
-        A_carrier = A(P_carrier)
         
-        # SAE Frame Axes relative to global frame
-        X_SAE_GF = A_carrier.dot(self.X_SAE_LF)
-        X_SAE_GF[2,0] = 0
-        X_SAE_GF = normalize(X_SAE_GF)
-        
-        Y_SAE_GF = A_carrier.dot(self.Y_SAE_LF)
-        Y_SAE_GF[2,0] = 0
-        Y_SAE_GF = normalize(Y_SAE_GF)
+        X_SAE_GF = self.SAE_GF[:,0:1]
+        Y_SAE_GF = self.SAE_GF[:,1:2]
         
         R_pw = np.array([[R_hub[0,0]], [R_hub[1,0]], [0]]) - R_hub
         delta_r_eff = (self.R_ul - self.ru) * 0.025
@@ -234,7 +240,10 @@ class brush_model(abstract_tire):
 
         Force = self.Fx*X_SAE_GF + self.Fy*Y_SAE_GF + self.Fz*np.array([[0],[0],[1]])
         self.F = Force
-        self.M = skew_matrix(R_pw_eff).dot(self.F) + self.Mz
+        self.M = skew_matrix(R_pw_eff).dot(self.F) #+ self.Mz
+        self.M_SAE = self.SAE_GF.T.dot(self.M)
+        self.My_SAE = self.M_SAE[1,0]
+        print('My_SAE = %s'%self.My_SAE)
         print('M = %s'%(self.M.T))
         
     
