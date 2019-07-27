@@ -20,8 +20,8 @@ def normalize(v):
 
 class abstract_tire(object):
     
-    def __init__(self, P_carrier):
-        self._set_SAE_Frame(P_carrier)
+    def __init__(self, P_hub):
+        self._set_SAE_Frame(P_hub)
         self._u_history = [0]
         self._v_history = [0]
         self.t = 0
@@ -50,7 +50,7 @@ class abstract_tire(object):
         AngVel_Hub_LF = 2*E(P_hub)@Pd_hub # Local
         
                 
-        self._set_SAE_Frame(P_carrier)
+        self._set_SAE_Frame(P_hub)
         
         # Circumferential Velocity
 #        AngVel_Hub_SAE = self.SAE_GF.T.dot(AngVel_Hub_LF)
@@ -65,8 +65,8 @@ class abstract_tire(object):
 #        V_wc_SAE = self.SAE_LF.T.dot(A(P_carrier).T).dot(V_wc)
         V_wc_SAE = self.SAE_GF.T.dot(V_wc)
         
-        V_sx = (V_wc_SAE[0,0] + V_C)
-        V_sy =  V_wc_SAE[1,0]
+        V_sx = V_wc_SAE[0,0] + V_C
+        V_sy = V_wc_SAE[1,0]
         V_x  = abs(V_wc_SAE[0,0])
         
         self.V_sx = V_sx
@@ -76,31 +76,28 @@ class abstract_tire(object):
                 
         
         print('Omega = %s'%Omega)
-#        print('AngVel_Hub_LF = %s'%AngVel_Hub_LF.T)
-#        print('V_WC = %s'%V_wc_SAE.T)
-#        print('V_C = %s'%V_C)
-#        print('V_sx = %s'%V_sx.T)
-#        print('V_sy = %s'%V_sy.T)
-#        print('V_x  = %s'%V_x)
-#        print('S_lng = %s'%self.S_lng)
-#
-#        print('S_ltr = %s'%self.S_ltr)
-#        print('SlipAngle = %s'%np.arctan(self.S_ltr))
+        print('V_WC = %s'%V_wc_SAE.T)
+        print('V_C = %s'%V_C)
+        print('V_sx = %s'%V_sx)
+        print('V_sy = %s'%V_sy)
+        print('V_x  = %s'%V_x)
     
-    def _set_SAE_Frame(self, P_carrier):
+    def _set_SAE_Frame(self, P_hub, terrain_normal=np.array([[0],[0],[1]])):
         
-        A_carrier = A(P_carrier)
+        frame = A(P_hub)
         
-        x_vec = A_carrier[:,0:1]
-        x_vec[2,0] = 0
-        x_vec = -1* normalize(x_vec)
-        y_vec = A_carrier[:,1:2]
-        y_vec[2,0] = 0
-        y_vec = normalize(y_vec)
-        z_vec = np.array([[0],[0],[-1]])
+        spin_axis = frame[:,1:2]
         
-        self.SAE_GF = np.concatenate([x_vec, y_vec, z_vec], axis=1)
-        print(self.SAE_GF)
+        Z_SAE_GF = -terrain_normal
+        X_SAE_GF = normalize(skew_matrix(spin_axis).dot(Z_SAE_GF))
+        Y_SAE_GF = skew_matrix(Z_SAE_GF).dot(X_SAE_GF)
+        
+        self.X_SAE_GF = X_SAE_GF
+        self.Y_SAE_GF = Y_SAE_GF
+        self.Z_SAE_GF = Z_SAE_GF
+        self.SAE_GF = np.concatenate([X_SAE_GF, Y_SAE_GF, Z_SAE_GF], axis=1)
+        
+#        print(self.SAE_GF)
             
     
     def _get_transient_slips(self, t, dt, V_sx, V_sy, Vx):
@@ -108,16 +105,16 @@ class abstract_tire(object):
         k =  float(self.ui/self.sigma_k)
         a =  float(self.vi/self.sigma_a)
         
-#        if abs(Vx) <= self._V_low:
-#            kv_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
-#            damped = (kv_low/self.C_Fk)*V_sx
-#            print('damped_k = %s'%damped)
-#            k = k - damped
-#            
-#            ka_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
-#            damped = (ka_low/self.C_Fa)*V_sy
-#            print('damped_a = %s'%damped)
-#            a = a - damped
+        if abs(Vx) <= self._V_low:
+            kv_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
+            damped = (kv_low/self.C_Fk)*V_sx
+            print('damped_k = %s'%damped)
+            k = k - damped
+            
+            ka_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
+            damped = (ka_low/self.C_Fa)*V_sy
+            print('damped_a = %s'%damped)
+            a = a - damped
         
         print('ui = %s'%self.ui)
         print('k = %s'%k)
@@ -164,6 +161,7 @@ class abstract_tire(object):
             dydt = -(1/relx)*Vx*y - slip_vel
         return dydt
 
+#    def _log_states(self):
         
 ###############################################################################
 ###############################################################################
@@ -177,8 +175,8 @@ class brush_model(abstract_tire):
         self.cp = 1500*1e3
         self.a  = 210
         
-        self.kz = 650*1e6
-        self.cz = 16*1e6
+        self.kz = 720*1e6
+        self.cz = 10*1e6
         
         C_fk = (2375*9.81*1e6*0.2)/(3*1e-2)
         C_fa = (150*1e6*1e2)/(np.deg2rad(2))
@@ -202,18 +200,19 @@ class brush_model(abstract_tire):
         self.Fz = (self.kz * self.ru) - (self.cz * Rd_hub[2,0])
 
         k, alpha = self._get_transient_slips(t, dt, self.V_sx, self.V_sy, self.V_x)
-        Theta   = (2/3)*((self.cp * self.a**2)/(self.mu*self.Fz))
+        
         sigma_x = k/(1+k)
-        sigma_y = alpha/(1+k)
+        sigma_y = np.tan(alpha)/(1+k)
         sigma   = np.sqrt(sigma_x**2 + sigma_y**2)
+        
+        Theta   = (2/3)*((self.cp * self.a**2)/(self.mu*self.Fz))
         TG = Theta*sigma
 
         sigma_vec = np.array([[sigma_x], [sigma_y]])
         
         if sigma <=1e-5:
-            self.Fx = 0
-            self.Fy = 0
-            self.Mz = np.array([[0], [0], [0]])
+            F  = np.array([[0], [0]])
+            xt = 0
         else:
             if sigma <= 1/Theta:
                 factor = (3*(TG) - 3*(TG)**2 + (TG)**3)
@@ -225,23 +224,23 @@ class brush_model(abstract_tire):
             F  = force * normalize(sigma_vec)
             xt = (1/3)*self.a * ((1 - 3*abs(TG) + 3*TG**2 - abs(TG)**3) /
                                  (1 - abs(TG) + (1/3)*TG**2 ))
-            self.Fx = F[0,0]
-            self.Fy = F[1,0]
-            self.Mz = (- xt * self.Fy) * np.array([[0], [0], [1]])
+        self.Fx = F[0,0]
+        self.Fy = F[1,0]
+        self.Mz = (- xt * self.Fy) * np.array([[0], [0], [1]])
 
-        print('Tire_Ground Force = %s'%([self.Fx, self.Fy]))
-        self._eval_GF_forces(R_hub, P_carrier)
+        print('Tire_Ground Force = %s'%(F.T))
+        self._eval_GF_forces(R_hub)
 
 
-    def _eval_GF_forces(self, R_hub, P_carrier):
-        
-        X_SAE_GF = self.SAE_GF[:,0:1]
-        Y_SAE_GF = self.SAE_GF[:,1:2]
+    def _eval_GF_forces(self, R_hub):
         
         R_pw = np.array([[R_hub[0,0]], [R_hub[1,0]], [0]]) - R_hub
         delta_r_eff = (self.R_ul - self.ru) * 0.025
         R_pw_eff = R_pw + np.array([[0], [0], [-delta_r_eff]])
 
+        X_SAE_GF = self.X_SAE_GF
+        Y_SAE_GF = self.Y_SAE_GF
+        
         Force = self.Fx*X_SAE_GF + self.Fy*Y_SAE_GF + self.Fz*np.array([[0],[0],[1]])
         self.F = Force
 #        self.M = skew_matrix(R_pw_eff).dot(self.F) + self.Mz
