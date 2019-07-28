@@ -175,7 +175,7 @@ class brush_model(abstract_tire):
         self.cp = 1500*1e3
         self.a  = 210
         
-        self.kz = 720*1e6
+        self.kz = 650*1e6
         self.cz = 10*1e6
         
         C_fk = (2375*9.81*1e6*0.2)/(3*1e-2)
