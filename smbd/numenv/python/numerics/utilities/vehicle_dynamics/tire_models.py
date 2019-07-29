@@ -79,7 +79,7 @@ class abstract_tire(object):
         
         # Rotational velocity vector of wheel in Global and Local frames.
         AngVel_Hub_GF = 2*G(P_hub)@Pd_hub # Global
-        AngVel_Hub_LF = 2*E(P_hub)@Pd_hub # Local
+#        AngVel_Hub_LF = 2*E(P_hub)@Pd_hub # Local
         
                 
         self._set_SAE_Frame(P_hub)
@@ -90,18 +90,17 @@ class abstract_tire(object):
 #        Omega = AngVel_Hub_LF[1,0]
 #        V_C = Omega * np.linalg.norm(R_S)
         
-        Omega = self._solve_wheel_ODE(t, drive_torque, self.R_ul - self.ru, dt)
         
         V_C_GF  = skew_matrix(-R_S).dot(AngVel_Hub_GF)
         V_C_SAE = self.SAE_GF.T.dot(V_C_GF)
         V_C = V_C_SAE[0,0]
         
-        
-#        V_wc_SAE = self.SAE_LF.T.dot(A(P_carrier).T).dot(V_wc)
         V_wc_SAE = self.SAE_GF.T.dot(V_wc)
+
+        Omega = self._solve_wheel_ODE(t, drive_torque, self.R_ul - self.ru, dt)
+        V_sx = V_wc_SAE[0,0] - Omega*(self.R_ul - self.ru)
         
 #        V_sx = V_wc_SAE[0,0] + V_C
-        V_sx = V_wc_SAE[0,0] - Omega*(self.R_ul - self.ru)
         V_sy = V_wc_SAE[1,0]
         V_x  = abs(V_wc_SAE[0,0])
         
