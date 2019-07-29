@@ -24,12 +24,44 @@ class abstract_tire(object):
         self._set_SAE_Frame(P_hub)
         self._u_history = [0]
         self._v_history = [0]
+        self._s_history = [0]
         self.t = 0
         self._V_low = 2.5*1e3
         
         self.driven = 1
+        
+    def _solve_wheel_ODE(self, t, drive_torque, Re, dt):
+        if self.t <= t:
+            Iyy = self.Iyy
+            Fx  = self.Fx
+            y   = self._s_history[-1]
+            omega = self._wheel_spin_RK45(y, dt, Iyy, drive_torque, Fx, Re)
+            self._s_history.append(omega)
+            return omega
+        else:
+            return self._s_history[-1]
+        
     
-    def _process_wheel_kinematics(self, R_hub, P_hub, Rd_hub, Pd_hub, P_carrier):
+    
+    def _wheel_spin_RK45(self, y, h, Iyy, drive_torque, Fx, Re):
+        func = self._wheel_spin_ODE
+        
+        f1 = h*func(y, Iyy, drive_torque, Fx, Re)
+        f2 = h*func(y + 0.5*f1, Iyy, drive_torque, Fx, Re)
+        f3 = h*func(y + 0.5*f2, Iyy, drive_torque, Fx, Re)
+        f4 = h*func(y + f3, Iyy, drive_torque, Fx, Re)
+        
+        dy = (1/6) * (f1 + 2*f2 + 2*f3 + f4)
+        yn = y + dy  
+        return yn
+    
+    def _wheel_spin_ODE(self, y, Iyy, drive_torque, Fx, Re):
+        net_torque = abs(drive_torque) - (Fx*Re)
+        dydt = (1/Iyy)*net_torque
+        return dydt
+
+    
+    def _process_wheel_kinematics(self, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque, t, dt):
         
         # Wheel Center Translational Velocity in Global Frame
         V_wc = Rd_hub
@@ -55,8 +87,11 @@ class abstract_tire(object):
         # Circumferential Velocity
 #        AngVel_Hub_SAE = self.SAE_GF.T.dot(AngVel_Hub_LF)
 #        Omega = AngVel_Hub_SAE[1,0]
-        Omega = AngVel_Hub_LF[1,0]
+#        Omega = AngVel_Hub_LF[1,0]
 #        V_C = Omega * np.linalg.norm(R_S)
+        
+        Omega = self._solve_wheel_ODE(t, drive_torque, self.R_ul - self.ru, dt)
+        
         V_C_GF  = skew_matrix(-R_S).dot(AngVel_Hub_GF)
         V_C_SAE = self.SAE_GF.T.dot(V_C_GF)
         V_C = V_C_SAE[0,0]
@@ -65,7 +100,8 @@ class abstract_tire(object):
 #        V_wc_SAE = self.SAE_LF.T.dot(A(P_carrier).T).dot(V_wc)
         V_wc_SAE = self.SAE_GF.T.dot(V_wc)
         
-        V_sx = V_wc_SAE[0,0] + V_C
+#        V_sx = V_wc_SAE[0,0] + V_C
+        V_sx = V_wc_SAE[0,0] - Omega*(self.R_ul - self.ru)
         V_sy = V_wc_SAE[1,0]
         V_x  = abs(V_wc_SAE[0,0])
         
@@ -154,8 +190,8 @@ class abstract_tire(object):
 
     def _CPM_ODE(self, y, slip_vel, relx, Vx):
         
-        if False:#(slip_vel + Vx*y/relx)*y < 0:
-            print((slip_vel + (Vx*y)/relx) * y)
+        if self.slipping:
+#            print((slip_vel + (Vx*y)/relx) * y)
             dydt = 0
         else:
             dydt = -(1/relx)*Vx*y - slip_vel
@@ -190,12 +226,16 @@ class brush_model(abstract_tire):
         
         self.kv_low = 770*1e3 # 770 Ns/m Damping coefficient at low speeds
         
+        self.Iyy = 50*1e9
+        self.Fx  = 0
+        self.slipping = False
+        
         super().__init__(P_carrier)
         
     
-    def Eval_Forces(self, R_hub, P_hub, Rd_hub, Pd_hub, P_carrier, t, dt):
+    def Eval_Forces(self, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque, t, dt):
         
-        self._process_wheel_kinematics(R_hub, P_hub, Rd_hub, Pd_hub, P_carrier)
+        self._process_wheel_kinematics(R_hub, P_hub, Rd_hub, Pd_hub, drive_torque, t, dt)
         
         self.Fz = (self.kz * self.ru) - (self.cz * Rd_hub[2,0])
 
@@ -215,11 +255,13 @@ class brush_model(abstract_tire):
             xt = 0
         else:
             if sigma <= 1/Theta:
+                self.slipping = False
                 factor = (3*(TG) - 3*(TG)**2 + (TG)**3)
                 force  = self.mu * self.Fz * factor
             else:
                 print('SLIDING !!')
                 force = self.mu*self.Fz
+                self.slipping = True
             
             F  = force * normalize(sigma_vec)
             xt = (1/3)*self.a * ((1 - 3*abs(TG) + 3*TG**2 - abs(TG)**3) /
