@@ -77,18 +77,15 @@ The tool currently provides:
 
 **Full Vehicle Lane-Change Manoeuvre**
 </br>
-![Blender Gif](readme_materials/gif/fullvehicle_lanechange.gif)
+![Blender Gif](readme_materials/gif/lane_change.gif)
 
 ---------------------------------------------------
 
 ---------------------------------------------------
 
 ## Background
-### The Whats and The Hows ?
+### The What and The How ?
 
-#### What is Computational Dynamics?
-
-Computational Dynamics is a rapidly developing field that brings together applied mathematics (especially numerical analysis), computer science, and scientific or engineering applications. Multibody Dynamics can be considered as a sub-field of computational dynamics.
 #### What is the problem to be solved?
 The primary interest in multibody dynamics is to analyze the system behavior for given inputs. In analogy with control systems; a multi-body system can be thought as a **_system_** subjected to some **_inputs_** producing some **_outputs_**. These three parts of the problem are dependent on the analyst end goal of the analysis and simulation. 
 #### How is the system physics abstracted mathematically?
@@ -123,7 +120,7 @@ The combination of both, NetworkX and SymPy, provides the tool with a very simpl
 
 #### Code Generation and Model Simulation
 
-The process of performing actual simulations on the created model requires the generation of a valid numerical and computational code of the created model. This is done by taking in the symbolic model and create a valid code files written in the desired programming language with the desired programming paradigm and structure. Currently, the tool provides a *Python Code Generator* that generates an object oriented python code of the symbolic multibody system that can be used to perform the desired simulations.
+The process of performing actual simulations on the created model requires the generation of a valid numerical and computational code of the created model. This is done by taking in the symbolic model and create a valid code files written in the desired programming language with the desired programming paradigm and structure. As mentioned previously, the tool provides two numerical environemnts, one in python and another one in C++.
 
 #### Conclusion
 
@@ -227,7 +224,7 @@ from smbd.systems import standalone_topology
 model_name = 'fourbar'
 sym_model = standalone_topology(model_name)
 ```
-We then starts constructing our system by adding the bodies, joints, actuators and forces.
+We then start  constructing our system by adding the bodies, joints, actuators and forces.
 ```python
 # Adding Bodies
 sym_model.add_body('l1')
@@ -454,6 +451,7 @@ sim.eval_reactions()
 #### C++ Numerical Simulation.
 
 *__Note__: The details of the structure of the generated environment code structure and the "how to use" will be discussed in a separate documentation.*
+
 The C++ simulation environments generates a sample ```main.cpp``` file that can be filled in with the numerical data directly, as well as a template ```Makefile``` that can be used to build the model executable easily.
 First, we open the ```main.cpp``` and edit the ```#include "src/topology.hpp"``` and ```#include "src/configuration.hpp"``` to match our generated code-files names, then we set our numerical configuration data. Finally we save the file as a ```new_main.cpp```.
 
