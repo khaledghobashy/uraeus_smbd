@@ -328,7 +328,7 @@ class dds_solver(abstract_solver):
             self._set_time(t)
             self._solve_time_step(t, i, dt)
             self._extract_independent_coordinates(self._jac[:-self.dof,:])
-            i += 1
+            i += 1            
         print('\n')
         self._creat_results_dataframes()
 
