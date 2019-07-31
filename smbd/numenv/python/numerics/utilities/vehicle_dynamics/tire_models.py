@@ -30,92 +30,50 @@ class abstract_tire(object):
         
         self.driven = 1
         
-    def _solve_wheel_ODE(self, t, drive_torque, Re, dt):
+    def _advance_time(self, t, dt):
         if self.t <= t:
-            Iyy = self.Iyy
-            Fx  = self.Fx
-            y   = self._s_history[-1]
-            omega = self._wheel_spin_RK45(y, dt, Iyy, drive_torque, Fx, Re)
-            self._s_history.append(omega)
-            return omega
-        else:
-            return self._s_history[-1]
-        
+            self.t += dt            
     
-    
-    def _wheel_spin_RK45(self, y, h, Iyy, drive_torque, Fx, Re):
-        func = self._wheel_spin_ODE
+    def _process_wheel_kinematics(self, t, dt, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque):
         
-        f1 = h*func(y, Iyy, drive_torque, Fx, Re)
-        f2 = h*func(y + 0.5*f1, Iyy, drive_torque, Fx, Re)
-        f3 = h*func(y + 0.5*f2, Iyy, drive_torque, Fx, Re)
-        f4 = h*func(y + f3, Iyy, drive_torque, Fx, Re)
-        
-        dy = (1/6) * (f1 + 2*f2 + 2*f3 + f4)
-        yn = y + dy  
-        return yn
-    
-    def _wheel_spin_ODE(self, y, Iyy, drive_torque, Fx, Re):
-        net_torque = abs(drive_torque) - (Fx*Re)
-        dydt = (1/Iyy)*net_torque
-        return dydt
-
-    
-    def _process_wheel_kinematics(self, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque, t, dt):
-        
-        # Wheel Center Translational Velocity in Global Frame
-        V_wc = Rd_hub
-        
-        # Penetration Length assuming flat horizontal ground
-        self.ru = max(self.R_ul - R_hub[2,0], 0)
-        
-        # Position of contact point C relative to the wheel center
-        R_C = np.array([[R_hub[0,0]], [R_hub[1,0]], [0]]) - R_hub
-        
-        # Tire Effective Radius as a ratio of loaded radius
-        delta_r_eff = (self.R_ul - self.ru) * 0.025
-        R_S = R_C + np.array([[0], [0], [-delta_r_eff]])
-
-        
-        # Rotational velocity vector of wheel in Global and Local frames.
-        AngVel_Hub_GF = 2*G(P_hub)@Pd_hub # Global
-#        AngVel_Hub_LF = 2*E(P_hub)@Pd_hub # Local
-        
-                
+        # Creating SAE wheel frame based on hub orientation
         self._set_SAE_Frame(P_hub)
         
-        # Circumferential Velocity
-#        AngVel_Hub_SAE = self.SAE_GF.T.dot(AngVel_Hub_LF)
-#        Omega = AngVel_Hub_SAE[1,0]
-#        Omega = AngVel_Hub_LF[1,0]
-#        V_C = Omega * np.linalg.norm(R_S)
+        # Evaluating the tire radii
+        self._eval_wheel_radii(R_hub, P_hub)
         
-        
-        V_C_GF  = skew_matrix(-R_S).dot(AngVel_Hub_GF)
-        V_C_SAE = self.SAE_GF.T.dot(V_C_GF)
-        V_C = V_C_SAE[0,0]
-        
-        V_wc_SAE = self.SAE_GF.T.dot(V_wc)
+        # Wheel Center Translational Velocity in Global Frame
+        V_wc_GF  = Rd_hub
+        # Wheel Center Translational Velocity in SAE Frame
+        V_wc_SAE = self.SAE_GF.T.dot(V_wc_GF)
 
-        Omega = self._solve_wheel_ODE(t, drive_torque, self.R_ul - self.ru, dt)
-        V_sx = V_wc_SAE[0,0] - Omega*(self.R_ul - self.ru)
+        # Wheel spin velocity in SAE frame
+        Omega = self._solve_wheel_ODE(t, dt, drive_torque)
         
-#        V_sx = V_wc_SAE[0,0] + V_C
+        # Circumfiranctial Velocity in SAE frame
+        V_C  = Omega * self.effective_radius
+        
+        # Longitudinal Slip Velocity in SAE frame
+        V_sx = V_wc_SAE[0,0] - V_C
+        
+        # Lateral Slip Velocity in SAE frame
         V_sy = V_wc_SAE[1,0]
+
+        # Longitudinal Wheel Velocity in SAE frame
         V_x  = abs(V_wc_SAE[0,0])
-        
+
+        self.V_C  = V_C
         self.V_sx = V_sx
         self.V_sy = V_sy
         self.V_x  = V_x 
-        self.V_C  = V_C
                 
-        
-        print('Omega = %s'%Omega)
-        print('V_WC = %s'%V_wc_SAE.T)
-        print('V_C = %s'%V_C)
-        print('V_sx = %s'%V_sx)
-        print('V_sy = %s'%V_sy)
-        print('V_x  = %s'%V_x)
+        if True:
+            print('Omega = %s'%Omega)
+            print('V_WC = %s'%V_wc_SAE.T)
+            print('V_C = %s'%V_C)
+            print('V_sx = %s'%V_sx)
+            print('V_sy = %s'%V_sy)
+            print('V_x  = %s'%V_x)
     
     def _set_SAE_Frame(self, P_hub, terrain_normal=np.array([[0],[0],[1]])):
         
@@ -132,32 +90,88 @@ class abstract_tire(object):
         self.Z_SAE_GF = Z_SAE_GF
         self.SAE_GF = np.concatenate([X_SAE_GF, Y_SAE_GF, Z_SAE_GF], axis=1)
         
-#        print(self.SAE_GF)
+    def _eval_wheel_radii(self, R_hub, P_hub):
+        # Loaded Radius
+        self.loaded_radius = R_hub[2,0]
+        
+        # Penetration Length assuming flat horizontal ground
+        self.vertical_defflection = max(self.nominal_radius - self.loaded_radius, 0)
+        
+        # Tire Effective Radius as a ratio of loaded radius
+        self.effective_radius = self.loaded_radius + \
+                                (self.vertical_defflection * (2/3))
+
+
+    def _solve_wheel_ODE(self, t, dt, drive_torque):
+        if self.t <= t:
+            Iyy = self.Iyy
+            Fx  = self.Fx
+            y   = self._s_history[-1]
+            Re  = self.effective_radius
+            omega = self._wheel_spin_RK45(y, dt, Iyy, drive_torque, Fx, Re)
+            self._s_history.append(omega)
+            return omega
+        else:
+            return self._s_history[-1]
+        
+    def _wheel_spin_RK45(self, y, h, Iyy, drive_torque, Fx, Re):
+        func = self._wheel_spin_ODE
+        
+        f1 = h*func(y, Iyy, drive_torque, Fx, Re)
+        f2 = h*func(y + 0.5*f1, Iyy, drive_torque, Fx, Re)
+        f3 = h*func(y + 0.5*f2, Iyy, drive_torque, Fx, Re)
+        f4 = h*func(y + f3, Iyy, drive_torque, Fx, Re)
+        
+        dy = (1/6) * (f1 + 2*f2 + 2*f3 + f4)
+        yn = y + dy  
+        return yn
+    
+    def _wheel_spin_ODE(self, y, Iyy, drive_torque, Fx, Re):
+        net_torque = abs(drive_torque) - (Fx*Re)
+        dydt = (1/Iyy)*net_torque
+        return dydt
             
     
-    def _get_transient_slips(self, t, dt, V_sx, V_sy, Vx):
-        self._integrate_CPM(t, dt, V_sx, V_sy, Vx)
+    def _get_transient_slips(self, t, dt):
+        
+        V_sx = self.V_sx
+        V_sy = self.V_sy
+        V_x  = self.V_x
+
+        self._integrate_CPM(t, dt, V_sx, V_sy, V_x)
         k =  float(self.ui/self.sigma_k)
         a =  float(self.vi/self.sigma_a)
         
-        if abs(Vx) <= self._V_low:
-            kv_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
+        if abs(V_x) <= self._V_low:
+            kv_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(V_x/self._V_low)))
             damped = (kv_low/self.C_Fk)*V_sx
-            print('damped_k = %s'%damped)
+#            print('damped_k = %s'%damped)
             k = k - damped
             
-            ka_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(Vx/self._V_low)))
+            ka_low = 0.5*self.kv_low*(1 + np.cos(np.pi*(V_x/self._V_low)))
             damped = (ka_low/self.C_Fa)*V_sy
-            print('damped_a = %s'%damped)
+#            print('damped_a = %s'%damped)
             a = a - damped
         
-        print('ui = %s'%self.ui)
-        print('k = %s'%k)
-        print('vi = %s'%self.vi)
-        print('a = %s'%a)
+#        print('ui = %s'%self.ui)
+#        print('k = %s'%k)
+#        print('vi = %s'%self.vi)
+#        print('a = %s'%a)
         
-        return k*self.driven, a
+        return k*self.driven, a    
     
+    def _integrate_CPM(self, t, dt, V_sx, V_sy, Vx):
+        
+        if self.t <= t:
+            u_old = self._u_history[-1]
+            self.ui = self._integrate_CPM_RK45(dt, u_old, V_sx, self.sigma_k, Vx)
+            
+            v_old = self._v_history[-1]
+            self.vi = self._integrate_CPM_RK45(dt, v_old, V_sy, self.sigma_a, Vx)
+                        
+            self._u_history.append(self.ui)
+            self._v_history.append(self.vi)
+            
     def _integrate_CPM_RK45(self, h, y, slip_vel, relx, Vx):
         func = self._CPM_ODE
         
@@ -170,22 +184,6 @@ class abstract_tire(object):
         yn = y + dy
         
         return yn
-    
-    
-    def _integrate_CPM(self, t, h, V_sx, V_sy, Vx):
-        
-        if self.t <= t:
-            u_old = self._u_history[-1]
-            self.ui = self._integrate_CPM_RK45(h, u_old, V_sx, self.sigma_k, Vx)
-            
-            v_old = self._v_history[-1]
-            self.vi = self._integrate_CPM_RK45(h, v_old, V_sy, self.sigma_a, Vx)
-            
-            self.t += h
-            
-            self._u_history.append(self.ui)
-            self._v_history.append(self.vi)
-
 
     def _CPM_ODE(self, y, slip_vel, relx, Vx):
         
@@ -196,16 +194,15 @@ class abstract_tire(object):
             dydt = -(1/relx)*Vx*y - slip_vel
         return dydt
 
-#    def _log_states(self):
         
 ###############################################################################
 ###############################################################################
 
 class brush_model(abstract_tire):
     
-    def __init__(self, P_carrier):
+    def __init__(self, P_hub):
         
-        self.R_ul = 546
+        self.nominal_radius = 546
         self.mu = 0.85
         self.cp = 1500*1e3
         self.a  = 210
@@ -229,17 +226,17 @@ class brush_model(abstract_tire):
         self.Fx  = 0
         self.slipping = False
         
-        super().__init__(P_carrier)
-        
+        super().__init__(P_hub)
     
-    def Eval_Forces(self, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque, t, dt):
+    
+    def Eval_Forces(self, t, dt, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque):
         
-        self._process_wheel_kinematics(R_hub, P_hub, Rd_hub, Pd_hub, drive_torque, t, dt)
+        self._process_wheel_kinematics(t, dt, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque)
         
-        self.Fz = (self.kz * self.ru) - (self.cz * Rd_hub[2,0])
+        self.Fz = (self.kz * self.vertical_defflection) \
+                - (self.cz * Rd_hub[2,0])
 
-        k, alpha = self._get_transient_slips(t, dt, self.V_sx, self.V_sy, self.V_x)
-        
+        k, alpha = self._get_transient_slips(t, dt)
         sigma_x = k/(1+k)
         sigma_y = np.tan(alpha)/(1+k)
         sigma   = np.sqrt(sigma_x**2 + sigma_y**2)
@@ -265,42 +262,35 @@ class brush_model(abstract_tire):
             F  = force * normalize(sigma_vec)
             xt = (1/3)*self.a * ((1 - 3*abs(TG) + 3*TG**2 - abs(TG)**3) /
                                  (1 - abs(TG) + (1/3)*TG**2 ))
+        
         self.Fx = F[0,0]
         self.Fy = F[1,0]
         self.Mz = (- xt * self.Fy) * np.array([[0], [0], [1]])
 
         print('Tire_Ground Force = %s'%(F.T))
-        self._eval_GF_forces(R_hub)
-
-
-    def _eval_GF_forces(self, R_hub):
+        self._eval_GF_forces()
         
-        R_pw = np.array([[R_hub[0,0]], [R_hub[1,0]], [0]]) - R_hub
-        delta_r_eff = (self.R_ul - self.ru) * 0.025
-        R_pw_eff = R_pw + np.array([[0], [0], [-delta_r_eff]])
+        # Advancing the time stamp in the tire model
+        self._advance_time(t, dt)
 
+
+    def _eval_GF_forces(self):
+        
         X_SAE_GF = self.X_SAE_GF
         Y_SAE_GF = self.Y_SAE_GF
         
         Force = self.Fx*X_SAE_GF + self.Fy*Y_SAE_GF + self.Fz*np.array([[0],[0],[1]])
         self.F = Force
-#        self.M = skew_matrix(R_pw_eff).dot(self.F) + self.Mz
-        self.My = self.Fx*np.linalg.norm(R_pw_eff)
+        self.My = self.Fx * self.effective_radius
         self.M  = (self.My * Y_SAE_GF) + self.Mz
-        self.M_SAE = self.SAE_GF.T.dot(self.M)
-        self.My_SAE = self.M_SAE[1,0]
         print('My_SAE = %s'%self.My)
         print('M = %s'%(self.M.T))
         
     
-    def _rolling_resistance(self):
-        pass
-
-
 ###############################################################################
 ###############################################################################
 
-class interolator(abstract_tire):
+class interpolator(abstract_tire):
 
     def __init__(self, P_carrier):
         self.R_ul = 546
