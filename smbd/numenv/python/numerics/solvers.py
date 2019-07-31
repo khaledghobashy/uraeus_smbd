@@ -313,6 +313,8 @@ class dds_solver(abstract_solver):
         pos_t0 = self._pos_history[0]
         vel_t0 = self._vel_history[0]
         
+        self._newton_raphson(pos_t0)
+
         M, J, Qt, Qd = self._eval_augmented_matricies(pos_t0, vel_t0)
         acc_t0, lamda_t0 = self._solve_augmented_system(M, J, Qt, Qd)        
         self._acc_history[0] = acc_t0
@@ -325,9 +327,9 @@ class dds_solver(abstract_solver):
         while i != bar_length:
             progress_bar(bar_length,i)
             t = time_array[i+1]
+            self._extract_independent_coordinates(self._jac[:-self.dof,:])
             self._set_time(t)
             self._solve_time_step(t, i, dt)
-            self._extract_independent_coordinates(self._jac[:-self.dof,:])
             i += 1            
         print('\n')
         self._creat_results_dataframes()
@@ -439,8 +441,8 @@ class dds_solver(abstract_solver):
         y2 = state_vector[self.dof:]
         
         guess = self._pos_history[i]
-        for c in range(self.dof): 
-            guess[np.argmax(self.independent_cols[:, c]), 0] = y1[c]
+#        for c in range(self.dof): 
+#            guess[np.argmax(self.independent_cols[:, c]), 0] = y1[c]
                         
         self._newton_raphson(guess)
         self._set_gen_coordinates(self._pos)
