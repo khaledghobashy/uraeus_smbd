@@ -137,7 +137,8 @@ class abstract_force(object):
         elif self.def_locs == 1:
             loc  = self.loc_1
             ui_bar_eq = sm.Eq(self.ui_bar, loc.express(self.body_i) - self.Ri.express(self.body_i))
-            location_equalities = [ui_bar_eq]
+            uj_bar_eq = sm.Eq(self.uj_bar, loc.express(self.body_j) - self.Rj.express(self.body_j))
+            location_equalities = [ui_bar_eq, uj_bar_eq]
         else: 
             raise NotImplementedError
         self._sym_constants += location_equalities
@@ -419,8 +420,8 @@ class bushing(abstract_force):
     @property
     def Qi(self):
         
-        Kt = sm.diag(*self.Kt.as_explicit())
-        Ct = sm.diag(*self.Ct.as_explicit())
+        Kt = self.Kt.T*sm.Identity(3) #sm.diag(*self.Kt.as_explicit())
+        Ct = self.Ct.T*sm.Identity(3) #sm.diag(*self.Ct.as_explicit())
         
         dR  = self.Ri + self.ui - self.Rj - self.uj
         dRd = self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj
@@ -433,7 +434,15 @@ class bushing(abstract_force):
     
     @property
     def Qj(self):
-        return - self._Qi
+        Kt = self.Kt.T*sm.Identity(3) #sm.diag(*self.Kt.as_explicit())
+        Ct = self.Ct.T*sm.Identity(3) #sm.diag(*self.Ct.as_explicit())
+        
+        dR  = self.Ri + self.ui - self.Rj - self.uj
+        dRd = self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj
+        
+        F = Kt*dR + Ct*dRd
+        T = zero_matrix(4,1)
+        return sm.BlockMatrix([[-F], [-T]])
     
     @property
     def arguments_symbols(self):

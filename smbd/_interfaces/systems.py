@@ -142,6 +142,8 @@ class forces_container(topology_edges_container):
         self.force = forces.force
         self.torque = forces.torque
         self.generic_force = forces.generic_force
+        self.bushing = forces.bushing
+        
         super().__init__(topology)
     
     def _decorate(self, edge_component):
