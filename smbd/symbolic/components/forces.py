@@ -390,6 +390,60 @@ class internal_force(abstract_force):
 ###############################################################################
 
        
+class bushing(abstract_force):
+    
+    def_axis = 1
+    def_locs = 1
+    
+    def __init__(self, name, body_i=None, body_j=None):
+        """
+        F = Kt*dR + Ct*dRd
+        T = Kr*dP + Cr*dPd
+        
+        Kt = [[Kx, 0 ,0],
+              [0, Ky, 0],
+              [0, 0, Kz]]
+        
+        dR = [[dx, dy, dz]].T
+        
+        """
+        super().__init__(name, body_i, body_j)
+        
+        self.Kt = vector('Kt_%s'%self.id_name)
+        self.Ct = vector('Ct_%s'%self.id_name)
+        
+        self.Kr = vector('Kr_%s'%self.id_name)
+        self.Cr = vector('Cr_%s'%self.id_name)
+        
+                
+    @property
+    def Qi(self):
+        
+        Kt = sm.diag(*self.Kt.as_explicit())
+        Ct = sm.diag(*self.Ct.as_explicit())
+        
+        dR  = self.Ri + self.ui - self.Rj - self.uj
+        dRd = self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj
+        
+        F = Kt*dR + Ct*dRd
+        T = zero_matrix(4,1)
+        
+        Qi = sm.BlockMatrix([[F], [T]])
+        return Qi
+    
+    @property
+    def Qj(self):
+        return - self._Qi
+    
+    @property
+    def arguments_symbols(self):
+        configuration_args = [self.axis_1, self.loc_1]
+        forces_args = [self.Kt, self.Ct, self.Kr, self.Cr]
+        return configuration_args + forces_args
+    
+    
+###############################################################################
+###############################################################################
 
 
         
