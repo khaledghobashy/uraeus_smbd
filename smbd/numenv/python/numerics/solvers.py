@@ -439,7 +439,12 @@ class dds_solver(abstract_solver):
         y1 = state_vector[:self.dof]
         y2 = state_vector[self.dof:]
         
-        guess = self._pos_history[i]
+        dt = self.step_size
+        
+        guess = self._pos_history[i] \
+              + self._vel_history[i]*dt \
+              + 0.5*self._acc_history[i]*(dt**2)
+
         for c in range(self.dof): 
             guess[np.argmax(self.independent_cols[:, c]), 0] = y1[c]
                         
