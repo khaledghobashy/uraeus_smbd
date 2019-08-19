@@ -32,7 +32,6 @@ def progress_bar(steps, i):
     sys.stdout.write('\r')
     length=(100*(1+i)//(4*steps))
     percentage=100*(1+i)//steps
-#    sys.stdout.write("Progress: ")
     sys.stdout.write("[%-25s] %d%%, (%s/%s) steps." % ('='*length,percentage,i+1, steps))
     sys.stdout.flush()
 
@@ -441,8 +440,8 @@ class dds_solver(abstract_solver):
         y2 = state_vector[self.dof:]
         
         guess = self._pos_history[i]
-#        for c in range(self.dof): 
-#            guess[np.argmax(self.independent_cols[:, c]), 0] = y1[c]
+        for c in range(self.dof): 
+            guess[np.argmax(self.independent_cols[:, c]), 0] = y1[c]
                         
         self._newton_raphson(guess)
         self._set_gen_coordinates(self._pos)
