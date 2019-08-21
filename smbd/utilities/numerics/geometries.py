@@ -53,8 +53,8 @@ def triangular_prism(p1,p2,p3,thickness=10):
     height = l2*np.sin(theta)
     area   = np.sqrt(pr*(pr-l1)*(pr-l2)*(pr-l3))
     volume = area*thickness
-    density = 7.9*1e-3 #(gm/mm3)
-        
+    density = 7.8*1e-3 #(gm/mm3)
+            
     # Creating a centroidal reference frame with z-axis normal to triangle
     # plane and x-axis oriented with the selected base vector v1.
     n = oriented(p1,p2,p3)
@@ -62,17 +62,29 @@ def triangular_prism(p1,p2,p3,thickness=10):
     
     # Calculating the principle inertia properties "moment of areas" at the
     # geometry centroid.
-    a   = v2.T.dot(v1) # Offset of p3 from p1 projected on v1.
+    a   = v2.T.dot(v1/l1) # Offset of p3 from p1 projected on v1.
     Ixc = (l1*height**3)/36
     Iyc = ((l1**3*height)-(l1**2*height*a)+(l1*height*a**2))/36
     Izc = ((l1**3*height)-(l1**2*height*a)+(l1*height*a**2)+(l1*height**3))/36
     
-    # Calculating moment of inertia from the moment of area
+    # Evaluating the moments of inertia of the side-walls
+    Ix_n = (1/12) * thickness**3 * l1
+    Iy_n = (1/12) * thickness**3 * height
+        
+    # Evaluating mass
     m = density*volume
-    J = (m/area) * np.diag([float(i) for i in [Ixc,Iyc,Izc]])
+    
+    # Calculating the total moment of inertia from the moment of areas
+    Ix = ((m/area) * float(Ixc)) + ((m/(thickness*l1))*Ix_n)
+    Iy = ((m/area) * float(Iyc)) + ((m/(thickness*height))*Iy_n)
+    Iz = (m/area) * float(Izc)
+
+    # Evaluate Geometry properties
+    J = np.diag([float(i) for i in [Ix, Iy, Iz]])
     R = centered(p1,p2,p3)
     P = dcm2ep(frame)
 
+    # Transforming Inertia to the Global Frame
     J = A(P).dot(J).dot(A(P).T)
     P = np.array([[1],[0],[0],[0]],dtype=np.float64)
     
