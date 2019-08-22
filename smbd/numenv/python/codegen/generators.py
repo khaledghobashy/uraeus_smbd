@@ -672,7 +672,7 @@ class assembly_codegen(template_codegen):
                 '''
         indent = 4*' '
         tpl_import_prefix = 'from ..templates'
-        templates_imports = '\n'.join(['%s import %s'%(tpl_import_prefix,i)
+        templates_imports = '\n'.join(['%s.%s import %s'%(tpl_import_prefix, i, i)
                                         for i in self.templates])
         
         subsystems = ['%s = %s.topology(%r)'%(subsys, template, subsys)\
