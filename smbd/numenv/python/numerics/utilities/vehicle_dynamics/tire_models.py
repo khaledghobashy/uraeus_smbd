@@ -25,6 +25,7 @@ class abstract_tire(object):
         self._u_history = [0]
         self._v_history = [0]
         self._s_history = [0]
+        self._Fz_history = []
         self.t = 0
         self._V_low = 2.5*1e3
         
@@ -158,7 +159,7 @@ class abstract_tire(object):
 #        print('vi = %s'%self.vi)
 #        print('a = %s'%a)
         
-        return k*self.driven, a    
+        return k*self.driven, a
     
     def _integrate_CPM(self, t, dt, V_sx, V_sy, Vx):
         
@@ -194,7 +195,9 @@ class abstract_tire(object):
             dydt = -(1/relx)*Vx*y - slip_vel
         return dydt
 
-        
+    def _log_Fz(self, t):
+        if self.t <= t:
+            self._Fz_history.append(self.Fz)
 ###############################################################################
 ###############################################################################
 
@@ -269,6 +272,8 @@ class brush_model(abstract_tire):
 
         print('Tire_Ground Force = %s'%(F.T))
         self._eval_GF_forces()
+        
+        self._log_Fz(t)
         
         # Advancing the time stamp in the tire model
         self._advance_time(t, dt)
