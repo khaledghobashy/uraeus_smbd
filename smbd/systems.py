@@ -13,7 +13,9 @@ from smbd._interfaces.systems import (standalone_topology,
                                       standalone_project,
                                       templatebased_project)
 
+from smbd._interfaces.projects import smbd_database
+
 __all__ = ['standalone_topology', 'template_topology', 'assembly',
            'configuration', 'load_pickled_data', 'standalone_project',
-           'templatebased_project']
+           'templatebased_project', 'smbd_database']
 
