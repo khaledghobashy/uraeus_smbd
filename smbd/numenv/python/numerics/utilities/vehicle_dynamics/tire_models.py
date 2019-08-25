@@ -322,7 +322,6 @@ class interpolator(abstract_tire):
             self.Fx = self.Fx_data(k) * max(self.Fz, 0) * 0.13
         else:
             print('SLIDING !!')
-#            self.Fx = 0.06 * max(self.Fz, 0)
             self.Fx = self.Fx_data(24.90091463) * max(self.Fz, 0) * 0.13 *0.6
         
         self.Fy = 0
