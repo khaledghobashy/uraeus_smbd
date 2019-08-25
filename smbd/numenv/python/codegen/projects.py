@@ -30,7 +30,7 @@ class standalone_project(object):
         for d in ['src']:
             subdir = os.path.join(self.code_dir, d)
             if not os.path.exists(subdir):
-                os.makedirs(subdir)        
+                os.makedirs(subdir)  
     
     def create_dirs(self, clean=False):
         if os.path.exists(self.code_dir):
@@ -165,5 +165,8 @@ class templatebased_project(object):
     
     def _write_init_file(self):
         pass
+    
+    
+
 
    
