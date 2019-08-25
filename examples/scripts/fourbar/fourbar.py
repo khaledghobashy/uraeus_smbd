@@ -130,3 +130,14 @@ from smbd.utilities.blender.codegen import script_generator
 bpy_code = script_generator(config.config)
 bpy_code.write_code_file('numenv/')
 
+#import bpy
+#
+#for i in range(250):
+#    
+#    bpy.ops.mesh.primitive_plane_add(view_align=False, enter_editmode=False, location=(0, 10, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+#    
+#    bpy.context.object.scale[0] = 30
+#    bpy.context.object.scale[1] = 5
+#    
+#    bpy.context.object.location[0] = i*(30+100)
+    

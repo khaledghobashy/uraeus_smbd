@@ -8,14 +8,18 @@ database_directory = '/home/khaledghobashy/Documents/smbd/examples/notebooks/fsa
 pkg_path = '/home/khaledghobashy/Documents/smbd'
 sys.path.append(pkg_path)
 
+database_directory = r'C:\Users\khaled.ghobashy\Desktop\smbd\examples\notebooks'
+pkg_path = r'C:\Users\khaled.ghobashy\Desktop\smbd'
+sys.path.append(pkg_path)
+
 from smbd.numenv.python.numerics.systems import multibody_system, simulation
 from smbd.utilities.numerics.euler_parameters import A
 
 try:
     import fsae_car
 except ModuleNotFoundError:
-    import sys
     sys.path.append('/home/khaledghobashy/Documents/smbd/examples/notebooks')
+    sys.path.append(database_directory)
     
 
 from fsae_car.numenv.python.templates.dwb_bc_pushrod import dwb_bc_pushrod_cfg
@@ -38,7 +42,7 @@ num_model.Subsystems.ST1.config = ST1_config
 num_model.Subsystems.CH.config  = CH_config
 
 
-configuration_files = os.path.join(database_directory, 'symenv', 'templates', 'config_inputs')
+configuration_files = os.path.join(database_directory, 'fsae_car', 'symenv', 'templates', 'config_inputs')
 
 AX1_df = pd.read_csv(os.path.join(configuration_files, 'dwb_bc_pushrod_cfg.csv'), index_col=0)
 AX2_df = pd.read_csv(os.path.join(configuration_files, 'dwb_bc_pushrod_cfg.csv'), index_col=0)
@@ -93,7 +97,7 @@ AX1_df.loc['vcs_z'] = [0, 0, 1, 0]
 AX1_df.loc['s_tire_radius'] = [TR, 0, 0, 0]
 AX1_df.loc['s_links_ro']    = [8, 0, 0, 0]
 AX1_df.loc['s_strut_inner'] = [15, 0, 0, 0]
-AX1_df.loc['s_strut_outer'] = [30, 0, 0, 0]
+AX1_df.loc['s_strut_outer'] = [22, 0, 0, 0]
 AX1_df.loc['s_thickness']   = [8, 0, 0, 0]
 
 AX1_df.to_csv('config_inputs/front_axle.csv', index=True)
@@ -155,7 +159,7 @@ AX2_df.loc['vcs_z'] = [0, 0, 1, 0]
 AX2_df.loc['s_tire_radius'] = [TR, 0, 0, 0]
 AX2_df.loc['s_links_ro']    = [8, 0, 0, 0]
 AX2_df.loc['s_strut_inner'] = [15, 0, 0, 0]
-AX2_df.loc['s_strut_outer'] = [30, 0, 0, 0]
+AX2_df.loc['s_strut_outer'] = [22, 0, 0, 0]
 AX2_df.loc['s_thickness']   = [8, 0, 0, 0]
 
 AX2_df.to_csv('config_inputs/rear_axle.csv', index=True)
@@ -187,7 +191,7 @@ ST1_config.load_from_dataframe(ST1_df)
 
 
 CH_df.loc['hps_CG'] = [WB/2, 0, 300, 0]
-CH_df.loc['s_CG_radius'] = [80, 0, 0, 0]
+CH_df.loc['s_CG_radius'] = [50, 0, 0, 0]
 CH_df.loc['m_rbs_chassis'] = [280*1e3, 0, 0, 0]
 
 CH_df.to_csv('config_inputs/chassis.csv', index=True)
@@ -457,7 +461,7 @@ def steering_function(t):
 ST1_config.UF_mcs_rack_act = steering_function
 
 
-equlibrium_results = pd.read_csv('results/equ_3.csv', index_col=0)
+equlibrium_results = pd.read_csv('results/equilibrium.csv', index_col=0)
 q0 = np.array(equlibrium_results.iloc[-1][:-1]).reshape((num_model.topology.n, 1))
 
 sim = simulation('sim', num_model, 'dds')
