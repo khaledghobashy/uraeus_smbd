@@ -361,7 +361,9 @@ class abstract_topology(object):
                 vel_rhs[row_ind:row_ind+2,0]   = b.normalized_vel_equation.blocks
                 acc_rhs[row_ind:row_ind+2,0]   = b.normalized_acc_equation.blocks
             else:
+                jacobian[row_ind,i*2]   = b.normalized_jacobian[0]
                 jacobian[row_ind,i*2+1] = b.normalized_jacobian[1]
+
                 equations[row_ind,0] = b.normalized_pos_equation
                 vel_rhs[row_ind,0]   = b.normalized_vel_equation
                 acc_rhs[row_ind,0]   = b.normalized_acc_equation
