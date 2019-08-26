@@ -478,10 +478,10 @@ class topology(abstract_topology):
             self._edges_map[name] = (*act_edge, key)
             self._edges_keys_map[name] = key
     
-    def add_absolute_actuator(self, typ, name, body, coordinate):
+    def add_absolute_actuator(self, typ, name, body, body_j, coordinate):
         assert body in self.nodes, 'Body %r does not exist.'%body
         variant = self.selected_variant
-        edge  = (body, self.grf)
+        edge  = (body, body_j)
         if name not in self._edges_map:
             attr_dict = self._typ_attr_dict(typ)
             attr_dict.update({'name':name, 'coordinate':coordinate})
@@ -575,21 +575,22 @@ class template_based_topology(topology):
             act_edge = self._edges_map[name]
             variant.edges[act_edge].update({'mirr':name})
     
-    def add_absolute_actuator(self, typ, name, body_i, coordinate, mirror=False):
+    def add_absolute_actuator(self, typ, name, body_i, body_j, coordinate, mirror=False):
         variant = self.selected_variant
         if mirror:
             body_i_mirr = variant.nodes[body_i]['mirr']
+            body_j_mirr = variant.nodes[body_j]['mirr']
             name1 = 'mcr_%s'%name
             name2 = 'mcl_%s'%name
-            super().add_absolute_actuator(typ, name1, body_i, coordinate)
-            super().add_absolute_actuator(typ, name2, body_i_mirr, coordinate)
+            super().add_absolute_actuator(typ, name1, body_i, body_j, coordinate)
+            super().add_absolute_actuator(typ, name2, body_i_mirr, body_j_mirr, coordinate)
             act_edge1 = self._edges_map[name1]
             act_edge2 = self._edges_map[name2]
             variant.edges[act_edge1].update({'mirr':name2, 'align':'r'})
             variant.edges[act_edge2].update({'mirr':name1, 'align':'l'})
         else:
             name = 'mcs_%s'%name
-            super().add_absolute_actuator(typ, name, body_i, coordinate)
+            super().add_absolute_actuator(typ, name, body_i, body_j, coordinate)
             act_edge = self._edges_map[name]
             variant.edges[act_edge].update({'mirr':name})
     
