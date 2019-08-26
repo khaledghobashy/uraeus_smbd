@@ -444,7 +444,7 @@ class distance_constraint(object):
 
 ###############################################################################
 
-class coordinate_constraint(object):
+class coordinate_constraint1(object):
     
     nc  = 1
     
@@ -475,7 +475,46 @@ class coordinate_constraint(object):
         
         obj._jacobian_i.append(jacobian[0])
         obj._jacobian_j.append(jacobian[1])
+        
+###############################################################################
+
+class coordinate_constraint(object):
+    
+    nc  = 1
+    
+    def __init__(self):
+        pass
+    
+    def construct(self, obj):
+        i  = obj.i        
+        Ri = obj.Ri
+        Ai = obj.Ai
+        Rj = obj.Rj
+        Aj = obj.Aj
+#        C  = obj.loc_1
+        ui_bar = obj.ui_bar
+        uj_bar = obj.uj_bar
+        Pdi = obj.Pdi
+
+        pos_level_equation = (Ri + Ai*ui_bar)[i,:] - (Rj + Aj*uj_bar)[i,:]
+        vel_level_equation = zero_matrix(1, 1)
+        acc_level_equation = (B(obj.Pdi,obj.ui_bar)*obj.Pdi\
+                            -B(obj.Pdj,obj.uj_bar)*obj.Pdj)[i,:]
+        
+        J_R = I[i,:]
+        J_P = obj.Bui[i,:]
             
+        jacobian = ([J_R, J_P], 
+                    [-I[i,:], -obj.Buj[i,:]])
+       
+        obj._pos_level_equations.append(pos_level_equation)
+        obj._vel_level_equations.append(vel_level_equation)
+        obj._acc_level_equations.append(acc_level_equation)
+        
+        obj._jacobian_i.append(jacobian[0])
+        obj._jacobian_j.append(jacobian[1])
+        
+
 ###############################################################################
 ###############################################################################
 
