@@ -108,6 +108,7 @@ class joints_container(topology_edges_container):
         self.cylinderical  = joints.cylinderical
         self.tripod = joints.tripod
         self.fixed  = joints.fixed
+        self.fixed_orientation = joints.fixed_orientation
         
         super().__init__(topology)
     
@@ -123,10 +124,14 @@ class actuators_container(topology_edges_container):
         self.rotational_actuator = joints.rotational_actuator
         self.absolute_locator = joints.absolute_locator
         self.translational_actuator = joints.translational_actuator
+        self.absolute_rotator = joints.absolute_rotator
         super().__init__(topology)
     
     def _decorate(self, edge_component):
         if issubclass(edge_component, joints.absolute_locator):
+            def decorated(*args, **kwargs):
+                self._topology.add_absolute_actuator(edge_component, *args, **kwargs)
+        elif issubclass(edge_component, joints.absolute_rotator):
             def decorated(*args, **kwargs):
                 self._topology.add_absolute_actuator(edge_component, *args, **kwargs)
         else:

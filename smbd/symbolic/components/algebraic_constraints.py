@@ -365,6 +365,7 @@ class dot_product_2(object):
 ###############################################################################
 
 class angle_constraint(object):
+    
     nc = 1
     
     def __init__(self):
@@ -454,11 +455,11 @@ class coordinate_constraint(object):
         i  = obj.i
         Ri = obj.Ri
         Ai = obj.Ai
-        C  = obj.loc_1
+#        C  = obj.loc_1
         ui_bar = obj.ui_bar
         Pdi = obj.Pdi
 
-        pos_level_equation = (Ri + Ai*ui_bar - C)[i,:]
+        pos_level_equation = (Ri + Ai*ui_bar)[i,:]
         vel_level_equation = zero_matrix(1, 1)
         acc_level_equation = (B(Pdi,ui_bar)*Pdi)[i,:]
         
@@ -475,7 +476,6 @@ class coordinate_constraint(object):
         obj._jacobian_i.append(jacobian[0])
         obj._jacobian_j.append(jacobian[1])
             
-
 ###############################################################################
 ###############################################################################
 
@@ -546,6 +546,7 @@ class absolute_actuator(abstract_actuator):
         self.coordinate = coordinate
         self.i = self._coordinates_map[self.coordinate]
         super().__init__(name, body_i, body_j)
+
         
 ###############################################################################
 ###############################################################################
