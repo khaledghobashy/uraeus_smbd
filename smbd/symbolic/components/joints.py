@@ -98,7 +98,7 @@ class translational_actuator(joint_actuator, metaclass=joint_constructor):
 
 class absolute_locator(absolute_actuator, metaclass=joint_constructor):
     def_axis = 0
-    def_locs = 1
+    def_locs = 2
     vector_equations = [coordinate_constraint()]
 
 
