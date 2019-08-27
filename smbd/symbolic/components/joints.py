@@ -111,7 +111,11 @@ class absolute_rotator(abstract_actuator, metaclass=joint_constructor):
     def pos_level_equations(self):
         return sm.BlockMatrix([sm.Identity(1)*self._pos_level_equations[0]])
 
-
+class inline(abstract_joint, metaclass=joint_constructor):
+    def_axis = 1
+    def_locs = 1
+    vector_equations = [dot_product_2('i'),
+                        dot_product_2('j')]
 
 class dummy_cylinderical(abstract_joint, metaclass=joint_constructor):
     def_axis = 1

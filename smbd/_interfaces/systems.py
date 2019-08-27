@@ -109,6 +109,7 @@ class joints_container(topology_edges_container):
         self.tripod = joints.tripod
         self.fixed  = joints.fixed
         self.fixed_orientation = joints.fixed_orientation
+        self.inline = joints.inline
         
         super().__init__(topology)
     
