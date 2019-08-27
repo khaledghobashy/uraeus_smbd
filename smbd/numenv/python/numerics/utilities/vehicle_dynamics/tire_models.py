@@ -229,6 +229,9 @@ class brush_model(abstract_tire):
         self.Fx  = 0
         self.slipping = False
         
+        self.F = np.zeros((3,1))
+        self.M = np.zeros((3,1))
+        
         super().__init__(P_hub)
     
     
