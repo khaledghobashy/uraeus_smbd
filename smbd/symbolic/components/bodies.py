@@ -28,14 +28,13 @@ class body(reference_frame):
     Parameters
     ----------
     name : str
-        Name of the reference_frame instance. Should mimic a valid python 
-        variable name.
+        Name of the body instance. Should mimic a valid python variable name.
     
     Attributes
     ----------
     n : int
         Number of generalized coordinates used to define the body 
-        configuration.
+        configuration. Equals 7.
     nc : int
         Number of scalar constraint equations (euler-parameters normalization).
     nve : int
@@ -89,15 +88,15 @@ class body(reference_frame):
         A list containing the symbolic mathematical objects that changes during
         the run-time of a nuemric simulation's "solve" method.
          
-    constants_symbolic_expr : list (of sympy equalities)
+    constants_symbolic_expr : list (of sympy.Equality)
         A list containing sympy equalities representing the values of internal
         class symbolic constants that are evaluated from other symbolic 
-        variables.
+        expressions.
     
-    constants_numeric_expr : list (of sympy equalities)
+    constants_numeric_expr : list (of sympy.Equality)
         A list containing sympy equalities representing the values of internal
         class symbolic constants that are evaluated directly from numerical 
-        values.
+        expressions.
     
     constants_symbols : list (of symbolic objects)
         A list containing all the symbolic mathematical objects that represent 
