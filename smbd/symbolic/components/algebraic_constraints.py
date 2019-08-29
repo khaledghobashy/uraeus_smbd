@@ -6,7 +6,6 @@ Created on Tue Jan  1 11:06:05 2019
 """
 # Standard library imports
 import itertools
-from IPython.display import display
 
 # 3rd parties library imports
 import sympy as sm
@@ -14,15 +13,137 @@ import sympy as sm
 # Local application imports
 from .matrices import (reference_frame, vector, zero_matrix, B, E, Skew,
                        matrix_symbol)
-from .bodies import body
 from .helpers import body_setter, name_setter
 
 
-I = sm.Identity(3)
+# Commonly used variables
+I  = sm.Identity(3)
 I1 = sm.Identity(1)
 
 
 class abstract_joint(object):
+    r"""
+    **Abstract Class**
+    
+    A class that acts as a base class for algebraic constraints equations. The
+    class is used to construct spatial joints connecting body pairs as well as
+    actuators that acts on joints or bodies.
+    
+    Parameters
+    ----------
+    name : str
+        Name of the joint instance. Should mimic a valid python variable name.
+    body_i : body
+        The 1st body isntance. Should be an instance of the ```body``` class.
+    body_j : body
+        The 2nd body isntance. Should be an instance of the ```body``` class.
+        
+    Attributes
+    ----------
+    n : int
+        Class member. Number of generalized coordinates used to define the
+        joint configuration. Equals zero.
+    nc : int
+        Class member. Number of scalar constraint equations. This is specified 
+        automatically based on the type and the quantity of base-constraints 
+        used.
+    nve : int
+        Class member. Number of vetor constraint equations.This is specified 
+        automatically based on the type and the quantity of base-constraints 
+        used.
+        
+    def_axis : int
+        Class member. Number of axes used to define the given constraint.
+    def_locs : int
+        Class member. Number of location points used to define the given 
+        constraint.
+        
+    
+    body_i : body
+        The 1st body isntance.
+    body_i : body
+        The 2nd body isntance.
+    
+    
+    pos_level_equations : sympy.BlockMatrix
+        A block matrix that stores the set of vector equations thatrepresents 
+        the position constraints equations. The shape of the blocks is (nve, 1),
+        where the scalar shape is (nc, 1).
+        
+    vel_level_equations : sympy.BlockMatrix
+        A block matrix that stores the set of vector equations that
+        represents the right hand-side of the velocity level of the constraints
+        equations. The shape of the blocks is (nve, 1), where the scalar shape 
+        is (nc, 1).
+        
+    acc_level_equations : sympy.BlockMatrix
+        A block matrix that stores the set of vector equations that
+        represents the right hand-side of the acceleration level of the 
+        constraints equations. The shape of the blocks is (nve, 1), where the 
+        scalar shape is (nc, 1).
+        
+    jacobian_i : sympy.BlockMatrix
+        A block matrix that stores the jacobian of the constraint equations
+        with respect to the body_i generalized coordinates. The shape of the 
+        blocks is (nve, 2), where the scalar shape is (nc, 7).
+    
+    jacobian_j : sympy.BlockMatrix
+        A block matrix that stores the jacobian of the constraint equations
+        with respect to the body_j generalized coordinates. The shape of the 
+        blocks is (nve, 2), where the scalar shape is (nc, 7).
+        
+    reactions_equalities : list (of sympy.Equality)
+        A list containg the reactions' equalities acting on body_i. These are
+        sympy equalities containing lhs vactor symbols and rhs matrix 
+        expressions. These are: 
+            - Total Reaction Load Equality (Qi).
+            - Reaction Force Equality (Fi).
+            - Reaction Torque Euality (Ti) in terms of cartesian coordinates.
+            - Reaction Torque Euality (Ti_e) in terms of euler parameters.
+    
+    reactions_symbols : list (of sympy.MatrixExpr)
+        A list contating the reaction force vector Fi and the reaction torque 
+        vector Ti acting on body_i.
+        
+    arguments_symbols : list (of sympy.MatrixSymbol)
+        A list containing the symbolic mathematical objects -location points 
+        and orientation axes- that should be nuemrically defined by the user in
+        a numerical simulation session.
+        The number of arguments are given by the sum of ```def_axis``` and 
+        ```def_locs```.
+        
+    runtime_symbols : list (of sympy.MatrixSymbol)
+        A list containing the symbolic mathematical objects that changes during
+        the run-time of a nuemric simulation's "solve" method. Here this is 
+        mostly an empty list.
+    
+    constants_symbolic_expr : list (of sympy.Equality)
+        A list containing sympy equalities representing the values of internal
+        class symbolic constants that are evaluated from other symbolic 
+        expressions.
+    
+    constants_numeric_expr : list (of sympy.Equality)
+        A list containing sympy equalities representing the values of internal
+        class symbolic constants that are evaluated directly from numerical 
+        expressions.
+    
+    constants_symbols : list (of symbolic objects)
+        A list containing all the symbolic mathematical objects that represent
+        constants for the given joint/actuator instance.
+        
+    dij : sympy.MatrixExpr
+        A symbolic matrix expression representing the relative position vector
+        between the joint location point on body_i and the location point on
+        body_j. 
+        $$ R_i + A(P_i) \bar{u}_i - R_j - A(P_j) \bar{u}_j $$
+    
+    dijd : sympy.MatrixExpr
+        A symbolic matrix expression representing the relative velocity vector
+        between the joint location point on body_i and the location point on
+        body_j.
+        $$ d(R_i + A(P_i) \bar{u}_i - R_j - A(P_j) \bar{u}_j) / dt $$
+    
+    """
     
     def_axis = 1
     def_locs = 1
@@ -57,87 +178,217 @@ class abstract_joint(object):
     @body_j.setter
     def body_j(self, body_j):
         body_setter(self, body_j, 'j')
-    
-    @property
-    def dij(self):
-        return self.Ri + self.ui - self.Rj - self.uj
-    @property
-    def dijd(self):
-        return self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj
-    
+        
     @property
     def pos_level_equations(self):
+        """
+        A block matrix that stores the set of matrix/vector equations that
+        represents the position constraints equations. The shape of the blocks
+        is (nve, 1), where the scalar shape is (nc, 1).
+        """
         return sm.BlockMatrix(self._pos_level_equations)
+    
     @property
     def vel_level_equations(self):
+        """
+        A block matrix that stores the set of matrix/vector equations that
+        represents the right hand-side of the velocity level of the constraints
+        equations. The shape of the blocks is (nve, 1), where the scalar shape 
+        is (nc, 1).
+        """
         return sm.BlockMatrix(self._vel_level_equations)
+    
     @property
     def acc_level_equations(self):
+        """
+        A block matrix that stores the set of matrix/vector equations that
+        represents the right hand-side of the acceleration level of the 
+        constraints equations. The shape of the blocks is (nve, 1), where the 
+        scalar shape is (nc, 1).
+        """
         return sm.BlockMatrix(self._acc_level_equations)
+    
     @property
     def jacobian_i(self):
+        """
+        A block matrix that stores the jacobian of the constraint equations
+        with respect to the body_i generalized coordinates. The shape of the 
+        blocks is (nve, 2), where the scalar shape is (nc, 7).
+        """
         return sm.BlockMatrix(self._jacobian_i)
+    
     @property
     def jacobian_j(self):
+        """
+        A block matrix that stores the jacobian of the constraint equations
+        with respect to the body_j generalized coordinates. The shape of the 
+        blocks is (nve, 2), where the scalar shape is (nc, 7).
+        """
         return sm.BlockMatrix(self._jacobian_j)
         
     @property
     def reactions_equalities(self):
+        """
+        A list containg the reactions' equalities acting on body_i. These are
+        sympy equalities containing lhs vactor symbols and rhs matrix 
+        expressions. These are: 
+            - Total Reaction Load Equality (Qi).
+            - Reaction Force Equality (Fi).
+            - Reaction Torque Euality (Ti) in terms of cartesian coordinates.
+            - Reaction Torque Euality (Ti_e) in terms of euler parameters.
+        """
         return self._reactions_equalities
     
     @property
     def reactions_symbols(self):
+        """
+        A list contating the reaction force vector Fi and the reaction torque 
+        vector Ti acting on body_i.
+        """
         return [self.Fi, self.Ti]
     
     @property
     def arguments_symbols(self):
+        """
+        A list containing the symbolic mathematical objects -location points 
+        and orientation axes- that should be nuemrically defined by the user in
+        a numerical simulation session.
+        The number of arguments are given by the sum of ```def_axis``` and 
+        ```def_locs```.
+        """
         return self._arguments
+    
     @property
     def runtime_symbols(self):
+        """
+        A list containing the symbolic mathematical objects that changes during
+        the run-time of a nuemric simulation's "solve" method. Here this is 
+        mostly an empty list.
+        """
         return []
+    
     @property
     def constants_symbolic_expr(self):
+        """
+        A list containing sympy equalities representing the values of internal
+        class symbolic constants that are evaluated from other symbolic 
+        expressions.
+        """
         return self._sym_constants
+    
     @property
     def constants_numeric_expr(self):
+        """
+        A list containing sympy equalities representing the values of internal
+        class symbolic constants that are evaluated directly from numerical 
+        expressions.
+        """
         return []
+    
     @property
     def constants_symbols(self):
+        """
+        A list containing all the symbolic mathematical objects that represent
+        constants for the given joint/actuator instance.
+        """
         constants_expr = itertools.chain(self.constants_symbolic_expr,
                                          self.constants_numeric_expr)
         return [expr.lhs for expr in constants_expr]
 
+    @property
+    def dij(self):
+        equation = self.Ri + self.ui - self.Rj - self.uj
+        return equation
+    @property
+    def dijd(self):
+        equation = self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj
+        return equation
+
+            
+    def _create_joint_arguments(self):
+        """
+        Private method used to create the required symbolic mathematical 
+        objects that should be nuemrically defined by the user in a numerical 
+        simulation session.
+        """
+        
+        # Creating the joint definition axes
+        for i in range(self.def_axis):
+            self._create_joint_def_axis(i+1)
+            
+        # Creating the joint definition locations
+        for i in range(self.def_locs):
+            self._create_joint_def_loc(i+1)
+        
+        # Empty list to store the created symbolic vectors
+        l = []
+        
+        # Storing the created symbolic vetors in the list
+        for i in range(self.def_axis):
+            n = i+1
+            v = getattr(self, 'axis_%s'%n)
+            l.append(v)
+            
+        for i in range(self.def_locs):
+            n = i+1
+            u = getattr(self, 'loc_%s'%n)
+            l.append(u)
+        
+        self._arguments = l
     
     
     def _create_joint_def_axis(self, i):
+        """
+        Private method used to create a symbolic definition axis.
+        
+        Parameters
+        ----------
+        i : int
+            Axis number ID
+        
+        Returns
+        -------
+        None
+        
+        Notes
+        -----
+        The method constructs a vector instance with the name ```axis_i_name``` 
+        where ```i``` is the ID number and ```name``` is the joint/actuator name. 
+        The method then sets two memebrs to the instance that represents the 
+        ```axis_i``` and its corresponding marker ```marker_i```.
+        
+        """
         format_ = (self.prefix, i, self.id_name)
         v = vector('%sax%s_%s'%format_)
         m = reference_frame('%sM%s_%s'%format_, format_as=r'{%s{M%s}_{%s}}'%format_)
         setattr(self, 'axis_%s'%i, v)
         setattr(self, 'marker_%s'%i, m)
     
+    
     def _create_joint_def_loc(self, i):
+        """
+        Private method used to create a symbolic definition location.
+        
+        Parameters
+        ----------
+        i : int
+            Location ID number.
+        
+        Returns
+        -------
+        None
+        
+        Notes
+        -----
+        The method constructs a vector instance with the name ```pt_i_name``` 
+        where ```i``` is the ID number and ```name``` is the joint/actuator name.
+        The method then sets a memebr variable to the instance that represents 
+        the ```loc_i```.
+        
+        """
         format_ = (self.prefix, i, self.id_name)
         u = vector('%spt%s_%s'%format_)
         setattr(self, 'loc_%s'%i, u)
-        
-    def _create_joint_arguments(self):
-        
-        for i in range(self.def_axis):
-            self._create_joint_def_axis(i+1)
-        for i in range(self.def_locs):
-            self._create_joint_def_loc(i+1)
-            
-        l = []
-        for i in range(self.def_axis):
-            n = i+1
-            v = getattr(self, 'axis_%s'%n)
-            l.append(v)
-        for i in range(self.def_locs):
-            n = i+1
-            u = getattr(self, 'loc_%s'%n)
-            l.append(u)
-        self._arguments = l
     
     
     def _construct(self):
@@ -219,22 +470,22 @@ class abstract_joint(object):
         
         format_ = (self.prefix, body_i_name, self.id_name)
         
-        #Joint Reaction Load acting on body_i.
+        # Joint Reaction Load acting on body_i.
         Qi_raw_name = '%sQ_%s_%s'%format_
         Qi_frm_name = r'{%sQ^{%s}_{%s}}'%format_
         self.Qi = matrix_symbol(Qi_raw_name, 7, 1, Qi_frm_name)
         
-        #Joint Reaction Force acting on body_i.
+        # Joint Reaction Force acting on body_i.
         Fi_raw_name = '%sF_%s_%s'%format_
         Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
         self.Fi = matrix_symbol(Fi_raw_name, 3, 1, Fi_frm_name)
         
-        #Joint Reaction Torque acting on body_i in terms of orientation parameters.
+        # Joint Reaction Torque acting on body_i in terms of orientation parameters.
         Tie_raw_name = '%sTe_%s_%s'%format_
         Tie_frm_name = r'{%sTe^{%s}_{%s}}'%format_
         self.Ti_e = matrix_symbol(Tie_raw_name, 4, 1, Tie_frm_name)
         
-        #Joint Reaction Torque acting on body_i in terms of cartesian coordinates.
+        # Joint Reaction Torque acting on body_i in terms of cartesian coordinates.
         Ti_raw_name = '%sT_%s_%s'%format_
         Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
         self.Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
@@ -249,20 +500,7 @@ class abstract_joint(object):
         Ti_eq = sm.Eq(self.Ti, self.Ti_eq)
         self._reactions_equalities = [Qi_eq, Fi_eq, Ti_e_eq, Ti_eq]
         
-    
-    @classmethod
-    def represent_equations(cls):
-        a = body('1')
-        b = body('2')
-        j = cls('c',a,b)
         
-        equations = [j.pos_level_equations,
-                     j.vel_level_equations,
-                     j.acc_level_equations,
-                     sm.BlockMatrix([[j.jacobian_i,j.jacobian_j]])]
-        
-        for i in equations: display(i)
-    
 ###############################################################################
 ###############################################################################
 
@@ -491,10 +729,8 @@ class coordinate_constraint(object):
         Ai = obj.Ai
         Rj = obj.Rj
         Aj = obj.Aj
-#        C  = obj.loc_1
         ui_bar = obj.ui_bar
         uj_bar = obj.uj_bar
-        Pdi = obj.Pdi
 
         pos_level_equation = (Ri + Ai*ui_bar)[i,:] - (Rj + Aj*uj_bar)[i,:]
         vel_level_equation = zero_matrix(1, 1)
