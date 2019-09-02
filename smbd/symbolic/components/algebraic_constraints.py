@@ -390,77 +390,187 @@ class abstract_joint(object):
         u = vector('%spt%s_%s'%format_)
         setattr(self, 'loc_%s'%i, u)
     
-    
-    def _construct(self):
-        self._create_local_equalities()
-        self._create_reactions_args()
-        self._create_reactions_equalities()
-            
     def _create_equations_lists(self):
+        """
+        Creats empty lists to hold the created symbolic equations.
+        """
         self._pos_level_equations = []
         self._vel_level_equations = []
         self._acc_level_equations = []
         self._jacobian_i = []
         self._jacobian_j = []
+
+
+    def _construct(self):
+        """
+        A method that calls the other methods resposible for constructing the
+        symbolic objects/equalities of the joint/actuator.
+        """
+        self._create_local_equalities()
+        self._create_reactions_args()
+        self._create_reactions_equalities()
+            
     
     def _create_local_equalities(self):
+        """
+        A private method to create the joint/actuator local symbolic equalities
+        that represents constants to the joint/acutator.
+        
+        Notes
+        -----
+        When a joint/actuator gets created by the user, it checks the number of
+        arguments used to fully define it, e.g; defintion axes and locations.
+        It then creates local version of these arguments that are local to the
+        bodies connected. These local arguments do not change relative to the
+        given body reference point and orientation.
+        TODO....
+        
+        """
+        
+        # Empty list to store symbolic equalities
         self._sym_constants = []
         
+        # Creating Local Constant Markers based on the joint/actuator 
+        # definition axes.
+        # ===========================================================
         if self.def_axis == 0:
             markers_equalities = []
         
         elif self.def_axis == 1:
             axis   = self.axis_1
             marker = self.marker_1
-            marker.orient_along(axis)
-            mi_bar    = marker.express(self.body_i)
-            mi_bar_eq = sm.Eq(self.mi_bar.A, mi_bar)
-            mj_bar    = marker.express(self.body_j)
-            mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
-            markers_equalities = [mi_bar_eq,mj_bar_eq]
             
+            # Creating a global marker/triad oriented along the definition 
+            # axis, where Z-axis of the triad is parallel to the axis.
+            marker.orient_along(axis)
+            
+            # Expressing the created marker/triad in terms of the 1st body 
+            # local reference frame resulting in matrix transformation 
+            # expression
+            mi_bar    = marker.express(self.body_i)
+            # Creating a symbolic equality that equates the symbolic dcm of the
+            # marker to the matrix transformation expression created.
+            mi_bar_eq = sm.Eq(self.mi_bar.A, mi_bar)
+            
+            # Expressing the created marker/triad in terms of the 2nd body 
+            # local reference frame resulting in matrix transformation 
+            # expression
+            mj_bar    = marker.express(self.body_j)
+            # Creating a symbolic equality that equates the symbolic dcm of the
+            # marker to the matrix transformation expression created.
+            mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
+            
+            # Storing the equalities in the markers list.
+            markers_equalities = [mi_bar_eq, mj_bar_eq]
+          
+        
+        # The case of two definition axes for universal/hook/tripod joints.
+        # Where two global triads/markers created along two different axis.
         elif self.def_axis == 2:
-            axis1  = self.axis_1
-            axis2  = self.axis_2
+
+            axis1   = self.axis_1
             marker1 = self.marker_1
+
+            axis2   = self.axis_2
             marker2 = self.marker_2
             
+            # Orienting 1st marker along 1st axis
             marker1.orient_along(axis1)
+            # Expressing the created marker/triad in terms of the 1st body 
+            # local reference frame resulting in matrix transformation 
+            # expression
             mi_bar    = marker1.express(self.body_i)
+            # Creating a symbolic equality that equates the symbolic dcm of the
+            # marker to the matrix transformation expression created.
             mi_bar_eq = sm.Eq(self.mi_bar.A, mi_bar)
             
-            marker2.orient_along(axis2,marker1.A[:,1])
+            # Orienting the 2nd marker along the 2nd axis, where the 2nd marker
+            # x-axis is parallel to the 1st marker's y-axis.
+            marker2.orient_along(axis2, marker1.A[:, 1])
+            # Expressing the created marker/triad in terms of the 2nd body 
+            # local reference frame resulting in matrix transformation 
+            # expression
             mj_bar    = marker2.express(self.body_j)
+            # Creating a symbolic equality that equates the symbolic dcm of the
+            # marker to the matrix transformation expression created.
             mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
-            markers_equalities = [mi_bar_eq,mj_bar_eq]
+            
+            # Storing the equalities in the markers list.
+            markers_equalities = [mi_bar_eq, mj_bar_eq]
         
-        else: 
+        else:
+            # Other cases not considered yet.
             raise NotImplementedError
+        
+        # Increment/Update the symbolic_constants list.
         self._sym_constants += markers_equalities
         
+        
+        # Creating Local Constant Position Vectors based on the joint/actuator 
+        # definition locations.
+        # ====================================================================
         if self.def_locs == 0:
             location_equalities = []
 
         elif self.def_locs == 1:
             loc  = self.loc_1
-            ui_bar_eq = sm.Eq(self.ui_bar, loc.express(self.body_i) - self.Ri.express(self.body_i))
-            uj_bar_eq = sm.Eq(self.uj_bar, loc.express(self.body_j) - self.Rj.express(self.body_j))
-            location_equalities = [ui_bar_eq,uj_bar_eq]
+            
+            # Relative position vector of joint location relative to the 1st 
+            # body reference point, in the body-local reference frame
+            ui_bar = loc.express(self.body_i) - self.Ri.express(self.body_i)
+            # Creating a symbolic equality that equates the symbolic vector of
+            # the local position to the matrix transformation expression created.
+            ui_bar_eq = sm.Eq(self.ui_bar, ui_bar)
+            
+            # Relative position vector of joint location relative to the 2nd 
+            # body reference point, in the body-local reference frame
+            uj_bar = loc.express(self.body_j) - self.Rj.express(self.body_j)
+            # Creating a symbolic equality that equates the symbolic vector of
+            # the local position to the matrix transformation expression created.
+            uj_bar_eq = sm.Eq(self.uj_bar, uj_bar)
+
+            # Storing the equalities in the locations list.
+            location_equalities = [ui_bar_eq, uj_bar_eq]
         
         elif self.def_locs == 2: 
             loc1 = self.loc_1
             loc2 = self.loc_2
-            ui_bar_eq = sm.Eq(self.ui_bar, loc1.express(self.body_i) - self.Ri.express(self.body_i))
-            uj_bar_eq = sm.Eq(self.uj_bar, loc2.express(self.body_j) - self.Rj.express(self.body_j))
-            location_equalities = [ui_bar_eq,uj_bar_eq]
+            
+            # Relative position vector of 1st joint location relative to the 1st 
+            # body reference point, in the body-local reference frame
+            ui_bar = loc1.express(self.body_i) - self.Ri.express(self.body_i)
+            # Creating a symbolic equality that equates the symbolic vector of
+            # the local position to the matrix transformation expression created.
+            ui_bar_eq = sm.Eq(self.ui_bar, ui_bar)
+
+            # Relative position vector of 2nd joint location relative to the 2nd 
+            # body reference point, in the body-local reference frame
+            uj_bar = loc2.express(self.body_j) - self.Rj.express(self.body_j)
+            # Creating a symbolic equality that equates the symbolic vector of
+            # the local position to the matrix transformation expression created.
+            uj_bar_eq = sm.Eq(self.uj_bar, uj_bar)
+            
+            # Storing the equalities in the locations list.
+            location_equalities = [ui_bar_eq, uj_bar_eq]
+        
+        
         else: 
             raise NotImplementedError
-        self._sym_constants += location_equalities
         
+        self._sym_constants += location_equalities
+    
+    
     def _construct_actuation_functions(self):
+        """
+        A method to create actuation functions in actuator classes.
+        """
         pass
     
     def _create_reactions_args(self):
+        """
+        TODO
+        """
+        
         body_i_name = self.body_i.id_name
         
         format_ = (self.prefix, self.id_name)
@@ -493,6 +603,10 @@ class abstract_joint(object):
         
         
     def _create_reactions_equalities(self):
+        """
+        TODO
+        """
+        
         jacobian_i = self.jacobian_i
         Qi_eq = sm.Eq(self.Qi, -jacobian_i.T*self.L)
         Fi_eq = sm.Eq(self.Fi, self.Qi[0:3,0])
@@ -506,12 +620,27 @@ class abstract_joint(object):
 
 class spehrical_constraint(object):
     
+    # Number of Scalar Constraint Equations
     nc  = 3
     
     def __init__(self):
+        """
+        A class that represents a Premitive Spherical/At-Point Constraint.
+        This constrains a given pair of bodies to be coincident at a given 
+        point where no relative translation is allowed in any direction, 
+        only rotations may take place at that point about any axis.
+        
+        The construction of this constraint does not require any symbolic 
+        parameters.
+        
+        Notes
+        -----
+        TODO
+        
+        """
         pass
     
-    def construct(self,obj):
+    def construct(self, obj):
         pos_level_equation = obj.dij
         vel_level_equation = zero_matrix(3,1)
         acc_level_equation = B(obj.Pdi,obj.ui_bar)*obj.Pdi\
