@@ -35,6 +35,50 @@ class abstract_tire(object):
         if self.t <= t:
             self.t += dt            
     
+    def _process_wheel_kinematics_2(self, t, dt, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque):
+        
+        # Creating SAE wheel frame based on hub orientation
+        self._set_SAE_Frame(P_hub)
+        
+        # Evaluating the tire radii
+        self._eval_wheel_radii(R_hub, P_hub)
+        
+        # Wheel Center Translational Velocity in Global Frame
+        V_wc_GF  = Rd_hub
+        # Wheel Center Translational Velocity in SAE Frame
+        V_wc_SAE = self.SAE_GF.T.dot(V_wc_GF)
+
+        AngVel_Hub_LF = 2*E(P_hub)@Pd_hub # Local
+        
+        # Wheel spin velocity in SAE frame
+        Omega = AngVel_Hub_LF[1,0]
+        
+        # Circumfiranctial Velocity in SAE frame
+        V_C  = Omega * self.effective_radius
+        
+        # Longitudinal Slip Velocity in SAE frame
+        V_sx = V_wc_SAE[0,0] + V_C
+        
+        # Lateral Slip Velocity in SAE frame
+        V_sy = V_wc_SAE[1,0]
+
+        # Longitudinal Wheel Velocity in SAE frame
+        V_x  = abs(V_wc_SAE[0,0])
+
+        self.V_C  = V_C
+        self.V_sx = V_sx
+        self.V_sy = V_sy
+        self.V_x  = V_x 
+                
+        if True:
+            print('Omega = %s'%Omega)
+            print('V_WC = %s'%V_wc_SAE.T)
+            print('V_C = %s'%V_C)
+            print('V_sx = %s'%V_sx)
+            print('V_sy = %s'%V_sy)
+            print('V_x  = %s'%V_x)
+    
+    
     def _process_wheel_kinematics(self, t, dt, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque):
         
         # Creating SAE wheel frame based on hub orientation
@@ -75,7 +119,8 @@ class abstract_tire(object):
             print('V_sx = %s'%V_sx)
             print('V_sy = %s'%V_sy)
             print('V_x  = %s'%V_x)
-    
+
+
     def _set_SAE_Frame(self, P_hub, terrain_normal=np.array([[0],[0],[1]])):
         
         frame = A(P_hub)
