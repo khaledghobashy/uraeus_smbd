@@ -8,9 +8,9 @@ database_directory = '/home/khaledghobashy/Documents/smbd/examples/notebooks/fsa
 pkg_path = '/home/khaledghobashy/Documents/smbd'
 sys.path.append(pkg_path)
 
-database_directory = r'C:\Users\khaled.ghobashy\Desktop\smbd\examples\notebooks'
-pkg_path = r'C:\Users\khaled.ghobashy\Desktop\smbd'
-sys.path.append(pkg_path)
+#database_directory = r'C:\Users\khaled.ghobashy\Desktop\smbd\examples\notebooks'
+#pkg_path = r'C:\Users\khaled.ghobashy\Desktop\smbd'
+#sys.path.append(pkg_path)
 
 from smbd.numenv.python.numerics.systems import multibody_system, simulation
 from smbd.utilities.numerics.euler_parameters import A
@@ -102,17 +102,6 @@ AX1_df.loc['s_thickness']   = [8, 0, 0, 0]
 
 AX1_df.to_csv('config_inputs/front_axle.csv', index=True)
 
-
-wheel_inertia =  np.array([[1*1e4, 0,      0 ],
-                           [0    , 1*1e9, 0 ],
-                           [0    , 0, 1*1e4  ]])
-
-AX1_config.Jbar_rbr_hub = wheel_inertia
-AX1_config.Jbar_rbl_hub = wheel_inertia
-
-AX1_config.m_rbr_hub = 11*1e3
-AX1_config.m_rbl_hub = 11*1e3
-
 # Loading data into the configuration instance
 AX1_config.load_from_dataframe(AX1_df)
 
@@ -164,18 +153,6 @@ AX2_df.loc['s_thickness']   = [8, 0, 0, 0]
 
 AX2_df.to_csv('config_inputs/rear_axle.csv', index=True)
 
-
-wheel_inertia =  np.array([[1*1e4, 0,      0 ],
-                           [0    , 1*1e9, 0 ],
-                           [0    , 0, 1*1e4  ]])
-
-AX2_config.Jbar_rbr_hub = wheel_inertia
-AX2_config.Jbar_rbl_hub = wheel_inertia
-
-AX2_config.m_rbr_hub = 11*1e3
-AX2_config.m_rbl_hub = 11*1e3
-
-
 # Loading data into the configuration instance
 AX2_config.load_from_dataframe(AX2_df)
 
@@ -195,16 +172,40 @@ CH_df.loc['s_CG_radius'] = [50, 0, 0, 0]
 CH_df.loc['m_rbs_chassis'] = [280*1e3, 0, 0, 0]
 
 CH_df.to_csv('config_inputs/chassis.csv', index=True)
+# Loading data into the configuration instance
+CH_config.load_from_dataframe(CH_df)
+
+# =============
+# Direct Inputs
+# =============
+wheel_inertia =  np.array([[1*1e4, 0,      0 ],
+                           [0    , 1*1e9, 0 ],
+                           [0    , 0, 1*1e4  ]])
+
+
+AX1_config.Jbar_rbr_hub = wheel_inertia
+AX1_config.Jbar_rbl_hub = wheel_inertia
+
+AX1_config.m_rbr_hub = 11*1e3
+AX1_config.m_rbl_hub = 11*1e3
+
+
+AX2_config.Jbar_rbr_hub = wheel_inertia
+AX2_config.Jbar_rbl_hub = wheel_inertia
+
+AX2_config.m_rbr_hub = 11*1e3
+AX2_config.m_rbl_hub = 11*1e3
+
 
 CH_config.Jbar_rbs_chassis = np.array([[120*1e9 , 0, 0   ],
                                        [0   , 150*1e9 ,0 ],
                                        [0   , 0, 150*1e9 ]])
-#CH_config.Jbar_rbs_chassis = np.eye(3)
-
-# Loading data into the configuration instance
-CH_config.load_from_dataframe(CH_df)
 
 
+
+# =====================================================
+#                   Coil-Over Data
+# =====================================================
 
 def strut_spring(x):
     k = 75*1e6
@@ -214,7 +215,6 @@ def strut_spring(x):
 def strut_damping(v):
     force = 3*1e6 * v
     return force
-
 
 
 AX1_config.UF_far_strut_Fs = strut_spring
@@ -475,7 +475,7 @@ sim.save_results('', 'results/sin_steer')
 
 
 
-#=============================================================================
+# =============================================================================
 #                       Plotting Simulation Results
 # =============================================================================
 
