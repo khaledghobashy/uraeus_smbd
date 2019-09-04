@@ -12,16 +12,27 @@ from scipy.integrate import ode
 
 from smbd.numenv.python.numerics.misc import A, E, G, skew_matrix
 
+normal = np.array([[0], [0], [1]])
+
 
 def normalize(v):
     normalized = v/np.linalg.norm(v)
     return normalized
 
 
+
+class terrain(object):
+
+   def __init__(self):
+      pass
+
+   def get_state(self, x, y):
+      return [normal, 0]
+
+
 class abstract_tire(object):
     
-    def __init__(self, P_hub):
-        self._set_SAE_Frame(P_hub)
+    def __init__(self):
         self._u_history = [0]
         self._v_history = [0]
         self._s_history = [0]
@@ -79,13 +90,23 @@ class abstract_tire(object):
             print('V_x  = %s'%V_x)
     
     
-    def _process_wheel_kinematics(self, t, dt, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque):
+    def _process_wheel_kinematics(self, t, dt, wheel_states, drive_torque, terrain_state=None):
+        
+        # Extracting the wheel states
+        R_hub, P_hub, Rd_hub, Pd_hub = wheel_states
+        
+        # 
+        if terrain_state:
+            terrain_normal, terrain_height = terrain_state
+        else:
+            terrain_normal = normal
+            terrain_height = 0
         
         # Creating SAE wheel frame based on hub orientation
-        self._set_SAE_Frame(P_hub)
+        self._set_SAE_Frame(P_hub, terrain_normal)
         
         # Evaluating the tire radii
-        self._eval_wheel_radii(R_hub, P_hub)
+        self._eval_wheel_radii(R_hub, Rd_hub, terrain_height)
         
         # Wheel Center Translational Velocity in Global Frame
         V_wc_GF  = Rd_hub
@@ -121,7 +142,7 @@ class abstract_tire(object):
             print('V_x  = %s'%V_x)
 
 
-    def _set_SAE_Frame(self, P_hub, terrain_normal=np.array([[0],[0],[1]])):
+    def _set_SAE_Frame(self, P_hub, terrain_normal):
         
         frame = A(P_hub)
         
@@ -136,12 +157,15 @@ class abstract_tire(object):
         self.Z_SAE_GF = Z_SAE_GF
         self.SAE_GF = np.concatenate([X_SAE_GF, Y_SAE_GF, Z_SAE_GF], axis=1)
         
-    def _eval_wheel_radii(self, R_hub, P_hub):
+    
+    def _eval_wheel_radii(self, R_hub, Rd_hub, terrain_height = 0):
         # Loaded Radius
-        self.loaded_radius = R_hub[2,0]
+        self.loaded_radius = R_hub[2,0] - terrain_height
         
         # Penetration Length assuming flat horizontal ground
         self.vertical_defflection = max(self.nominal_radius - self.loaded_radius, 0)
+        
+        self.penetration_speed = Rd_hub[2,0]
         
         # Tire Effective Radius as a ratio of loaded radius
         self.effective_radius = self.loaded_radius + \
@@ -243,12 +267,14 @@ class abstract_tire(object):
     def _log_Fz(self, t):
         if self.t <= t:
             self._Fz_history.append(self.Fz)
+            
+
 ###############################################################################
 ###############################################################################
 
 class brush_model(abstract_tire):
     
-    def __init__(self, P_hub):
+    def __init__(self):
         
         self.nominal_radius = 546
         self.mu = 0.85
@@ -277,15 +303,17 @@ class brush_model(abstract_tire):
         self.F = np.zeros((3,1))
         self.M = np.zeros((3,1))
         
-        super().__init__(P_hub)
+        super().__init__()
     
     
-    def Eval_Forces(self, t, dt, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque):
+    
+    def Eval_Forces(self, t, dt, wheel_states, drive_torque, terrain_state=None):
         
-        self._process_wheel_kinematics(t, dt, R_hub, P_hub, Rd_hub, Pd_hub, drive_torque)
+        self._process_wheel_kinematics(t, dt, wheel_states, drive_torque, terrain_state)
         
-        self.Fz = (self.kz * self.vertical_defflection) \
-                - (self.cz * Rd_hub[2,0])
+        self.Fz =  (self.kz * self.vertical_defflection) \
+                 - (self.cz * self.penetration_speed)
+        
 
         k, alpha = self._get_transient_slips(t, dt)
         sigma_x = k/(1+k)
@@ -311,12 +339,15 @@ class brush_model(abstract_tire):
                 self.slipping = True
             
             F  = force * normalize(sigma_vec)
+            # Pneumatic Trail
             xt = (1/3)*self.a * ((1 - 3*abs(TG) + 3*TG**2 - abs(TG)**3) /
                                  (1 - abs(TG) + (1/3)*TG**2 ))
         
         self.Fx = F[0,0]
         self.Fy = F[1,0]
-        self.Mz = (- xt * self.Fy) * np.array([[0], [0], [1]])
+        
+        # Self Aligning Moment in SAE Frame
+        self.Mz = (- xt * self.Fy)
 
         print('Tire_Ground Force = %s'%(F.T))
         self._eval_GF_forces()
@@ -329,13 +360,17 @@ class brush_model(abstract_tire):
 
     def _eval_GF_forces(self):
         
-        X_SAE_GF = self.X_SAE_GF
+#        X_SAE_GF = self.X_SAE_GF
         Y_SAE_GF = self.Y_SAE_GF
+        Z_SAE_GF = self.Z_SAE_GF
+
+#        Force = self.Fx*X_SAE_GF + self.Fy*Y_SAE_GF + self.Fz*(-Z_SAE_GF)
         
-        Force = self.Fx*X_SAE_GF + self.Fy*Y_SAE_GF + self.Fz*np.array([[0],[0],[1]])
-        self.F = Force
+        F = np.array([[self.Fx], [self.Fy], [-self.Fz]])
+
+        self.F = self.SAE_GF.dot(F)
         self.My = self.Fx * self.effective_radius
-        self.M  = (self.My * Y_SAE_GF) + self.Mz
+        self.M  = (self.My * Y_SAE_GF) + (self.Mz * Z_SAE_GF)
         print('My_SAE = %s'%self.My)
         print('M = %s'%(self.M.T))
         
