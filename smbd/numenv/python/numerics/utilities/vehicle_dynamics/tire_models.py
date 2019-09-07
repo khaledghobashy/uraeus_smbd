@@ -160,7 +160,7 @@ class abstract_tire(object):
     
     def _eval_wheel_radii(self, R_hub, Rd_hub, terrain_height = 0):
         # Loaded Radius
-        self.loaded_radius = R_hub[2,0] - terrain_height
+        self.loaded_radius = min(self.nominal_radius, R_hub[2,0] - terrain_height)
         
         # Penetration Length assuming flat horizontal ground
         self.vertical_defflection = max(self.nominal_radius - self.loaded_radius, 0)
@@ -228,7 +228,7 @@ class abstract_tire(object):
 #        print('vi = %s'%self.vi)
 #        print('a = %s'%a)
         
-        return k*self.driven, a
+        return k, a
     
     def _integrate_CPM(self, t, dt, V_sx, V_sy, Vx):
         
