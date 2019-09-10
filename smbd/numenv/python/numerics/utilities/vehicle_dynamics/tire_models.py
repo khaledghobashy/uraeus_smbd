@@ -228,7 +228,7 @@ class abstract_tire(object):
 #        print('vi = %s'%self.vi)
 #        print('a = %s'%a)
         
-        return k, a
+        return k*self.driven, a
     
     def _integrate_CPM(self, t, dt, V_sx, V_sy, Vx):
         
@@ -312,23 +312,24 @@ class brush_model(abstract_tire):
         self._process_wheel_kinematics(t, dt, wheel_states, drive_torque, terrain_state)
         
         self.Fz =  (self.kz * self.vertical_defflection) \
-                 - (self.cz * self.penetration_speed)
+                 #- (self.cz * self.penetration_speed)
         
 
         k, alpha = self._get_transient_slips(t, dt)
         sigma_x = k/(1+k)
         sigma_y = np.tan(alpha)/(1+k)
         sigma   = np.sqrt(sigma_x**2 + sigma_y**2)
-        
-        Theta   = (2/3)*((self.cp * self.a**2)/(self.mu*self.Fz))
-        TG = Theta*sigma
-
         sigma_vec = np.array([[sigma_x], [sigma_y]])
+
         
-        if sigma <=1e-5:
+        if sigma <= 1e-5 or self.Fz <= 0:
             F  = np.array([[0], [0]])
             xt = 0
+
         else:
+            Theta   = (2/3)*((self.cp * self.a**2)/(self.mu*self.Fz))
+            TG = Theta*sigma
+
             if sigma <= 1/Theta:
                 self.slipping = False
                 factor = (3*(TG) - 3*(TG)**2 + (TG)**3)
