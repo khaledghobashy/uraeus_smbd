@@ -165,7 +165,7 @@ class abstract_tire(object):
         # Penetration Length assuming flat horizontal ground
         self.vertical_defflection = max(self.nominal_radius - self.loaded_radius, 0)
         
-        self.penetration_speed = Rd_hub[2,0]
+        self.penetration_speed = Rd_hub[2,0] if self.vertical_defflection >0 else 0
         
         # Tire Effective Radius as a ratio of loaded radius
         self.effective_radius = self.loaded_radius + \
@@ -312,7 +312,7 @@ class brush_model(abstract_tire):
         self._process_wheel_kinematics(t, dt, wheel_states, drive_torque, terrain_state)
         
         self.Fz =  (self.kz * self.vertical_defflection) \
-                 #- (self.cz * self.penetration_speed)
+                 - (self.cz * self.penetration_speed)
         
 
         k, alpha = self._get_transient_slips(t, dt)
