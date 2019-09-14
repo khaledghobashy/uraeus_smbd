@@ -18,7 +18,7 @@ from smbd.numenv.python.numerics.matrix_funcs import sparse_assembler
 
 
 def solve(A, b):
-    x = spsolve(A, b)
+    x = spsolve(A.tocsr(), b)
     shape = (x.size, 1)
     x = np.reshape(x, shape)
     return x
@@ -31,6 +31,7 @@ def progress_bar(steps, i):
     sys.stdout.flush()
 
 
+@numba.njit(cache=True)
 def sparse_assembler_py(blocks, b_rows, b_cols): 
     
     e_data = []
@@ -54,6 +55,9 @@ def sparse_assembler_py(blocks, b_rows, b_cols):
             prev_cols_size  = 0
         
         arr = blocks[v]
+        if not np.any(arr):
+            continue
+        
         m, n = arr.shape
         
         if n==3:
@@ -72,10 +76,12 @@ def sparse_assembler_py(blocks, b_rows, b_cols):
     return e_data, e_rows, e_cols
 
 
+
 def scipy_matrix_assembler(data, rows, cols, shape):
     e_data, e_rows, e_cols = sparse_assembler_py(data, rows, cols)
     mat = sc.sparse.coo_matrix((e_data, (e_rows, e_cols)), shape=shape)
     return mat
+
 
 def scipy_matrix_assembler2(data, rows, cols, shape):
     e_data = []
@@ -227,7 +233,7 @@ class abstract_solver(object):
         self._jac_data = data = self.model.jac_eq_blocks
         shape = (self.model.nc, self.model.n)
         mat = scipy_matrix_assembler(data, rows, cols, shape)
-        return mat.tocsr()
+        return mat
     
     def _eval_mass_eq(self):
         self.model.eval_mass_eq()
@@ -235,7 +241,7 @@ class abstract_solver(object):
         n = self.model.n #self.model.ncols
         self._mass_rows = rows = cols = np.arange(self.model.ncols, dtype=np.intc)
         mat = scipy_matrix_assembler(data, rows, cols, (n,n))
-        return mat.tocsr()
+        return mat
     
     def _eval_frc_eq(self):
         self.model.eval_frc_eq()
@@ -272,7 +278,7 @@ class abstract_solver(object):
                 break
             itr+=1
         self._pos = guess
-        self._jac = self._eval_jac_eq()
+        self._jac = self._eval_jac_eq().tocsr()
 
 ###############################################################################
 ###############################################################################
@@ -374,7 +380,7 @@ class dds_solver(abstract_solver):
         while i != bar_length:
             progress_bar(bar_length,i)
             t = time_array[i+1]
-            self._extract_independent_coordinates(self._jac[:-self.dof,:])
+            self._extract_independent_coordinates(self._jac[:-self.dof])
             self._set_time(t)
             self._solve_time_step(t, i, dt)
             i += 1            
@@ -410,7 +416,7 @@ class dds_solver(abstract_solver):
         self._set_gen_coordinates(qi)
         self._set_gen_velocities(vi)
         
-        J  = A[:-self.dof,:]
+        J  = A[:-self.dof]
         M  = self._eval_mass_eq()
         Qt = self._eval_frc_eq()
         Qd = self._eval_acc_eq()
@@ -453,9 +459,8 @@ class dds_solver(abstract_solver):
         l = np.concatenate([J, z], axis=1)
         
         A = np.concatenate([u, l], axis=0)
-        A = sc.sparse.coo_matrix(A).tocsr()
+        A = sc.sparse.coo_matrix(A)
         
-#        A = sc.sparse.bmat([[M, J.T], [J, None]], format='csc')
         b = np.concatenate([Qt, -Qd])
         x = solve(A, b)
         n = len(self._coordinates_indicies)
@@ -479,7 +484,7 @@ class dds_solver(abstract_solver):
     def _eval_jac_eq(self):
         A = np.concatenate([super()._eval_jac_eq().A, self.independent_cols.T])
         A = scipy.sparse.coo_matrix(A)
-        return A.tocsr()
+        return A
     
             
     def get_indpenednt_q(self, q):
@@ -489,7 +494,7 @@ class dds_solver(abstract_solver):
         qv = qp[-dof:,:]
         return qv
     
-    
+#    @profile
     def SSODE(self, state_vector, t, i):
           
         self._set_time(t)
@@ -513,7 +518,7 @@ class dds_solver(abstract_solver):
         vi = solve(self._jac, -vel_rhs)
         self._set_gen_velocities(vi)
 
-        J  = self._jac[:-self.dof,:]
+        J  = self._jac[:-self.dof]
         M  = self._eval_mass_eq()
         Qt = self._eval_frc_eq()
         Qd = self._eval_acc_eq()
