@@ -227,11 +227,11 @@ cpdef sparse_assembler(list blocks, int[:] b_rows, int[:] b_cols,
                        list e_data, list e_rows, list e_cols): 
     cdef:
         int row_counter = 0 
-        int col_counter = 0
         int prev_rows_size = 0
         int prev_cols_size = 0
-        int flat_count = 0
+        
         int nnz = len(b_rows)
+        
         int v, i, j, vi, vj, m, n
         double value
         double[:,:] arr
@@ -258,9 +258,9 @@ cpdef sparse_assembler(list blocks, int[:] b_rows, int[:] b_cols,
         for i in range(m):
             for j in range(n):
                 value = arr[i,j]
-                if fabs(value)>exp(-2):
-                    e_rows.append(prev_rows_size+i)
-                    e_cols.append(prev_cols_size+j)
+                if fabs(value)>exp(-5):
+                    e_rows.append(prev_rows_size + i)
+                    e_cols.append(prev_cols_size + j)
                     e_data.append(value)
         
         
