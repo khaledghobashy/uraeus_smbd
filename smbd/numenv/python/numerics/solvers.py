@@ -12,15 +12,10 @@ import scipy.integrate
 from scipy.sparse.linalg import spsolve
 import pandas as pd
 
-def solve1(A,b):
-    try:
-        A = A.A
-    except AttributeError:
-        pass
-    x = np.linalg.solve(A, b)
-    shape = (x.size, 1)
-    x = np.reshape(x, shape)
-    return x
+import numba
+
+from smbd.numenv.python.numerics.matrix_funcs import sparse_assembler
+
 
 def solve(A, b):
     x = spsolve(A, b)
@@ -35,10 +30,62 @@ def progress_bar(steps, i):
     sys.stdout.write("[%-25s] %d%%, (%s/%s) steps." % ('='*length,percentage,i+1, steps))
     sys.stdout.flush()
 
+
+def sparse_assembler_py(blocks, b_rows, b_cols): 
+    
+    e_data = []
+    e_rows = []
+    e_cols = []
+    
+    row_counter = 0 
+    prev_rows_size = 0
+    prev_cols_size = 0
+    nnz = len(b_rows)
+    
+    m = 0
+    
+    for v in range(nnz):
+        vi = b_rows[v]
+        vj = b_cols[v]
+        
+        if vi != row_counter:
+            row_counter +=1
+            prev_rows_size += m
+            prev_cols_size  = 0
+        
+        arr = blocks[v]
+        m, n = arr.shape
+        
+        if n==3:
+            prev_cols_size = 7*(vj//2)
+        elif n==4:
+            prev_cols_size = 7*(vj//2)+3
+        
+        for i in range(m):
+            for j in range(n):
+                value = arr[i,j]
+                if abs(value)> 1e-5:
+                    e_rows.append(prev_rows_size + i)
+                    e_cols.append(prev_cols_size + j)
+                    e_data.append(value)
+    
+    return e_data, e_rows, e_cols
+
+
 def scipy_matrix_assembler(data, rows, cols, shape):
-    mat = sc.empty(shape, dtype=np.object)
-    mat[rows, cols] = data
-    return sc.sparse.bmat(mat, format='csc')
+    e_data, e_rows, e_cols = sparse_assembler_py(data, rows, cols)
+    mat = sc.sparse.coo_matrix((e_data, (e_rows, e_cols)), shape=shape)
+    return mat
+
+def scipy_matrix_assembler2(data, rows, cols, shape):
+    e_data = []
+    e_rows = []
+    e_cols = []
+    
+    sparse_assembler(data, rows, cols, e_data, e_rows, e_cols)
+    
+    mat = sc.sparse.coo_matrix((e_data, (e_rows, e_cols)), shape=shape)
+    return mat
 
 ###############################################################################
 ###############################################################################
@@ -175,19 +222,20 @@ class abstract_solver(object):
             
     def _eval_jac_eq(self):
         self.model.eval_jac_eq()
-        rows = self.model.jac_rows
-        cols = self.model.jac_cols
-        data = self.model.jac_eq_blocks
-        mat = scipy_matrix_assembler(data, rows, cols, self._jac_shape)
-        return mat
+        self._jac_rows = rows = self.model.jac_rows
+        self._jac_cols = cols = self.model.jac_cols
+        self._jac_data = data = self.model.jac_eq_blocks
+        shape = (self.model.nc, self.model.n)
+        mat = scipy_matrix_assembler(data, rows, cols, shape)
+        return mat.tocsr()
     
     def _eval_mass_eq(self):
         self.model.eval_mass_eq()
-        data = self.model.mass_eq_blocks
-        n = self.model.ncols
-        rows = cols = np.arange(n)
+        self._mass_data = data = self.model.mass_eq_blocks
+        n = self.model.n #self.model.ncols
+        self._mass_rows = rows = cols = np.arange(self.model.ncols, dtype=np.intc)
         mat = scipy_matrix_assembler(data, rows, cols, (n,n))
-        return mat
+        return mat.tocsr()
     
     def _eval_frc_eq(self):
         self.model.eval_frc_eq()
@@ -333,7 +381,6 @@ class dds_solver(abstract_solver):
         print('\n')
         self._creat_results_dataframes()
 
-
     def _solve_time_step(self, t, i, dt):
         
         q  = self._pos_history[i]
@@ -396,8 +443,19 @@ class dds_solver(abstract_solver):
         Qd = self._eval_acc_eq()
         return M, J, Qt, Qd
     
-    def _solve_augmented_system(self, M, J, Qt, Qd):        
-        A = sc.sparse.bmat([[M, J.T], [J, None]], format='csc')
+        
+    def _solve_augmented_system(self, M, J, Qt, Qd):
+        
+        J = J.A
+        z = np.zeros((self.model.nc, self.model.nc))
+
+        u = np.concatenate([M.A, J.T], axis=1)
+        l = np.concatenate([J, z], axis=1)
+        
+        A = np.concatenate([u, l], axis=0)
+        A = sc.sparse.coo_matrix(A).tocsr()
+        
+#        A = sc.sparse.bmat([[M, J.T], [J, None]], format='csc')
         b = np.concatenate([Qt, -Qd])
         x = solve(A, b)
         n = len(self._coordinates_indicies)
@@ -419,9 +477,9 @@ class dds_solver(abstract_solver):
         return A
     
     def _eval_jac_eq(self):
-        A = super()._eval_jac_eq()
-        A = sc.sparse.bmat([[A], [self.independent_cols.T]], format='csc')
-        return A
+        A = np.concatenate([super()._eval_jac_eq().A, self.independent_cols.T])
+        A = scipy.sparse.coo_matrix(A)
+        return A.tocsr()
     
             
     def get_indpenednt_q(self, q):
