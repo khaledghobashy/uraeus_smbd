@@ -8,19 +8,14 @@ Created on Tue Jan  1 13:21:35 2019
 import sys
 import numpy as np
 import scipy as sc
-import scipy.integrate
-from scipy.sparse.linalg import spsolve
 import pandas as pd
 
-import numba
+#from scipy.sparse.linalg import spsolve
 
-from smbd.numenv.python.numerics.matrix_funcs import sparse_assembler
-
+from ._solvers.numba_funcs import matrix_assembler
 
 def solve(A, b):
-    x = spsolve(A.tocsr(), b)
-    shape = (x.size, 1)
-    x = np.reshape(x, shape)
+    x = np.linalg.solve(A, b)
     return x
 
 def progress_bar(steps, i):
@@ -31,68 +26,6 @@ def progress_bar(steps, i):
     sys.stdout.flush()
 
 
-@numba.njit(cache=True)
-def sparse_assembler_py(blocks, b_rows, b_cols): 
-    
-    e_data = []
-    e_rows = []
-    e_cols = []
-    
-    row_counter = 0 
-    prev_rows_size = 0
-    prev_cols_size = 0
-    nnz = len(b_rows)
-    
-    m = 0
-    
-    for v in range(nnz):
-        vi = b_rows[v]
-        vj = b_cols[v]
-        
-        if vi != row_counter:
-            row_counter +=1
-            prev_rows_size += m
-            prev_cols_size  = 0
-        
-        arr = blocks[v]
-        if not np.any(arr):
-            continue
-        
-        m, n = arr.shape
-        
-        if n==3:
-            prev_cols_size = 7*(vj//2)
-        elif n==4:
-            prev_cols_size = 7*(vj//2)+3
-        
-        for i in range(m):
-            for j in range(n):
-                value = arr[i,j]
-                if abs(value)> 1e-5:
-                    e_rows.append(prev_rows_size + i)
-                    e_cols.append(prev_cols_size + j)
-                    e_data.append(value)
-    
-    return e_data, e_rows, e_cols
-
-
-
-def scipy_matrix_assembler(data, rows, cols, shape):
-    e_data, e_rows, e_cols = sparse_assembler_py(data, rows, cols)
-    mat = sc.sparse.coo_matrix((e_data, (e_rows, e_cols)), shape=shape)
-    return mat
-
-
-def scipy_matrix_assembler2(data, rows, cols, shape):
-    e_data = []
-    e_rows = []
-    e_cols = []
-    
-    sparse_assembler(data, rows, cols, e_data, e_rows, e_cols)
-    
-    mat = sc.sparse.coo_matrix((e_data, (e_rows, e_cols)), shape=shape)
-    return mat
-
 ###############################################################################
 ###############################################################################
 
@@ -101,11 +34,7 @@ class abstract_solver(object):
     def __init__(self, model):
         self.model = model
         self._initialize_model()
-        
-        self._nrows = model.nrows
-        self._ncols = model.ncols
-        self._jac_shape = (self._nrows,self._ncols)
-        
+                
         self._pos_history = {0 : model.q0}
         self._vel_history = {0 : 0*model.q0}
         self._acc_history = {}
@@ -134,25 +63,6 @@ class abstract_solver(object):
             raise ValueError('Time array is not properly sampled.')
         self.time_array = time_array
         self.step_size  = step_size
-        
-    def eval_reactions(self):
-        self._reactions = {}
-        time_array = self.time_array
-        bar_length = len(time_array)
-        print('\nEvaluating System Constraints Reactions:')
-        for i, t in enumerate(time_array):
-            progress_bar(bar_length, i)
-            self._set_time(t)
-            lamda = self._eval_lagrange_multipliers(i)
-            self._eval_reactions_eq(lamda)
-            self._reactions[i] = self.model.reactions
-        
-        self.values = {i:np.concatenate(list(v.values())) for i,v in self._reactions.items()}
-        
-        self.reactions_dataframe = pd.DataFrame(
-                data = np.concatenate(list(self.values.values()),1).T,
-                columns = self._reactions_indicies)
-        self.reactions_dataframe['time'] = time_array
     
     
     def _initialize_model(self):
@@ -228,19 +138,19 @@ class abstract_solver(object):
             
     def _eval_jac_eq(self):
         self.model.eval_jac_eq()
-        self._jac_rows = rows = self.model.jac_rows
-        self._jac_cols = cols = self.model.jac_cols
-        self._jac_data = data = self.model.jac_eq_blocks
+        rows = self.model.jac_rows
+        cols = self.model.jac_cols
+        data = self.model.jac_eq_blocks
         shape = (self.model.nc, self.model.n)
-        mat = scipy_matrix_assembler(data, rows, cols, shape)
+        mat = matrix_assembler(data, rows, cols, shape)
         return mat
     
     def _eval_mass_eq(self):
         self.model.eval_mass_eq()
-        self._mass_data = data = self.model.mass_eq_blocks
-        n = self.model.n #self.model.ncols
-        self._mass_rows = rows = cols = np.arange(self.model.ncols, dtype=np.intc)
-        mat = scipy_matrix_assembler(data, rows, cols, (n,n))
+        data = self.model.mass_eq_blocks
+        n = self.model.n
+        rows = cols = np.arange(self.model.ncols, dtype=np.intc)
+        mat = matrix_assembler(data, rows, cols, (n, n))
         return mat
     
     def _eval_frc_eq(self):
@@ -278,7 +188,7 @@ class abstract_solver(object):
                 break
             itr+=1
         self._pos = guess
-        self._jac = self._eval_jac_eq().tocsr()
+        self._jac = self._eval_jac_eq()
 
 ###############################################################################
 ###############################################################################
@@ -328,6 +238,26 @@ class kds_solver(abstract_solver):
         print('\n')
         self._creat_results_dataframes()    
     
+    def eval_inverse_dynamics(self):
+        self._reactions = {}
+        time_array = self.time_array
+        bar_length = len(time_array)
+        print('\nEvaluating System Inverse Dynamics:')
+        for i, t in enumerate(time_array):
+            progress_bar(bar_length, i)
+            self._set_time(t)
+            lamda = self._eval_lagrange_multipliers(i)
+            self._eval_reactions_eq(lamda)
+            self._reactions[i] = self.model.reactions
+        
+        self.values = {i:np.concatenate(list(v.values())) for i,v in self._reactions.items()}
+        
+        self.reactions_dataframe = pd.DataFrame(
+                data = np.concatenate(list(self.values.values()),1).T,
+                columns = self._reactions_indicies)
+        self.reactions_dataframe['time'] = time_array
+
+    
     def _eval_lagrange_multipliers(self, i):
         self._set_gen_coordinates(self._pos_history[i])
         self._set_gen_velocities(self._vel_history[i])
@@ -342,6 +272,7 @@ class kds_solver(abstract_solver):
         lamda = solve(jac.T, rhs)
         
         return lamda
+    
 
 ###############################################################################
 ###############################################################################
@@ -354,9 +285,11 @@ class dds_solver(abstract_solver):
             raise ValueError('Model is fully constrained.')
     
     def solve(self, run_id):
+        
         time_array = self.time_array
         dt = self.step_size
         bar_length = len(time_array)-1
+        
         print('\nStarting System Dynamic Analysis:')
         
         self._extract_independent_coordinates()
@@ -431,7 +364,7 @@ class dds_solver(abstract_solver):
     def _extract_independent_coordinates(self, jacobian=None):
         A = super()._eval_jac_eq() if jacobian is None else jacobian
         rows, cols = A.shape
-        permutaion_mat = sc.linalg.lu(A.A.T)[0]
+        permutaion_mat = sc.linalg.lu(A.T)[0]
         independent_cols = permutaion_mat[:, rows:]
         self.dof = dof = independent_cols.shape[1]
         independent_cord = [self._coordinates_indicies[np.argmax(independent_cols[:,i])] for i in range(dof) ]
@@ -452,38 +385,35 @@ class dds_solver(abstract_solver):
         
     def _solve_augmented_system(self, M, J, Qt, Qd):
         
-        J = J.A
         z = np.zeros((self.model.nc, self.model.nc))
 
-        u = np.concatenate([M.A, J.T], axis=1)
+        u = np.concatenate([M, J.T], axis=1)
         l = np.concatenate([J, z], axis=1)
         
         A = np.concatenate([u, l], axis=0)
-        A = sc.sparse.coo_matrix(A)
+#        A = sc.sparse.coo_matrix(A)
         
         b = np.concatenate([Qt, -Qd])
         x = solve(A, b)
-        n = len(self._coordinates_indicies)
+        n = self.model.n
         accelerations = x[:n]
         lamda = x[n:]
         return accelerations, lamda
     
     def _eval_pos_eq(self):
         A = super()._eval_pos_eq()
-        Z = np.zeros((self.dof,1))
-        A = np.concatenate([A,Z])
+        Z = np.zeros((self.dof, 1))
+        A = np.concatenate([A, Z])
         return A
 
     def _eval_vel_eq(self,ind_vel_i):
         A = super()._eval_vel_eq()
-        V = np.array(ind_vel_i)
-        V = np.reshape(V,(self.dof,1))
-        A = np.concatenate([A,-V])
+        V = np.array(ind_vel_i).reshape((self.dof, 1))
+        A = np.concatenate([A, -V])
         return A
     
     def _eval_jac_eq(self):
-        A = np.concatenate([super()._eval_jac_eq().A, self.independent_cols.T])
-        A = scipy.sparse.coo_matrix(A)
+        A = np.concatenate([super()._eval_jac_eq(), self.independent_cols.T])
         return A
     
             
@@ -491,7 +421,7 @@ class dds_solver(abstract_solver):
         dof = self.dof
         P = self.permutaion_mat
         qp = P@q
-        qv = qp[-dof:,:]
+        qv = qp[-dof:, :]
         return qv
     
 #    @profile
