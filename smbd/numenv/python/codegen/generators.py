@@ -109,7 +109,7 @@ class configuration_codegen(abstract_generator):
         text = '''
                 import numpy as np
                 
-                from smbd.numenv.python.numerics.core.shared_classes import num_config
+                from smbd.numenv.python.numerics.core.shared_classes import config_inputs
                 from smbd.numenv.python.numerics.core.math_funcs.misc import (mirrored, centered, oriented,
                                                                cylinder_geometry,
                                                                composite_geometry,
@@ -119,18 +119,75 @@ class configuration_codegen(abstract_generator):
         text = text.expandtabs()
         text = textwrap.dedent(text)
         return text
+    
+    def write_inputs_lists(self):
+        text = '''
+                
+                _locations_inputs = {(locations})
+                
+                _orientation_vectors = ({orientation_vectors})
+                
+                _orientation_parameters = ({orientation_parameters})
+                
+                _mass_symbols = ({mass_symbols})
+                
+                _inertia_symbols = ({inertia_symbols})
+                
+                _user_functions = ({user_functions})
+                
+                _scalar_symbols = ({scalar_symbols})
+                
+                '''
+        
+        p = self.printer
+        
+        locations = []
+        orientation_vectors = []
+        orientation_parameters = []
+        mass_symbols = []
+        inertia_symbols = []
+        user_functions = []
+        scalar_symbols = []
+        
+        for arg in self.input_args:
+            
+            if arg.startswith('hpr_') or arg.startswith('hps_'):
+                 locations.append(arg)
+                 
+            elif arg.startswith('vcr_') or arg.startswith('vcs_'):
+                 orientation_vectors.append(arg)
+            
+            elif arg.startswith('P_'):
+                 orientation_parameters.append(arg)
+                
+            elif arg.startswith('m_rbr_') or arg.startswith('m_rbs_'):
+                 mass_symbols.append(arg)
+                 
+            elif arg.startswith('Jbar_rbr_') or arg.startswith('Jbar_rbs_'):
+                 inertia_symbols.append(arg)
+                 
+            elif arg.startswith('UF_'):
+                 user_functions.append(arg)
+        
+        text = text.expandtabs()
+        text = textwrap.dedent(text)
+        
+        text = text.format(locations = locations)
+        return text
         
     def write_class_init(self):
-        text = '''    
-                class inputs(object):
+        text = '''
+                class inputs(config_inputs):
                     
                     _inputs_names = ({inputs_names})
                     
-                    def __init__(self):
+                    def __init__(self, name):
+                        self.name = name
+                        
                         {inputs}
                         
                 
-                class configuration(num_config):
+                class configuration(object):
 
                     def __init__(self):
                         pass
@@ -159,20 +216,6 @@ class configuration_codegen(abstract_generator):
     
     def write_helpers(self):
         text = '''
-                @property
-                def name(self):
-                    return '{name}'
-
-                @property
-                def q(self):
-                    q = {coordinates}
-                    return q
-                    
-                @property
-                def qd(self):
-                    qd = {velocities}
-                    return qd
-                                                        
                 def assemble(self, inputs_instance):
                     
                     for arg in inputs_instance._inputs_names:
@@ -180,9 +223,13 @@ class configuration_codegen(abstract_generator):
                         setattr(self, arg, value)
                     
                     {outputs}
+                    
+                    self.q  = np.concatenate([{coordinates}])
+                    
+                    self.qd = np.concatenate([{velocities}])
                     {pass_text}
-                
                 '''
+        
         p = self.printer
         indent = 4*' '
         
@@ -199,12 +246,12 @@ class configuration_codegen(abstract_generator):
         
         coordinates = ',\n'.join(self.gen_coordinates_sym)
         coordinates = re.sub(pattern,self_inserter,coordinates)
-        coordinates = ('np.concatenate([%s])'%coordinates if len(coordinates)!=0 else '[]')
+        coordinates = (coordinates if len(coordinates)!=0 else '[]')
         coordinates = textwrap.indent(coordinates,indent).lstrip()
         
         velocities = ',\n'.join(self.gen_velocities_sym)
         velocities = re.sub(pattern,self_inserter,velocities)
-        velocities = ('np.concatenate([%s])'%velocities if len(velocities)!=0 else '[]')
+        velocities = (velocities if len(velocities)!=0 else '[]')
         velocities = textwrap.indent(velocities,indent).lstrip()
         
         
@@ -213,9 +260,9 @@ class configuration_codegen(abstract_generator):
         text = text.format(outputs = outputs,
                            pass_text = pass_text,
                            coordinates = coordinates,
-                           velocities = velocities,
-                           name = self.name)
-        text = textwrap.indent(text,indent)
+                           velocities = velocities)
+        
+        text = textwrap.indent(text, indent)
         return text
     
     def write_system_class(self):
@@ -561,7 +608,7 @@ class template_codegen(abstract_generator):
 
                     {replacements}
 
-                    self.{eq_initial}_eq_blocks = ({expressions})
+                    self.{eq_initial}_eq_blocks = ({expressions},)
                 '''
         
         text = text.expandtabs()
@@ -1033,7 +1080,7 @@ class assembly_codegen(template_codegen):
                     
                     eq_blocks = (s.{func_name}_eq_blocks for s in self.subsystems)
                     
-                    self.{func_name}_eq_blocks = itertools.chain({func_name}_ground_eq_blocks, eq_blocks)
+                    self.{func_name}_eq_blocks = (*{func_name}_ground_eq_blocks, *itertools.chain(*eq_blocks))
                 '''
         
         indent = 4*' '
