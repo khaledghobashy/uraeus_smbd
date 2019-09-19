@@ -8,11 +8,10 @@ Created on Sun Jul  7 09:38:20 2019
 
 import numpy as np
 import scipy as sc
-from scipy.integrate import ode
 
-from smbd.numenv.python.numerics.misc import A, E, G, skew_matrix
+from smbd.numenv.python.numerics.core.math_funcs import A, E, G, skew
 
-normal = np.array([[0], [0], [1]])
+normal = np.array([[0], [0], [1]], dtype=np.float64)
 
 
 def normalize(v):
@@ -81,7 +80,7 @@ class abstract_tire(object):
         self.V_sy = V_sy
         self.V_x  = V_x 
                 
-        if True:
+        if False:
             print('Omega = %s'%Omega)
             print('V_WC = %s'%V_wc_SAE.T)
             print('V_C = %s'%V_C)
@@ -133,7 +132,7 @@ class abstract_tire(object):
         self.V_sy = V_sy
         self.V_x  = V_x 
                 
-        if True:
+        if False:
             print('Omega = %s'%Omega)
             print('V_WC = %s'%V_wc_SAE.T)
             print('V_C = %s'%V_C)
@@ -149,8 +148,8 @@ class abstract_tire(object):
         spin_axis = frame[:,1:2]
         
         Z_SAE_GF = -terrain_normal
-        X_SAE_GF = normalize(skew_matrix(spin_axis).dot(Z_SAE_GF))
-        Y_SAE_GF = skew_matrix(Z_SAE_GF).dot(X_SAE_GF)
+        X_SAE_GF = normalize(skew(spin_axis).dot(Z_SAE_GF))
+        Y_SAE_GF = skew(Z_SAE_GF).dot(X_SAE_GF)
         
         self.X_SAE_GF = X_SAE_GF
         self.Y_SAE_GF = Y_SAE_GF
@@ -350,7 +349,7 @@ class brush_model(abstract_tire):
         # Self Aligning Moment in SAE Frame
         self.Mz = (- xt * self.Fy)
 
-        print('Tire_Ground Force = %s'%(F.T))
+#        print('Tire_Ground Force = %s'%(F.T))
         self._eval_GF_forces()
         
         self._log_Fz(t)
@@ -372,8 +371,8 @@ class brush_model(abstract_tire):
         self.F = self.SAE_GF.dot(F)
         self.My = self.Fx * self.effective_radius
         self.M  = (self.My * Y_SAE_GF) + (self.Mz * Z_SAE_GF)
-        print('My_SAE = %s'%self.My)
-        print('M = %s'%(self.M.T))
+#        print('My_SAE = %s'%self.My)
+#        print('M = %s'%(self.M.T))
         
     
 ###############################################################################
@@ -401,7 +400,7 @@ class interpolator(abstract_tire):
         self.Fz = vertical_force
         
         k = abs(self.S_lng*100)
-        print('k = %s'%k)
+#        print('k = %s'%k)
         if k <= 24.90091463:
             self.Fx = self.Fx_data(k) * max(self.Fz, 0) * 0.13
         else:
@@ -415,7 +414,7 @@ class interpolator(abstract_tire):
 #        self.F = SAE_GF.dot(self.Force_SAE_LF)
         self.F = np.array([[-self.Fx], [self.Fy], [self.Fz]])
         self.M = skew_matrix(R_pw).dot(self.F)
-        print('M = %s'%(self.M.T))
+#        print('M = %s'%(self.M.T))
 
         
 
