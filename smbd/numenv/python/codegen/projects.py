@@ -60,11 +60,11 @@ class standalone_project(object):
                 import pandas as pd
                 
                 try:
-                    from smbd.numenv.python.numerics.systems import multibody_system, simulation
+                    from smbd.numenv.python.numerics.core.systems import multibody_system, simulation
                 except ModuleNotFoundError:
                     import sys
                     sys.path.append('{pkg_path}')
-                    from smbd.numenv.python.numerics.systems import multibody_system, simulation
+                    from smbd.numenv.python.numerics.core.systems import multibody_system, simulation
 
                 from src import topology, configuration
                 
@@ -127,7 +127,7 @@ class templatebased_project(object):
         self._config = config.config
 
         self._template_name = topology.name
-        self._code_dir = os.path.join(self._parent_dir, 'numenv', 'python')
+        self._code_dir = os.path.join(self._parent_dir, 'numenv', 'python', 'models')
         self._templates_dir  = os.path.join(self._code_dir, 'templates')
         self._assemblies_dir = os.path.join(self._code_dir, 'assemblies')
     
