@@ -6,6 +6,7 @@ Created on Wed May  8 20:49:14 2019
 @author: khaledghobashy
 """
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -14,10 +15,12 @@ from numpy.linalg import multi_dot
 
 from smbd.numenv.python.numerics.core.math_funcs import G
 
-class num_config(object):
+class config_inputs(object):
     
-    def __init__(self):
-        pass
+    _inputs_names = ()
+    
+    def __init__(self, name):
+        self.name = name
     
     def load_from_csv(self, csv_file):
         dataframe = pd.read_csv(csv_file, index_col=0)
@@ -34,7 +37,32 @@ class num_config(object):
             else:
                 v = dataframe.loc[ind][0]
                 setattr(self, ind, v)
-        self.assemble()
+    
+    def to_pickle(self, directory=''):
+        file = os.path.join(os.path.abspath(directory), '%s.inputs'%self.name)
+        with open(file, 'wb') as f:
+            pickle.dump(self, f)
+    
+    def to_dataframe(self):
+        dataframe = pd.DataFrame(index=self._inputs_names, columns=[0, 1, 2, 3])
+        for arg in self._inputs_names:
+            value = getattr(self, arg)
+            if isinstance(value, np.ndarray):
+                if value.shape in ((3,1) or (4,1)):
+                    dataframe.loc[arg][0:value.shape[0]] = value.flat[:]
+            elif isinstance(value, int) or isinstance(value, float):
+                dataframe.loc[arg][0] = value
+            else:
+                pass
+        
+        return dataframe
+    
+    def to_csv(self, directory=''):
+        file = os.path.join(os.path.abspath(directory), '%s.csv'%self.name)
+        dataframe = self.to_dataframe()
+        dataframe.to_csv(file, index=True)
+
+    
     
 
 class num_assm(object):
