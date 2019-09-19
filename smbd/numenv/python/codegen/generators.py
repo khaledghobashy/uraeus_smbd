@@ -96,6 +96,7 @@ class configuration_codegen(abstract_generator):
         
         self.config_vars = [printer._print(i) for i in self.config.arguments_symbols]
         self.input_args  = self.config.input_equalities
+        self.input_sym   = [printer._print(i.lhs) for i in self.input_args]
         self.output_args = self.config.intermediat_equalities \
                          + self.config.output_equalities
         
@@ -108,8 +109,8 @@ class configuration_codegen(abstract_generator):
         text = '''
                 import numpy as np
                 
-                from smbd.numenv.python.numerics.numcls import num_config
-                from smbd.numenv.python.numerics.misc import (mirrored, centered, oriented,
+                from smbd.numenv.python.numerics.core.shared_classes import num_config
+                from smbd.numenv.python.numerics.core.math_funcs.misc import (mirrored, centered, oriented,
                                                                cylinder_geometry,
                                                                composite_geometry,
                                                                triangular_prism,
@@ -120,12 +121,21 @@ class configuration_codegen(abstract_generator):
         return text
         
     def write_class_init(self):
-        text = '''                
+        text = '''    
+                class inputs(object):
+                    
+                    _inputs_names = ({inputs_names})
+                    
+                    def __init__(self):
+                        {inputs}
+                        
+                
                 class configuration(num_config):
 
                     def __init__(self):
-                        {inputs}                       
+                        pass
                 '''
+        
         p = self.printer
         indent = 8*' '
         inputs = self.input_args
@@ -136,14 +146,23 @@ class configuration_codegen(abstract_generator):
         inputs = '\n'.join([p._print(exp) for exp in inputs])
         inputs = re.sub(pattern,self_inserter,inputs)
         inputs = textwrap.indent(inputs,indent).lstrip()
+        
+        inputs_names = ',\n'.join(('%r'%i for i in self.input_sym))
+        inputs_names = textwrap.indent(inputs_names, indent).lstrip()
+        
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
-        text = text.format(inputs = inputs)
+        text = text.format(inputs = inputs,
+                           inputs_names = inputs_names)
         return text
     
     def write_helpers(self):
         text = '''
+                @property
+                def name(self):
+                    return '{name}'
+
                 @property
                 def q(self):
                     q = {coordinates}
@@ -154,9 +173,15 @@ class configuration_codegen(abstract_generator):
                     qd = {velocities}
                     return qd
                                                         
-                def evaluate(self):
+                def assemble(self, inputs_instance):
+                    
+                    for arg in inputs_instance._inputs_names:
+                        value = getattr(inputs_instance, arg)
+                        setattr(self, arg, value)
+                    
                     {outputs}
                     {pass_text}
+                
                 '''
         p = self.printer
         indent = 4*' '
@@ -164,7 +189,7 @@ class configuration_codegen(abstract_generator):
         outputs = self.output_args
         
         pattern = '|'.join(self.config_vars)
-        self_inserter = self._insert_string('self.')
+        self_inserter  = self._insert_string('self.')
                 
         outputs = '\n'.join([p._print(exp) for exp in outputs])
         outputs = re.sub(pattern,self_inserter,outputs)
@@ -188,7 +213,8 @@ class configuration_codegen(abstract_generator):
         text = text.format(outputs = outputs,
                            pass_text = pass_text,
                            coordinates = coordinates,
-                           velocities = velocities)
+                           velocities = velocities,
+                           name = self.name)
         text = textwrap.indent(text,indent)
         return text
     
@@ -228,12 +254,8 @@ class template_codegen(abstract_generator):
                 from numpy.linalg import multi_dot
                 from scipy.misc import derivative
                 
-                try:
-                    from smbd.numenv.python.numerics.matrix_funcs import A, B, G, E, triad, skew_matrix as skew
-                except ModuleNotFoundError:
-                    print('Failed importing compiled matrices!')
-                    print('Falling back to python defined matrix functions')
-                    from smbd.numenv.python.numerics.misc import A, B, G, E, triad, skew_matrix as skew
+                from smbd.numenv.python.numerics.core.math_funcs import A, B, G, E, triad, skew
+                
                 '''
         text = text.expandtabs()
         text = textwrap.dedent(text)
@@ -286,7 +308,7 @@ class template_codegen(abstract_generator):
                     self.rows += self.rows_offset
                     self.jac_rows = np.array({jac_rows})
                     self.jac_rows += self.rows_offset
-                    self.jac_cols = [{jac_cols}]
+                    self.jac_cols = np.array([{jac_cols}])
                 
                 def set_initial_states(self):
                     self.set_gen_coordinates(self.config.q)
@@ -531,7 +553,7 @@ class template_codegen(abstract_generator):
         text = textwrap.indent(text,indent)
         return text
     
-    def _write_x_equations(self,eq_initial):
+    def _write_x_equations(self, eq_initial):
         text = '''
                 def eval_{eq_initial}_eq(self):
                     config = self.config
@@ -539,7 +561,7 @@ class template_codegen(abstract_generator):
 
                     {replacements}
 
-                    self.{eq_initial}_eq_blocks = [{expressions}]
+                    self.{eq_initial}_eq_blocks = ({expressions})
                 '''
         
         text = text.expandtabs()
@@ -655,15 +677,12 @@ class assembly_codegen(template_codegen):
         
     def write_imports(self):
         text = '''
+                import itertools
+                
                 import numpy as np
                 from numpy.linalg import multi_dot
                 
-                try:
-                    from smbd.numenv.python.numerics.matrix_funcs import G
-                except ModuleNotFoundError:
-                    from smbd.numenv.python.numerics.misc import G
-
-                
+                from smbd.numenv.python.numerics.core.math_funcs import G
                                 
                 {templates_imports}
                 
@@ -1011,8 +1030,12 @@ class assembly_codegen(template_codegen):
                     
                     for sub in self.subsystems:
                         sub.eval_{func_name}_eq()
-                    self.{func_name}_eq_blocks = {func_name}_ground_eq_blocks + sum([s.{func_name}_eq_blocks for s in self.subsystems],[])
+                    
+                    eq_blocks = (s.{func_name}_eq_blocks for s in self.subsystems)
+                    
+                    self.{func_name}_eq_blocks = itertools.chain({func_name}_ground_eq_blocks, eq_blocks)
                 '''
+        
         indent = 4*' '
         p = self.printer
         text = text.expandtabs()
