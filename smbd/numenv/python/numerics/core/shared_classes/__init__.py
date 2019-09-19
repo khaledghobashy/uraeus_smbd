@@ -1,5 +1,5 @@
 #
 
-from .numcls import num_config
+from .numcls import config_inputs
 
-__all__ = ['num_config']
+__all__ = ['config_inputs']
