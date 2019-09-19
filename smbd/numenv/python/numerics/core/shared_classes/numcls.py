@@ -5,33 +5,20 @@ Created on Wed May  8 20:49:14 2019
 
 @author: khaledghobashy
 """
+import os
 
 import numpy as np
 import pandas as pd
 
 from numpy.linalg import multi_dot
 
-try:
-    from smbd.numenv.python.numerics.matrix_funcs import G
-except ModuleNotFoundError:
-    print('Failed importing compiled matrices!')
-    print('Falling back to python defined matrix functions')
-    from smbd.numenv.python.numerics.misc import G
-
+from smbd.numenv.python.numerics.core.math_funcs import G
 
 class num_config(object):
     
     def __init__(self):
         pass
     
-    @property
-    def q(self):
-        return
-
-    @property
-    def qd(self):
-        return
-
     def load_from_csv(self, csv_file):
         dataframe = pd.read_csv(csv_file, index_col=0)
         self.load_from_dataframe(dataframe)
@@ -47,11 +34,8 @@ class num_config(object):
             else:
                 v = dataframe.loc[ind][0]
                 setattr(self, ind, v)
-        self.evaluate()
-
-    def evaluate(self):
-        pass
-
+        self.assemble()
+    
 
 class num_assm(object):
 

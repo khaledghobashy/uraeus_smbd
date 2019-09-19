@@ -12,7 +12,7 @@ import pandas as pd
 
 #from scipy.sparse.linalg import spsolve
 
-from ._solvers.numba_funcs import matrix_assembler
+from ..math_funcs.numba_funcs import matrix_assembler
 
 def solve(A, b):
     x = np.linalg.solve(A, b)
