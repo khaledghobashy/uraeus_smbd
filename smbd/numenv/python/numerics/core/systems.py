@@ -10,7 +10,6 @@ import pickle
 
 # 3rd party library imports
 import numpy as np
-import matplotlib.pyplot as plt
 
 # Local applicataion imports
 from .solvers import kds_solver, dds_solver
@@ -65,24 +64,4 @@ class simulation(object):
     def eval_reactions(self):
         self.soln.eval_reactions()
     
-    def plot(self, y_args, x=None):
-        
-        if x is None:
-            x_data = self.soln.time_array 
-        elif isinstance(x, tuple):
-            x_string, level = x
-            data = getattr(self.soln, '%s_dataframe'%level)
-            x_data = data[x_string]
-        elif isinstance(x, np.ndarray):
-            x_data = x
-        
-        plt.figure(figsize=(8,4))
-        for y_string, level in y_args:
-            data = getattr(self.soln, '%s_dataframe'%level)
-            y_data = data[y_string]
-            plt.plot(x_data, y_data)
-        
-        plt.legend()
-        plt.grid()
-        plt.show()
 
