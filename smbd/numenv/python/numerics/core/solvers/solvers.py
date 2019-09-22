@@ -6,6 +6,8 @@ Created on Tue Jan  1 13:21:35 2019
 """
 
 import sys
+import time
+
 import numpy as np
 import scipy as sc
 import pandas as pd
@@ -22,13 +24,13 @@ def solve(A, b):
     return x
 
 
-def progress_bar(steps, i):
+def progress_bar(steps, i, t0):
     sys.stdout.write('\r')
     length=(100*(1+i)//(4*steps))
     percentage=100*(1+i)//steps
-    sys.stdout.write("[%-25s] %d%%, (%s/%s) steps." % ('='*length,percentage,i+1, steps))
+    t = time.perf_counter() - t0
+    sys.stdout.write("[%-25s] %d%%, (%s/%s) steps. ET = %.5s (s)" % ('='*length,percentage,i+1, steps, t))
     sys.stdout.flush()
-
 
 ###############################################################################
 ###############################################################################
@@ -67,6 +69,28 @@ class abstract_solver(object):
             raise ValueError('Time array is not properly sampled.')
         self.time_array = time_array
         self.step_size  = step_size
+    
+    
+    def eval_reactions(self):
+        self._reactions = {}
+        time_array = self.time_array
+        bar_length = len(time_array)
+        print("\nEvaluating System Constraints' Forces.")
+        t0 = time.perf_counter()
+        for i, t in enumerate(time_array):
+            progress_bar(bar_length, i, t0)
+            self._set_time(t)
+            lamda = self._eval_lagrange_multipliers(i)
+            self._eval_reactions_eq(lamda)
+            self._reactions[i] = self.model.reactions
+        
+        self.values = {i:np.concatenate(list(v.values())) for i,v in self._reactions.items()}
+        
+        self.reactions_dataframe = pd.DataFrame(
+                data = np.concatenate(list(self.values.values()),1).T,
+                columns = self._reactions_indicies)
+        self.reactions_dataframe['time'] = time_array
+
     
     
     def _initialize_model(self):
@@ -204,7 +228,10 @@ class kds_solver(abstract_solver):
         if self.model.n != self.model.nc:
             raise ValueError('Model is not fully constrained.')
     
-    def solve(self, run_id):        
+    def solve(self, run_id):
+        
+        t0 = time.perf_counter()
+        
         time_array = self.time_array
         dt = self.step_size
         
@@ -220,7 +247,7 @@ class kds_solver(abstract_solver):
         print('\nRunning System Kinematic Analysis:')
         bar_length = len(time_array)-1
         for i,t in enumerate(time_array[1:]):
-            progress_bar(bar_length, i)
+            progress_bar(bar_length, i, t0)
             self._set_time(t)
 
             g =   self._pos_history[i] \
@@ -242,25 +269,6 @@ class kds_solver(abstract_solver):
         print('\n')
         self._creat_results_dataframes()    
     
-    def eval_inverse_dynamics(self):
-        self._reactions = {}
-        time_array = self.time_array
-        bar_length = len(time_array)
-        print('\nEvaluating System Inverse Dynamics:')
-        for i, t in enumerate(time_array):
-            progress_bar(bar_length, i)
-            self._set_time(t)
-            lamda = self._eval_lagrange_multipliers(i)
-            self._eval_reactions_eq(lamda)
-            self._reactions[i] = self.model.reactions
-        
-        self.values = {i:np.concatenate(list(v.values())) for i,v in self._reactions.items()}
-        
-        self.reactions_dataframe = pd.DataFrame(
-                data = np.concatenate(list(self.values.values()),1).T,
-                columns = self._reactions_indicies)
-        self.reactions_dataframe['time'] = time_array
-
     
     def _eval_lagrange_multipliers(self, i):
         self._set_gen_coordinates(self._pos_history[i])
@@ -289,6 +297,7 @@ class dds_solver(abstract_solver):
             raise ValueError('Model is fully constrained.')
     
     def solve(self, run_id):
+        t0 = time.perf_counter()
         
         time_array = self.time_array
         dt = self.step_size
@@ -315,7 +324,7 @@ class dds_solver(abstract_solver):
         print('\nRunning System Dynamic Analysis:')
         i = 0
         while i != bar_length:
-            progress_bar(bar_length,i)
+            progress_bar(bar_length, i, t0)
             t = time_array[i+1]
             self._extract_independent_coordinates(self._jac[:-self.dof])
             self._set_time(t)
@@ -482,6 +491,10 @@ class dds_solver(abstract_solver):
         yn = state_vector + (1/6) * (f1 + 2*f2 + 2*f3 + f4)
         
         return yn
+    
+    def _eval_lagrange_multipliers(self, i):
+        self._set_gen_coordinates(self._pos_history[i])
+        return self._lgr_history[i]
         
 
 
