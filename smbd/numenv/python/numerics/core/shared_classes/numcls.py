@@ -44,11 +44,17 @@ class config_inputs(object):
             pickle.dump(self, f)
     
     def to_dataframe(self):
-        dataframe = pd.DataFrame(index=self._inputs_names, columns=[0, 1, 2, 3])
-        for arg in self._inputs_names:
+        
+        data = np.zeros((len(self._inputs_names), 4))
+        index = self._inputs_names
+        columns = np.arange(4)
+        
+        dataframe = pd.DataFrame(data, index = index, columns = columns)
+        
+        for arg in index:
             value = getattr(self, arg)
             if isinstance(value, np.ndarray):
-                if value.shape in ((3,1) or (4,1)):
+                if value.shape in ((3,1), (4,1)):
                     dataframe.loc[arg][0:value.shape[0]] = value.flat[:]
             elif isinstance(value, int) or isinstance(value, float):
                 dataframe.loc[arg][0] = value
