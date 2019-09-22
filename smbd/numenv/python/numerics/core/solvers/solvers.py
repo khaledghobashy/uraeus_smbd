@@ -14,9 +14,13 @@ import pandas as pd
 
 from ..math_funcs.numba_funcs import matrix_assembler
 
+import numba
+
+@numba.njit(cache=True)
 def solve(A, b):
     x = np.linalg.solve(A, b)
     return x
+
 
 def progress_bar(steps, i):
     sys.stdout.write('\r')
