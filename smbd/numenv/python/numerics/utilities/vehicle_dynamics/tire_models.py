@@ -109,6 +109,7 @@ class abstract_tire(object):
         
         # Wheel Center Translational Velocity in Global Frame
         V_wc_GF  = Rd_hub
+        
         # Wheel Center Translational Velocity in SAE Frame
         V_wc_SAE = self.SAE_GF.T.dot(V_wc_GF)
 
@@ -154,6 +155,7 @@ class abstract_tire(object):
         self.X_SAE_GF = X_SAE_GF
         self.Y_SAE_GF = Y_SAE_GF
         self.Z_SAE_GF = Z_SAE_GF
+        
         self.SAE_GF = np.concatenate([X_SAE_GF, Y_SAE_GF, Z_SAE_GF], axis=1)
         
     
@@ -315,6 +317,7 @@ class brush_model(abstract_tire):
         
 
         k, alpha = self._get_transient_slips(t, dt)
+        
         sigma_x = k/(1+k)
         sigma_y = np.tan(alpha)/(1+k)
         sigma   = np.sqrt(sigma_x**2 + sigma_y**2)
@@ -360,16 +363,16 @@ class brush_model(abstract_tire):
 
     def _eval_GF_forces(self):
         
+        F = np.array([[self.Fx], [self.Fy], [-self.Fz]])
+
+        self.F = self.SAE_GF.dot(F)
+        self.My = self.Fx * self.effective_radius
+        
 #        X_SAE_GF = self.X_SAE_GF
         Y_SAE_GF = self.Y_SAE_GF
         Z_SAE_GF = self.Z_SAE_GF
 
 #        Force = self.Fx*X_SAE_GF + self.Fy*Y_SAE_GF + self.Fz*(-Z_SAE_GF)
-        
-        F = np.array([[self.Fx], [self.Fy], [-self.Fz]])
-
-        self.F = self.SAE_GF.dot(F)
-        self.My = self.Fx * self.effective_radius
         self.M  = (self.My * Y_SAE_GF) + (self.Mz * Z_SAE_GF)
 #        print('My_SAE = %s'%self.My)
 #        print('M = %s'%(self.M.T))
