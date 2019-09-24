@@ -99,7 +99,7 @@ def matrix_assembler_temp(data, rows, cols, shape):
 
 @numba.njit(cache=True, nogil=True)
 def skew_matrix(v):
-    x, y, z = v.flatten()
+    x, y, z = v.flat[:]
     vs = np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
     return vs
 
@@ -167,7 +167,7 @@ def E(p):
         E   : 3x4 ndarray
     ===========================================================================
     '''
-    e0,e1,e2,e3 = [float(i) for i in p]
+    e0,e1,e2,e3 = p.flat[:]
     m = np.array([[-e1, e0,-e3, e2],
                   [-e2, e3, e0,-e1],
                   [-e3,-e2, e1, e0]])
@@ -188,7 +188,7 @@ def G(p):
         G   : 3x4 ndarray
     ===========================================================================
     '''
-    e0,e1,e2,e3 = [float(i) for i in p]
+    e0,e1,e2,e3 = p.flat[:]
     m = np.array([[-e1, e0, e3,-e2],
                 [-e2,-e3, e0, e1],
                 [-e3, e2,-e1, e0]])
@@ -227,7 +227,7 @@ def B(p,a):
         B   : 3x4 ndarray representing the jacobian of A.dot(a)
     ===========================================================================
     '''
-    e0,e1,e2,e3 = [float(i) for i in p]
+    e0,e1,e2,e3 = p.flat[:]
     e = np.array([[e1],[e2],[e3]])
     a = np.array(a).reshape((3,1))
     a_s = skew_matrix(a)
