@@ -227,14 +227,14 @@ def B(p,a):
         B   : 3x4 ndarray representing the jacobian of A.dot(a)
     ===========================================================================
     '''
+    I = np.eye(3)
+
     e0,e1,e2,e3 = p.flat
     e = np.array([[e1],[e2],[e3]])
-    a = np.array(a).reshape((3,1))
     a_s = skew_matrix(a)
-    I = np.eye(3)
     e_s = skew_matrix(e)
     
-    m = 2*np.bmat([[(e0*I+e_s).dot(a), e.dot(a.T)-(e0*I+e_s).dot(a_s)]])
+    m = 2*np.concatenate(((e0*I+e_s).dot(a), e.dot(a.T)-(e0*I+e_s).dot(a_s)), axis=1)
     
     return m
 
