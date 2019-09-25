@@ -599,7 +599,11 @@ class abstract_joint(object):
         Ti_raw_name = '%sT_%s_%s'%format_
         Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
         self.Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
-        self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e - Skew(self.ui)*self.Fi
+        
+        if self.def_locs >0:
+            self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e - Skew(self.ui)*self.Fi
+        else:
+            self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e
         
         
     def _create_reactions_equalities(self):
