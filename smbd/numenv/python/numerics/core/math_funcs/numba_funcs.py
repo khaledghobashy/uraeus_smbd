@@ -36,10 +36,10 @@ def sparse_assembler(blocks, b_rows, b_cols, n_rows):
             prev_cols_size  = 0
         
         arr = blocks[v]
+        m, n = arr.shape
+
         if not np.any(arr):
             continue
-        
-        m, n = arr.shape
         
         if n == 3:
             prev_cols_size = 7*(vj//2)
