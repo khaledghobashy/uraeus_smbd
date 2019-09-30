@@ -119,7 +119,7 @@ class absolute_rotator(abstract_actuator, metaclass=joint_constructor):
 
 class inline(abstract_joint, metaclass=joint_constructor):
     def_axis = 1
-    def_locs = 1
+    def_locs = 2
     vector_equations = [dot_product_2('i'),
                         dot_product_2('j')]
 
