@@ -133,7 +133,7 @@ class abstract_tire(object):
         self.V_sy = V_sy
         self.V_x  = V_x 
                 
-        if False:
+        if True:
             print('Omega = %s'%Omega)
             print('V_WC = %s'%V_wc_SAE.T)
             print('V_C = %s'%V_C)
