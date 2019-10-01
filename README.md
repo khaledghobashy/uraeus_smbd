@@ -187,8 +187,28 @@ except ModuleNotFoundError:
 
 ---------------------------------------------------
 ## Usage Examples & Tutorials
-### Spatial Fourbar Mechanism
-Below is code sample that walks you through the process of building a standalone symbolic topology and configuration as well as the generation of numerical simulation environments. The same code is also provided as a .py script and .ipynb notebook in the [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples/) sub-directory.
+
+### Ready-to-Use Notebooks & Tutorials
+
+This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modeling process. The [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples/standalone_models/notebooks/) directory in this repository is planned to include updated versions of working models that can be statically viewed on github, downloaded on your machine or to be ran directly on Colab.
+
+### Standalone Studies
+
+- **Spatial Four-bar**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/spatial_fourbar/spatial_fourbar.ipynb) | [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/spatial_fourbar/spatial_fourbar.ipynb))
+- **Spatial Slider-Crank**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/spatial_slider_crank/spatial_slider_crank.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/spatial_slider_crank/spatial_slider_crank.ipynb))
+- **Double-Wishbone Suspension**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_wishbone_suspension/double_wishbone_direct_acting.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_wishbone_suspension/double_wishbone_direct_acting.ipynb#scrollTo=A5aeLp5S45eh))
+- **Double-Four-bar Mechanism**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_fourbar/double_fourbar.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_fourbar/double_fourbar.ipynb#scrollTo=A5aeLp5S45eh))
+- **Simple Pendulum**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/simple_pendulum/simple_pendulum.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/simple_pendulum/simple_pendulum.ipynb#scrollTo=A5aeLp5S45eh))
+- **Double Pendulum**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_pendulum/double_pendulum.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_pendulum/double_pendulum.ipynb#scrollTo=A5aeLp5S45eh))
+
+### Template-Based Projects
+
+*To be discussed ...*
+
+
+
+### Detailed Example - Spatial Fourbar Mechanism
+Below is code sample that walks you through the process of building a standalone symbolic topology and configuration as well as the generation of numerical simulation environments. The same code is also provided as a .py script and .ipynb notebook in the [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples/standalone_models) sub-directory.
 
 This model will be created as a **standalone** topology and project. What this means is that model topological data is fully encapsulated in one topology graph and no need for any topological data from other external systems, which is the case for **template-based** topologies.
 
@@ -209,7 +229,9 @@ To create a standalone project :
 
 ```python
 from smbd.systems import standalone_project
+
 parent_dir = '' # current working directory
+
 project = standalone_project(parent_dir)
 project.create()
 ```
@@ -280,35 +302,48 @@ The idea is to construct a directed relational graph that maps the required prim
 We start by creating our configuration instance
 ```python
 from smbd.systems import configuration
-config = configuration('%s_cfg'%model_name, sym_model)
+sym_config = configuration('%s_cfg'%model_name, sym_model)
 ```
-Now we can check the primary configuration parameters extracted the from the symbolic topology by ```config.config.input_nodes``` which returns a list of strings containing the inputs' parameters names.
+Now we can check the primary configuration parameters extracted the from the symbolic topology by ```sym_config.config.input_nodes``` which returns a list of strings containing the inputs' parameters names.
 
 Now, we create our desired user inputs.
 
 ```python
-config.add_point.UserInput('a')
-config.add_point.UserInput('b')
-config.add_point.UserInput('c')
-config.add_point.UserInput('d')
+# Adding the desired set of UserInputs
+# ====================================
 
-config.add_vector.UserInput('x')
-config.add_vector.UserInput('y')
-config.add_vector.UserInput('z')
+sym_config.add_point.UserInput('a')
+sym_config.add_point.UserInput('b')
+sym_config.add_point.UserInput('c')
+sym_config.add_point.UserInput('d')
+
+sym_config.add_vector.UserInput('x')
+sym_config.add_vector.UserInput('y')
+sym_config.add_vector.UserInput('z')
 ```
 After that, we set the relations between the primary configuration parameters and our custom configuration inputs.
 ```python
-config.add_relation.Equal_to('pt1_jcs_a', ('hps_a',))
-config.add_relation.Equal_to('pt1_jcs_b', ('hps_b',))
-config.add_relation.Equal_to('pt1_jcs_c', ('hps_c',))
-config.add_relation.Equal_to('pt1_jcs_d', ('hps_d',))
+# Defining Relations between original topology inputs
+# and our desired UserInputs.
+# ===================================================
 
-config.add_relation.Oriented('ax1_jcs_c', ('hps_b', 'hps_c'))
-config.add_relation.Oriented('ax2_jcs_c', ('hps_c', 'hps_b'))
+# Revolute Joint (a) location and orientation
+sym_config.add_relation.Equal_to('pt1_jcs_a', ('hps_a',))
+sym_config.add_relation.Equal_to('ax1_jcs_a', ('vcs_x',))
 
-config.add_relation.Equal_to('ax1_jcs_a', ('vcs_x',))
-config.add_relation.Equal_to('ax1_jcs_b', ('vcs_z',))
-config.add_relation.Equal_to('ax1_jcs_d', ('vcs_y',))
+# Spherical Joint (b) location and orientation
+sym_config.add_relation.Equal_to('pt1_jcs_b', ('hps_b',))
+sym_config.add_relation.Equal_to('ax1_jcs_b', ('vcs_z',))
+
+# Universal Joint (c) location and orientation
+sym_config.add_relation.Equal_to('pt1_jcs_c', ('hps_c',))
+sym_config.add_relation.Oriented('ax1_jcs_c', ('hps_b', 'hps_c'))
+sym_config.add_relation.Oriented('ax2_jcs_c', ('hps_c', 'hps_b'))
+
+# Revolute Joint (d) location and orientation
+sym_config.add_relation.Equal_to('pt1_jcs_d', ('hps_d',))
+sym_config.add_relation.Equal_to('ax1_jcs_d', ('vcs_y',))
+
 ```
 *__Note__: The set of configuration parameters of each component and their naming convention will be discussed in a separate documentation*
 
@@ -316,21 +351,25 @@ The first line of the above code-block adds a relation that sets the location of
 
 An optional and recommended step is to create symbolic geometries and assign these geometries to topology bodies to automatically evaluate the bodies configuration parameters stated earlier. Also this will be used to generate a python-blender script that can be used in blender to create 3D visualizations in blender later.
 ```python
-config.add_scalar.UserInput('links_ro')
+# links radius
+sym_config.add_scalar.UserInput('links_ro')
 
-config.add_geometry.Cylinder_Geometry('l1', ('hps_a','hps_b','s_links_ro'))
-config.assign_geometry_to_body('rbs_l1', 'gms_l1')
+# Link 1 geometry
+sym_config.add_geometry.Cylinder_Geometry('l1', ('hps_a','hps_b','s_links_ro'))
+sym_config.assign_geometry_to_body('rbs_l1', 'gms_l1')
 
-config.add_geometry.Cylinder_Geometry('l2', ('hps_b','hps_c','s_links_ro'))
-config.assign_geometry_to_body('rbs_l2', 'gms_l2')
+# Link 2 geometry
+sym_config.add_geometry.Cylinder_Geometry('l2', ('hps_b','hps_c','s_links_ro'))
+sym_config.assign_geometry_to_body('rbs_l2', 'gms_l2')
 
-config.add_geometry.Cylinder_Geometry('l3', ('hps_c','hps_d','s_links_ro'))
-config.assign_geometry_to_body('rbs_l3', 'gms_l3')
+# Link 3 geometry
+sym_config.add_geometry.Cylinder_Geometry('l3', ('hps_c','hps_d','s_links_ro'))
+sym_config.assign_geometry_to_body('rbs_l3', 'gms_l3')
 ```
 The last step is to ```assemble``` the symbolic configuration and extract the updated set of inputs to a .csv file.
 ```python
-config.assemble()
-config.extract_inputs_to_csv(parent_dir)
+sym_config.assemble()
+sym_config.extract_inputs_to_csv(parent_dir)
 ```
 #### Generating Simulation Environments.
 Currently the tool provides two fully encapsulating numerical simulation environments in **python** and **C++**,  where each numerical simulation environment is responsible for creating its own structure and dependencies.
@@ -341,10 +380,17 @@ Currently the tool provides two fully encapsulating numerical simulation environ
 
 ```python
 from smbd.numenv.python.codegen import projects as py_numenv
+
+# Creating the needed directories structure for the source code.
 py_project = py_numenv.standalone_project(parent_dir)
 py_project.create_dirs()
+
+# Generating the source code.
 py_project.write_topology_code(sym_model.topology)
 py_project.write_configuration_code(config.config)
+
+# Creating a sample main.py that can be used 
+# in the numerical simulation
 py_project.write_mainfile()
 ```
 The generated code structure can be found under ```numenv/python/``` directory.
@@ -355,10 +401,16 @@ The generated code structure can be found under ```numenv/python/``` directory.
 
 ```python
 from smbd.numenv.cpp_eigen.codegen import projects as cpp_numenv
+
+# Creating the needed directories structure for the source code.
 cpp_project = cpp_numenv.standalone_project(parent_dir)
 cpp_project.create_dirs()
+
+# Generating the source code.
 cpp_project.write_topology_code(sym_model.topology)
 cpp_project.write_configuration_code(config.config)
+
+# Generating the makefile and main.cpp files.
 cpp_project.write_mainfile()
 cpp_project.write_makefile()
 ```
@@ -370,7 +422,7 @@ Also, we can generate a blender-python script that we can use later in 3D visual
 
 ```python
 from smbd.utilities.blender.codegen import script_generator
-bpy_code = script_generator(config.config)
+bpy_code = script_generator(sym_config.config)
 bpy_code.write_code_file('numenv/')
 ```
 
@@ -393,43 +445,46 @@ from smbd.numenv.python.numerics.systems import multibody_system, simulation
 ```
 And finally we import the generated source-code.
 ```python
+# Importing the generated modules/souce-code of the model.
 from numenv.python.src import fourbar, fourbar_cfg
 ```
 Now we create our needed instances.
 ```python
-num_model = multibody_system(fourbar)
-num_model.topology.config = fourbar_cfg.configuration()
+num_model  = multibody_system(fourbar)
+num_config = fourbar_cfg.configuration()
+
+num_model.topology.config = num_config
 ```
 Then we set our numerical values.
 ```python
-inputs_df = pd.read_csv('config_inputs/fourbar_cfg.csv', index_col=0)
+# Creating numerical inputs instance.
+num_inputs = spatial_fourbar_cfg.inputs('base_config')
 
-inputs_df.loc['P_ground'] = [1, 0, 0, 0]
+# Specifying the Numerical Configuration of the System.
+# ====================================================
+num_inputs.P_ground.flat[:] = [1, 0, 0, 0]
 
-inputs_df.loc['hps_a'] = [0, 0, 0, 0]
-inputs_df.loc['hps_b'] = [0, 0, 200, 0]
-inputs_df.loc['hps_c'] = [-750, -850, 650, 0]
-inputs_df.loc['hps_d'] = [-400, -850, 0  , 0]
+num_inputs.hps_a.flat[:] = 0, 0, 0
+num_inputs.hps_b.flat[:] = 0, 0, 200
+num_inputs.hps_c.flat[:] = -750, -850, 650
+num_inputs.hps_d.flat[:] = -400, -850, 0
 
-inputs_df.loc['vcs_x'] = [1, 0, 0, 0]
-inputs_df.loc['vcs_y'] = [0, 1, 0, 0]
-inputs_df.loc['vcs_z'] = [0, 0, 1, 0]
+num_inputs.vcs_x.flat[:] = 1, 0, 0
+num_inputs.vcs_y.flat[:] = 0, 1, 0
+num_inputs.vcs_z.flat[:] = 0, 0, 1
 
-inputs_df.loc['s_links_ro'] = [20, 0, 0, 0]
+num_inputs.s_links_ro = 20
 
 # Saving the numerical data to a new csv file
-inputs_df.to_csv('config_inputs/fourbar_cfg_v1.csv')
-
-# Setting the configuration numerical values.
-num_model.topology.config.load_from_dataframe(inputs_df)
+num_inputs.to_csv('config_inputs')
 
 # Setting the actuation function
-num_model.topology.config.UF_mcs_act = lambda t : -np.deg2rad(360)*t
+num_inputs.UF_mcs_act = lambda t : -np.deg2rad(360)*t
 ```
 Then we create a simulation instance that takes in the numerical model.
 ```python
 sim = simulation('sim', num_model, 'kds')
-sim.set_time_array(1, 100)
+sim.set_time_array(5, 2e-2)
 sim.solve()
 ```
 The simulation results can be accessed as
@@ -493,7 +548,7 @@ int main()
     Config.assemble();
 
     Solver<Topology> Soln(model);
-    Soln.set_time_array(1, 100);
+    Soln.set_time_array(5, 250);
     Soln.Solve();
     Soln.ExportResultsCSV("../../results/", 0);
 
@@ -508,7 +563,6 @@ MODEL := fourbar
 CONFG := fourbar_cfg
 MAIN := new_main.cpp
 # ========================================================================
-
 
 M_BUILD := build/
 M_SRC := src/
@@ -533,10 +587,10 @@ $(M_BIN)$(MODEL): $(DEPS) $(SMBD_OBJS)
 $(M_BUILD)$(MODEL).o: $(M_SRC)$(MODEL).cpp $(M_SRC)$(MODEL).hpp
 	$(CC) $(INC) -c -o $@ $<
 
-    
+
 $(SMBD_BUILD)/%.o: $(SMBD_SRC)/smbd/%.cpp $(SMBD_SRC)/smbd/%.hpp
 	cd $(SMBD_SRC)/../ && make
-    
+
 
 clear:
 	rm $(M_BUILD)*.o $(M_BIN)$(MODEL)
@@ -546,23 +600,7 @@ Then we open a terminal in the directory containing the ```Makefile``` and run `
 
 *__Note__: It should be noted that building the model requires the availability of ```make``` and ```gcc``` to be carried out successfully. Most Linux machines are already pre-equipped with these by default. Also the building process is only tested on the ```gcc``` compiler, more tests to be carried out using different compilers on different machines.*
 
-### Ready-to-Use Notebooks & Tutorials
-This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modeling process. The [**examples/notebooks**](https://github.com/khaledghobashy/smbd/tree/master/examples/notebooks/) directory in this repository is planned to include updated versions of working models that can be statically viewed on github, downloaded on your machine or to be ran directly on Colab.
-
-### Standalone Studies
-
-- **Spatial Four-bar**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/spatial_fourbar/spatial_fourbar.ipynb) | [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/notebooks/spatial_fourbar/spatial_fourbar.ipynb))
-- **Spatial Slider-Crank**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/spatial_slider_crank/spatial_slider_crank.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/notebooks/spatial_slider_crank/spatial_slider_crank.ipynb))
-- **Stewart-Gough Platform**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/stewart_gough/stewart_gough.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/notebooks/stewart_gough/stewart_gough.ipynb#scrollTo=A5aeLp5S45eh))
-
-### Template-Based Studies
-
-#### Vehicle Front Axle. ([GitHub](https://github.com/khaledghobashy/smbd/tree/master/examples/notebooks/vehicle_front_axle) | Colab)
-
-- Template-Based Topology - "double-wishbone vehicle suspension". 
-- Template-Based Topology - "suspension actuation test-rig". 
-- Symbolic Assembly - "vehicle front-axle assembly".
-- Numerical Simulation - "vehicle front axle kinematics". 
+---------------------------------------------------
 
 ### 3D Visualization
 
