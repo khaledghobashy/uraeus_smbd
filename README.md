@@ -77,7 +77,7 @@ The tool currently provides:
 
 **Full Vehicle Lane-Change Manoeuvre**
 </br>
-![Blender Gif](readme_materials/gif/lane_change.gif)
+![Blender Gif](readme_materials/gif/full_vehicle_lanechange.gif)
 
 ---------------------------------------------------
 
