@@ -103,7 +103,7 @@ def skew_matrix(v):
     vs = np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
     return vs
 
-@numba.njit(cache=True, nogil=True)
+#@numba.njit(cache=True, nogil=True)
 def dcm2ep(dcm):
     ''' 
     extracting euler parameters from a transformation matrix

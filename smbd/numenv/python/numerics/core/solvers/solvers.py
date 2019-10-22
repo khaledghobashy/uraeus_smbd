@@ -295,6 +295,8 @@ class dds_solver(abstract_solver):
         super().__init__(model)
         if self.model.n == self.model.nc:
             raise ValueError('Model is fully constrained.')
+        
+        self.integrator = self._runge_kutta
     
     def solve(self, run_id):
         t0 = time.perf_counter()
@@ -318,8 +320,6 @@ class dds_solver(abstract_solver):
         acc_t0, lamda_t0 = self._solve_augmented_system(M, J, Qt, Qd)        
         self._acc_history[0] = acc_t0
         self._lgr_history[0] = lamda_t0
-
-        self.integrator = self._runge_kutta
         
         print('\nRunning System Dynamic Analysis:')
         i = 0
