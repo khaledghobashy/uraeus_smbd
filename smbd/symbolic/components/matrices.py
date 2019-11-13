@@ -37,13 +37,12 @@ class AbstractMatrix(sm.MatrixExpr):
     
     def __init__(self,*args):
         pass
-    def doit(self):
-        return self
+    
     def _latex(self,expr):
         name = self.__class__.__name__
         return r'{%s%s}'%(name,self.args,)
     
-    def _entry(self,i,j):
+    def _entry(self,i,j, *args):
         v = sm.MatrixSlice(self,i,j)
         return v
     
@@ -62,11 +61,33 @@ class A(AbstractMatrix):
     shape = (3,3)
     
     def __init__(self, P):
-        pass
+        e0, e1, e2, e3 = P.as_explicit()
+    
+        a00 = (e0**2+e1**2-e2**2-e3**2)
+        a01 = 2*((e1*e2)-(e0*e3))              
+        a02 = 2*((e1*e3)+(e0*e2))
+
+        a10 = 2*((e1*e2)+(e0*e3))
+        a11 = e0**2-e1**2+e2**2-e3**2
+        a12 = 2*((e2*e3)-(e0*e1))
+
+        a20 = 2*((e1*e3)-(e0*e2))
+        a21 = 2*((e2*e3)+(e0*e1))
+        a22 = e0**2-e1**2-e2**2+e3**2
+
+        mat = sm.Matrix([[a00, a01, a02],
+                         [a10, a11, a12],
+                         [a20, a21, a22]])
+        self._data = mat
 
     def _latex(self,expr):
         p = self.args[0]
         return r'{A(%s)}'%p.name
+    
+    def _entry(self, i, j, *args):
+        v = self._data[i,j]
+        return v
+
 
 
 class G(AbstractMatrix):
@@ -726,21 +747,27 @@ class vector(sm.MatrixSymbol):
     shape = (3,1)
     
     is_commutative = False
+    is_Atom = True
+    is_Symbol = True
     
-    def __new__(cls,name, frame=None, format_as=None):
-        # Oveloading the MatrixSymbol __new__ method to supply it with the 
-        # appropriat arguments (name,m,n)
+    def __new__(cls, name, frame=None, format_as=None):
         if format_as:
             name = format_as
-        return super(vector,cls).__new__(cls,name,3,1)
+            
+        if isinstance(name, str):
+            name = sm.Symbol(name)
+            
+        obj = sm.Basic.__new__(cls, name, frame, format_as)
+        return obj
     
-    def __init__(self,name, frame=None, format_as=None):
+    def __init__(self, name, frame=None, format_as=None):
         self._raw_name = name
-        self._formated_name = super().name
-        self.frame = (frame if frame is not None else reference_frame.global_frame)        
-        self._args = (name,self.frame,self._formated_name)
+        self._formated_name = self.args[0].name
+        self.frame = (frame if frame is not None else reference_frame.global_frame)
+        self._data = sm.MatrixSymbol(self.name, *self.shape)
+        self._states = {}
         
-    def express(self,frame=None):
+    def express(self, frame=None):
         """
         Transform the vector from its' current frame to the given frame.
         
@@ -761,15 +788,43 @@ class vector(sm.MatrixSymbol):
         v = A*self
         return v
     
-    @property
-    def name(self):
-        return self._formated_name
+    
     @property
     def raw_name(self):
         return self._raw_name
-   
-    def doit(self):
-        return self
+    
+    @property
+    def func(self):
+        return vector
+    
+    def doit(self, **hints):
+        return self._data
+    
+    def _eval_simplify(self, **kwargs):
+        return self._data
+    
+    def as_explicit(self):
+        return self._data.as_explicit()
+    
+    def set_states(self, states_dict):
+        for key, args in states_dict.items():
+            v = vector(args[0], self.frame, args[1])
+            self._states[key] = v
+            
+    
+    def _eval_derivative(self, sym):
+        print('called')
+        return self.diff(sym)
+        
+    def diff(self, *symbols, **assumptions):
+        #assumptions.setdefault("evaluate", True)
+        
+        der = sm.Derivative(self, *symbols, **assumptions)
+        if (der.args[1][0]).name == 't':
+            return der.args[1][1]
+        else:
+            return sm.Derivative(self, *symbols, **assumptions)
+        
     
     def __str__(self):
         return self.raw_name
@@ -790,32 +845,54 @@ class quatrenion(sm.MatrixSymbol):
     """
     shape = (4,1)
     is_commutative = False
+    is_Atom = True
+    is_Symbol = True
     
     def __new__(cls, name, format_as=None):
-        # Oveloading the MatrixSymbol __new__ method to supply it with the 
-        # appropriat arguments (name,m,n)
         if format_as:
             name = format_as
-        return super(quatrenion,cls).__new__(cls,name,*cls.shape)
+            
+        if isinstance(name, str):
+            name = sm.Symbol(name)
+            
+        obj = sm.Basic.__new__(cls, name, format_as)
+        return obj
     
     def __init__(self,name, format_as=None):
         self._raw_name = name
-        self._formated_name = super().name
-        self._args = (name,format_as)
+        self._formated_name = self.args[0].name
+        self._data = sm.MatrixSymbol(self.name, *self.shape)
     
-    @property
-    def name(self):
-        return self._formated_name 
+    
     @property
     def raw_name(self):
         return self._raw_name
-
-    def doit(self):
-        return self
     
     @property
     def func(self):
-        return self.__class__
+        return quatrenion
+    
+    def doit(self, **hints):
+        return self._data
+    
+    def _eval_simplify(self, **kwargs):
+        return self._data
+    
+    def as_explicit(self):
+        return self._data.as_explicit()
+    
+    def _eval_derivative(self, sym):
+        print('called')
+        return self.diff(sym)
+        
+    def diff(self, *symbols, **assumptions):
+        #assumptions.setdefault("evaluate", True)
+        
+        der = sm.Derivative(self, *symbols, **assumptions)
+        if (der.args[1][0]).name == 't':
+            return der.args[1][1]
+        else:
+            return sm.Derivative(self, *symbols, **assumptions)
     
     def __str__(self):
         return self.raw_name
