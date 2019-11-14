@@ -87,6 +87,9 @@ class A(AbstractMatrix):
     def _entry(self, i, j, *args):
         v = self._data[i,j]
         return v
+    
+    def doit(self, **hints):
+        return self
 
 
 
@@ -716,7 +719,9 @@ class matrix_symbol(sm.MatrixSymbol):
     
     def __str__(self):
         return self.raw_name
+    
 
+from sympy.matrices.expressions.matexpr import MatrixElement
    
 class vector(sm.MatrixSymbol):
     """A (3 x 1) symbolic matrix.
@@ -767,6 +772,12 @@ class vector(sm.MatrixSymbol):
         self._data = sm.MatrixSymbol(self.name, *self.shape)
         self._states = {}
         
+        self.x = MatrixElement(self._data, 0, 0)
+        self.y = MatrixElement(self._data, 1, 0)
+        self.z = MatrixElement(self._data, 2, 0)
+        
+        self._data = sm.Matrix([self.x, self.y, self.z])
+        
     def express(self, frame=None):
         """
         Transform the vector from its' current frame to the given frame.
@@ -798,13 +809,16 @@ class vector(sm.MatrixSymbol):
         return vector
     
     def doit(self, **hints):
-        return self._data
+        return self
     
     def _eval_simplify(self, **kwargs):
         return self._data
     
+    '''def as_explicit(self):
+        return self._data.as_explicit()'''
+    
     def as_explicit(self):
-        return self._data.as_explicit()
+        return self._data
     
     def set_states(self, states_dict):
         for key, args in states_dict.items():
@@ -824,10 +838,16 @@ class vector(sm.MatrixSymbol):
             return der.args[1][1]
         else:
             return sm.Derivative(self, *symbols, **assumptions)
-        
+    
+    def _entry(self, i, j):
+        return self._data[i, j]
     
     def __str__(self):
         return self.raw_name
+    
+    def __getitem__(self, key):
+        i, j = key
+        return self._entry(i, j)
 
         
 ###############################################################################
@@ -862,6 +882,13 @@ class quatrenion(sm.MatrixSymbol):
         self._raw_name = name
         self._formated_name = self.args[0].name
         self._data = sm.MatrixSymbol(self.name, *self.shape)
+        
+        self.w = MatrixElement(self._data, 0, 0)
+        self.x = MatrixElement(self._data, 1, 0)
+        self.y = MatrixElement(self._data, 2, 0)
+        self.z = MatrixElement(self._data, 3, 0)
+        
+        self._data = sm.Matrix([self.w, self.x, self.y, self.z])
     
     
     @property
@@ -873,13 +900,13 @@ class quatrenion(sm.MatrixSymbol):
         return quatrenion
     
     def doit(self, **hints):
-        return self._data
+        return self
     
     def _eval_simplify(self, **kwargs):
         return self._data
     
     def as_explicit(self):
-        return self._data.as_explicit()
+        return self._data
     
     def _eval_derivative(self, sym):
         print('called')
@@ -894,9 +921,16 @@ class quatrenion(sm.MatrixSymbol):
         else:
             return sm.Derivative(self, *symbols, **assumptions)
     
+    def _entry(self, i, j):
+        return self._data[i, j]
+    
     def __str__(self):
         return self.raw_name
-                
+    
+    def __getitem__(self, key):
+        i, j = key
+        return self._entry(i, j)
+            
 ###############################################################################
 ###############################################################################
 
