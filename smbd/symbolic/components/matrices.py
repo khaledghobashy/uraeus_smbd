@@ -722,6 +722,16 @@ class matrix_symbol(sm.MatrixSymbol):
     
 
 from sympy.matrices.expressions.matexpr import MatrixElement
+
+
+class element(MatrixElement):
+    
+    def _eval_derivative(self, v):
+        print('Called in element')
+        if v == 't':
+            return 1
+        else:
+            return super()._eval_derivative(v)
    
 class vector(sm.MatrixSymbol):
     """A (3 x 1) symbolic matrix.
@@ -754,6 +764,8 @@ class vector(sm.MatrixSymbol):
     is_commutative = False
     is_Atom = True
     is_Symbol = True
+    _diff_wrt = True
+    is_constant = True
     
     def __new__(cls, name, frame=None, format_as=None):
         if format_as:
@@ -775,6 +787,10 @@ class vector(sm.MatrixSymbol):
         self.x = MatrixElement(self._data, 0, 0)
         self.y = MatrixElement(self._data, 1, 0)
         self.z = MatrixElement(self._data, 2, 0)
+        
+        #self.x = sm.Function('%s_{x}'%self._formated_name)('t')
+        #self.y = sm.Function('%s_{y}'%self._formated_name)('t')
+        #self.z = sm.Function('%s_{z}'%self._formated_name)('t')
         
         self._data = sm.Matrix([self.x, self.y, self.z])
         
@@ -827,17 +843,18 @@ class vector(sm.MatrixSymbol):
             
     
     def _eval_derivative(self, sym):
-        print('called')
+        print('called "_eval_derivative"')
         return self.diff(sym)
         
     def diff(self, *symbols, **assumptions):
-        #assumptions.setdefault("evaluate", True)
+        print('called "diff" in "vector"')
+        assumptions.setdefault("evaluate", True)
         
-        der = sm.Derivative(self, *symbols, **assumptions)
+        '''der = sm.Derivative(self, *symbols, **assumptions)
         if (der.args[1][0]).name == 't':
-            return der.args[1][1]
-        else:
-            return sm.Derivative(self, *symbols, **assumptions)
+            return der.args[1][1]'''
+        #else:
+        return sm.Derivative(self, *symbols, **assumptions)
     
     def _entry(self, i, j):
         return self._data[i, j]
@@ -887,6 +904,11 @@ class quatrenion(sm.MatrixSymbol):
         self.x = MatrixElement(self._data, 1, 0)
         self.y = MatrixElement(self._data, 2, 0)
         self.z = MatrixElement(self._data, 3, 0)
+        
+        #self.w = sm.Symbol('%s_{w}'%self._formated_name, real=True)
+        #self.x = sm.Symbol('%s_{x}'%self._formated_name, real=True)
+        #self.y = sm.Symbol('%s_{y}'%self._formated_name, real=True)
+        #self.z = sm.Symbol('%s_{z}'%self._formated_name, real=True)
         
         self._data = sm.Matrix([self.w, self.x, self.y, self.z])
     
