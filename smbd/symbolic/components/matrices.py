@@ -724,14 +724,63 @@ class matrix_symbol(sm.MatrixSymbol):
 from sympy.matrices.expressions.matexpr import MatrixElement
 
 
-class element(MatrixElement):
+class element(sm.Function):
     
-    def _eval_derivative(self, v):
-        print('Called in element')
-        if v == 't':
-            return 1
+    is_commutative = True
+    is_Atom = True
+    is_Symbol = True
+    _diff_wrt = True
+    
+    nargs = 3
+    
+    _coordinates = {(0,0):'x', (0,1):'y', (0,2):'z'}
+    
+    def __new__(cls, parent, i, j, t=sm.Symbol('t')):
+        
+        if isinstance(parent, (vector, quatrenion)):
+            obj = super(sm.Function, cls).__new__(cls, parent, i, j, t)
+        elif isinstance(parent, sm.MatrixSymbol):
+            if parent.shape == (3, 1):
+                parent = vector(parent.name)
+            elif parent.shape == (4, 1):
+                parent = quatrenion(parent.name)
+            obj = super(sm.Function, cls).__new__(cls, parent, i, j, t)
+        
+        return obj
+    
+    def __init__(self, parent, i, j, t=sm.Symbol('t')):
+        
+        self.parent = parent
+        self.i = i
+        self.j = j
+        #self._args = (parent, i, j, t)
+        
+    def _latex(self, expr, **kwargs):
+        return r'{{%s}_{%s}}'%(self.parent.name, (self.i, self.j))
+    
+    '''def _eval_derivative(self, sym):
+        print('called "_eval_derivative" in "element"')
+        print(sym)
+        if sym == self.parent:
+            print('sym (%s) == parent (%s)'%(sym, self.parent))
+            return sm.S.Zero
         else:
-            return super()._eval_derivative(v)
+            return super()._eval_derivative(sym)'''
+    
+    def diff(self, *symbols, **assumptions):
+        print('called "diff" in "element"')
+        print(symbols)
+        assumptions.setdefault("evaluate", True)
+        
+        '''der = sm.Derivative(self, *symbols, **assumptions)
+        if (der.args[1][0]).name == 't':
+            return der.args[1][1]
+        else:'''
+        return sm.Derivative(self, *symbols, **assumptions)
+        
+    
+
+
    
 class vector(sm.MatrixSymbol):
     """A (3 x 1) symbolic matrix.
@@ -762,10 +811,9 @@ class vector(sm.MatrixSymbol):
     shape = (3,1)
     
     is_commutative = False
-    is_Atom = True
+    is_Atom = False
     is_Symbol = True
     _diff_wrt = True
-    is_constant = True
     
     def __new__(cls, name, frame=None, format_as=None):
         if format_as:
@@ -781,16 +829,11 @@ class vector(sm.MatrixSymbol):
         self._raw_name = name
         self._formated_name = self.args[0].name
         self.frame = (frame if frame is not None else reference_frame.global_frame)
-        self._data = sm.MatrixSymbol(self.name, *self.shape)
         self._states = {}
         
-        self.x = MatrixElement(self._data, 0, 0)
-        self.y = MatrixElement(self._data, 1, 0)
-        self.z = MatrixElement(self._data, 2, 0)
-        
-        #self.x = sm.Function('%s_{x}'%self._formated_name)('t')
-        #self.y = sm.Function('%s_{y}'%self._formated_name)('t')
-        #self.z = sm.Function('%s_{z}'%self._formated_name)('t')
+        self.x = element(self, 0, 0)
+        self.y = element(self, 1, 0)
+        self.z = element(self, 2, 0)
         
         self._data = sm.Matrix([self.x, self.y, self.z])
         
@@ -842,9 +885,9 @@ class vector(sm.MatrixSymbol):
             self._states[key] = v
             
     
-    def _eval_derivative(self, sym):
+    '''def _eval_derivative(self, sym):
         print('called "_eval_derivative"')
-        return self.diff(sym)
+        return self.diff(sym)'''
         
     def diff(self, *symbols, **assumptions):
         print('called "diff" in "vector"')
@@ -856,7 +899,7 @@ class vector(sm.MatrixSymbol):
         #else:
         return sm.Derivative(self, *symbols, **assumptions)
     
-    def _entry(self, i, j):
+    def _entry(self, i, j, **kwargs):
         return self._data[i, j]
     
     def __str__(self):
@@ -881,9 +924,11 @@ class quatrenion(sm.MatrixSymbol):
         None.    
     """
     shape = (4,1)
+    
     is_commutative = False
-    is_Atom = True
+    is_Atom = False
     is_Symbol = True
+    _diff_wrt = True
     
     def __new__(cls, name, format_as=None):
         if format_as:
@@ -898,17 +943,11 @@ class quatrenion(sm.MatrixSymbol):
     def __init__(self,name, format_as=None):
         self._raw_name = name
         self._formated_name = self.args[0].name
-        self._data = sm.MatrixSymbol(self.name, *self.shape)
         
-        self.w = MatrixElement(self._data, 0, 0)
-        self.x = MatrixElement(self._data, 1, 0)
-        self.y = MatrixElement(self._data, 2, 0)
-        self.z = MatrixElement(self._data, 3, 0)
-        
-        #self.w = sm.Symbol('%s_{w}'%self._formated_name, real=True)
-        #self.x = sm.Symbol('%s_{x}'%self._formated_name, real=True)
-        #self.y = sm.Symbol('%s_{y}'%self._formated_name, real=True)
-        #self.z = sm.Symbol('%s_{z}'%self._formated_name, real=True)
+        self.w = element(self, 0, 0)
+        self.x = element(self, 1, 0)
+        self.y = element(self, 2, 0)
+        self.z = element(self, 3, 0)
         
         self._data = sm.Matrix([self.w, self.x, self.y, self.z])
     
@@ -930,20 +969,21 @@ class quatrenion(sm.MatrixSymbol):
     def as_explicit(self):
         return self._data
     
-    def _eval_derivative(self, sym):
+    '''def _eval_derivative(self, sym):
         print('called')
-        return self.diff(sym)
+        return self.diff(sym)'''
         
     def diff(self, *symbols, **assumptions):
-        #assumptions.setdefault("evaluate", True)
+        print('called "diff" in "quatrenion"')
+        assumptions.setdefault("evaluate", True)
         
-        der = sm.Derivative(self, *symbols, **assumptions)
+        '''der = sm.Derivative(self, *symbols, **assumptions)
         if (der.args[1][0]).name == 't':
-            return der.args[1][1]
-        else:
-            return sm.Derivative(self, *symbols, **assumptions)
+            return der.args[1][1]'''
+        #else:
+        return sm.Derivative(self, *symbols, **assumptions)
     
-    def _entry(self, i, j):
+    def _entry(self, i, j, **kwargs):
         return self._data[i, j]
     
     def __str__(self):
