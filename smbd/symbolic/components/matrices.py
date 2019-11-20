@@ -727,7 +727,7 @@ from sympy.matrices.expressions.matexpr import MatrixElement
 class element(sm.Function):
     
     is_commutative = True
-    is_Atom = True
+    is_Atom = False
     is_Symbol = True
     _diff_wrt = True
     
