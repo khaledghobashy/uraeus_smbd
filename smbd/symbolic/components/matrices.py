@@ -84,7 +84,7 @@ class A(AbstractMatrix):
         p = self.args[0]
         return r'{A(%s)}'%p.name
     
-    def _entry(self, i, j, *args):
+    def _entry(self, i, j, *args, **kwargs):
         v = self._data[i,j]
         return v
     
@@ -768,8 +768,8 @@ class element(sm.Function):
             return super()._eval_derivative(sym)'''
     
     def diff(self, *symbols, **assumptions):
-        print('called "diff" in "element"')
-        print(symbols)
+        #print('called "diff" in "element"')
+        #print(symbols)
         assumptions.setdefault("evaluate", True)
         
         '''der = sm.Derivative(self, *symbols, **assumptions)
@@ -815,27 +815,37 @@ class vector(sm.MatrixSymbol):
     is_Symbol = True
     _diff_wrt = True
     
-    def __new__(cls, name, frame=None, format_as=None):
+    def __new__(cls, name, frame=None, format_as=None, is_state=False):
         if format_as:
             name = format_as
             
         if isinstance(name, str):
             name = sm.Symbol(name)
             
-        obj = sm.Basic.__new__(cls, name, frame, format_as)
+        obj = sm.Basic.__new__(cls, name, frame, format_as, is_state)
         return obj
     
-    def __init__(self, name, frame=None, format_as=None):
+    def __init__(self, name, frame=None, format_as=None, is_state=False):
         self._raw_name = name
         self._formated_name = self.args[0].name
         self.frame = (frame if frame is not None else reference_frame.global_frame)
+        self.is_state = is_state
         self._states = {}
         
-        self.x = element(self, 0, 0)
-        self.y = element(self, 1, 0)
-        self.z = element(self, 2, 0)
+        if is_state:
+            self._data = self._set_state_variables(element)
+        else:
+            self._data = self._set_state_variables(MatrixElement)
         
-        self._data = sm.Matrix([self.x, self.y, self.z])
+    
+    def _set_state_variables(self, cls):
+        self.x = cls(self, 0, 0)
+        self.y = cls(self, 1, 0)
+        self.z = cls(self, 2, 0)
+        
+        data = sm.Matrix([self.x, self.y, self.z])
+        return data
+        
         
     def express(self, frame=None):
         """
@@ -890,7 +900,7 @@ class vector(sm.MatrixSymbol):
         return self.diff(sym)'''
         
     def diff(self, *symbols, **assumptions):
-        print('called "diff" in "vector"')
+        #print('called "diff" in "vector"')
         assumptions.setdefault("evaluate", True)
         
         '''der = sm.Derivative(self, *symbols, **assumptions)
@@ -974,7 +984,7 @@ class quatrenion(sm.MatrixSymbol):
         return self.diff(sym)'''
         
     def diff(self, *symbols, **assumptions):
-        print('called "diff" in "quatrenion"')
+        #print('called "diff" in "quatrenion"')
         assumptions.setdefault("evaluate", True)
         
         '''der = sm.Derivative(self, *symbols, **assumptions)
