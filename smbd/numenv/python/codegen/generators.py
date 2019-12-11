@@ -123,7 +123,7 @@ class configuration_codegen(abstract_generator):
     def write_inputs_lists(self):
         text = '''
                 
-                _locations_inputs = {(locations})
+                _locations_inputs = ({locations})
                 
                 _orientation_vectors = ({orientation_vectors})
                 
