@@ -1,5 +1,51 @@
 import json
+import textwrap
 import sympy as sm
+
+
+class Encoder(object):
+
+    def __init__(self):
+        pass
+    
+    def encode(self, obj, nest=0):
+        try:
+            cls_name = obj.__class__.__name__
+            method = getattr(self, '_encode_%s'%cls_name)
+            return method(obj, nest)
+        except AttributeError:
+            raise NotImplementedError
+    
+    def _encode_dict(self, obj, nest=0):
+        indent = (nest * 4 * ' ') if nest >0 else ''
+        text = str(obj)
+        text = ',\n'.join(text.split(','))
+        #text.expandtabs()
+        #text = textwrap.dedent(text)
+        text = textwrap.indent(text, indent)
+        text = '\n' + text + '\n'
+        return text
+    
+    def _encode_Cylinder_Geometry(self, obj, nest=0):
+        
+        indent = (nest * 4 * ' ') if nest >0 else ''
+        p1, p2, radius = obj.args
+        
+        args = {'p1': p1, 'p2': p2, 'radius': radius}
+        
+        text = \
+        '''
+        type: '{object_type}',
+        args: {object_args}
+        '''
+        text.expandtabs()
+        text = textwrap.dedent(text)
+        text = textwrap.indent(text, indent)
+        
+        text = text.format(object_type=obj.__class__.__name__.lower(), object_args=self.encode(args, nest+1))
+        text = '{' + text + '}'
+
+        return text
 
 class SMBDEncoder(json.JSONEncoder):
     

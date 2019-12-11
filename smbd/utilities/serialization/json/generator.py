@@ -20,7 +20,7 @@ class configuration(object):
         # Creating a dict that stores the inputs' equalities as input_name : input_data.
         self.inputs  = {str(expr.lhs): expr.rhs for expr in self.config.input_equalities}
 
-        self.data = {"inputs": inputs}
+        self.data = {"inputs": self.inputs}
 
     def dump_JSON(self):
         json_text = json.dumps(self.data, cls=SMBDEncoder, indent=4)
