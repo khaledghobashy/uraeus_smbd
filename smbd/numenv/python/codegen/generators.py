@@ -45,15 +45,15 @@ class abstract_generator(object):
 
     """
     
-    def __init__(self,mbs, printer=printer()):
+    def __init__(self, mbs, _printer=printer()):
         
         self.mbs     = mbs
-        self.printer = printer
+        self.printer = _printer
         self.name    = self.mbs.name
                 
-        self.arguments_symbols = [printer._print(exp) for exp in self.mbs.arguments_symbols]
-        self.constants_symbols = [printer._print(exp) for exp in self.mbs.constants_symbols]
-        self.runtime_symbols   = [printer._print(exp) for exp in self.mbs.runtime_symbols]
+        self.arguments_symbols = [self.printer._print(exp) for exp in self.mbs.arguments_symbols]
+        self.constants_symbols = [self.printer._print(exp) for exp in self.mbs.constants_symbols]
+        self.runtime_symbols   = [self.printer._print(exp) for exp in self.mbs.runtime_symbols]
         
         self.primary_arguments = self.arguments_symbols
         
@@ -61,20 +61,20 @@ class abstract_generator(object):
         self.constants_numeric_expr  = self.mbs.constants_numeric_expr
         
         self.gen_coordinates_exp = self.mbs.mapped_gen_coordinates
-        self.gen_coordinates_sym = [printer._print(exp.lhs) for exp in self.gen_coordinates_exp]
+        self.gen_coordinates_sym = [self.printer._print(exp.lhs) for exp in self.gen_coordinates_exp]
 
         self.gen_velocities_exp  = self.mbs.mapped_gen_velocities
-        self.gen_velocities_sym  = [printer._print(exp.lhs) for exp in self.gen_velocities_exp]
+        self.gen_velocities_sym  = [self.printer._print(exp.lhs) for exp in self.gen_velocities_exp]
         
         self.gen_accelerations_exp  = self.mbs.mapped_gen_accelerations
-        self.gen_accelerations_sym  = [printer._print(exp.lhs) for exp in self.gen_accelerations_exp]
+        self.gen_accelerations_sym  = [self.printer._print(exp.lhs) for exp in self.gen_accelerations_exp]
         
         self.lagrange_multipliers_exp  = self.mbs.mapped_lagrange_multipliers
-        self.lagrange_multipliers_sym  = [printer._print(exp.lhs) for exp in self.lagrange_multipliers_exp]
+        self.lagrange_multipliers_sym  = [self.printer._print(exp.lhs) for exp in self.lagrange_multipliers_exp]
 
-        self.joint_reactions_sym = [printer._print(exp) for exp in self.mbs.reactions_symbols]
+        self.joint_reactions_sym = [self.printer._print(exp) for exp in self.mbs.reactions_symbols]
 
-        self.virtual_coordinates = [printer._print(exp) for exp in self.mbs.virtual_coordinates]
+        self.virtual_coordinates = [self.printer._print(exp) for exp in self.mbs.virtual_coordinates]
                 
         self.bodies = self.mbs.bodies
 
@@ -88,21 +88,25 @@ class abstract_generator(object):
 
 class configuration_codegen(abstract_generator):
         
-    def __init__(self, config, printer=printer()):
+    def __init__(self, config, _printer=printer()):
+
+        #super().__init__(config.topology, _printer)
         
         self.config  = config
-        self.printer = printer
+        self.printer = _printer
         self.name = self.config.name
         
-        self.config_vars = [printer._print(i) for i in self.config.arguments_symbols]
+        self.config_vars = [self.printer._print(i) for i in self.config.arguments_symbols]
+        self.runtime_symbols = [self.printer._print(exp) for exp in self.config.topology.runtime_symbols]
         self.input_args  = self.config.input_equalities
-        self.input_sym   = [printer._print(i.lhs) for i in self.input_args]
+        self.input_sym   = [self.printer._print(i.lhs) for i in self.input_args]
         self.output_args = self.config.intermediat_equalities \
                          + self.config.output_equalities
         
-        self.gen_coordinates_sym = [printer._print(exp.lhs) 
+        
+        self.gen_coordinates_sym = [self.printer._print(exp.lhs) 
         for exp in self.config.topology.mapped_gen_coordinates]
-        self.gen_velocities_sym  = [printer._print(exp.lhs) 
+        self.gen_velocities_sym  = [self.printer._print(exp.lhs) 
         for exp in self.config.topology.mapped_gen_velocities]
         
     def write_imports(self):
@@ -217,6 +221,12 @@ class configuration_codegen(abstract_generator):
     def write_helpers(self):
         text = '''
                 def assemble(self, inputs_instance):
+
+                    self.R_ground = np.array([[0], [0], [0]], dtype=np.float64)
+                    self.P_ground = np.array([[1], [0], [0], [0]], dtype=np.float64)
+
+                    self.Rd_ground = np.array([[0], [0], [0]], dtype=np.float64)
+                    self.Pd_ground = np.array([[0], [0], [0], [0]], dtype=np.float64)
                     
                     for arg in inputs_instance._inputs_names:
                         value = getattr(inputs_instance, arg)
@@ -244,6 +254,8 @@ class configuration_codegen(abstract_generator):
         
         pass_text = ('pass' if len(outputs)==0 else '')
         
+        pattern = '|'.join(self.runtime_symbols)
+
         coordinates = ',\n'.join(self.gen_coordinates_sym)
         coordinates = re.sub(pattern,self_inserter,coordinates)
         coordinates = (coordinates if len(coordinates)!=0 else '[]')

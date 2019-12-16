@@ -221,14 +221,16 @@ class ground(body):
     
     @property
     def arguments_symbols(self):
-        return [self.R, self.P, self.Rd, self.Pd, self.Rdd, self.Pdd]
+        return []#[self.R, self.P, self.Rd, self.Pd, self.Rdd, self.Pdd]
     
     @property
     def constants_numeric_expr(self):
-        expr = sm.Eq(self.P_ground, sm.Matrix([1,0,0,0]))
+        position = sm.Eq(self.R, sm.Matrix([0,0,0]))
+        expr1 = sm.Eq(self.P, sm.Matrix([1,0,0,0]))
+        expr2 = sm.Eq(self.P_ground, sm.Matrix([1,0,0,0]))
         mass = sm.Eq(self.m, sm.Float(1))
         iner = sm.Eq(self.Jbar, sm.eye(3,3))
-        return [expr, mass, iner]
+        return [position, expr1, expr2, mass, iner]
 
 
 ###############################################################################
