@@ -29,7 +29,7 @@ def dcm2ep(dcm):
     e2s = (2*dcm[1,1]-trA+1)/4
     e3s = (2*dcm[2,2]-trA+1)/4
     
-    emax = max([e0s,e1s,e2s,e2s,e3s])
+    emax = max([e0s,e1s,e2s,e3s])
     
     # Case 1 : e0 != zero
     if e0s == emax:
