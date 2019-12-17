@@ -370,9 +370,11 @@ class template_codegen(abstract_generator):
                     self.jac_cols = np.array([{jac_cols}])
                 
                 def set_initial_states(self):
-                    self.set_gen_coordinates(self.config.q)
-                    self.set_gen_velocities(self.config.qd)
-                    self.q0 = self.config.q
+                    self.q0  = np.concatenate([{coordinates}])
+                    self.qd0 = np.concatenate([{velocities}])
+
+                    self.set_gen_coordinates(self.q0)
+                    self.set_gen_velocities(self.qd0)
                     
                 def _set_mapping(self,indicies_map, interface_map):
                     p = self.prefix
@@ -384,21 +386,36 @@ class template_codegen(abstract_generator):
         text = text.expandtabs()
         text = textwrap.dedent(text)
         
-        nodes = '\n'.join(['%s = indicies_map[p+%r]'%('self.%s'%i,i) for i in self.bodies])
+        nodes = '\n'.join(['%s = indicies_map[p + %r]'%('self.%s'%i,i) for i in self.bodies])
         nodes = textwrap.indent(nodes,indent).lstrip()
         
-        virtuals = '\n'.join(['%s = indicies_map[interface_map[p+%r]]'%('self.%s'%i,i) for i in self.mbs.virtual_bodies])
+        virtuals = '\n'.join(['%s = indicies_map[interface_map[p + %r]]'%('self.%s'%i,i) for i in self.mbs.virtual_bodies])
         virtuals = textwrap.indent(virtuals,indent).lstrip()
         
         ind_body = {v:k for k,v in self.mbs.nodes_indicies.items()}
         rows, cols, data = zip(*self.mbs.jac_equations.row_list())
         string_cols = [('self.%s*2'%ind_body[i//2] if i%2==0 else 'self.%s*2+1'%ind_body[i//2]) for i in cols]
         string_cols_text = ', '.join(string_cols)
+
+        self_inserter  = self._insert_string('self.config.')
+        pattern = '|'.join(self.runtime_symbols)
+
+        coordinates = ',\n'.join(self.gen_coordinates_sym)
+        coordinates = re.sub(pattern,self_inserter,coordinates)
+        coordinates = (coordinates if len(coordinates)!=0 else '[]')
+        coordinates = textwrap.indent(coordinates,indent).lstrip()
+        
+        velocities = ',\n'.join(self.gen_velocities_sym)
+        velocities = re.sub(pattern,self_inserter,velocities)
+        velocities = (velocities if len(velocities)!=0 else '[]')
+        velocities = textwrap.indent(velocities,indent).lstrip()
         
         text = text.format(maped = nodes,
                            virtuals = virtuals,
                            jac_rows = list(rows),
-                           jac_cols = string_cols_text)
+                           jac_cols = string_cols_text,
+                           coordinates = coordinates,
+                           velocities = velocities)
         text = textwrap.indent(text,indent)
         return text
     
