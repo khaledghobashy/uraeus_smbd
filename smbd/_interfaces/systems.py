@@ -256,15 +256,14 @@ class configuration(object):
     def __init__(self, name, model_instance):
         self.name = get_file_name(name)
         self.config = cfg_cls.abstract_configuration(self.name, model_instance.topology)
-        
-        self.config.assemble_base_layer()
         self._decorate_methods()
     
     @property
     def add_point(self):
         """
         Add a spatial point.
-        Availabe Methodes:
+
+        Availabe Methods:
             'UserInput', 'Mirrored', 'Centered', 'Equal_to'
         """
         return self._point_methods
