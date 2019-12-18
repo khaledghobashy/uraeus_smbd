@@ -71,11 +71,21 @@ class simulation(object):
 
 ###############################################################################
 ###############################################################################
+def lambdify(args):
+    name = args[0]
+    return_value = args[-1]
+    arguments = args[1]
+    str_args = ', '.join([i for i in arguments])
+    text = 'def %s(%s): return %s'%(name, str_args, return_value)
+    exec(text)
+    return eval(name)
+
 
 class JSON_configuration(object):
 
     _construction_map = {'array': np.array,
                          'getattribute': getattr,
+                         'Lambda': lambdify,
                          'Oriented': oriented,
                          'Mirrored': mirrored,
                          'Centered': centered,
@@ -83,11 +93,14 @@ class JSON_configuration(object):
 
     def __init__(self, json_file):
         self.file = json_file
-        self.construct_toplevel_dicts()
+
+        self.read_JSON_file()
         self.construct_inputs()
 
-    def construct_toplevel_dicts(self):
-        json_text = self.file
+    def read_JSON_file(self, json_file):
+        with open(json_file, 'r') as f:
+            json_text = f.read()
+        
         data_dict = json.loads(json_text)
 
         self.user_inputs = data_dict['user_inputs']
@@ -98,10 +111,20 @@ class JSON_configuration(object):
         user_inputs_dict = self.user_inputs
         for key, data in user_inputs_dict.items():
             if isinstance(data, dict):
-                constructor = self._construction_map[data['constructor']]
+                constructor_name = data['constructor']
+                constructor = self._construction_map[constructor_name]
                 args = data['args']
-                value = constructor(args)[:, None]
+                
+                if constructor_name == 'Lambda':
+                    args.insert(0, key)
+                
+                value = constructor(args)
+                
+                if constructor_name == 'array':
+                    value = value[:, None]
+                
                 setattr(self, key, value)
+            
             elif isinstance(data, (int, float, str, bool)):
                 setattr(self, key, data)
     
