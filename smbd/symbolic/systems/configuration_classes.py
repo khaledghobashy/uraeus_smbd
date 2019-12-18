@@ -295,6 +295,7 @@ class abstract_configuration(relational_graph):
         super().__init__(name)
         self._config = self
         self.topology = model_instance
+        self.assemble_base_layer()
         self.geometries_map = {}
 
     @property
@@ -305,6 +306,12 @@ class abstract_configuration(relational_graph):
     @property
     def primary_arguments(self):
         return self.topology.arguments_symbols
+
+    @property
+    def primary_nodes(self):
+        nodes = self.graph.nodes
+        primary_nodes = [n for n in nodes if nodes[n]['primary']]
+        return primary_nodes
     
     @property
     def geometry_nodes(self):
@@ -400,6 +407,9 @@ class abstract_configuration(relational_graph):
         self._add_primary_nodes(nodes_arguments)
 
         self.bodies = {n:self.topology.nodes[n] for n in self.topology.bodies}
+        
+        nodes = self.graph.nodes
+        self.primary_equalities = dict(nodes(data='equality'))
 
             
     def assign_geometry_to_body(self, body, geo, eval_inertia=True, mirror=False):
@@ -418,7 +428,8 @@ class abstract_configuration(relational_graph):
         node_object = symbolic_type(name)
         function = None 
         attributes_dict = {'lhs_value':node_object, 'rhs_function':function,
-                           'mirr':mirr, 'align':align, 'equality':None}
+                           'mirr':mirr, 'align':align, 'equality':None,
+                           'primary':False}
         return attributes_dict
 
     def _add_primary_nodes(self, arguments_lists):
@@ -436,9 +447,11 @@ class abstract_configuration(relational_graph):
         
     def _add_primary_node(self, node_object, mirr='', align='s'):
         name = str(node_object)
-        function = None #self._get_initial_equality(node_object)
+        function = None
+        equality = self._get_initial_equality(node_object)
         attributes_dict = {'lhs_value':node_object, 'rhs_function':function,
-                           'mirr':mirr, 'align':align}
+                           'mirr':mirr, 'align':align, 'primary':True,
+                           'equality':equality}
         self.graph.add_node(name, **attributes_dict)
 
     def _assign_geometry_to_body(self, body, geo, eval_inertia=True):
@@ -461,6 +474,7 @@ class abstract_configuration(relational_graph):
         rhs_function = nodes[node]['rhs_function']
         if rhs_function is None:
             equality = self._get_initial_equality(lhs_value)
+            nodes[node]['equality'] = equality
         else:
             input_edges = self.graph.in_edges(node, data='passed_attr')
             inputs = [(nodes[e[0]]['lhs_value'], e[-1]) for e in input_edges]
