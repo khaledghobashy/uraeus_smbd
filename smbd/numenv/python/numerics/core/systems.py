@@ -6,7 +6,6 @@ Created on Wed Mar 27 08:49:16 2019
 """
 # Standard library imports
 import os
-import json
 import pickle
 import itertools
 
@@ -15,8 +14,8 @@ import numpy as np
 
 # Local applicataion imports
 from .solvers import kds_solver, dds_solver
-from smbd.utilities.numerics.spatial_alg import centered, oriented, mirrored
-from smbd.utilities.numerics.geometries import cylinder_geometry
+from .utilities.decoders import JSON_Decoder
+
 
 ###############################################################################
 
@@ -71,96 +70,6 @@ class simulation(object):
 
 ###############################################################################
 ###############################################################################
-def lambdify(args):
-    name = args[0]
-    return_value = args[-1]
-    arguments = args[1]
-    str_args = ', '.join([i for i in arguments])
-    text = 'def %s(%s): return %s'%(name, str_args, return_value)
-    exec(text)
-    return eval(name)
-
-
-class JSON_configuration(object):
-
-    _construction_map = {'array': np.array,
-                         'getattribute': getattr,
-                         'Lambda': lambdify,
-                         'Oriented': oriented,
-                         'Mirrored': mirrored,
-                         'Centered': centered,
-                         'Cylinder_Geometry': cylinder_geometry,}
-
-    def __init__(self, json_file):
-        self.file = json_file
-
-        self.read_JSON_file()
-        self.construct_inputs()
-
-    def read_JSON_file(self, json_file):
-        with open(json_file, 'r') as f:
-            json_text = f.read()
-        
-        data_dict = json.loads(json_text)
-
-        self.user_inputs = data_dict['user_inputs']
-        self.evaluations = data_dict['evaluations']
-        self.outputs     = data_dict['outputs']
-    
-    def construct_inputs(self):
-        user_inputs_dict = self.user_inputs
-        for key, data in user_inputs_dict.items():
-            if isinstance(data, dict):
-                constructor_name = data['constructor']
-                constructor = self._construction_map[constructor_name]
-                args = data['args']
-                
-                if constructor_name == 'Lambda':
-                    args.insert(0, key)
-                
-                value = constructor(args)
-                
-                if constructor_name == 'array':
-                    value = value[:, None]
-                
-                setattr(self, key, value)
-            
-            elif isinstance(data, (int, float, str, bool)):
-                setattr(self, key, data)
-    
-    def perform_evaluations(self):
-        
-        evaluations_dict = self.evaluations
-        outputs_dict = self.outputs
-        
-        for key, data in evaluations_dict.items():
-            if isinstance(data, dict):
-                constructor = self._construction_map[data['constructor']]
-                args = [getattr(self, arg) for arg in data['args']]
-                value = constructor(*args)
-                setattr(self, key, value)
-            elif isinstance(data, (int, float, str, bool)):
-                setattr(self, key, data)
-        
-        for key, data in outputs_dict.items():
-            if isinstance(data, dict):
-                constructor = self._construction_map[data['constructor']]
-                if constructor is getattr:
-                    args = [getattr(self, data['args'][0]), data['args'][1]]
-                else:
-                    args = [getattr(self, arg) for arg in data['args']]
-                value = constructor(*args)
-                setattr(self, key, value)
-            elif isinstance(data, (int, float, str, bool)):
-                if isinstance(data, str):
-                    value = getattr(self, data)
-                else:
-                    value = data
-                setattr(self, key, value)
-
-
-###############################################################################
-###############################################################################
 
 class configuration(object):
     
@@ -175,26 +84,23 @@ class configuration(object):
     
     def construct_from_json(self, json_file, assemble=False):
 
-        json_config = JSON_configuration(json_file)
-        self.json_config = json_config
+        self.decoded_data = JSON_Decoder(json_file)
 
         if not assemble:
-            _attributes = json_config.user_inputs.keys()
+            _attributes = self.decoded_data.user_inputs.keys()
             for key in _attributes:
-                value = getattr(json_config, key)
+                value = getattr(self.decoded_data, key)
                 setattr(self, key, value)
         else:
             self.assemble()
         
-        
-    
     def assemble(self):
-        self.json_config.perform_evaluations()
+        self.decoded_data.assemble()
 
-        _attributes = itertools.chain(self.json_config.evaluations.keys(),
-                                      self.json_config.outputs.keys())
+        _attributes = itertools.chain(self.decoded_data.evaluations.keys(),
+                                      self.decoded_data.outputs.keys())
         
         for key in _attributes:
-            value = getattr(self.json_config, key)
+            value = getattr(self.decoded_data, key)
             setattr(self, key, value)
 
