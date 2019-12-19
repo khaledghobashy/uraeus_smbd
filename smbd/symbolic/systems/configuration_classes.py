@@ -327,11 +327,13 @@ class abstract_configuration(relational_graph):
             node2_attr_dict = self._create_node_dict(node2, symbolic_type, node1, align='l')
             super().add_node(node1, **node1_attr_dict)
             super().add_node(node2, **node2_attr_dict)
+            self._evaluate_node(node1)
             self.add_relation(Mirrored, node2, (node1,))
         else:
             node1 = '%ss_%s'%(sym, name)
             node1_attr_dict = self._create_node_dict(node1, symbolic_type, node1, align='s')
             super().add_node(node1, **node1_attr_dict)
+            self._evaluate_node(node1)
         return node1
     
     def add_relation(self, relation, node, arg_nodes, mirror=False):
@@ -344,27 +346,18 @@ class abstract_configuration(relational_graph):
             super().add_relation(node2, args2)
             self._update_node_rhs(node1, relation)
             self._update_node_rhs(node2, relation)
-            self._assemble_node_equality(node1, relation)
-            self._assemble_node_equality(node2, relation)
+            self._evaluate_node(node1)
+            self._evaluate_node(node2)
         else:
             super().add_relation(node, arg_nodes)
             self._update_node_rhs(node, relation)
-            self._assemble_node_equality(node, relation)
+            self._evaluate_node(node)
         
     def assemble_equalities(self):
         self.input_equalities = self._evaluate_nodes(self.input_nodes)
         self.intermediat_equalities = self._evaluate_nodes(self.intermediat_nodes)
         self.output_equalities = self._evaluate_nodes(self.output_nodes)
         
-    def _assemble_node_equality(self, node, relation):
-        nodes = self.graph.nodes
-        lhs_value = nodes[node]['lhs_value']
-        input_edges = self.graph.in_edges(node, data='passed_attr')
-        inputs = [(nodes[e[0]]['lhs_value'], e[-1]) for e in input_edges]
-        input_values = [i[0] if i[1] is None else getattr(*i) for i in inputs]
-        rhs_value = relation(*input_values)
-        equality = sm.Eq(lhs_value, rhs_value, evaluate=False)
-        nodes[node]['equality'] = equality
     
     def get_geometries_graph_data(self):
         graph = self.graph
@@ -474,13 +467,13 @@ class abstract_configuration(relational_graph):
         rhs_function = nodes[node]['rhs_function']
         if rhs_function is None:
             equality = self._get_initial_equality(lhs_value)
-            nodes[node]['equality'] = equality
         else:
             input_edges = self.graph.in_edges(node, data='passed_attr')
             inputs = [(nodes[e[0]]['lhs_value'], e[-1]) for e in input_edges]
             input_values = [i[0] if i[1] is None else getattr(*i) for i in inputs]
             rhs_value = rhs_function(*input_values)
             equality = sm.Eq(lhs_value, rhs_value, evaluate=False)
+        nodes[node]['equality'] = equality
         return equality
     
     @staticmethod
