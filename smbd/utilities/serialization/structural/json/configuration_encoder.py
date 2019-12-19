@@ -2,31 +2,55 @@
 """
 @author: Khaled Ghobashy
 """
-
+# Standard library imports
 import os
 import sys
 import json
 import inspect
 
+# 3rd party library imports
 import sympy as sm
+
+# Local applicataion imports
 from smbd.symbolic.components.matrices import AbstractMatrix, vector, quatrenion
 from smbd.symbolic.systems.configuration_classes import Simple_geometry
 
+################################################################################
+
 class Encoder(json.JSONEncoder):
+    """
+    A subclass of the `json.JSONEncoder` that over-rides the `default` method
+    that calls a custom `JSONify` function that returns a compatibale type
+    that can be serialzed in JSON.
+    """
     
     def default(self, obj):
         return JSONify(obj)
 
+################################################################################
+################################################################################
 
 def JSONify(instance):
+    """
+    A function that takes in a symbolic object or a class and returns a 
+    compatibale type that can be serialzed in JSON.
 
+    TODO:
+        DataTypes map
+    """
+
+    # check if the given instance is a class
     if inspect.isclass(instance):
         constructor = instance.__name__
         return constructor
     
+    # check if the given instance is a basic scalar data type that can be 
+    # understod by the JSON encoder directly.
     if isinstance(instance, (str, float, int, bool)):
         return instance
     
+    # check if the given instance is a basic sequence/iterable data type that 
+    # can be understod by the JSON encoder directly.
     elif isinstance(instance, dict):
         return {k: JSONify(v) for k,v in instance.items()}
     
@@ -38,9 +62,15 @@ def JSONify(instance):
         alias = tuple(JSONify(value) for value in instance)
         return alias
     
+    # Conversions of basic symbolic scalars / symbols to JSON
     elif isinstance(instance, (sm.Number,)):
         return float(instance)
     
+    elif isinstance(instance, (vector, quatrenion, sm.Symbol)):
+        text = str(instance)
+        return text
+    
+    # Conversion of sympy matrices.
     elif isinstance(instance, (sm.ImmutableDenseMatrix, sm.MutableDenseMatrix)):
         if 1 in instance.shape:
             alias = [JSONify(value) for value in instance]
@@ -49,36 +79,33 @@ def JSONify(instance):
         data_object = {'constructor': 'array', 'args':  alias}
         return data_object
     
-    elif isinstance(instance, (vector, quatrenion, sm.Symbol)):
-        text = str(instance)
-        return text
-    
+    # Conversion of symbolic geometries.
     elif isinstance(instance, tuple(Simple_geometry.__subclasses__())):
         constructor = JSONify(instance.__class__)
         args = [JSONify(arg) for arg in instance.args]
         data_object = {'constructor': constructor, 'args':  args}
         return data_object
     
+    # Conversion of Lambda functions.
     elif isinstance(instance, (sm.Function, sm.Lambda)):
         constructor = JSONify(instance.__class__)
         args = [JSONify(arg) for arg in instance.args]
         data_object = {'constructor': constructor, 'args':  args}
         return data_object
     
-    elif isinstance(instance, tuple(AbstractMatrix.__subclasses__())):
-        constructor = JSONify(instance.__class__)
-        args = [JSONify(arg) for arg in instance.args]
-        data_object = {'constructor': constructor, 'args':  args}
-        return data_object
-    
+    # Fall back to basic string message if datatype not included in previous
+    # casses.
     else:
-        #print(instance)
         return 'Data type not supported'
         
 
+################################################################################
+################################################################################
 
-
-class graph_data_extractor(object):
+class generator(object):
+    """
+    This class serves as a 
+    """
 
     def __init__(self, sym_config):
 
@@ -95,11 +122,8 @@ class graph_data_extractor(object):
 
         self.primary_equalities = self.config.primary_equalities
 
-    def dump_JSON_text(self):
-        data = self.construct()
-        json_text = json.dumps(data, cls=Encoder, indent=4)
-        return json_text
-    
+        self.data = self.construct()
+
     def write_JSON_file(self, file_path=''):
         name = '%s.json'%self.configuration_name
         file_name = os.path.join(file_path, name)
@@ -107,6 +131,11 @@ class graph_data_extractor(object):
 
         with open(file_name, 'w') as f:
             f.write(json_text)
+        
+    def dump_JSON_text(self):
+        data = self.construct()
+        json_text = json.dumps(data, cls=Encoder, indent=4)
+        return json_text
     
     def construct(self):
         config_info = {}
@@ -116,16 +145,10 @@ class graph_data_extractor(object):
         data = {}
         data['information'] = config_info
         data['user_inputs'] = self.construct_data_dict(self.input_nodes)
-        #data['raw_inputs']  = self.construt_raw_inputs(self.primary_equalities)
         data['evaluations'] = self.construct_data_dict(self.intermediat_nodes)
         data['outputs']     = self.construct_data_dict(self.output_nodes)
         return data
 
-    def construt_raw_inputs(self, equalities_dict):
-        storage_dict = {}
-        for node, equality in equalities_dict.items():
-            storage_dict[node] = JSONify(equality.rhs)
-        return storage_dict
     
     def construct_data_dict(self, nodes):
         storage_dict = {}
@@ -146,7 +169,8 @@ class graph_data_extractor(object):
         parent_node = edge[0]
         attribute = self.graph.edges[edge]['passed_attr']
         if attribute:
-            data_dict = {'constructor': 'getattribute', 'args': [parent_node, attribute]}
+            data_dict = {'constructor': 'getattribute', 
+                         'args': [parent_node, attribute]}
             return data_dict
         else:
             return parent_node
