@@ -9,7 +9,8 @@ import json
 import numpy as np
 
 # Local applicataion imports
-from ..math_funcs.misc import centered, oriented, mirrored, cylinder_geometry
+from ..math_funcs.spatial_alg import centered, oriented, mirrored
+from ..math_funcs.geometries import cylinder_geometry
 
 ###############################################################################
 
