@@ -86,6 +86,13 @@ def JSONify(instance):
         data_object = {'constructor': constructor, 'args':  args}
         return data_object
     
+    # Conversion of symbolic geometries.
+    elif isinstance(instance, tuple(AbstractMatrix.__subclasses__())):
+        constructor = JSONify(instance.__class__)
+        args = [JSONify(arg) for arg in instance.args]
+        data_object = {'constructor': constructor, 'args':  args}
+        return data_object
+    
     # Conversion of Lambda functions.
     elif isinstance(instance, (sm.Function, sm.Lambda)):
         constructor = JSONify(instance.__class__)
