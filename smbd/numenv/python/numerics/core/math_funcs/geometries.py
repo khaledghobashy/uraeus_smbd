@@ -11,7 +11,7 @@ from collections import namedtuple
 import numpy as np
 
 from .spatial_alg import triad, centered, oriented
-from .euler_parameters import A, dcm2ep
+from .numba_funcs import A, dcm2ep
 
 
 geometry = namedtuple('geometry', ['R','P','m','J'])

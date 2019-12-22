@@ -17,7 +17,7 @@ import smbd.symbolic.components.forces as forces
 import smbd.symbolic.systems.topology_classes as topology_classes
 import smbd.symbolic.systems.configuration_classes  as cfg_cls
 from smbd.symbolic.components.matrices import vector
-from smbd.utilities.serialization.structural.json.configuration_encoder import graph_data_extractor
+from smbd.utilities.serialization.structural.json.configuration_encoder import generator
 
 ###############################################################################
 
@@ -298,7 +298,7 @@ class configuration(object):
         inputs_dataframe.to_csv('%s.csv'%file_path)
     
     def export_JSON_file(self, path=''):
-        config_constructor = graph_data_extractor(self.config)
+        config_constructor = generator(self.config)
         config_constructor.write_JSON_file(path)
     
     def save(self):
