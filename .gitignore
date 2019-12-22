@@ -3,8 +3,12 @@
 **/__pycache__
 **/*.cmd
 **/*.o
+**/*.obj
+**/*.so
+**/*.pyd
 **/*.stpl
-**/*.vscode
+**/.vscode
+**/build
 /examples/**/numenv
 /examples/**/*.stpl
 /examples/**/csv_files
