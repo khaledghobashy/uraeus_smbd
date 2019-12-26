@@ -1,14 +1,13 @@
-# URAEUS
+# **URAEUS**
 
 **_Symbolic creation and analysis of constrained multi-body systems in python_**
 
 ## Description
 
-**uraeus** is a python package developed for the symbolic creation and analysis of constrained multi-body systems.
+**uraeus** is a python package developed for the symbolic creation and analysis of constrained [multi-body systems](https://en.wikipedia.org/wiki/Multibody_system).
 
 A multi-body system is hereby defined as *a finite number of material bodies connected in an arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies*. Practitioners of multi-body dynamics study the generation and solution of the equations governing the motion of such systems [1].
 
----------------------------------------------------
 ### Audience and Fields of Application
 
 Initially, the main targeted audience was the **Formula Student** community. The motive was *encouraging a deeper understanding of the modelling processes and the underlying theories used in other commercial software packages*, which is a way of giving back to the community, and supporting the concept of *"knowledge share"* adopted there by exposing it to the open-source community as well.
@@ -26,25 +25,14 @@ Fields of application include any domain that deals with the study of interconne
 
 ---------------------------------------------------
 
-### Features 
-
-Currently, the tool provides:
-
-- Creation of symbolic template-based and stand-alone multi-body systems using minimal API via python scripting.
-- Convenient and easy creation of complex multi-body assemblies.
-- Convenient visualization of the system topology as a network graph.
-- Viewing the system's symbolic equations in a natural mathematical format using Latex printing.
-- Optimization of the system symbolic equations by performing common sub-expressions elimination.
-- Creation of symbolic configuration files to facilitate the process of numerical simulation data entry.
-
----------------------------------------------------
-
-## Background
-### The What and The How ?
+### Background
 
 #### What is the problem to be solved?
+
 The primary interest in multi-body dynamics is to analyze the system behaviour for given inputs. In analogy with control systems; a multi-body system can be thought as a **_system_** subjected to some **_inputs_** producing some **_outputs_**. These three parts of the problem are dependent on the analyst end goal of the analysis and simulation. 
+
 #### How is the system physics abstracted mathematically?
+
 An unconstrained body in space is normally defined using 6 generalized coordinates defining its location and orientation. For example, a system of 10 bodies requires 60 generalized coordinates to be fully defined, which in turn requires 60 *independent equations* to be solved for these  _unknown_ generalized coordinates.
 
 The way we achieve a solution for the system is dependent on the type of study we are performing. Mainly we have **four types** of analysis that are of interest for a given multi-body system. These are:
@@ -61,11 +49,12 @@ The way we achieve a solution for the system is dependent on the type of study w
 Each analysis type -or question- can be modelled by a set of algebraic and/or differential equations that can be solved for the system generalized states (positions, velocities and accelerations). A more detailed discussion of each analysis type will be provided in another documentation.
 
 ### Approach
-The philosophy of the tool is to isolate the model creation process form the actual numerical and computational representation of the system that will be used in the simulation process. This is done through the ideas of symbolic computing and code-generation as well be shown below.
+
+The philosophy of the tool is to isolate the model creation process form the actual numerical and computational representation of the system that will be used in the simulation process. This is done through the ideas of **symbolic computing** and **code-generation** as well be shown below.
 
 #### Model Creation
 
-The topology of the system is represented as a multi-directed graph, where each **node** represents a body and each **edge** represents a connection between the end nodes, where this connection may represents a joint, actuator or a force element. This serves mainly two aspects:
+The topology of the system is represented as a multi-directed graph, where each node represents a body and each edge represents a connection between the end nodes, where this connection may represents a joint, actuator or a force element. This serves mainly two aspects:
 
 1. A natural way to create and represent the topology of a given multi-body system.
 2. A convenient way to abstract the system programmatically, where all the topological data of the system are stored in a graph.
@@ -78,7 +67,7 @@ The combination of both, NetworkX and SymPy, provides the tool with a very simpl
 
 The process of performing actual simulations on the created model requires the generation of a valid numerical and computational code of the created model. This is done by taking in the symbolic model and create a valid code files written in the desired programming language with the desired programming paradigm and structure.
 
-These numerical environments are decoupled from the tool and developed fairly independently, as each numerical environment is responsible for the translation of the developed symbolic models into valid numerical code and what features it aims to provide for the users.
+These numerical environments are decoupled from this package and developed fairly independently, as each numerical environment is responsible for the translation of the developed symbolic models into valid numerical code and what features it aims to provide for the users.
 
 The development of such environments in different languages requires a good grasp of several aspects such as :
 
@@ -98,6 +87,19 @@ Several benefits of the adopted approach can be stated here, but the major theme
 - The distinction between the topology design phase and the configuration assignment phase, which gives proper focus for each at its' own.
 - Natural adoption of the template-based modelling theme that emerges from the use of network-graphs to represent the system, which allows convenient assemblage of several graphs to form a new system. 
 - Uncoupled simulation environment, where the symbolic equations generated form the designed topology is free to be written in any programming language with any desired numerical libraries.
+
+---------------------------------------------------
+
+### Features 
+
+Currently, the tool provides:
+
+- Creation of symbolic template-based and stand-alone multi-body systems using minimal API via python scripting.
+- Convenient and easy creation of complex multi-body assemblies.
+- Convenient visualization of the system topology as a network graph.
+- Viewing the system's symbolic equations in a natural mathematical format using Latex printing.
+- Optimization of the system symbolic equations by performing common sub-expressions elimination.
+- Creation of symbolic configuration files to facilitate the process of numerical simulation data entry.
 
 ---------------------------------------------------
 
@@ -174,10 +176,13 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 *To be discussed ...*
 
+---------------------------------------------------
 
+---------------------------------------------------
 
 ### Detailed Example - Spatial Fourbar Mechanism
-Below is code sample that walks you through the process of building a standalone symbolic topology and configuration as well as the generation of numerical simulation environments. The same code is also provided as a .py script and .ipynb notebook in the [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples/standalone_models) sub-directory.
+----------------------------------
+Below is code sample that walks you through the process of building a standalone symbolic topology and configuration as well as the generation of numerical simulation environments.
 
 This model will be created as a **standalone** topology and project. What this means is that model topological data is fully encapsulated in one topology graph and no need for any topological data from other external systems, which is the case for **template-based** topologies.
 
@@ -231,7 +236,7 @@ sym_model.add_joint.revolute('d', 'rbs_l3', 'ground')
 # Adding Actuators
 sym_model.add_actuator.rotational_actuator('act', 'jcs_a')
 ```
-And thats it; we have just created a symbolic topology that represents our fourbar mechanism. The topology graph of the system can be visualized by the method ```sym_model.topology.draw_constraints_topology()```
+And that's it; we have just created a symbolic topology that represents our fourbar mechanism. The topology graph of the system can be visualized by the method ```sym_model.topology.draw_constraints_topology()```
 Also we can check the number of constraint equations, generalized coordinates and the estimated degrees of freedom of the system.
 To finalize this step, we call the ```assemble()``` method to construct the governing equations symbolically.
 
