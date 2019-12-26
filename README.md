@@ -1,15 +1,17 @@
-# **SMBD** | Symbolic Multi-Body Dynamics
+# URAEUS
+
+**_Symbolic creation and analysis of constrained multi-body systems in python_**
 
 ## Description
 
-**smbd** is a python package developed for the creation, simulation and visualization of multi-body systems.
+**uraeus** is a python package developed for the symbolic creation and analysis of constrained multi-body systems.
 
 A multi-body system is hereby defined as *a finite number of material bodies connected in an arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies*. Practitioners of multi-body dynamics study the generation and solution of the equations governing the motion of such systems [1].
 
 ---------------------------------------------------
 ### Audience and Fields of Application
 
-Initially, the main targeted audience was the **Formula Student** community. The motive was *encouraging a deeper understanding of the modeling processes and the underlying theories used in other commercial software packages*, which is a way of giving back to the community, and supporting the concept of *"knowledge share"* adopted there by exposing it to the open-source community as well.
+Initially, the main targeted audience was the **Formula Student** community. The motive was *encouraging a deeper understanding of the modelling processes and the underlying theories used in other commercial software packages*, which is a way of giving back to the community, and supporting the concept of *"knowledge share"* adopted there by exposing it to the open-source community as well.
 
 Currently, the tool aims to serve a wider domain of users with different usage goals and different backgrounds, such as students, academic researchers and industry professionals.
 
@@ -28,58 +30,12 @@ Fields of application include any domain that deals with the study of interconne
 
 Currently, the tool provides:
 
-#### Symbolic Model Creation
-
-- Creation of symbolic template-based and stand-alone multibody systems using minimal API via python scripting.
-- Convenient and easy creation of complex multibody assemblies.
+- Creation of symbolic template-based and stand-alone multi-body systems using minimal API via python scripting.
+- Convenient and easy creation of complex multi-body assemblies.
 - Convenient visualization of the system topology as a network graph.
 - Viewing the system's symbolic equations in a natural mathematical format using Latex printing.
-- Optimization of the system equations by performing common sub-expressions elimination.
-- Creation of symbolic configuration files to facilitate the process of numerical configuration data entry.
-
-#### Numerical Simulation Environments
-The tool aims to provide a full encompassing simulation environments and not only code-generation. The development of such environments in different languages requires a good grasp of several aspects such as :
-- Good knowledge of the symbolic models' interfaces and structure.
-- Good knowledge of the target language.
-- Appropriate environment architecture/structure that serves the intended usage requirements.
-- Good knowledge of the available linear algebra and math libraries for that language.
-- Design for minimal dependencies on 3rd parties libraries.
-- Simple API for usage and simple build process for compiled languages. 
-
-*__Note__:The development of such environments is discussed in a separate documentation for those interested in developing their own.*
-
-The tool currently provides:
-- A numerical simulation environment in **python** that provides a python solver that can be used to solve for *Kinematically  and Dynamically Driven Systems* using the [NumPy](https://www.numpy.org/) and [SciPy](https://www.scipy.org/index.html) libraries for numerical evaluation.
-- A numerical simulation environment in **C++** that provides a solver that can be used to solve for *Kinematically Driven Systems* using [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) library as the linear algebra engine and selected modules from the [Boost](https://www.boost.org/) library for other math functionalities. It also generates appropriate makefiles that automates the build process of model executables.
-
-#### 3D Visualization
-
-*"Requires the installation of  [blender](https://www.blender.org/). It is free and open-source."*
-
-- A blender code-generator for the creation of valid blender scripts that can be used for 3D visualizations in blender.
-- A blender add-on that can be easily added to blender's GUI, to facilitate the visualization process of the simulated systems.
-
-#### Extensible Development Environment
-
-- Easy construction of new, user-defined joints and actuators.
-- A modular development environment that adopts the *"programming to an interface instead of an implementation"* concept, resulting in a flexible, loosely-coupled code structure. 
-
----------------------------------------------------
-
-### Visualization Samples
-**Double-Wishbone Bell-Crank Actuated Front-Axle**
-</br>
-![Blender Gif](readme_materials/gif/frontaxle.gif)
-
-**Spatial Fourbar Mechanism**
-</br>
-![Blender Gif](readme_materials/gif/fourbar.gif)
-
-**Full Vehicle Lane-Change Manoeuvre**
-</br>
-![Blender Gif](readme_materials/gif/full_vehicle_lanechange.gif)
-
----------------------------------------------------
+- Optimization of the system symbolic equations by performing common sub-expressions elimination.
+- Creation of symbolic configuration files to facilitate the process of numerical simulation data entry.
 
 ---------------------------------------------------
 
@@ -87,9 +43,9 @@ The tool currently provides:
 ### The What and The How ?
 
 #### What is the problem to be solved?
-The primary interest in multibody dynamics is to analyze the system behavior for given inputs. In analogy with control systems; a multi-body system can be thought as a **_system_** subjected to some **_inputs_** producing some **_outputs_**. These three parts of the problem are dependent on the analyst end goal of the analysis and simulation. 
+The primary interest in multi-body dynamics is to analyze the system behaviour for given inputs. In analogy with control systems; a multi-body system can be thought as a **_system_** subjected to some **_inputs_** producing some **_outputs_**. These three parts of the problem are dependent on the analyst end goal of the analysis and simulation. 
 #### How is the system physics abstracted mathematically?
-An unconstrained body in space is normally defined using 6 generalized coordinates defining its location and orientation. For example, a system of 10 bodies requires 60 generalized coordinates to be fully defined, which in turn requires 60 *independent equations* to be solved for these  -unknown- generalized coordinates.
+An unconstrained body in space is normally defined using 6 generalized coordinates defining its location and orientation. For example, a system of 10 bodies requires 60 generalized coordinates to be fully defined, which in turn requires 60 *independent equations* to be solved for these  _unknown_ generalized coordinates.
 
 The way we achieve a solution for the system is dependent on the type of study we are performing. Mainly we have **four types** of analysis that are of interest for a given multi-body system. These are:
 
@@ -102,32 +58,45 @@ The way we achieve a solution for the system is dependent on the type of study w
 - **Dynamic Analysis**</br>
   *"Now we gave it a force, how does it behave ?"*
 
-Each analysis type -or question- can be modeled by a set of algebraic and/or differential equations that can be solved for the system generalized states (positions, velocities and accelerations). A more detailed discussion of each analysis type will be provided in another documentation.
+Each analysis type -or question- can be modelled by a set of algebraic and/or differential equations that can be solved for the system generalized states (positions, velocities and accelerations). A more detailed discussion of each analysis type will be provided in another documentation.
 
 ### Approach
 The philosophy of the tool is to isolate the model creation process form the actual numerical and computational representation of the system that will be used in the simulation process. This is done through the ideas of symbolic computing and code-generation as well be shown below.
 
 #### Model Creation
 
-The topology of the system is represented as a multi-directed graph, where each node represents a body and each edge represents a connection between the end nodes, where this connection may represents a joint, actuator or a force element. This serves mainly two aspects:
+The topology of the system is represented as a multi-directed graph, where each **node** represents a body and each **edge** represents a connection between the end nodes, where this connection may represents a joint, actuator or a force element. This serves mainly two aspects:
 
-1. A natural way to create and represent the topology of a given multibody system.
+1. A natural way to create and represent the topology of a given multi-body system.
 2. A convenient way to abstract the system programmatically, where all the topological data of the system are stored in a graph.
 
-The tool achieves this by making heavy use the [NetworkX](https://networkx.github.io/documentation/stable/index.html) python package to create topology graphs and to construct the governing equations of the system. The equations themselves are represented symbolically by using [SymPy](https://www.sympy.org/en/index.html), which is a Python library for symbolic mathematics.
+The tool achieves this by making heavy use the [NetworkX](https://networkx.github.io/documentation/stable/index.html) python package to create topology graphs and to construct the governing equations of the system. The equations themselves are represented symbolically using [SymPy](https://www.sympy.org/en/index.html), which is a Python library for symbolic mathematics.
 
 The combination of both, NetworkX and SymPy, provides the tool with a very simple, easy-to-use and convenient interface for the process of model creation and topology design, where the user only focuses on the validity of the system topology in hand, as he thinks only in terms of the topological components - bodies, joints, actuators and forces-, without the burden of frequent numerical inputs for each component, or how the actual system is configured in space. In short, the tool divide the typical model creation process in halves, the system topology design and the system configuration assignment.
 
 #### Code Generation and Model Simulation
 
-The process of performing actual simulations on the created model requires the generation of a valid numerical and computational code of the created model. This is done by taking in the symbolic model and create a valid code files written in the desired programming language with the desired programming paradigm and structure. As mentioned previously, the tool provides two numerical environemnts, one in python and another one in C++.
+The process of performing actual simulations on the created model requires the generation of a valid numerical and computational code of the created model. This is done by taking in the symbolic model and create a valid code files written in the desired programming language with the desired programming paradigm and structure.
+
+These numerical environments are decoupled from the tool and developed fairly independently, as each numerical environment is responsible for the translation of the developed symbolic models into valid numerical code and what features it aims to provide for the users.
+
+The development of such environments in different languages requires a good grasp of several aspects such as :
+
+- Good knowledge of the symbolic models' interfaces and structure.
+- Good knowledge of the target language.
+- Appropriate environment architecture/structure that serves the intended usage requirements.
+- Good knowledge of the available linear algebra and math libraries for that language.
+- Design for minimal dependencies on 3rd parties libraries.
+- Simple API for usage and simple build process for compiled languages.
+
+_**Note**: The development of such environments is discussed in a separate documentation for those interested in developing their own._
 
 #### Conclusion
 
 Several benefits of the adopted approach can be stated here, but the major theme here is the flexibility and modularity, in both software usage and software development. These can be summarized as follows:
 
 - The distinction between the topology design phase and the configuration assignment phase, which gives proper focus for each at its' own.
-- Natural adoption of the template-based modeling theme that emerges from the use of network-graphs to represent the system, which allows convenient assemblage of several graphs to form a new system. 
+- Natural adoption of the template-based modelling theme that emerges from the use of network-graphs to represent the system, which allows convenient assemblage of several graphs to form a new system. 
 - Uncoupled simulation environment, where the symbolic equations generated form the designed topology is free to be written in any programming language with any desired numerical libraries.
 
 ---------------------------------------------------
@@ -137,9 +106,9 @@ Several benefits of the adopted approach can be stated here, but the major theme
 
 ### Using the tool on [Colab](https://colab.research.google.com)
 
-Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. So, if you do not have an up and running python environment, you still can check out the tool and create multibody systems seamlessly. 
+Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. So, if you do not have an up and running python environment, you still can check out the tool and create multi-body systems seamlessly. 
 
-The examples section below, has several ready-to-use Colab notebooks that walks you through a typical modeling process flow.
+The examples section below, has several ready-to-use Colab notebooks that walks you through a typical modelling process flow.
 
 ### Using the tool on your machine.
 
@@ -150,7 +119,7 @@ The tool needs a valid python 3.6+ environment. If new to scientific computing i
 As the tool is still under continuous development, cloning this repository is a more versatile way to test and play with it, until a more stable first release is released. This can be done via the following git commands from the command line.
 
 ```bash
-git clone https://github.com/khaledghobashy/smbd.git
+git clone https://github.com/khaledghobashy/uraeus.git
 ```
 
 ```bash
@@ -163,14 +132,14 @@ Then, if creating a new python session to use the tool, add the directory path w
 
 ```python
 try:
-    import smbd
+    import uraeus
 except ModuleNotFoundError:
     import sys
-	pkg_path = 'path/to/smbd'
+	pkg_path = 'path/to/uraeus'
     sys.path.append(pkg_path)
 
-# the package can now be imported as smbd, e.g. :
-# from smbd.systems import standalone_topology
+# the package can now be imported as uraeus, e.g. :
+# from uraeus.systems import standalone_topology
 ```
 
 
@@ -190,7 +159,7 @@ except ModuleNotFoundError:
 
 ### Ready-to-Use Notebooks & Tutorials
 
-This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modeling process. The [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples/standalone_models/notebooks/) directory in this repository is planned to include updated versions of working models that can be statically viewed on github, downloaded on your machine or to be ran directly on Colab.
+This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modelling process. The [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples/standalone_models/notebooks/) directory in this repository is planned to include updated versions of working models that can be statically viewed on github, downloaded on your machine or to be ran directly on Colab.
 
 ### Standalone Studies
 
@@ -371,241 +340,6 @@ The last step is to ```assemble``` the symbolic configuration and extract the up
 sym_config.assemble()
 sym_config.extract_inputs_to_csv(parent_dir)
 ```
-#### Generating Simulation Environments.
-Currently the tool provides two fully encapsulating numerical simulation environments in **python** and **C++**,  where each numerical simulation environment is responsible for creating its own structure and dependencies.
-
-
-
-**Generating python code.** 
-
-```python
-from smbd.numenv.python.codegen import projects as py_numenv
-
-# Creating the needed directories structure for the source code.
-py_project = py_numenv.standalone_project(parent_dir)
-py_project.create_dirs()
-
-# Generating the source code.
-py_project.write_topology_code(sym_model.topology)
-py_project.write_configuration_code(config.config)
-
-# Creating a sample main.py that can be used 
-# in the numerical simulation
-py_project.write_mainfile()
-```
-The generated code structure can be found under ```numenv/python/``` directory.
-
-
-
-**Generating C++ code.** 
-
-```python
-from smbd.numenv.cpp_eigen.codegen import projects as cpp_numenv
-
-# Creating the needed directories structure for the source code.
-cpp_project = cpp_numenv.standalone_project(parent_dir)
-cpp_project.create_dirs()
-
-# Generating the source code.
-cpp_project.write_topology_code(sym_model.topology)
-cpp_project.write_configuration_code(config.config)
-
-# Generating the makefile and main.cpp files.
-cpp_project.write_mainfile()
-cpp_project.write_makefile()
-```
-The generated code structure can be found under ```numenv/cpp_eigen/``` directory.
-
-
-
-Also, we can generate a blender-python script that we can use later in 3D visualizations. This is done via
-
-```python
-from smbd.utilities.blender.codegen import script_generator
-bpy_code = script_generator(sym_config.config)
-bpy_code.write_code_file('numenv/')
-```
-
-
-
-And thats it for the symbolic domain. The full script can be found [here](/examples/scripts/fourbar/fourbar.py).
-
-
-
-#### Python Numerical Simulation.
-
-Now we use the generated source-code to create a valid simulation instance. We start with several imports
-```python
-import pandas as pd
-import numpy as np
-```
-Then we import the needed classes and functions from the provided python numerical environment.
-```python
-from smbd.numenv.python.numerics.systems import multibody_system, simulation
-```
-And finally we import the generated source-code.
-```python
-# Importing the generated modules/souce-code of the model.
-from numenv.python.src import fourbar, fourbar_cfg
-```
-Now we create our needed instances.
-```python
-num_model  = multibody_system(fourbar)
-num_config = fourbar_cfg.configuration()
-
-num_model.topology.config = num_config
-```
-Then we set our numerical values.
-```python
-# Creating numerical inputs instance.
-num_inputs = spatial_fourbar_cfg.inputs('base_config')
-
-# Specifying the Numerical Configuration of the System.
-# ====================================================
-num_inputs.P_ground.flat[:] = [1, 0, 0, 0]
-
-num_inputs.hps_a.flat[:] = 0, 0, 0
-num_inputs.hps_b.flat[:] = 0, 0, 200
-num_inputs.hps_c.flat[:] = -750, -850, 650
-num_inputs.hps_d.flat[:] = -400, -850, 0
-
-num_inputs.vcs_x.flat[:] = 1, 0, 0
-num_inputs.vcs_y.flat[:] = 0, 1, 0
-num_inputs.vcs_z.flat[:] = 0, 0, 1
-
-num_inputs.s_links_ro = 20
-
-# Saving the numerical data to a new csv file
-num_inputs.to_csv('config_inputs')
-
-# Setting the actuation function
-num_inputs.UF_mcs_act = lambda t : -np.deg2rad(360)*t
-```
-Then we create a simulation instance that takes in the numerical model.
-```python
-sim = simulation('sim', num_model, 'kds')
-sim.set_time_array(5, 2e-2)
-sim.solve()
-```
-The simulation results can be accessed as
-```python
-sim.soln.pos_dataframe
-sim.soln.vel_dataframe
-sim.soln.acc_dataframe
-```
-and can be plotted easily as 
-```python
-sim.soln.pos_dataframe.plot(x='time', y='rbs_l3.x', grid=True, figsize=(10,4))
-```
-The python numerical environment also provides a method to evaluate the constraints forces resulted from the prescribed motion imposed on the system using the vector of Lagrange multipliers.
-```python
-sim.eval_reactions()
-```
-
-
-#### C++ Numerical Simulation.
-
-*__Note__: The details of the structure of the generated environment code structure and the "how to use" will be discussed in a separate documentation.*
-
-The C++ simulation environments generates a sample ```main.cpp``` file that can be filled in with the numerical data directly, as well as a template ```Makefile``` that can be used to build the model executable easily.
-First, we open the ```main.cpp``` and edit the ```#include "src/topology.hpp"``` and ```#include "src/configuration.hpp"``` to match our generated code-files names, then we set our numerical configuration data. Finally we save the file as a ```new_main.cpp```.
-
-```c++
-#include <iostream>
-
-#include "smbd/solvers.hpp"
-
-// topology and configuration header files.
-#include "src/fourbar.hpp"
-#include "src/fourbar_cfg.hpp"
-
-
-int main()
-{
-    Topology model("");
-    auto Config = ConfigurationInputs<Configuration>(model.config);
-
-    // assign the configuration inputs needed ...
-    //=========================================================//
-    
-    Config.R_ground << 0, 0, 0 ;
-    Config.P_ground << 1, 0, 0, 0 ;
-
-    Config.hps_a <<  0, 0, 0 ;
-    Config.hps_b <<  0, 0, 200 ;
-    Config.hps_c << -750, -850, 650 ;
-    Config.hps_d << -400, -850, 0 ;
-
-    Config.vcs_x << 1, 0, 0 ;
-    Config.vcs_y << 0, 1, 0 ;
-    Config.vcs_z << 0, 0, 1 ;
-
-    Config.s_links_ro = 20 ;
-    Config.UF_mcs_act = [](double t)->double{return 2*(22/7)*t;};
-
-    //=========================================================//
-    
-    Config.assemble();
-
-    Solver<Topology> Soln(model);
-    Soln.set_time_array(5, 250);
-    Soln.Solve();
-    Soln.ExportResultsCSV("../../results/", 0);
-
-};
-```
-
-Then we open the generated ```Makefile``` and edit the first three lines as follows then we save it with the same name -overwriting the original-.
-```makefile
-# Change MODEL, CONFG and MAIN to match the source files you want to build
-# ========================================================================
-MODEL := fourbar
-CONFG := fourbar_cfg
-MAIN := new_main.cpp
-# ========================================================================
-
-M_BUILD := build/
-M_SRC := src/
-M_BIN := bin/
-
-NUM_DIR := {path/to/sourcecode} # this will be generated automatically in your generated makefile based on on your setup.
-
-SMBD_SRC := $(NUM_DIR)/src
-SMBD_BUILD := $(NUM_DIR)/build
-
-SMBD_OBJS = $(SMBD_BUILD)/*.o
-
-DEPS := $(M_BUILD)$(MODEL).o $(MAIN) $(M_SRC)$(CONFG).hpp $(SMBD_SRC)/smbd/solvers.hpp
-
-INC := -I $(SMBD_SRC)
-CC := g++
-
-
-$(M_BIN)$(MODEL): $(DEPS) $(SMBD_OBJS)
-	$(CC) $(INC) $(M_BUILD)$(MODEL).o $(MAIN) $(SMBD_OBJS) -o $@
-
-$(M_BUILD)$(MODEL).o: $(M_SRC)$(MODEL).cpp $(M_SRC)$(MODEL).hpp
-	$(CC) $(INC) -c -o $@ $<
-
-
-$(SMBD_BUILD)/%.o: $(SMBD_SRC)/smbd/%.cpp $(SMBD_SRC)/smbd/%.hpp
-	cd $(SMBD_SRC)/../ && make
-
-
-clear:
-	rm $(M_BUILD)*.o $(M_BIN)$(MODEL)
-
-```
-Then we open a terminal in the directory containing the ```Makefile``` and run ```make```. This will start compiling and build the executable using the ```gcc``` compiler and saves the executable in the ```/bin``` directory. The executable can be then run via the command ```bin/fourbar```
-
-*__Note__: It should be noted that building the model requires the availability of ```make``` and ```gcc``` to be carried out successfully. Most Linux machines are already pre-equipped with these by default. Also the building process is only tested on the ```gcc``` compiler, more tests to be carried out using different compilers on different machines.*
-
----------------------------------------------------
-
-### 3D Visualization
-
-*To be discussed ...*
-
 ---------------------------------------------------
 
 ---------------------------------------------------
@@ -632,5 +366,5 @@ As the tool is developed and maintained by one developer for now, if you have an
 
 ## License
 
-**SMBD** is distributed under the 3-clause BSD license. See the [LICENSE](LICENSE) file for details.
+**uraeus** is distributed under the 3-clause BSD license. See the [LICENSE](LICENSE) file for details.
 
