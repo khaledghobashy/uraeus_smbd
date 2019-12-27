@@ -16,3 +16,8 @@
 /examples/**/config_inputs
 /smbd/numenv/cpp_eigen/numerics/tests
 /tests
+
+build
+dist
+# Egg metadata
+*.egg-info
