@@ -3,11 +3,7 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-short_description = \
-"""
-A python package developed for symbolic creation and analysis 
-of constrained multi-body systems.
-"""
+short_description = 'Symbolic creation and analysis of constrained multi-body systems in python'
 
 setuptools.setup(
     name = "uraeus",
@@ -25,4 +21,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires = '>=3.6',
+    install_requires=[
+          'sympy==1.4',
+          'networkx',
+          'cloudpickle',
+          'matplotlib'
+      ],
 )
