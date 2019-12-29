@@ -11,7 +11,7 @@ import itertools
 import sympy as sm
 import numpy as np
 import networkx as nx
-import pandas as pd
+#import pandas as pd
 import matplotlib.pyplot as plt
 
 # Local application imports
@@ -379,16 +379,16 @@ class abstract_configuration(relational_graph):
                 'geometries_map':self.geometries_map}
         return data
 
-    def create_inputs_dataframe(self):
-        nodes  = self.graph.nodes
+    def _create_inputs_dataframe(self):
+        """ nodes  = self.graph.nodes
         inputs = self.input_nodes
         condition = lambda i:  isinstance(nodes[i]['lhs_value'], sm.MatrixSymbol)\
                             or isinstance(nodes[i]['lhs_value'], sm.Symbol)
         indecies = list(filter(condition, inputs))
         indecies.sort()
         shape = (len(indecies),4)
-        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64)
-        return dataframe
+        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64) """
+        raise NotImplementedError
 
     def assemble_base_layer(self):
         edges_data = list(zip(*self.topology.edges(data=True)))
