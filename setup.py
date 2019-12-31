@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 short_description = 'Symbolic creation and analysis of constrained multi-body systems in python'
 
 setuptools.setup(
-    name = "uraeus",
+    name = "uraeus.smbd",
     version = "0.0.dev1",
     author = "Khaled Ghobashy",
     author_email = "khaled.ghobashy@live.com",
