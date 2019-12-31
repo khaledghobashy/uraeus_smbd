@@ -12,8 +12,8 @@ import inspect
 import sympy as sm
 
 # Local applicataion imports
-from smbd.symbolic.components.matrices import AbstractMatrix, vector, quatrenion
-from smbd.symbolic.systems.configuration_classes import Simple_geometry
+from .....symbolic.components.matrices import AbstractMatrix, vector, quatrenion
+from .....symbolic.systems.configuration_classes import Simple_geometry
 
 ################################################################################
 

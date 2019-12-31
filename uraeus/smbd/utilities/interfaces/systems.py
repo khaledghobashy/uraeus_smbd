@@ -12,12 +12,12 @@ import cloudpickle
 import sympy as sm
 
 # Local applicataion imports
-import smbd.symbolic.components.joints as joints
-import smbd.symbolic.components.forces as forces
-import smbd.symbolic.systems.topology_classes as topology_classes
-import smbd.symbolic.systems.configuration_classes  as cfg_cls
-from smbd.symbolic.components.matrices import vector
-from smbd.utilities.serialization.structural.json.configuration_encoder import generator
+from ...symbolic.components import joints as joints
+from ...symbolic.components import forces as forces
+from ...symbolic.systems import topology_classes as topology_classes
+from ...symbolic.systems import configuration_classes  as cfg_cls
+from ...symbolic.components.matrices import vector
+from ..serialization.structural.json.configuration_encoder import generator
 
 ###############################################################################
 
