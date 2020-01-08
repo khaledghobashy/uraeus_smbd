@@ -1,5 +1,2 @@
 #
-import os
-
-_source_path = os.path.dirname(__file__)
-pkg_path = os.path.split(_source_path)[0]
+__import__('pkg_resources').declare_namespace(__name__)
