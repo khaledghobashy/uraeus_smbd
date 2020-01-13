@@ -197,9 +197,7 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 ----------------------------------
 Below is code sample that walks you through the process of building a standalone symbolic topology and configuration as well as the generation of numerical simulation environments.
 
-This model will be created as a **standalone** topology and project. What this means is that model topological data is fully encapsulated in one topology graph and no need for any topological data from other external systems, which is the case for **template-based** topologies.
-
-This also means that the project files/database is self-contained, unlike the **template-based** topologies that need to be organized in a shared database.
+This model will be created as a **standalone** topology and project. What this means is that model topological data is fully encapsulated in one topology graph and no need for any topological data from other external systems, which is the case for **template-based** topologies. This also means that the project files/database is self-contained, unlike the **template-based** topologies that need to be organized in a shared database.
 
 #### Initializing Project Structure
 
