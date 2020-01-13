@@ -25,6 +25,21 @@ Fields of application include any domain that deals with the study of interconne
 
 ---------------------------------------------------
 
+### Features 
+
+Currently, the tool provides:
+
+- Creation of symbolic template-based and stand-alone multi-body systems using minimal API via python scripting.
+- Convenient and easy creation of complex multi-body assemblies.
+- Convenient visualization of the system topology as a network graph.
+- Viewing the system's symbolic equations in a natural mathematical format using Latex printing.
+- Optimization of the system symbolic equations by performing common sub-expressions elimination.
+- Creation of symbolic configuration files to facilitate the process of numerical simulation data entry.
+
+---------------------------------------------------
+
+---------------------------------------------------
+
 ### Background
 
 #### What is the problem to be solved?
@@ -90,20 +105,6 @@ Several benefits of the adopted approach can be stated here, but the major theme
 
 ---------------------------------------------------
 
-### Features 
-
-Currently, the tool provides:
-
-- Creation of symbolic template-based and stand-alone multi-body systems using minimal API via python scripting.
-- Convenient and easy creation of complex multi-body assemblies.
-- Convenient visualization of the system topology as a network graph.
-- Viewing the system's symbolic equations in a natural mathematical format using Latex printing.
-- Optimization of the system symbolic equations by performing common sub-expressions elimination.
-- Creation of symbolic configuration files to facilitate the process of numerical simulation data entry.
-
----------------------------------------------------
-
----------------------------------------------------
 ## Installation
 
 ### Using the tool on [Colab](https://colab.research.google.com)
@@ -121,34 +122,33 @@ The tool needs a valid python 3.6+ environment. If new to scientific computing i
 As the tool is still under continuous development, cloning this repository is a more versatile way to test and play with it, until a more stable first release is released. This can be done via the following git commands from the command line.
 
 ```bash
-git clone https://github.com/khaledghobashy/uraeus.git
+$ git clone https://github.com/khaledghobashy/uraeus.git
 ```
 
 ```bash
-git pull origin master
+$ git pull origin master
 ```
 
 Or alternatively, download the repository as a **zip** file and extract it on your machine.
 
-Then, if creating a new python session to use the tool, add the directory path where the tool exists to the python system path.
+To install the package locally and use it as other python packages, open a terminal or a powershell and `cd` to the package location, then run
 
-```python
-try:
-    import uraeus
-except ModuleNotFoundError:
-    import sys
-	pkg_path = 'path/to/uraeus'
-    sys.path.append(pkg_path)
-
-# the package can now be imported as uraeus, e.g. :
-# from uraeus.systems import standalone_topology
+```bash
+$ cd path/to/package
+$ pip install -e .
 ```
 
 
 
 #### Pip
 
-*To Do.*
+The package can be also installed from PyPi using
+
+```bash
+$ pip install uraeus.smbd
+```
+
+
 
 #### Conda
 
@@ -161,16 +161,16 @@ except ModuleNotFoundError:
 
 ### Ready-to-Use Notebooks & Tutorials
 
-This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modelling process. The [**examples**](https://github.com/khaledghobashy/smbd/tree/master/examples/standalone_models/notebooks/) directory in this repository is planned to include updated versions of working models that can be statically viewed on github, downloaded on your machine or to be ran directly on Colab.
+This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modelling process. The [**examples**](examples/standalone_models/) directory in this repository is planned to include updated versions of working models that can be statically viewed on github, downloaded on your machine or to be ran directly on Colab.
 
 ### Standalone Studies
 
-- **Spatial Four-bar**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/spatial_fourbar/spatial_fourbar.ipynb) | [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/spatial_fourbar/spatial_fourbar.ipynb))
-- **Spatial Slider-Crank**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/spatial_slider_crank/spatial_slider_crank.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/spatial_slider_crank/spatial_slider_crank.ipynb))
-- **Double-Wishbone Suspension**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_wishbone_suspension/double_wishbone_direct_acting.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_wishbone_suspension/double_wishbone_direct_acting.ipynb#scrollTo=A5aeLp5S45eh))
-- **Double-Four-bar Mechanism**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_fourbar/double_fourbar.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_fourbar/double_fourbar.ipynb#scrollTo=A5aeLp5S45eh))
-- **Simple Pendulum**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/simple_pendulum/simple_pendulum.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/simple_pendulum/simple_pendulum.ipynb#scrollTo=A5aeLp5S45eh))
-- **Double Pendulum**. ([**GitHub**](https://github.com/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_pendulum/double_pendulum.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/notebooks/double_pendulum/double_pendulum.ipynb#scrollTo=A5aeLp5S45eh))
+- **Spatial Four-bar**. ([**GitHub**](examples/standalone_models/spatial_fourbar/spatial_fourbar.ipynb) | [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/spatial_fourbar/spatial_fourbar.ipynb))
+- **Spatial Slider-Crank**. ([**GitHub**](examples/standalone_models/spatial_slider_crank/spatial_slider_crank.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/spatial_slider_crank/spatial_slider_crank.ipynb))
+- **Double-Wishbone Suspension**. ([**GitHub**](examples/standalone_models/double_wishbone_suspension/double_wishbone_direct_acting.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/double_wishbone_suspension/double_wishbone_direct_acting.ipynb#scrollTo=A5aeLp5S45eh))
+- **Double-Four-bar Mechanism**. ([**GitHub**](examples/standalone_models/double_fourbar/double_fourbar.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/double_fourbar/double_fourbar.ipynb#scrollTo=A5aeLp5S45eh))
+- **Simple Pendulum**. ([**GitHub**](examples/standalone_models/simple_pendulum/simple_pendulum.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/simple_pendulum/simple_pendulum.ipynb#scrollTo=A5aeLp5S45eh))
+- **Double Pendulum**. ([**GitHub**](examples/standalone_models/double_pendulum/double_pendulum.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/double_pendulum/double_pendulum.ipynb#scrollTo=A5aeLp5S45eh))
 
 ### Template-Based Projects
 
@@ -190,19 +190,19 @@ This also means that the project files/database is self-contained, unlike the **
 
 #### Initializing Project Structure
 
-Currently, a standalone project is structured using three top-level directories inside a given ```parent_dir```; these are
+Currently, a standalone project is structured using three top-level directories inside a given `parent_dir`; these are
 
--  ```/numenv``` : </br>
+- `/symenv` :</br>
+  Directory of symbolic model data.
+- `/numenv` : </br>
   Directory of the numerical environments to be generated.
-- ``` /results``` :</br>
-  Directory to store the results of numerical simulations if needed.
-- ``` /config_inputs``` :</br>
-  Directory to store the numerical inputs used in numerical simulations.
+- `/visenv` : </br>
+  Directory of the 3D visualization environments to be generated.
 
 To create a standalone project :
 
 ```python
-from smbd.systems import standalone_project
+from uraeus.smbd.systems import standalone_project
 
 parent_dir = '' # current working directory
 
@@ -215,7 +215,7 @@ project.create()
 #### Building the Symbolic Topology.
 We start by importing the ```standalone_topology``` class from the ```systems``` module to create our symbolic model instance.
 ```python
-from smbd.systems import standalone_topology
+from uraeus.smbd.systems import standalone_topology
 
 model_name = 'fourbar'
 sym_model = standalone_topology(model_name)
@@ -238,10 +238,11 @@ sym_model.add_actuator.rotational_actuator('act', 'jcs_a')
 ```
 And that's it; we have just created a symbolic topology that represents our fourbar mechanism. The topology graph of the system can be visualized by the method ```sym_model.topology.draw_constraints_topology()```
 Also we can check the number of constraint equations, generalized coordinates and the estimated degrees of freedom of the system.
-To finalize this step, we call the ```assemble()``` method to construct the governing equations symbolically.
+To finalize this step, we call the `assemble()` method to construct the governing equations symbolically then `save` the model.
 
 ```python
 sym_model.assemble()
+sym_model.save('symenv')
 ```
 We can check the system equations by accessing the appropriate topology attributes.
 ```python
@@ -275,7 +276,7 @@ The idea is to construct a directed relational graph that maps the required prim
 
 We start by creating our configuration instance
 ```python
-from smbd.systems import configuration
+from uraeus.smbd.systems import configuration
 sym_config = configuration('%s_cfg'%model_name, sym_model)
 ```
 Now we can check the primary configuration parameters extracted the from the symbolic topology by ```sym_config.config.input_nodes``` which returns a list of strings containing the inputs' parameters names.
@@ -340,10 +341,9 @@ sym_config.assign_geometry_to_body('rbs_l2', 'gms_l2')
 sym_config.add_geometry.Cylinder_Geometry('l3', ('hps_c','hps_d','s_links_ro'))
 sym_config.assign_geometry_to_body('rbs_l3', 'gms_l3')
 ```
-The last step is to ```assemble``` the symbolic configuration and extract the updated set of inputs to a .csv file.
+The last step is to export the configuration data into a JSON file that can be used then by other  numerical and visualization environments.
 ```python
-sym_config.assemble()
-sym_config.extract_inputs_to_csv(parent_dir)
+sym_config.export_JSON_file('symenv')
 ```
 ---------------------------------------------------
 
