@@ -2,8 +2,6 @@
 
 **Symbolic Multi-Body Dynamics in Python** | A python package for symbolic creation and analysis of constrained multi-body systems
 
-[TOC]
-
 ----------------------
 
 ## Description
