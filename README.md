@@ -1,12 +1,18 @@
-# **URAEUS**
+# **URAEUS** | SMBD
 
-**_Symbolic creation and analysis of constrained multi-body systems in python_**
+**Symbolic Multi-Body Dynamics in Python** | A python package for symbolic creation and analysis of constrained multi-body systems
+
+[TOC]
+
+----------------------
 
 ## Description
 
-**uraeus** is a python package developed for the symbolic creation and analysis of constrained [multi-body systems](https://en.wikipedia.org/wiki/Multibody_system).
+**uraeus.smbd** is a python package developed for the symbolic creation and analysis of constrained [multi-body systems](https://en.wikipedia.org/wiki/Multibody_system).
 
 A multi-body system is hereby defined as *a finite number of material bodies connected in an arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies*. Practitioners of multi-body dynamics study the generation and solution of the equations governing the motion of such systems [1].
+
+
 
 ### Audience and Fields of Application
 
@@ -25,6 +31,8 @@ Fields of application include any domain that deals with the study of interconne
 
 ---------------------------------------------------
 
+
+
 ### Features 
 
 Currently, the tool provides:
@@ -39,6 +47,8 @@ Currently, the tool provides:
 ---------------------------------------------------
 
 ---------------------------------------------------
+
+
 
 ### Background
 
@@ -105,13 +115,15 @@ Several benefits of the adopted approach can be stated here, but the major theme
 
 ---------------------------------------------------
 
+
+
 ## Installation
 
 ### Using the tool on [Colab](https://colab.research.google.com)
 
 Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. So, if you do not have an up and running python environment, you still can check out the tool and create multi-body systems seamlessly. 
 
-The examples section below, has several ready-to-use Colab notebooks that walks you through a typical modelling process flow.
+The *examples* section below, has several ready-to-use Colab notebooks that walks you through a typical modelling process flow.
 
 ### Using the tool on your machine.
 
@@ -180,7 +192,10 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 
 ---------------------------------------------------
 
+
+
 ### Detailed Example - Spatial Fourbar Mechanism
+
 ----------------------------------
 Below is code sample that walks you through the process of building a standalone symbolic topology and configuration as well as the generation of numerical simulation environments.
 
@@ -348,28 +363,41 @@ sym_config.export_JSON_file('symenv')
 ---------------------------------------------------
 
 ---------------------------------------------------
+
+
 ## Roadmap
 
 *To be discussed ...*
+
+
 
 ## Implementation Details
 
 *The **Implementation Details** will be provided in a separate documentation and linked here*
 
+
+
 ## Theoretical Basis
 
 *The **Theoretical Basis** will be provided in a separate documentation and linked here*
+
+
 
 ## Support
 
 As the tool is developed and maintained by one developer for now, if you have any inquiries, do not hesitate to contact me at khaled.ghobashy@live.com or kh.ghobashy@gmail.com
 
+
+
 ## References
+
 [1] : McPhee, J.J. Nonlinear Dyn (1996) 9: 73. https://doi.org/10.1007/BF01833294
 
 [2] : https://colab.research.google.com/notebooks/welcome.ipynb
 
+
+
 ## License
 
-**uraeus** is distributed under the 3-clause BSD license. See the [LICENSE](LICENSE) file for details.
+**uraeus.smbd** is distributed under the 3-clause BSD license. See the [LICENSE](LICENSE) file for details.
 
