@@ -8,7 +8,7 @@ short_description = 'A python package for symbolic creation and analysis of cons
 setuptools.setup(
     name = "uraeus.smbd",
     namespace_packages=['uraeus'],
-    version = "0.0.0.dev1",
+    version = "0.0.1.dev1",
     author = "Khaled Ghobashy",
     author_email = "khaled.ghobashy@live.com",
     description = short_description,
