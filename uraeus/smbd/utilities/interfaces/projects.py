@@ -15,8 +15,7 @@ class standalone_project(object):
     def __init__(self, parent_dir=''):
         
         self.parent_dir = parent_dir
-        self.subdirs = ['numenv', 'model_data']
-        self.code_dir = os.path.join(self.parent_dir, 'numenv')
+        self.subdirs = ['symenv', 'numenv', 'visenv']
         
     def create(self):
         self._create_common_dirs()
