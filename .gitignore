@@ -8,16 +8,17 @@
 **/*.pyd
 **/*.stpl
 **/.vscode
-**/build
+
+# Examples generated files
 /examples/**/numenv
-/examples/**/*.stpl
-/examples/**/csv_files
-/examples/**/results
-/examples/**/config_inputs
-/smbd/numenv/cpp_eigen/numerics/tests
+/examples/**/symenv
+/examples/**/visenv
+
 /tests
 
+# setup.py generated files
 build
 dist
+
 # Egg metadata
 *.egg-info
