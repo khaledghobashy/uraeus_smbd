@@ -18,8 +18,14 @@ setuptools.setup(
     packages = ['uraeus'] + setuptools.find_packages(exclude=("tests",)),
     classifiers = [
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: BSD 3-Clause License",
+        "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
+        "Development Status :: 1 - Planning",
+        "Intended Audience :: Education",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Scientific/Engineering :: Physics",
+        "Topic :: Scientific/Engineering :: Mathematics"
     ],
     python_requires = '>=3.6',
     install_requires=[
