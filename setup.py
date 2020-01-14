@@ -3,18 +3,18 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-short_description = 'Symbolic creation and analysis of constrained multi-body systems in python'
+short_description = 'A python package for symbolic creation and analysis of constrained multi-body systems.'
 
 setuptools.setup(
     name = "uraeus.smbd",
     namespace_packages=['uraeus'],
-    version = "0.0.dev1",
+    version = "0.0.0.dev1",
     author = "Khaled Ghobashy",
     author_email = "khaled.ghobashy@live.com",
     description = short_description,
     long_description = long_description,
     long_description_content_type = "text/markdown",
-    url = "https://github.com/khaledghobashy/uraeus",
+    url = "https://github.com/khaledghobashy/uraeus-smbd",
     packages = ['uraeus'] + setuptools.find_packages(exclude=("tests",)),
     classifiers = [
         "Programming Language :: Python :: 3",
