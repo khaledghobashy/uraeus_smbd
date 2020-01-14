@@ -46,9 +46,58 @@ Currently, the tool provides:
 
 ---------------------------------------------------
 
+## Installation
+
+### Using the tool on [Colab](https://colab.research.google.com)
+
+Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. So, if you do not have an up and running python environment, you still can check out the tool and create multi-body systems seamlessly. 
+
+The *examples* section below, has several ready-to-use Colab notebooks that walks you through a typical modelling process flow.
+
+### Using the tool on your machine.
+
+The tool needs a valid python 3.6+ environment. If new to scientific computing in python, [Anaconda](https://www.anaconda.com/download/) is a recommended free python distribution from Continuum Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for scientific computing, which provides a nice coherent platform with most of the tools needed.
+
+#### Git
+
+As the tool is still under continuous development, cloning this repository is a more versatile way to test and play with it, until a more stable first release is released. This can be done via the following git commands from the command line.
+
+```bash
+$ git clone https://github.com/khaledghobashy/uraeus.git
+```
+
+```bash
+$ git pull origin master
+```
+
+Or alternatively, download the repository as a **zip** file and extract it on your machine.
+
+To install the package locally and use it as other python packages, open a terminal or a powershell and `cd` to the package location, then run
+
+```bash
+$ cd path/to/package
+$ pip install -e .
+```
 
 
-### Background
+
+#### Pip
+
+The package can be also installed from PyPi using
+
+```bash
+$ pip install uraeus.smbd
+```
+
+
+
+#### Conda
+
+*To Do*
+
+---------------------------------------------------
+
+## Background
 
 #### What is the problem to be solved?
 
@@ -110,59 +159,6 @@ Several benefits of the adopted approach can be stated here, but the major theme
 - The distinction between the topology design phase and the configuration assignment phase, which gives proper focus for each at its' own.
 - Natural adoption of the template-based modelling theme that emerges from the use of network-graphs to represent the system, which allows convenient assemblage of several graphs to form a new system. 
 - Uncoupled simulation environment, where the symbolic equations generated form the designed topology is free to be written in any programming language with any desired numerical libraries.
-
----------------------------------------------------
-
-
-
-## Installation
-
-### Using the tool on [Colab](https://colab.research.google.com)
-
-Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. So, if you do not have an up and running python environment, you still can check out the tool and create multi-body systems seamlessly. 
-
-The *examples* section below, has several ready-to-use Colab notebooks that walks you through a typical modelling process flow.
-
-### Using the tool on your machine.
-
-The tool needs a valid python 3.6+ environment. If new to scientific computing in python, [Anaconda](https://www.anaconda.com/download/) is a recommended free python distribution from Continuum Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for scientific computing, which provides a nice coherent platform with most of the tools needed.
-
-#### Git
-
-As the tool is still under continuous development, cloning this repository is a more versatile way to test and play with it, until a more stable first release is released. This can be done via the following git commands from the command line.
-
-```bash
-$ git clone https://github.com/khaledghobashy/uraeus.git
-```
-
-```bash
-$ git pull origin master
-```
-
-Or alternatively, download the repository as a **zip** file and extract it on your machine.
-
-To install the package locally and use it as other python packages, open a terminal or a powershell and `cd` to the package location, then run
-
-```bash
-$ cd path/to/package
-$ pip install -e .
-```
-
-
-
-#### Pip
-
-The package can be also installed from PyPi using
-
-```bash
-$ pip install uraeus.smbd
-```
-
-
-
-#### Conda
-
-*To Do*
 
 ---------------------------------------------------
 
