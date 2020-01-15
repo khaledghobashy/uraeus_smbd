@@ -330,7 +330,6 @@ class abstract_configuration(relational_graph):
             super().add_node(node2, **node2_attr_dict)
             self._evaluate_node(node1)
             if not issubclass(symbolic_type, Geometry):
-                print(name, symbolic_type)
                 self.add_relation(Mirrored, node2, (node1,))
         else:
             node1 = '%ss_%s'%(sym, name)
