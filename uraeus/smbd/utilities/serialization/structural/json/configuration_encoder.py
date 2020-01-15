@@ -13,7 +13,7 @@ import sympy as sm
 
 # Local applicataion imports
 from .....symbolic.components.matrices import AbstractMatrix, vector, quatrenion
-from .....symbolic.systems.configuration_classes import Simple_geometry
+from .....symbolic.systems.configuration_classes import Simple_geometry, Equal_to
 
 ################################################################################
 
@@ -162,7 +162,7 @@ class generator(object):
         for node in nodes:
             feeding_nodes = self.get_feeding_nodes(node)
 
-            if len(feeding_nodes) == 1:
+            if len(feeding_nodes) == 1 and issubclass(self.graph.nodes[node]['rhs_function'], Equal_to):
                 n = feeding_nodes[0]
                 storage_dict[node] = self.check_attribute_access((n, node))
                 
