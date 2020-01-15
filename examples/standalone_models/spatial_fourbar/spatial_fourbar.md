@@ -28,7 +28,10 @@ The system connectivity is as follows:
 - Total free DOF is $$n-( n_{c,rev}+n_{c,sph}+n_{c,uni}+n_{c,P}+n_{c,g}) = 28-(10+3+4+(3\times1)+7) = 28-27 = 1$$, where the $n_{c,P}$ and $n_{c,g}$ represents the constraints due to euler-parameters normalization equations and the ground-constraints respectively.
 - The Crank revolute joint is actuated by a rotational actuator, resulting in constraint equations $n_{c,act} = 1$
 
+<br/>
+<br/>
 
+<center>
 
 | Joint Name  | Body i         | Body j         | Joint Type | $n_c$ |
 |:-----------:|:-------------- |:-------------- | ---------- | ----- |
@@ -36,6 +39,10 @@ The system connectivity is as follows:
 | b           | Crank          | Connecting-Rod | Spherical  | 3     |
 | c           | Connecting-Rod | Rocker         | Universal  | 4     |
 | d           | Rocker         | Ground         | Revolute   | 5     |
+
+</center>
+
+<br/>
 
 -------------------------------------------------------
 
