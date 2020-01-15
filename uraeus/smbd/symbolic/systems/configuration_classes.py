@@ -20,7 +20,24 @@ from ..components.matrices import (AbstractMatrix, vector, quatrenion,
 
 ###############################################################################
 ###############################################################################
+
+class Equal_to(AbstractMatrix):
+    """
+    A symbolic matrix function that functions as a place holder that reference
+    the value of a vector to that of another.
     
+    Parameters
+    ----------
+    v : vector
+    
+    """
+    def __new__(cls,arg):
+        return arg
+    def __init__(self,arg):
+        super().__init__(arg)
+    def _latex(self,expr):
+        return r'{Equal\_to%s}'%(self.args,)
+
 class Mirrored(AbstractMatrix):
     """
     A symbolic matrix function that represents a mirrored vector about the 
@@ -70,22 +87,6 @@ class Oriented(AbstractMatrix):
     def _latex(self,expr):
         return r'{Oriented%s}'%(self.args,)
 
-class Equal_to(AbstractMatrix):
-    """
-    A symbolic matrix function that functions as a place holder that reference
-    the value of a vector to that of another.
-    
-    Parameters
-    ----------
-    v : vector
-    
-    """
-    def __new__(cls,arg):
-        return arg
-    def __init__(self,arg):
-        super().__init__(arg)
-    def _latex(self,expr):
-        return r'{Equal\_to%s}'%(self.args,)
 
 
 class Config_Relations(object):
@@ -328,7 +329,9 @@ class abstract_configuration(relational_graph):
             super().add_node(node1, **node1_attr_dict)
             super().add_node(node2, **node2_attr_dict)
             self._evaluate_node(node1)
-            self.add_relation(Mirrored, node2, (node1,))
+            if not issubclass(symbolic_type, Geometry):
+                print(name, symbolic_type)
+                self.add_relation(Mirrored, node2, (node1,))
         else:
             node1 = '%ss_%s'%(sym, name)
             node1_attr_dict = self._create_node_dict(node1, symbolic_type, node1, align='s')
