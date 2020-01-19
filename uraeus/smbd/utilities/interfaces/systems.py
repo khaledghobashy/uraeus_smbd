@@ -12,12 +12,10 @@ import cloudpickle
 import sympy as sm
 
 # Local applicataion imports
-from ...symbolic.components import joints as joints
-from ...symbolic.components import forces as forces
-from ...symbolic.systems import topology_classes as topology_classes
-from ...symbolic.systems import configuration_classes  as cfg_cls
-from ...symbolic.components.matrices import vector
+from . import _decorated_containers as containers
 from ..serialization.structural.json.configuration_encoder import generator
+from ...symbolic.systems import topology_classes as topology_classes
+from ...symbolic.systems import configuration_classes as cfg_cls
 
 ###############################################################################
 
@@ -30,87 +28,7 @@ def load_pickled_data(file):
         instance = cloudpickle.load(f)
     return instance
 
-
 ###############################################################################
-
-class topology_edges_container(object):
-    
-    def __init__(self, topology):
-        self._topology = topology
-        self._decorate_items()
-        
-    @property
-    def _items(self):
-        members = {i:getattr(self,i) for i in dir(self) if not i.startswith('_') and not i.startswith("__")}
-        return members
-    
-    def _decorate_items(self):
-        for attr,obj in self._items.items():
-            setattr(self, attr, self._decorate(obj))
-    
-    def _decorate(self, edge_component):
-        raise NotImplementedError
-
-
-class joints_container(topology_edges_container):
-    
-    def __init__(self, topology):
-        self.spherical = joints.spherical
-        self.revolute  = joints.revolute
-        self.universal = joints.universal
-        self.translational = joints.translational
-        self.cylinderical  = joints.cylinderical
-        self.tripod = joints.tripod
-        self.fixed  = joints.fixed
-        self.fixed_orientation = joints.fixed_orientation
-        self.inline = joints.inline
-        
-        super().__init__(topology)
-    
-    def _decorate(self, edge_component):
-        def decorated(*args, **kwargs):
-            self._topology.add_joint(edge_component, *args, **kwargs)
-        return decorated
-
-    
-class actuators_container(topology_edges_container):
-    
-    def __init__(self, topology):
-        self.rotational_actuator = joints.rotational_actuator
-        self.absolute_locator = joints.absolute_locator
-        self.translational_actuator = joints.translational_actuator
-        self.absolute_rotator = joints.absolute_rotator
-        super().__init__(topology)
-    
-    def _decorate(self, edge_component):
-        if issubclass(edge_component, joints.absolute_locator):
-            def decorated(*args, **kwargs):
-                self._topology.add_absolute_actuator(edge_component, *args, **kwargs)
-        elif issubclass(edge_component, joints.absolute_rotator):
-            def decorated(*args, **kwargs):
-                self._topology.add_absolute_actuator(edge_component, *args, **kwargs)
-        else:
-            def decorated(*args, **kwargs):
-                self._topology.add_joint_actuator(edge_component, *args, **kwargs)
-        return decorated
-
-
-class forces_container(topology_edges_container):
-    
-    def __init__(self, topology):
-        self.internal_force = forces.internal_force
-        self.force = forces.force
-        self.torque = forces.torque
-        self.generic_force = forces.generic_force
-        self.bushing = forces.bushing
-        
-        super().__init__(topology)
-    
-    def _decorate(self, edge_component):
-        def decorated(*args, **kwargs):
-            self._topology.add_force(edge_component, *args, **kwargs)
-        return decorated
-    
 ###############################################################################
 
 class template_topology(object):
@@ -119,9 +37,9 @@ class template_topology(object):
         self.name = name
         self.topology = topology_classes.template_based_topology(self.name)
         
-        self._joints = joints_container(self.topology)
-        self._actuators = actuators_container(self.topology)
-        self._forces = forces_container(self.topology)
+        self._joints = containers.joints_container(self.topology)
+        self._actuators = containers.actuators_container(self.topology)
+        self._forces = containers.forces_container(self.topology)
     
     
     def add_body(self, *args, **kwargs):
@@ -156,9 +74,9 @@ class standalone_topology(template_topology):
         self.name = name
         self.topology = topology_classes.standalone_topology(self.name)
         
-        self._joints = joints_container(self.topology)
-        self._actuators = actuators_container(self.topology)
-        self._forces = forces_container(self.topology)
+        self._joints = containers.joints_container(self.topology)
+        self._actuators = containers.actuators_container(self.topology)
+        self._forces = containers.forces_container(self.topology)
         
 
 ###############################################################################
@@ -206,12 +124,11 @@ class assembly(object):
 ###############################################################################
 
 class configuration(object):
-    
     def __init__(self, name, model_instance):
         self.name = get_file_name(name)
         self.config = cfg_cls.abstract_configuration(self.name, model_instance.topology)
         self._decorate_methods()
-    
+
     @property
     def add_point(self):
         """
@@ -220,30 +137,27 @@ class configuration(object):
         Availabe Methods:
             'UserInput', 'Mirrored', 'Centered', 'Equal_to'
         """
-        return self._point_methods
+        return self._points_constructors
     
     @property
     def add_vector(self):
-        return self._vector_methods
+        return self._vectors_constructors
     
     @property
     def add_scalar(self):
-        return self._scalar_methods
+        return self._scalars_constructors
     
     @property
     def add_geometry(self):
-        return self._geometry_methods
+        return self._geometries_constructors
     
     @property
     def add_relation(self):
-        return self._relation_methods
+        return self._relations_methods
     
     def assign_geometry_to_body(self, body, geo, eval_inertia=True, mirror=False):
         self.config.assign_geometry_to_body(body, geo, eval_inertia, mirror)
     
-    def assemble(self):
-        self.config.assemble_equalities()
-
 
     def extract_inputs_to_csv(self, path):
         file_path = os.path.join(path, self.name)
@@ -260,92 +174,12 @@ class configuration(object):
             cloudpickle.dump(self, f)
     
     def _decorate_methods(self):
-        self._decorate_point_methods()
-        self._decorate_vector_methods()
-        self._decorate_scalar_methods()
-        self._decorate_geometry_methods()
-        self._decorate_relation_methods()
+        self._scalars_constructors = containers.scalar_nodes(self.config)
+        self._vectors_constructors = containers.vector_nodes(self.config)
+        self._points_constructors  = containers.points_nodes(self.config)
+        self._geometries_constructors = containers.geometries_nodes(self.config)
+        self._relations_methods = containers.relations_methods(self.config)
 
-    def _decorate_point_methods(self):
-        sym = 'hp'
-        node_type = vector
-        methods = ['Mirrored', 'Centered', 'Equal_to', 'UserInput']
-        self._point_methods = self._decorate_components(node_type, sym, 
-                                                        methods, cfg_cls.CR)
-        
-    def _decorate_vector_methods(self):
-        sym = 'vc'
-        node_type = vector
-        methods = ['Mirrored', 'Oriented', 'Equal_to', 'UserInput']
-        self._vector_methods = self._decorate_components(node_type, sym, 
-                                                         methods, cfg_cls.CR)
-
-    def _decorate_scalar_methods(self):
-        sym = ''
-        node_type = sm.symbols
-        methods = ['Equal_to', 'UserInput']
-        self._scalar_methods = self._decorate_components(node_type, sym, 
-                                                         methods, cfg_cls.CR)
-            
-    def _decorate_geometry_methods(self):
-        sym = 'gm'
-        node_type = cfg_cls.Geometry
-        methods = ['Composite_Geometry', 
-                   'Cylinder_Geometry', 
-                   'Triangular_Prism',
-                   'Sphere_Geometry']
-        self._geometry_methods = self._decorate_components(node_type, sym, 
-                                                           methods, cfg_cls.Geometries)
-
-    def _decorate_relation_methods(self):
-        sym = None
-        node_type = None
-        methods = ['Mirrored', 'Centered', 'Equal_to', 'Oriented', 'UserInput']
-        self._relation_methods = self._decorate_components(node_type, sym, 
-                                                           methods, cfg_cls.CR)
-
-    def _decorate_components(self, node_type, sym, methods_list, methods_class):   
-        container_class = type('container', (object,), {})
-        def dummy_init(dself): pass
-        container_class.__init__ = dummy_init
-        container_instance = container_class()
-
-        for name in methods_list:
-            method = getattr(methods_class, name)
-            decorated_method = self._decorate_as_attr(node_type, sym, method)
-            setattr(container_instance, name, decorated_method)
-        
-        return container_instance
     
-    def _decorate_as_attr(self, symbolic_type, sym, construction_method):
-        
-        if construction_method is None:
-            def decorated(*args, **kwargs):
-                name = args[0]
-                self._add_node(name, symbolic_type , sym=sym, **kwargs)
-            decorated.__doc__ = ''
-        
-        elif symbolic_type is None:
-            def decorated(*args, **kwargs):
-                self._add_relation(construction_method, *args, **kwargs)
-            decorated.__doc__ = construction_method.__doc__
-       
-        else:
-            def decorated(*args, **kwargs):
-                name = args[0]
-                node = self._add_node(name, symbolic_type, sym=sym, **kwargs)
-                self._add_relation(construction_method, node, *args[1:], **kwargs)
-            decorated.__doc__ = construction_method.__doc__
-        
-        return decorated
-    
-    def _add_node(self, name, symbolic_type, **kwargs):
-        return self.config.add_node(name, symbolic_type, **kwargs)
-
-    def _add_relation(self, relation, node, arg_nodes, **kwargs):
-        self.config.add_relation(relation, node, arg_nodes, **kwargs)
-
-
 ###############################################################################
 ###############################################################################
-
