@@ -128,6 +128,7 @@ class generator(object):
         self.intermediat_nodes = self.config.intermediat_nodes
 
         self.primary_equalities = self.config.primary_equalities
+        self.geometries_map = self.config.geometries_map
 
         self.data = self.construct()
 
@@ -148,12 +149,14 @@ class generator(object):
         config_info = {}
         config_info['topology_name'] = self.topology_name
         config_info['configuration_name'] = self.configuration_name
+        config_info['subsystem_name'] = ''
         
         data = {}
         data['information'] = config_info
         data['user_inputs'] = self.construct_data_dict(self.input_nodes)
         data['evaluations'] = self.construct_data_dict(self.intermediat_nodes)
-        data['outputs']     = self.construct_data_dict(self.output_nodes)
+        data['outputs'] = self.construct_data_dict(self.output_nodes)
+        data['geometries_map'] = self.geometries_map
         return data
 
     
