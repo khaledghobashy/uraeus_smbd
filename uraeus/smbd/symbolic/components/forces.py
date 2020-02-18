@@ -12,8 +12,8 @@ import itertools
 import sympy as sm
 
 # Local application imports
-from .matrices import (vector, G, Skew, zero_matrix,
-                       matrix_function_constructor, Force)
+from .matrices import (A, vector, G, E, Skew, zero_matrix,
+                       matrix_function_constructor, Force, Triad, reference_frame)
 from .helpers import body_setter, name_setter
 from .joints import dummy_cylinderical
 
@@ -124,9 +124,34 @@ class abstract_force(object):
         
         elif self.def_axis == 1:
             axis   = self.axis_1
+            format_ = (self.prefix, 1, self.id_name)
+            marker = reference_frame('%sM%s_%s'%format_, format_as=r'{%s{M%s}_{%s}}'%format_)
+
             axis_bar  = axis.express(self.body_i)
             axis_bar_eq = sm.Eq(self.vi_bar, axis_bar/sm.sqrt(axis_bar.T*axis_bar))
-            axis_equalities = [axis_bar_eq]
+            
+            # Creating a global marker/triad oriented along the definition 
+            # axis, where Z-axis of the triad is parallel to the axis.
+            marker.orient_along(axis)
+            
+            # Expressing the created marker/triad in terms of the 1st body 
+            # local reference frame resulting in matrix transformation 
+            # expression
+            mi_bar    = marker.express(self.body_i)
+            # Creating a symbolic equality that equates the symbolic dcm of the
+            # marker to the matrix transformation expression created.
+            mi_bar_eq = sm.Eq(self.mi_bar.A, mi_bar)
+            
+            # Expressing the created marker/triad in terms of the 2nd body 
+            # local reference frame resulting in matrix transformation 
+            # expression
+            mj_bar    = marker.express(self.body_j)
+            # Creating a symbolic equality that equates the symbolic dcm of the
+            # marker to the matrix transformation expression created.
+            mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
+            
+            # Storing the equalities in the markers list.
+            axis_equalities = [axis_bar_eq, mi_bar_eq, mj_bar_eq]
         else: 
             raise NotImplementedError
         self._sym_constants += axis_equalities
@@ -397,53 +422,48 @@ class bushing(abstract_force):
     def_locs = 1
     
     def __init__(self, name, body_i=None, body_j=None):
-        """
-        F = Kt*dR + Ct*dRd
-        T = Kr*dP + Cr*dPd
-        
-        Kt = [[Kx, 0 ,0],
-              [0, Ky, 0],
-              [0, 0, Kz]]
-        
-        dR = [[dx, dy, dz]].T
-        
-        """
         super().__init__(name, body_i, body_j)
         
-        self.Kt = vector('Kt_%s'%self.id_name)
-        self.Ct = vector('Ct_%s'%self.id_name)
+        self.Kt = sm.symbols('Kt_%s'%self.id_name)
+        self.Ct = sm.symbols('Ct_%s'%self.id_name)
         
-        self.Kr = vector('Kr_%s'%self.id_name)
-        self.Cr = vector('Cr_%s'%self.id_name)
+        self.Kr = sm.symbols('Kr_%s'%self.id_name) #vector('Kt_%s'%self.id_name)
+        self.Cr = sm.symbols('Cr_%s'%self.id_name) #vector('Kt_%s'%self.id_name)
+
+        self._construct_force_vector()
         
-                
+
+    def _construct_force_vector(self):
+        
+        dij  = -(self.Ri + self.ui - self.Rj - self.uj)
+        dijd = -(self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj)
+
+        dij_bush_i  = self.mi_bar.A.T * self.Ai.T * dij
+        dijd_bush_i = self.mi_bar.A.T * self.Ai.T * dijd
+
+        dij_bush_j  = self.mj_bar.A.T * self.Aj.T * dij
+        dijd_bush_j = self.mj_bar.A.T * self.Aj.T * dijd
+
+        F_bush_i = (self.Kt*sm.Identity(3) * dij_bush_i) + (self.Ct*sm.Identity(3) * dijd_bush_i)
+        F_bush_j = (self.Kt*sm.Identity(3) * dij_bush_j) + (self.Ct*sm.Identity(3) * dijd_bush_j)
+
+        self.Fi = self.Ai * self.mi_bar.A * F_bush_i
+        Ti_e = 2*E(self.Pi).T * (Skew(self.ui_bar) * self.mi_bar.A * F_bush_i)
+        self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
+        
+        self.Fj = self.Aj * self.mj_bar.A * F_bush_j
+        Tj_e = 2*E(self.Pj).T * (Skew(self.uj_bar) * self.mj_bar.A * F_bush_j)
+        self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
+
+
     @property
     def Qi(self):
-        
-        Kt = self.Kt.T*sm.Identity(3) #sm.diag(*self.Kt.as_explicit())
-        Ct = self.Ct.T*sm.Identity(3) #sm.diag(*self.Ct.as_explicit())
-        
-        dR  = self.Ri + self.ui - self.Rj - self.uj
-        dRd = self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj
-        
-        F = Kt*dR + Ct*dRd
-        T = zero_matrix(4,1)
-        
-        Qi = sm.BlockMatrix([[F], [T]])
-        return Qi
+        return self._Qi
     
     @property
     def Qj(self):
-        Kt = self.Kt.T*sm.Identity(3) #sm.diag(*self.Kt.as_explicit())
-        Ct = self.Ct.T*sm.Identity(3) #sm.diag(*self.Ct.as_explicit())
-        
-        dR  = self.Ri + self.ui - self.Rj - self.uj
-        dRd = self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj
-        
-        F = Kt*dR + Ct*dRd
-        T = zero_matrix(4,1)
-        return sm.BlockMatrix([[-F], [-T]])
-    
+        return self._Qj
+
     @property
     def arguments_symbols(self):
         configuration_args = [self.axis_1, self.loc_1]
