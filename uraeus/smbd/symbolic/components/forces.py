@@ -435,8 +435,8 @@ class bushing(abstract_force):
 
     def _construct_force_vector(self):
         
-        dij  = -(self.Ri + self.ui - self.Rj - self.uj)
-        dijd = -(self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj)
+        dij  = (self.Ri + self.ui - self.Rj - self.uj)
+        dijd = (self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj)
 
         dij_bush_i  = self.mi_bar.A.T * self.Ai.T * dij
         dijd_bush_i = self.mi_bar.A.T * self.Ai.T * dijd
@@ -446,12 +446,14 @@ class bushing(abstract_force):
         dijd_bush_j = self.mj_bar.A.T * self.Aj.T * dijd
         F_bush_j = (self.Kt*sm.Identity(3) * dij_bush_j) + (self.Ct*sm.Identity(3) * dijd_bush_j)
 
-        self.Fi = self.Ai * self.mi_bar.A * F_bush_i
-        Ti_e = -2*G(self.Pi).T * Skew(self.ui).T * self.Fi
+        self.Fi = self.Ai * self.mi_bar.A * -F_bush_i
+        #Ti_e = -2*G(self.Pi).T * Skew(self.ui).T * self.Fi
+        Ti_e = -(self.Ai * Skew(self.ui_bar) * 2*G(self.Pi)).T * self.Fi
         self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
         
-        self.Fj = self.Aj * self.mj_bar.A * -F_bush_j
-        Tj_e = -2*G(self.Pj).T * Skew(self.uj).T * self.Fj
+        self.Fj = self.Aj * self.mj_bar.A * F_bush_j
+        #Tj_e = -2*G(self.Pj).T * Skew(self.uj).T * self.Fj
+        Tj_e = -(self.Aj * Skew(self.uj_bar) * 2*G(self.Pj)).T * self.Fj
         self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
     
     def _construct_force_vector2(self):
