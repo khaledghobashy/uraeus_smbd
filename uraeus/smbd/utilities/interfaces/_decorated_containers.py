@@ -91,6 +91,7 @@ class forces_container(abstract_decorator):
         self.torque = forces.torque
         self.generic_force = forces.generic_force
         self.bushing = forces.bushing
+        self.generic_bushing = forces.generic_bushing
         
         super().__init__(topology)
         self._topology = self._sym_system

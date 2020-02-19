@@ -262,17 +262,20 @@ class generic_force(abstract_force):
     
     def __init__(self, name, body, *args):
         super().__init__(name, body, *args)
+
+        self.t  = sm.MatrixSymbol('t', 3, 1)
         
         self.Fi = matrix_function_constructor('UF_%s_F'%name, (3, 1))
         self.Ti = matrix_function_constructor('UF_%s_T'%name, (3, 1))
         
         self._Fi_alias = sm.Function('UF_%s_F'%name)
         self._Ti_alias = sm.Function('UF_%s_T'%name)
+
+        self._construct_force_vector()
         
     @property
     def Qi(self):
-        Ti_e = 2*G(self.Pi).T * (self.Ti() + Skew(self.ui).T*self.Fi())
-        return sm.BlockMatrix([[self.Fi()], [Ti_e]])
+        return self._Qi
     @property
     def Qj(self):
         return sm.BlockMatrix([[zero_matrix(3, 1)], [zero_matrix(4, 1)]])
@@ -281,6 +284,17 @@ class generic_force(abstract_force):
     def arguments_symbols(self):
         forces_args = [self._Fi_alias, self._Ti_alias, self.loc_1]
         return forces_args
+    
+    def _construct_force_vector(self):
+        Fi = self.Fi(self.t)
+        Ti = self.Ti(self.t)
+        Ti_e = 2*G(self.Pi).T * (Ti + Skew(self.ui).T*Fi)
+        self._Qi = sm.BlockMatrix([[Fi], [Ti_e]])
+        
+        Fj = -Fi
+        Tj = -Ti
+        Tj_e = 2*G(self.Pj).T * (Ti + Skew(self.uj).T*Fj)
+        self._Qj = sm.BlockMatrix([[Fj], [Tj_e]])
 
 ###############################################################################
 ###############################################################################
@@ -294,7 +308,6 @@ class force(abstract_force):
         super().__init__(name, body, *args)
         self.t  = sm.symbols('t', real=True)
         self.Fi = sm.Function('UF_%s'%name)
-
     
     @property
     def Qi(self):
@@ -427,54 +440,11 @@ class bushing(abstract_force):
         self.Kt = sm.symbols('Kt_%s'%self.id_name)
         self.Ct = sm.symbols('Ct_%s'%self.id_name)
         
-        self.Kr = sm.symbols('Kr_%s'%self.id_name) #vector('Kt_%s'%self.id_name)
-        self.Cr = sm.symbols('Cr_%s'%self.id_name) #vector('Kt_%s'%self.id_name)
+        self.Kr = sm.symbols('Kr_%s'%self.id_name)
+        self.Cr = sm.symbols('Cr_%s'%self.id_name)
 
         self._construct_force_vector()
         
-
-    def _construct_force_vector(self):
-        
-        dij  = (self.Ri + self.ui - self.Rj - self.uj)
-        dijd = (self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj)
-
-        dij_bush_i  = self.mi_bar.A.T * self.Ai.T * dij
-        dijd_bush_i = self.mi_bar.A.T * self.Ai.T * dijd
-        F_bush_i = (self.Kt*sm.Identity(3) * dij_bush_i) + (self.Ct*sm.Identity(3) * dijd_bush_i)
-
-        dij_bush_j  = self.mj_bar.A.T * self.Aj.T * dij
-        dijd_bush_j = self.mj_bar.A.T * self.Aj.T * dijd
-        F_bush_j = (self.Kt*sm.Identity(3) * dij_bush_j) + (self.Ct*sm.Identity(3) * dijd_bush_j)
-
-        self.Fi = self.Ai * self.mi_bar.A * -F_bush_i
-        #Ti_e = -2*G(self.Pi).T * Skew(self.ui).T * self.Fi
-        Ti_e = -(self.Ai * Skew(self.ui_bar) * 2*G(self.Pi)).T * self.Fi
-        self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
-        
-        self.Fj = self.Aj * self.mj_bar.A * F_bush_j
-        #Tj_e = -2*G(self.Pj).T * Skew(self.uj).T * self.Fj
-        Tj_e = -(self.Aj * Skew(self.uj_bar) * 2*G(self.Pj)).T * self.Fj
-        self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
-    
-    def _construct_force_vector2(self):
-        
-        dij  = (self.Ri + self.ui - self.Rj - self.uj)
-        dijd = (self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj)
-
-        dij_bush_i  = self.mi_bar.A.T * self.Ai.T * dij
-        dijd_bush_i = self.mi_bar.A.T * self.Ai.T * dijd
-
-        F_bush_i = (self.Kt*sm.Identity(3) * dij_bush_i) + (self.Ct*sm.Identity(3) * dijd_bush_i)
-
-        self.Fi = self.Ai * self.mi_bar.A * F_bush_i
-        Ti_e = 2*G(self.Pi).T * (Skew(self.ui).T*self.Fi)
-        self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
-        
-        self.Fj = -self.Fi
-        Tj_e = 2*G(self.Pj).T * (Skew(self.uj).T*self.Fj)
-        self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
-
-
     @property
     def Qi(self):
         return self._Qi
@@ -489,9 +459,91 @@ class bushing(abstract_force):
         forces_args = [self.Kt, self.Ct, self.Kr, self.Cr]
         return configuration_args + forces_args
     
+    def _construct_force_vector(self):
+        
+        dij  = (self.Ri + self.ui - self.Rj - self.uj)
+        dijd = (self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj)
+
+        dij_bush_i  = self.mi_bar.A.T * self.Ai.T * dij
+        dijd_bush_i = self.mi_bar.A.T * self.Ai.T * dijd
+        F_bush_i = (self.Kt*sm.Identity(3) * dij_bush_i) + (self.Ct*sm.Identity(3) * dijd_bush_i)
+
+        dij_bush_j  = self.mj_bar.A.T * self.Aj.T * dij
+        dijd_bush_j = self.mj_bar.A.T * self.Aj.T * dijd
+        F_bush_j = (self.Kt*sm.Identity(3) * dij_bush_j) + (self.Ct*sm.Identity(3) * dijd_bush_j)
+
+        self.Fi = self.Ai * self.mi_bar.A * -F_bush_i
+        Ti_e = -(self.Ai * Skew(self.ui_bar) * 2*G(self.Pi)).T * self.Fi
+        self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
+        
+        self.Fj = self.Aj * self.mj_bar.A * F_bush_j
+        Tj_e = -(self.Aj * Skew(self.uj_bar) * 2*G(self.Pj)).T * self.Fj
+        self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
+    
     
 ###############################################################################
 ###############################################################################
 
+class generic_bushing(abstract_force):
+    
+    def_axis = 1
+    def_locs = 1
+    
+    def __init__(self, name, body_i=None, body_j=None):
+        super().__init__(name, body_i, body_j)
+
+        self.t  = sm.MatrixSymbol('t', 3, 1)
+        
+        # Local Bush stiffness-loading functions
+        self.Fs = matrix_function_constructor('UF_%s_Fs'%name, (3, 1))
+        self.Ts = matrix_function_constructor('UF_%s_Ts'%name, (3, 1))
+        
+        # Local Bush damping-loading functions
+        self.Fd = matrix_function_constructor('UF_%s_Fd'%name, (3, 1))
+        self.Td = matrix_function_constructor('UF_%s_Td'%name, (3, 1))
+        
+        self._Fs_alias = sm.Function('UF_%s_Fs'%name)
+        self._Ts_alias = sm.Function('UF_%s_Ts'%name)
+
+        self._Fd_alias = sm.Function('UF_%s_Fd'%name)
+        self._Td_alias = sm.Function('UF_%s_Td'%name)
+
+        self._construct_force_vector()
+        
+    @property
+    def Qi(self):
+        return self._Qi
+    
+    @property
+    def Qj(self):
+        return self._Qj
+
+    @property
+    def arguments_symbols(self):
+        configuration_args = [self.axis_1, self.loc_1]
+        forces_args = [self._Fs_alias, self._Ts_alias, self._Fd_alias, self._Td_alias]
+        return configuration_args + forces_args
+    
+    def _construct_force_vector(self):
+        
+        dij  = (self.Ri + self.ui - self.Rj - self.uj)
+        dijd = (self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj)
+
+        bush_trasformation = self.mi_bar.A.T * self.Ai.T
+
+        F_bush_i = self.Fs(bush_trasformation, dij) \
+                 + self.Fd(bush_trasformation, dijd)
+
+        self.Fi = self.Ai * self.mi_bar.A * -F_bush_i
+        Ti_e = -(self.Ai * Skew(self.ui_bar) * 2*G(self.Pi)).T * self.Fi
+        self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
+        
+        self.Fj = -self.Fi
+        Tj_e = -(self.Aj * Skew(self.uj_bar) * 2*G(self.Pj)).T * self.Fj
+        self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
+    
+    
+###############################################################################
+###############################################################################
 
         
