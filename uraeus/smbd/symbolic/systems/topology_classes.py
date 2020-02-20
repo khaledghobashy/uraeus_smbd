@@ -7,6 +7,7 @@ Created on Tue Jan  1 11:31:35 2019
 
 # Standard library imports
 import itertools
+import copy
 
 # 3rd party libraries imports
 import sympy as sm
@@ -20,6 +21,20 @@ from ..components import bodies
 from ..components.joints import absolute_locator
 from ..components.algebraic_constraints import joint_actuator
 from ..components.forces import abstract_force, gravity_force, centrifugal_force
+
+###############################################################################
+
+class topology_variant(object):
+    def __init__(self, name, parent_graph):
+        self.name = name
+        self.nodes = {}
+        self.edges = {}
+    
+    def add_node(self, node):
+        self.nodes[node] = node
+    
+    def add_edge(self, name, edge):
+        self.edges[name] = edge
 
 ###############################################################################
 
@@ -44,8 +59,8 @@ class abstract_topology(object):
         graph.add_edges_from(parent_graph.edges(data=True, keys=True))
         self.variants[name] = graph
         self.selected_variant = name
-        
     
+
     @property
     def selected_variant(self):
         return self._selected_variant
@@ -159,6 +174,40 @@ class abstract_topology(object):
         eq = [self.edges[e]['obj'].reactions_symbols for e in self.constraints_graph.edges]
         return sum(eq,[])
     
+    @property
+    def pos_equations(self):
+        return self._get_variant_equations('pos_equations')
+    
+    @property
+    def vel_equations(self):
+        return self._get_variant_equations('vel_equations')
+
+    @property
+    def acc_equations(self):
+        return self._get_variant_equations('acc_equations')
+
+    @property
+    def jac_equations(self):
+        return self._get_variant_equations('jac_equations')
+    
+    @property
+    def mass_equations(self):
+        return self._get_variant_equations('mass_equations')
+
+    @property
+    def frc_equations(self):
+        return self._get_variant_equations('frc_equations')
+
+
+    def _get_variant_equations(self, equation_name):
+        name  = self.selected_variant.name
+        graph = self.selected_variant.graph
+        try:
+            return graph[equation_name]
+        except KeyError:
+            msg = 'Equations in the "%s" variant are not assembled yet!'%name
+            raise ValueError(msg)
+
     def draw_constraints_topology(self):
         plt.figure(figsize=(10, 6))
         graph = nx.Graph(self.constraints_graph)
@@ -179,6 +228,9 @@ class abstract_topology(object):
         self._assemble_forces_equations()
         self._assemble_mass_matrix()
         self._perform_cse()
+
+    def _get_combined_variants(self):
+        self.combined_graph = nx.disjoint_union_all(self.variants.values())
                 
     def save(self):
         import cloudpickle
@@ -314,6 +366,7 @@ class abstract_topology(object):
     
     def _assemble_constraints_equations(self):
         
+        variant = self.selected_variant
         edges = self.constraints_graph.edges
         nodes = self.nodes
         node_index = self.nodes_indicies
@@ -333,15 +386,15 @@ class abstract_topology(object):
             eo  = edges[e]['obj']
             u,v = e[:-1]
             
-            # tracker of row index based on the current joint type and the history
-            # of the loop
+            # tracker of row index based on the current joint type and the 
+            # history of the loop
             eo_nve = eo.nve + row_ind
             
             ui = node_index[u]
             vi = node_index[v]
 
-            # assigning the joint jacobians to the propper index in the system jacobian
-            # on the "constraint vector equations" level.
+            # assigning the joint jacobians to the propper index in the system 
+            # jacobian on the "constraint vector equations" level.
             jacobian[row_ind:eo_nve,ui*2:ui*2+2] = eo.jacobian_i.blocks
             jacobian[row_ind:eo_nve,vi*2:vi*2+2] = eo.jacobian_j.blocks
             
@@ -369,12 +422,13 @@ class abstract_topology(object):
                 acc_rhs[row_ind,0]   = b.normalized_acc_equation
             row_ind += b.nve
                 
-        self.pos_equations = equations
-        self.vel_equations = vel_rhs
-        self.acc_equations = acc_rhs
-        self.jac_equations = jacobian
+        variant.graph['pos_equations'] = equations
+        variant.graph['vel_equations'] = vel_rhs
+        variant.graph['acc_equations'] = acc_rhs
+        variant.graph['jac_equations'] = jacobian
                 
     def _assemble_mass_matrix(self):
+        variant = self.selected_variant
         nodes  = self.nodes
         bodies = self.bodies
         n = 2*len(bodies)
@@ -383,9 +437,11 @@ class abstract_topology(object):
         mass_matricies = sum(mass_matricies, [])
         for i,m in enumerate(mass_matricies):
             matrix[i,i] = m
-        self.mass_equations = matrix
+        #self.mass_equations = matrix
+        variant.graph['mass_equations'] = matrix
     
     def _assemble_forces_equations(self):
+        variant = self.selected_variant
         graph = self.forces_graph
         nodes = self.bodies
         nrows = 2*len(nodes)
@@ -415,7 +471,8 @@ class abstract_topology(object):
             F_applied[i*2]   = Q_t_R
             F_applied[i*2+1] = Q_t_P
             
-        self.frc_equations = F_applied
+        #self.frc_equations = F_applied
+        variant.graph['frc_equations'] = F_applied
     
         
     @staticmethod
