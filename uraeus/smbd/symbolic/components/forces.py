@@ -428,7 +428,6 @@ class internal_force(abstract_force):
 ###############################################################################
 ###############################################################################
 
-       
 class bushing(abstract_force):
     
     def_axis = 1
@@ -466,11 +465,13 @@ class bushing(abstract_force):
 
         dij_bush_i  = self.mi_bar.A.T * self.Ai.T * dij
         dijd_bush_i = self.mi_bar.A.T * self.Ai.T * dijd
-        F_bush_i = (self.Kt*sm.Identity(3) * dij_bush_i) + (self.Ct*sm.Identity(3) * dijd_bush_i)
+        F_bush_i = (self.Kt*sm.Identity(3) * dij_bush_i) \
+                 + (self.Ct*sm.Identity(3) * dijd_bush_i)
 
         dij_bush_j  = self.mj_bar.A.T * self.Aj.T * dij
         dijd_bush_j = self.mj_bar.A.T * self.Aj.T * dijd
-        F_bush_j = (self.Kt*sm.Identity(3) * dij_bush_j) + (self.Ct*sm.Identity(3) * dijd_bush_j)
+        F_bush_j = (self.Kt*sm.Identity(3) * dij_bush_j) \
+                 + (self.Ct*sm.Identity(3) * dijd_bush_j)
 
         self.Fi = self.Ai * self.mi_bar.A * -F_bush_i
         Ti_e = -(self.Ai * Skew(self.ui_bar) * 2*G(self.Pi)).T * self.Fi

@@ -165,10 +165,7 @@ class Moment(AbstractMatrix):
 
 def matrix_function_constructor(cls_name, shape=(3, 1), **kwargs):
 
-    def _cxxcode(obj, expr, **kwargs):
-        return '%s%s'%(cls_name, obj.args,)
-    
-    attrs = {'shape':shape, '_cxxcode':_cxxcode, '_ccode':_cxxcode}
+    attrs = {'shape':shape}
     _cls = type(cls_name, (AbstractMatrix, ), attrs)
         
     return _cls
