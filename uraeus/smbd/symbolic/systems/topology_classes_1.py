@@ -65,7 +65,6 @@ class abstract_topology(object):
     @selected_variant.setter
     def selected_variant(self, name):
         self._selected_variant = self.variants[name]
-        print('Current Active Graph : %s'%name)
     
     @property
     def nodes(self):
@@ -220,38 +219,16 @@ class abstract_topology(object):
     
     def assemble_model(self):
         self._set_global_frame()
-        self._construct_root_graph()
         self._assemble_nodes()
         self._assemble_edges()
         self._remove_virtual_edges()
-        self._update_variants()
-        self._assemble_equations()
-    
-    def _assemble_equations(self):
-        for name, graph in self.variants.items():
-            if name != 'root':
-                self.selected_variant = name
-                self._assemble_constraints_equations(graph)
-                self._assemble_forces_equations(graph)
-                self._assemble_mass_matrix(graph)
-                self._perform_cse(graph)
+        self._assemble_constraints_equations()
+        self._assemble_forces_equations()
+        self._assemble_mass_matrix()
+        self._perform_cse()
 
-    def _construct_root_graph(self):
-        graph_name = 'root'
-        self.root_graph = nx.compose_all(self.variants.values())
-        self.root_graph.graph['name'] = graph_name
-        self.variants[graph_name] = self.root_graph
-        self.selected_variant = graph_name
-    
-    def _update_variants(self):
-        root_nodes = self.root_graph.nodes(data=True)
-        root_edges = self.root_graph.edges(data=True, keys=True)
-        for name, graph in self.variants.items():
-            if name != 'root':
-                nx.set_node_attributes(graph, dict(root_nodes))
-                edges_dict = {(n1, n2, k): attr for n1, n2, k, attr in root_edges}
-                nx.set_edge_attributes(graph, edges_dict)
-
+    def _get_combined_variants(self):
+        self.combined_graph = nx.compose_all(self.variants.values())
                 
     def save(self):
         import cloudpickle
@@ -260,15 +237,13 @@ class abstract_topology(object):
             cloudpickle.dump(self, f)
 
 
-    def _perform_cse(self, variant):
-        container = {}
-        container['pos_rep'], container['pos_exp'] = self._generate_cse(self.pos_equations, 'x')
-        container['vel_rep'], container['vel_exp'] = self._generate_cse(self.vel_equations, 'v')
-        container['acc_rep'], container['acc_exp'] = self._generate_cse(self.acc_equations, 'a')
-        container['jac_rep'], container['jac_exp'] = self._generate_cse(self.jac_equations, 'j')
-        container['frc_rep'], container['frc_exp'] = self._generate_cse(self.frc_equations, 'f')
-        container['mass_rep'], container['mass_exp'] = self._generate_cse(self.mass_equations, 'm')
-        variant.graph['cse_equations'] = container
+    def _perform_cse(self):
+        self.pos_rep, self.pos_exp = self._generate_cse(self.pos_equations, 'x')
+        self.vel_rep, self.vel_exp = self._generate_cse(self.vel_equations, 'v')
+        self.acc_rep, self.acc_exp = self._generate_cse(self.acc_equations, 'a')
+        self.jac_rep, self.jac_exp = self._generate_cse(self.jac_equations, 'j')
+        self.frc_rep, self.frc_exp = self._generate_cse(self.frc_equations, 'f')
+        self.mass_rep, self.mass_exp = self._generate_cse(self.mass_equations, 'm')
 
     def _get_topology_attr(self, name):
         graph = self.selected_variant
@@ -387,7 +362,9 @@ class abstract_topology(object):
             self._actuators_indicies[constraint_name] = rows
             row_ind += constraint_nve
     
-    def _assemble_constraints_equations(self, variant):
+    def _assemble_constraints_equations(self):
+        
+        variant = self.selected_variant
         edges = self.constraints_graph.edges
         nodes = self.nodes
         node_index = self.nodes_indicies
@@ -448,7 +425,8 @@ class abstract_topology(object):
         variant.graph['acc_equations'] = acc_rhs
         variant.graph['jac_equations'] = jacobian
                 
-    def _assemble_mass_matrix(self, variant):
+    def _assemble_mass_matrix(self):
+        variant = self.selected_variant
         nodes  = self.nodes
         bodies = self.bodies
         n = 2*len(bodies)
@@ -460,7 +438,8 @@ class abstract_topology(object):
         #self.mass_equations = matrix
         variant.graph['mass_equations'] = matrix
     
-    def _assemble_forces_equations(self, variant):
+    def _assemble_forces_equations(self):
+        variant = self.selected_variant
         graph = self.forces_graph
         nodes = self.bodies
         nrows = 2*len(nodes)

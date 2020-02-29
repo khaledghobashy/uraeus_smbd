@@ -296,7 +296,6 @@ class abstract_configuration(relational_graph):
         super().__init__(name)
         self._config = self
         self.topology = model_instance
-        self.topology._get_combined_variants()
         self.assemble_base_layer()
         self.geometries_map = {}
 
@@ -387,8 +386,8 @@ class abstract_configuration(relational_graph):
 
     def assemble_base_layer(self):
 
-        base_nodes = dict(self.topology.combined_graph.nodes(data=True)).values()
-        base_edges = dict(self.topology.combined_graph.edges).values()
+        base_nodes = dict(self.topology.root_graph.nodes(data=True)).values()
+        base_edges = dict(self.topology.root_graph.edges).values()
 
         edges_data = list(zip(*base_edges))
         edges_arguments = self._extract_primary_arguments(base_edges)
@@ -398,7 +397,7 @@ class abstract_configuration(relational_graph):
         nodes_arguments = self._extract_primary_arguments(base_nodes)
         self._add_primary_nodes(nodes_arguments)
 
-        self.bodies = {n:self.topology.combined_graph.nodes[n] for n in self.topology.bodies}
+        self.bodies = {n:self.topology.root_graph.nodes[n] for n in self.topology.bodies}
         
         nodes = self.graph.nodes
         self.primary_equalities = dict(nodes(data='equality'))
