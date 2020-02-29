@@ -296,6 +296,7 @@ class abstract_configuration(relational_graph):
         super().__init__(name)
         self._config = self
         self.topology = model_instance
+        self.topology._get_combined_variants()
         self.assemble_base_layer()
         self.geometries_map = {}
 
@@ -382,26 +383,22 @@ class abstract_configuration(relational_graph):
         return data
 
     def _create_inputs_dataframe(self):
-        """ nodes  = self.graph.nodes
-        inputs = self.input_nodes
-        condition = lambda i:  isinstance(nodes[i]['lhs_value'], sm.MatrixSymbol)\
-                            or isinstance(nodes[i]['lhs_value'], sm.Symbol)
-        indecies = list(filter(condition, inputs))
-        indecies.sort()
-        shape = (len(indecies),4)
-        dataframe = pd.DataFrame(np.zeros(shape),index=indecies,dtype=np.float64) """
         raise NotImplementedError
 
     def assemble_base_layer(self):
-        edges_data = list(zip(*self.topology.edges(data=True)))
-        edges_arguments = self._extract_primary_arguments(edges_data[-1])
+
+        base_nodes = dict(self.topology.combined_graph.nodes(data=True)).values()
+        base_edges = dict(self.topology.combined_graph.edges).values()
+
+        edges_data = list(zip(*base_edges))
+        edges_arguments = self._extract_primary_arguments(base_edges)
         self._add_primary_nodes(edges_arguments)
         
-        nodes_data = list(zip(*self.topology.nodes(data=True)))
-        nodes_arguments = self._extract_primary_arguments(nodes_data[-1])
+        nodes_data = list(zip(*base_nodes))
+        nodes_arguments = self._extract_primary_arguments(base_nodes)
         self._add_primary_nodes(nodes_arguments)
 
-        self.bodies = {n:self.topology.nodes[n] for n in self.topology.bodies}
+        self.bodies = {n:self.topology.combined_graph.nodes[n] for n in self.topology.bodies}
         
         nodes = self.graph.nodes
         self.primary_equalities = dict(nodes(data='equality'))
