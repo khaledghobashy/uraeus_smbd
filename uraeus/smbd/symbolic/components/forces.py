@@ -13,7 +13,8 @@ import sympy as sm
 
 # Local application imports
 from .matrices import (A, vector, G, E, Skew, zero_matrix,
-                       matrix_function_constructor, Force, Triad, reference_frame)
+                       matrix_function_constructor, Force, Triad, 
+                       reference_frame, matrix_symbol)
 from .helpers import body_setter, name_setter
 from .joints import dummy_cylinderical
 
@@ -34,6 +35,9 @@ class abstract_force(object):
         
         self._create_arguments()
         self._create_local_equalities()
+
+        self._reactions_equalities = []
+        self._reactions_symbols = []
         
     @property
     def name(self):
@@ -85,6 +89,24 @@ class abstract_force(object):
         constants_expr = itertools.chain(self.constants_symbolic_expr,
                                          self.constants_numeric_expr)
         return [expr.lhs for expr in constants_expr]
+    
+    @property
+    def reactions_equalities(self):
+        """
+        A list containg the reactions' equalities acting on body_i. These are
+        sympy equalities containing lhs vactor symbols and rhs matrix 
+        expressions.
+        """
+        return self._reactions_equalities
+    
+    @property
+    def reactions_symbols(self):
+        """
+        A list contating the reaction force vector Fi and the reaction torque 
+        vector Ti acting on body_i.
+        """
+        return self._reactions_symbols
+
     
     
     def _create_def_axis(self, i):
@@ -381,6 +403,18 @@ class internal_force(abstract_force):
         self.Ta = sm.Function('UF_%s_Ta'%name)#, commutative=True)
         
         self._construct_force_vector()
+        
+        body_i_name = self.body_i.id_name
+        format_ = (self.prefix, body_i_name, self.id_name)
+        Fi_raw_name = '%sF_%s_%s'%format_
+        Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
+        Ti_raw_name = '%sT_%s_%s'%format_
+        Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
+
+        Fi = matrix_symbol(Fi_raw_name, 3, 1, Fi_frm_name)
+        Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
+        self._reactions_symbols = [Fi, Ti]
+        self._reactions_equalities = [sm.Eq(Fi, self.Fi), sm.Eq(Ti, zero_matrix(3,1))]
                 
     @property
     def Qi(self):
@@ -407,14 +441,20 @@ class internal_force(abstract_force):
     
     def _construct_force_vector(self):
         
-        dij = self.joint.dij
-        distance    = sm.sqrt(dij.T*dij)
+        dij  = self.joint.dij
+        dijd = self.joint.dijd
+
+        distance = sm.sqrt(dij.T*dij)
+        #velocity = sm.sqrt(dijd.T*dijd)[0,0]
+        #velocity = ((dijd/(velocity + sm.Symbol('s'))).T * dijd)
+
         unit_vector = dij/distance
         
         defflection = self.LF - distance[0,0]
-        velocity    = (unit_vector.T*self.joint.dijd)
-        
-        total_force = self.Fs(defflection) - self.Fd(velocity)
+        #velocity    = ((unit_vector).T * dijd)
+        velocity    = -0.5*(dij.T*dij)**(-0.5) * 2 * (dij.T*dijd)
+
+        total_force = self.Fs(defflection) + self.Fd(velocity)
 
         self.Fi = total_force * unit_vector
         Ti_e = 2*G(self.Pi).T * (self.Ti + Skew(self.ui).T*self.Fi)
@@ -443,6 +483,17 @@ class bushing(abstract_force):
         self.Cr = sm.symbols('Cr_%s'%self.id_name)
 
         self._construct_force_vector()
+        body_i_name = self.body_i.id_name
+        format_ = (self.prefix, body_i_name, self.id_name)
+        Fi_raw_name = '%sF_%s_%s'%format_
+        Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
+        Ti_raw_name = '%sT_%s_%s'%format_
+        Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
+
+        Fi = matrix_symbol(Fi_raw_name, 3, 1, Fi_frm_name)
+        Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
+        self._reactions_symbols = [Fi, Ti]
+        self._reactions_equalities = [sm.Eq(Fi, self.Fi), sm.Eq(Ti, zero_matrix(3,1))]
         
     @property
     def Qi(self):
@@ -510,6 +561,17 @@ class generic_bushing(abstract_force):
         self._Td_alias = sm.Function('UF_%s_Td'%name)
 
         self._construct_force_vector()
+        body_i_name = self.body_i.id_name
+        format_ = (self.prefix, body_i_name, self.id_name)
+        Fi_raw_name = '%sF_%s_%s'%format_
+        Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
+        Ti_raw_name = '%sT_%s_%s'%format_
+        Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
+
+        Fi = matrix_symbol(Fi_raw_name, 3, 1, Fi_frm_name)
+        Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
+        self._reactions_symbols = [Fi, Ti]
+        self._reactions_equalities = [sm.Eq(Fi, self.Fi), sm.Eq(Ti, zero_matrix(3,1))]
         
     @property
     def Qi(self):
