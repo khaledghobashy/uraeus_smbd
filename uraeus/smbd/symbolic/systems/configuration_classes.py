@@ -162,7 +162,8 @@ class Composite_Geometry(Simple_geometry):
     args : sequence of simple_geometry
     
     """
-    pass
+    def __init__(self, *geometries):
+        self.geometries = geometries
 
 class Cylinder_Geometry(Simple_geometry):
     
