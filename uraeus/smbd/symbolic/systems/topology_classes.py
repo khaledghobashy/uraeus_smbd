@@ -151,12 +151,14 @@ class abstract_topology(object):
 
     @property
     def reactions_equalities(self):
-        eq = [self.edges[e]['obj'].reactions_equalities for e in self.constraints_graph.edges]
+        graph = self.selected_variant
+        eq = [self.edges[e]['obj'].reactions_equalities for e in self.graph.edges]
         return sum(eq,[])
     
     @property
     def reactions_symbols(self):
-        eq = [self.edges[e]['obj'].reactions_symbols for e in self.constraints_graph.edges]
+        graph = self.selected_variant
+        eq = [self.edges[e]['obj'].reactions_symbols for e in self.graph.edges]
         return sum(eq,[])
     
     def draw_constraints_topology(self):
