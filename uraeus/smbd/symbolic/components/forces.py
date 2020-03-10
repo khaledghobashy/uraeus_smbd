@@ -451,8 +451,8 @@ class internal_force(abstract_force):
         unit_vector = dij/distance
         
         defflection = self.LF - distance[0,0]
-        #velocity    = ((unit_vector).T * dijd)
-        velocity    = -0.5*(dij.T*dij)**(-0.5) * 2 * (dij.T*dijd)
+        velocity    = -((unit_vector).T * dijd)
+        #velocity    = -0.5*(dij.T*dij)**(-0.5) * 2 * (dij.T*dijd)
 
         total_force = self.Fs(defflection) + self.Fd(velocity)
 
