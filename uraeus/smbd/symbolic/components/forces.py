@@ -310,12 +310,12 @@ class generic_force(abstract_force):
     def _construct_force_vector(self):
         Fi = self.Fi(self.t)
         Ti = self.Ti(self.t)
-        Ti_e = 2*G(self.Pi).T * (Ti + Skew(self.ui).T*Fi)
+        Ti_e = 2*E(self.Pi).T * (Ti + Skew(self.ui).T*Fi)
         self._Qi = sm.BlockMatrix([[Fi], [Ti_e]])
         
         Fj = -Fi
         Tj = -Ti
-        Tj_e = 2*G(self.Pj).T * (Ti + Skew(self.uj).T*Fj)
+        Tj_e = 2*E(self.Pj).T * (Ti + Skew(self.uj).T*Fj)
         self._Qj = sm.BlockMatrix([[Fj], [Tj_e]])
 
 ###############################################################################
@@ -334,7 +334,7 @@ class force(abstract_force):
     @property
     def Qi(self):
         force = self.Fi(self.t) * self.vi
-        Ti_e = 2*G(self.Pi).T * (self.Ti + Skew(self.ui).T*force)
+        Ti_e = 2*E(self.Pi).T * (self.Ti + Skew(self.ui).T*force)
         return sm.BlockMatrix([[force], [Ti_e]])
     @property
     def Qj(self):
@@ -365,7 +365,7 @@ class torque(abstract_force):
     @property
     def Qi(self):
         torque = self.Ti(self.t) * self.vi
-        Ti_e = 2*G(self.Pi).T * torque 
+        Ti_e = 2*E(self.Pi).T * torque 
         return sm.BlockMatrix([[self.Fi], [Ti_e]])
     @property
     def Qj(self):
@@ -457,12 +457,12 @@ class internal_force(abstract_force):
         total_force = self.Fs(defflection) + self.Fd(velocity)
 
         self.Fi = total_force * unit_vector
-        Ti_e = 2*G(self.Pi).T * (self.Ti + Skew(self.ui).T*self.Fi)
+        Ti_e = 2*E(self.Pi).T * (self.Ti + Skew(self.ui).T*self.Fi)
         
         self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
         
         self.Fj = -self.Fi
-        Tj_e = 2*G(self.Pj).T * (self.Tj + Skew(self.uj).T*self.Fj)
+        Tj_e = 2*E(self.Pj).T * (self.Tj + Skew(self.uj).T*self.Fj)
         self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
         
 ###############################################################################

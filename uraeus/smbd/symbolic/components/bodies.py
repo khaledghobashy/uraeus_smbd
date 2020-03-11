@@ -155,7 +155,7 @@ class body(reference_frame):
         self.m = sm.symbols('m_%s'%self.id_name)
         self.M = self.m*sm.Identity(3)
         self.Jbar = matrix_symbol('%sJbar_%s'%format_, 3, 3, r'{%s\bar{J}_{%s}}'%format_)
-        self.J = 4*G(self.P).T*self.Jbar*G(self.P)
+        self.J = 4*E(self.P).T * self.A * self.Jbar * self.A.T * E(self.P)
         
     
     @property
