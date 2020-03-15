@@ -86,12 +86,12 @@ class actuators_container(abstract_decorator):
 class forces_container(abstract_decorator):
     
     def __init__(self, topology):
-        self.internal_force = forces.internal_force
-        self.force = forces.force
-        self.torque = forces.torque
-        self.generic_force = forces.generic_force
-        self.bushing = forces.bushing
-        self.generic_bushing = forces.generic_bushing
+        self.TSDA = forces.TSDA
+        self.local_force  = forces.local_force
+        self.local_torque = forces.local_torque
+        self.generic_load = forces.generic_load
+        self.isotropic_bushing = forces.isotropic_bushing
+        self.generic_bushing   = forces.generic_bushing
         
         super().__init__(topology)
         self._topology = self._sym_system

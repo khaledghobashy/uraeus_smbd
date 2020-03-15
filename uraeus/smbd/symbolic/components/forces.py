@@ -16,7 +16,6 @@ from .matrices import (A, vector, G, E, Skew, zero_matrix,
                        matrix_function_constructor, Force, Triad, 
                        reference_frame, matrix_symbol)
 from .helpers import body_setter, name_setter
-from .joints import dummy_cylinderical
 
 
 class abstract_force(object):
@@ -186,6 +185,28 @@ class abstract_force(object):
             ui_bar_eq = sm.Eq(self.ui_bar, loc.express(self.body_i) - self.Ri.express(self.body_i))
             uj_bar_eq = sm.Eq(self.uj_bar, loc.express(self.body_j) - self.Rj.express(self.body_j))
             location_equalities = [ui_bar_eq, uj_bar_eq]
+        
+        elif self.def_locs == 2: 
+            loc1 = self.loc_1
+            loc2 = self.loc_2
+            
+            # Relative position vector of 1st joint location relative to the 1st 
+            # body reference point, in the body-local reference frame
+            ui_bar = loc1.express(self.body_i) - self.Ri.express(self.body_i)
+            # Creating a symbolic equality that equates the symbolic vector of
+            # the local position to the matrix transformation expression created.
+            ui_bar_eq = sm.Eq(self.ui_bar, ui_bar)
+
+            # Relative position vector of 2nd joint location relative to the 2nd 
+            # body reference point, in the body-local reference frame
+            uj_bar = loc2.express(self.body_j) - self.Rj.express(self.body_j)
+            # Creating a symbolic equality that equates the symbolic vector of
+            # the local position to the matrix transformation expression created.
+            uj_bar_eq = sm.Eq(self.uj_bar, uj_bar)
+            
+            # Storing the equalities in the locations list.
+            location_equalities = [ui_bar_eq, uj_bar_eq]
+
         else: 
             raise NotImplementedError
         self._sym_constants += location_equalities
@@ -199,7 +220,7 @@ class abstract_force(object):
         T_raw_name, T_frm_name = self._formatter(*T_format)
         self.Fi   = vector(F_raw_name, format_as=F_frm_name)
         self.Ti   = vector(T_raw_name, format_as=T_frm_name)
-        self.Ti_e = 2*G(self.Pi).T * (self.Ti + Skew(self.ui).T*self.Fi)
+        self.Ti_e = 2*E(self.Pi).T * (self.Ti + Skew(self.ui)*self.Fi)
     
     def _construct_force_j(self):
         bname = self.body_j.id_name
@@ -209,7 +230,7 @@ class abstract_force(object):
         T_raw_name, T_frm_name = self._formatter(*T_format)
         self.Fj   = vector(F_raw_name, format_as=F_frm_name)
         self.Tj   = vector(T_raw_name, format_as=T_frm_name)
-        self.Tj_e = 2*G(self.Pj).T * (self.Tj + Skew(self.uj).T*self.Fj)
+        self.Tj_e = 2*E(self.Pj).T * (self.Tj + Skew(self.uj)*self.Fj)
     
     @staticmethod
     def _formatter(*args):
@@ -277,7 +298,7 @@ class centrifugal_force(abstract_force):
 ###############################################################################
 ###############################################################################
 
-class generic_force(abstract_force):
+class generic_load(abstract_force):
     
     def_axis = 0
     def_locs = 1
@@ -308,20 +329,21 @@ class generic_force(abstract_force):
         return forces_args
     
     def _construct_force_vector(self):
+        # Ti_e = 2E(Pi).T * (M + (ui x Fi))
         Fi = self.Fi(self.t)
         Ti = self.Ti(self.t)
-        Ti_e = 2*E(self.Pi).T * (Ti + Skew(self.ui).T*Fi)
+        Ti_e = 2*E(self.Pi).T * (Ti + Skew(self.ui)*Fi)
         self._Qi = sm.BlockMatrix([[Fi], [Ti_e]])
         
         Fj = -Fi
         Tj = -Ti
-        Tj_e = 2*E(self.Pj).T * (Ti + Skew(self.uj).T*Fj)
+        Tj_e = 2*E(self.Pj).T * (Ti + Skew(self.uj)*Fj)
         self._Qj = sm.BlockMatrix([[Fj], [Tj_e]])
 
 ###############################################################################
 ###############################################################################
 
-class force(abstract_force):
+class local_force(abstract_force):
     
     def_axis = 1
     def_locs = 1
@@ -333,8 +355,8 @@ class force(abstract_force):
     
     @property
     def Qi(self):
-        force = self.Fi(self.t) * self.vi
-        Ti_e = 2*E(self.Pi).T * (self.Ti + Skew(self.ui).T*force)
+        force = A(self.Pi) * (self.Fi(self.t) * self.vi_bar)
+        Ti_e = 2*E(self.Pi).T * Skew(self.ui)*force
         return sm.BlockMatrix([[force], [Ti_e]])
     @property
     def Qj(self):
@@ -352,7 +374,7 @@ class force(abstract_force):
 ###############################################################################
 ###############################################################################
 
-class torque(abstract_force):
+class local_torque(abstract_force):
     
     def_axis = 1
     def_locs = 0
@@ -364,9 +386,9 @@ class torque(abstract_force):
 
     @property
     def Qi(self):
-        torque = self.Ti(self.t) * self.vi
-        Ti_e = 2*E(self.Pi).T * torque 
-        return sm.BlockMatrix([[self.Fi], [Ti_e]])
+        local_torque = self.Ti(self.t) * self.vi_bar
+        Ti_e = 2*G(self.Pi).T * local_torque 
+        return sm.BlockMatrix([[zero_matrix(3, 1)], [Ti_e]])
     @property
     def Qj(self):
         return sm.BlockMatrix([[zero_matrix(3, 1)], [zero_matrix(4, 1)]])
@@ -383,39 +405,23 @@ class torque(abstract_force):
 ###############################################################################
 ###############################################################################
 
-class internal_force(abstract_force):
+class TSDA(abstract_force):
     
     def_axis = 0
-    def_locs = 0
+    def_locs = 2
     
     def __init__(self, name, body_i=None, body_j=None):
         super().__init__(name, body_i, body_j)
-        self.joint = dummy_cylinderical(name, body_i, body_j)
         format_ = (self.prefix, self.id_name)
         self.LF = sm.symbols('%s%s_FL'%format_, real=True)
 
-        self.Fs = sm.Function('UF_%s_Fs'%name)#, commutative=True)
-        self.Fd = sm.Function('UF_%s_Fd'%name, real=True)#, commutative=True)
-        self.Fa = sm.Function('UF_%s_Fa'%name)#, commutative=True)
-        
-        self.Ts = sm.Function('UF_%s_Ts'%name)#, commutative=True)
-        self.Td = sm.Function('UF_%s_Td'%name)#, commutative=True)
-        self.Ta = sm.Function('UF_%s_Ta'%name)#, commutative=True)
-        
-        self._construct_force_vector()
-        
-        body_i_name = self.body_i.id_name
-        format_ = (self.prefix, body_i_name, self.id_name)
-        Fi_raw_name = '%sF_%s_%s'%format_
-        Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
-        Ti_raw_name = '%sT_%s_%s'%format_
-        Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
-
-        Fi = matrix_symbol(Fi_raw_name, 3, 1, Fi_frm_name)
-        Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
-        self._reactions_symbols = [Fi, Ti]
-        self._reactions_equalities = [sm.Eq(Fi, self.Fi), sm.Eq(Ti, zero_matrix(3,1))]
+        self.Fs = sm.Function('UF_%s_Fs'%name)
+        self.Fd = sm.Function('UF_%s_Fd'%name, real=True)
+        self.Fa = sm.Function('UF_%s_Fa'%name)
                 
+        self._construct_force_vector()
+        self._construct_reactions()
+        
     @property
     def Qi(self):
         return self._Qi
@@ -426,63 +432,41 @@ class internal_force(abstract_force):
     
     @property
     def arguments_symbols(self):
-        configuration_args = self.joint.arguments_symbols[1:3]
+        configuration_args = [self.loc_1, self.loc_2]
         forces_args = [self.Fs, self.Fd, self.LF]
         return configuration_args + forces_args
-    @property
-    def constants_symbolic_expr(self):
-        return self.joint.constants_symbolic_expr[2:4]
+
     @property
     def constants_numeric_expr(self):
         eq1 = sm.Eq(self.Ti, zero_matrix(3, 1), evaluate=False)
         eq2 = sm.Eq(self.Tj, zero_matrix(3, 1), evaluate=False)
         return [eq1, eq2]
     
-    
     def _construct_force_vector(self):
         
-        dij  = self.joint.dij
-        dijd = self.joint.dijd
+        dij  = (self.Ri + self.ui - self.Rj - self.uj)
+        dijd = (self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj)
 
-        distance = sm.sqrt(dij.T*dij)
-        #velocity = sm.sqrt(dijd.T*dijd)[0,0]
-        #velocity = ((dijd/(velocity + sm.Symbol('s'))).T * dijd)
+        # Fs = K(l - l0) + C*ld + Fa
+        l  = sm.sqrt(dij.T*dij)[0,0]
+        l0 = self.LF
+        unit_vector = dij/l
+        ld = ((unit_vector).T * dijd)
 
-        unit_vector = dij/distance
-        
-        defflection = self.LF - distance[0,0]
-        velocity    = -((unit_vector).T * dijd)
-        #velocity    = -0.5*(dij.T*dij)**(-0.5) * 2 * (dij.T*dijd)
+        defflection = l0 - l
 
-        total_force = self.Fs(defflection) + self.Fd(velocity)
+        Fs = -self.Fs(defflection) + self.Fd(ld)
 
-        self.Fi = total_force * unit_vector
-        Ti_e = 2*E(self.Pi).T * (self.Ti + Skew(self.ui).T*self.Fi)
-        
-        self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
+        self.Fi = -Fs * unit_vector
+        Ti_e = Fs * 2*E(self.Pi).T * Skew(self.ui).T * unit_vector        
         
         self.Fj = -self.Fi
-        Tj_e = 2*E(self.Pj).T * (self.Tj + Skew(self.uj).T*self.Fj)
+        Tj_e = -Fs * 2*E(self.Pj).T * Skew(self.uj).T * unit_vector
+
+        self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
         self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
-        
-###############################################################################
-###############################################################################
-
-class bushing(abstract_force):
     
-    def_axis = 1
-    def_locs = 1
-    
-    def __init__(self, name, body_i=None, body_j=None):
-        super().__init__(name, body_i, body_j)
-        
-        self.Kt = sm.symbols('Kt_%s'%self.id_name)
-        self.Ct = sm.symbols('Ct_%s'%self.id_name)
-        
-        self.Kr = sm.symbols('Kr_%s'%self.id_name)
-        self.Cr = sm.symbols('Cr_%s'%self.id_name)
-
-        self._construct_force_vector()
+    def _construct_reactions(self):
         body_i_name = self.body_i.id_name
         format_ = (self.prefix, body_i_name, self.id_name)
         Fi_raw_name = '%sF_%s_%s'%format_
@@ -493,46 +477,10 @@ class bushing(abstract_force):
         Fi = matrix_symbol(Fi_raw_name, 3, 1, Fi_frm_name)
         Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
         self._reactions_symbols = [Fi, Ti]
-        self._reactions_equalities = [sm.Eq(Fi, self.Fi), sm.Eq(Ti, zero_matrix(3,1))]
-        
-    @property
-    def Qi(self):
-        return self._Qi
-    
-    @property
-    def Qj(self):
-        return self._Qj
+        self._reactions_equalities = [sm.Eq(Fi, self.Fi), 
+                                      sm.Eq(Ti, zero_matrix(3,1))]
 
-    @property
-    def arguments_symbols(self):
-        configuration_args = [self.axis_1, self.loc_1]
-        forces_args = [self.Kt, self.Ct, self.Kr, self.Cr]
-        return configuration_args + forces_args
-    
-    def _construct_force_vector(self):
-        
-        dij  = (self.Ri + self.ui - self.Rj - self.uj)
-        dijd = (self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj)
 
-        dij_bush_i  = self.mi_bar.A.T * self.Ai.T * dij
-        dijd_bush_i = self.mi_bar.A.T * self.Ai.T * dijd
-        F_bush_i = (self.Kt*sm.Identity(3) * dij_bush_i) \
-                 + (self.Ct*sm.Identity(3) * dijd_bush_i)
-
-        dij_bush_j  = self.mj_bar.A.T * self.Aj.T * dij
-        dijd_bush_j = self.mj_bar.A.T * self.Aj.T * dijd
-        F_bush_j = (self.Kt*sm.Identity(3) * dij_bush_j) \
-                 + (self.Ct*sm.Identity(3) * dijd_bush_j)
-
-        self.Fi = self.Ai * self.mi_bar.A * -F_bush_i
-        Ti_e = -(self.Ai * Skew(self.ui_bar) * 2*G(self.Pi)).T * self.Fi
-        self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
-        
-        self.Fj = self.Aj * self.mj_bar.A * F_bush_j
-        Tj_e = -(self.Aj * Skew(self.uj_bar) * 2*G(self.Pj)).T * self.Fj
-        self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
-    
-    
 ###############################################################################
 ###############################################################################
 
@@ -561,17 +509,7 @@ class generic_bushing(abstract_force):
         self._Td_alias = sm.Function('UF_%s_Td'%name)
 
         self._construct_force_vector()
-        body_i_name = self.body_i.id_name
-        format_ = (self.prefix, body_i_name, self.id_name)
-        Fi_raw_name = '%sF_%s_%s'%format_
-        Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
-        Ti_raw_name = '%sT_%s_%s'%format_
-        Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
-
-        Fi = matrix_symbol(Fi_raw_name, 3, 1, Fi_frm_name)
-        Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
-        self._reactions_symbols = [Fi, Ti]
-        self._reactions_equalities = [sm.Eq(Fi, self.Fi), sm.Eq(Ti, zero_matrix(3,1))]
+        self._construct_reactions()
         
     @property
     def Qi(self):
@@ -598,14 +536,94 @@ class generic_bushing(abstract_force):
                  + self.Fd(bush_trasformation, dijd)
 
         self.Fi = self.Ai * self.mi_bar.A * -F_bush_i
-        Ti_e = -(self.Ai * Skew(self.ui_bar) * 2*G(self.Pi)).T * self.Fi
+        Ti_e = - 2*E(self.Pi).T * Skew(self.ui).T * self.Fi
+        #Ti_e = -(self.Ai * Skew(self.ui_bar) * 2*G(self.Pi)).T * self.Fi
         self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
         
         self.Fj = -self.Fi
-        Tj_e = -(self.Aj * Skew(self.uj_bar) * 2*G(self.Pj)).T * self.Fj
+        Tj_e = - 2*E(self.Pj).T * Skew(self.uj).T * self.Fj
+        #Tj_e = -(self.Aj * Skew(self.uj_bar) * 2*G(self.Pj)).T * self.Fj
         self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
     
+    def _construct_reactions(self):
+        body_i_name = self.body_i.id_name
+        format_ = (self.prefix, body_i_name, self.id_name)
+        Fi_raw_name = '%sF_%s_%s'%format_
+        Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
+        Ti_raw_name = '%sT_%s_%s'%format_
+        Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
+
+        Fi = matrix_symbol(Fi_raw_name, 3, 1, Fi_frm_name)
+        Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
+        self._reactions_symbols = [Fi, Ti]
+        self._reactions_equalities = [sm.Eq(Fi, self.Fi), sm.Eq(Ti, zero_matrix(3,1))]
+
+###############################################################################
+###############################################################################
+
+class isotropic_bushing(abstract_force):
     
+    def_axis = 1
+    def_locs = 1
+    
+    def __init__(self, name, body_i=None, body_j=None):
+        super().__init__(name, body_i, body_j)
+        
+        self.Kt = sm.symbols('Kt_%s'%self.id_name)
+        self.Ct = sm.symbols('Ct_%s'%self.id_name)
+        
+        self.Kr = sm.symbols('Kr_%s'%self.id_name)
+        self.Cr = sm.symbols('Cr_%s'%self.id_name)
+
+        self._construct_force_vector()
+        self._construct_reactions()
+            
+    @property
+    def Qi(self):
+        return self._Qi
+    
+    @property
+    def Qj(self):
+        return self._Qj
+
+    @property
+    def arguments_symbols(self):
+        configuration_args = [self.axis_1, self.loc_1]
+        forces_args = [self.Kt, self.Ct, self.Kr, self.Cr]
+        return configuration_args + forces_args
+    
+    def _construct_force_vector(self):
+        
+        dij  = (self.Ri + self.ui - self.Rj - self.uj)
+        dijd = (self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj)
+
+        dij_bush_i  = self.mi_bar.A.T * self.Ai.T * dij
+        dijd_bush_i = self.mi_bar.A.T * self.Ai.T * dijd
+        F_bush_i = (self.Kt*sm.Identity(3) * dij_bush_i) \
+                 + (self.Ct*sm.Identity(3) * dijd_bush_i)
+
+        self.Fi = self.Ai * self.mi_bar.A * -F_bush_i
+        Ti_e = - 2*E(self.Pi).T * Skew(self.ui).T * self.Fi
+        self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
+        
+        self.Fj = -self.Fi
+        Tj_e = - 2*E(self.Pj).T * Skew(self.uj).T * self.Fj
+        self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
+    
+    def _construct_reactions(self):
+        body_i_name = self.body_i.id_name
+        format_ = (self.prefix, body_i_name, self.id_name)
+        Fi_raw_name = '%sF_%s_%s'%format_
+        Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
+        Ti_raw_name = '%sT_%s_%s'%format_
+        Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
+
+        Fi = matrix_symbol(Fi_raw_name, 3, 1, Fi_frm_name)
+        Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
+        self._reactions_symbols = [Fi, Ti]
+        self._reactions_equalities = [sm.Eq(Fi, self.Fi), 
+                                      sm.Eq(Ti, zero_matrix(3,1))]
+
 ###############################################################################
 ###############################################################################
 
