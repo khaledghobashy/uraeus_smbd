@@ -451,11 +451,11 @@ class TSDA(abstract_force):
         l  = sm.sqrt(dij.T*dij)[0,0]
         l0 = self.LF
         unit_vector = dij/l
-        ld = ((unit_vector).T * dijd)
+        ld = -((unit_vector).T * dijd)
 
         defflection = l0 - l
 
-        Fs = -self.Fs(defflection) + self.Fd(ld)
+        Fs = -self.Fs(defflection) - self.Fd(ld)
 
         self.Fi = -Fs * unit_vector
         Ti_e = Fs * 2*E(self.Pi).T * Skew(self.ui).T * unit_vector        
