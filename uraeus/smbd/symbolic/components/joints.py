@@ -77,9 +77,9 @@ class universal(abstract_joint, metaclass=joint_constructor):
     
 
 class tripod(abstract_joint, metaclass=joint_constructor):
-    def_axis = 1
+    def_axis = 2
     def_locs = 1
-    vector_equations = [dot_product_1('i', 'j'),
+    vector_equations = [dot_product_1('i', 'i'),
                         dot_product_2('i'),
                         dot_product_2('j')]
 
