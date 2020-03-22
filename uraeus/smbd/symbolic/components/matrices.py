@@ -322,8 +322,7 @@ class zero_matrix(sm.MatrixSymbol):
     
     def _latex(self,expr):
         return self.sym
-    def _ccode(self,expr,**kwargs):
-        return 'np.zeros((%s,%s),dtype=np.float64)'%(self.shape)
+
     def _sympystr(self,expr):
         return 'zero_matrix(%s,%s)'%self.shape
     
