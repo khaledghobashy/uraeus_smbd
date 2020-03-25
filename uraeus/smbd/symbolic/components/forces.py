@@ -569,11 +569,11 @@ class isotropic_bushing(abstract_force):
     def __init__(self, name, body_i=None, body_j=None):
         super().__init__(name, body_i, body_j)
         
-        self.Kt = sm.symbols('Kt_%s'%self.id_name)
-        self.Ct = sm.symbols('Ct_%s'%self.id_name)
+        self.Kt = sm.symbols('Kt_%s'%self.id_name, real=True)
+        self.Ct = sm.symbols('Ct_%s'%self.id_name, real=True)
         
-        self.Kr = sm.symbols('Kr_%s'%self.id_name)
-        self.Cr = sm.symbols('Cr_%s'%self.id_name)
+        self.Kr = sm.symbols('Kr_%s'%self.id_name, real=True)
+        self.Cr = sm.symbols('Cr_%s'%self.id_name, real=True)
 
         self._construct_force_vector()
         self._construct_reactions()
@@ -606,7 +606,12 @@ class isotropic_bushing(abstract_force):
         Ti_e = - 2*E(self.Pi).T * Skew(self.ui).T * self.Fi
         self._Qi = sm.BlockMatrix([[self.Fi], [Ti_e]])
         
-        self.Fj = -self.Fi
+        dij_bush_j  = self.mj_bar.A.T * self.Aj.T * dij
+        dijd_bush_j = self.mj_bar.A.T * self.Aj.T * dijd
+        F_bush_j = (self.Kt*sm.Identity(3) * dij_bush_j) \
+                 + (self.Ct*sm.Identity(3) * dijd_bush_j)
+
+        self.Fj = self.Aj * self.mj_bar.A * F_bush_j
         Tj_e = - 2*E(self.Pj).T * Skew(self.uj).T * self.Fj
         self._Qj = sm.BlockMatrix([[self.Fj], [Tj_e]])
     
