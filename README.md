@@ -14,7 +14,7 @@ A multi-body system is hereby defined as *a finite number of material bodies con
 
 ### Audience and Fields of Application
 
-Initially, the main targeted audience was the **Formula Student** community. The motive was *encouraging a deeper understanding of the modelling processes and the underlying theories used in other commercial software packages*, which is a way of giving back to the community, and supporting the concept of *"knowledge share"* adopted there by exposing it to the open-source community as well.
+Initially, the main targeted audience was the **Formula Student** community. The motive was *encouraging a deeper understanding of the modeling processes and the underlying theories used in other commercial software packages*, which is a way of giving back to the community, and supporting the concept of *"knowledge share"* adopted there by exposing it to the open-source community as well.
 
 Currently, the tool aims to serve a wider domain of users with different usage goals and different backgrounds, such as students, academic researchers and industry professionals.
 
@@ -52,7 +52,7 @@ Currently, the tool provides:
 
 Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. So, if you do not have an up and running python environment, you still can check out the tool and create multi-body systems seamlessly. 
 
-The *examples* section below, has several ready-to-use Colab notebooks that walks you through a typical modelling process flow.
+The *examples* section below, has several ready-to-use Colab notebooks that walks you through a typical modeling process flow.
 
 ### Using the tool on your machine.
 
@@ -63,7 +63,7 @@ The tool needs a valid python 3.6+ environment. If new to scientific computing i
 As the tool is still under continuous development, cloning this repository is a more versatile way to test and play with it, until a more stable first release is released. This can be done via the following git commands from the command line.
 
 ```bash
-$ git clone https://github.com/khaledghobashy/uraeus.git
+$ git clone https://github.com/khaledghobashy/uraeus-smbd.git
 ```
 
 ```bash
@@ -101,7 +101,7 @@ $ pip install uraeus.smbd
 
 #### What is the problem to be solved?
 
-The primary interest in multi-body dynamics is to analyze the system behaviour for given inputs. In analogy with control systems; a multi-body system can be thought as a **_system_** subjected to some **_inputs_** producing some **_outputs_**. These three parts of the problem are dependent on the analyst end goal of the analysis and simulation. 
+The primary interest in multi-body dynamics is to analyze the system behavior for given inputs. In analogy with control systems; a multi-body system can be thought as a **_system_** subjected to some **_inputs_** producing some **_outputs_**. These three parts of the problem are dependent on the analyst end goal of the analysis and simulation. 
 
 #### How is the system physics abstracted mathematically?
 
@@ -157,7 +157,7 @@ _**Note**: The development of such environments is discussed in a separate docum
 Several benefits of the adopted approach can be stated here, but the major theme here is the flexibility and modularity, in both software usage and software development. These can be summarized as follows:
 
 - The distinction between the topology design phase and the configuration assignment phase, which gives proper focus for each at its' own.
-- Natural adoption of the template-based modelling theme that emerges from the use of network-graphs to represent the system, which allows convenient assemblage of several graphs to form a new system. 
+- Natural adoption of the template-based modeling theme that emerges from the use of network-graphs to represent the system, which allows convenient assemblage of several graphs to form a new system. 
 - Uncoupled simulation environment, where the symbolic equations generated form the designed topology is free to be written in any programming language with any desired numerical libraries.
 
 ---------------------------------------------------
@@ -165,28 +165,11 @@ Several benefits of the adopted approach can be stated here, but the major theme
 ---------------------------------------------------
 ## Usage Examples & Tutorials
 
-### Ready-to-Use Notebooks & Tutorials
-
-This is a list of ready-to-use jupyter notebooks that walks you through the typical flow of the tool modelling process. The [**examples**](examples/standalone_models/) directory in this repository is planned to include updated versions of working models that can be statically viewed on github, downloaded on your machine or to be ran directly on Colab.
-
-### Standalone Studies
-
-- **Spatial Four-bar**. ([**GitHub**](examples/standalone_models/spatial_fourbar/spatial_fourbar.ipynb) | [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/spatial_fourbar/spatial_fourbar.ipynb))
-- **Spatial Slider-Crank**. ([**GitHub**](examples/standalone_models/spatial_slider_crank/spatial_slider_crank.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/spatial_slider_crank/spatial_slider_crank.ipynb))
-- **Double-Wishbone Suspension**. ([**GitHub**](examples/standalone_models/double_wishbone_suspension/double_wishbone_direct_acting.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/double_wishbone_suspension/double_wishbone_direct_acting.ipynb#scrollTo=A5aeLp5S45eh))
-- **Double-Four-bar Mechanism**. ([**GitHub**](examples/standalone_models/double_fourbar/double_fourbar.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/double_fourbar/double_fourbar.ipynb#scrollTo=A5aeLp5S45eh))
-- **Simple Pendulum**. ([**GitHub**](examples/standalone_models/simple_pendulum/simple_pendulum.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/simple_pendulum/simple_pendulum.ipynb#scrollTo=A5aeLp5S45eh))
-- **Double Pendulum**. ([**GitHub**](examples/standalone_models/double_pendulum/double_pendulum.ipynb)| [**Colab**](https://colab.research.google.com/github/khaledghobashy/smbd/blob/master/examples/standalone_models/double_pendulum/double_pendulum.ipynb#scrollTo=A5aeLp5S45eh))
-
-### Template-Based Projects
-
-*To be discussed ...*
+The [uraeus-mbd-projects](https://github.com/khaledghobashy/uraeus_mbd_projects) repository provides a list of well documented working examples that make use of the different uraeus framework parts, symbolic model creation, code-generation, numerical simulation and 3D visualization.
 
 ---------------------------------------------------
 
 ---------------------------------------------------
-
-
 
 ### Detailed Example - Spatial Fourbar Mechanism
 
@@ -194,30 +177,6 @@ This is a list of ready-to-use jupyter notebooks that walks you through the typi
 Below is code sample that walks you through the process of building a standalone symbolic topology and configuration as well as the generation of numerical simulation environments.
 
 This model will be created as a **standalone** topology and project. What this means is that model topological data is fully encapsulated in one topology graph and no need for any topological data from other external systems, which is the case for **template-based** topologies. This also means that the project files/database is self-contained, unlike the **template-based** topologies that need to be organized in a shared database.
-
-#### Initializing Project Structure
-
-Currently, a standalone project is structured using three top-level directories inside a given `parent_dir`; these are
-
-- `/symenv` :</br>
-  Directory of symbolic model data.
-- `/numenv` : </br>
-  Directory of the numerical environments to be generated.
-- `/visenv` : </br>
-  Directory of the 3D visualization environments to be generated.
-
-To create a standalone project :
-
-```python
-from uraeus.smbd.systems import standalone_project
-
-parent_dir = '' # current working directory
-
-project = standalone_project(parent_dir)
-project.create()
-```
-
-
 
 #### Building the Symbolic Topology.
 We start by importing the ```standalone_topology``` class from the ```systems``` module to create our symbolic model instance.
@@ -249,7 +208,7 @@ To finalize this step, we call the `assemble()` method to construct the governin
 
 ```python
 sym_model.assemble()
-sym_model.save('symenv')
+sym_model.save()
 ```
 We can check the system equations by accessing the appropriate topology attributes.
 ```python
@@ -350,7 +309,7 @@ sym_config.assign_geometry_to_body('rbs_l3', 'gms_l3')
 ```
 The last step is to export the configuration data into a JSON file that can be used then by other  numerical and visualization environments.
 ```python
-sym_config.export_JSON_file('symenv')
+sym_config.export_JSON_file()
 ```
 ---------------------------------------------------
 
