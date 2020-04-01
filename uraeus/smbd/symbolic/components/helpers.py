@@ -7,7 +7,7 @@ Created on Sun Feb 10 10:28:45 2019
 
 from .matrices import reference_frame, vector, B
 
-def name_setter(obj,name):
+def name_setter(obj, name):
     splited_name = name.split('.')
     obj._id_name = ''.join(splited_name[-1])
     obj.prefix  = '.'.join(splited_name[:-1])

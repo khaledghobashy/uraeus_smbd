@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan  1 11:06:05 2019
 
-@author: khale
-"""
 # Standard library imports
 import itertools
 
@@ -34,9 +29,9 @@ class abstract_joint(object):
     name : str
         Name of the joint instance. Should mimic a valid python variable name.
     body_i : body
-        The 1st body isntance. Should be an instance of the ```body``` class.
+        The 1st body isntance. Should be an instance of the `body` class.
     body_j : body
-        The 2nd body isntance. Should be an instance of the ```body``` class.
+        The 2nd body isntance. Should be an instance of the `body` class.
         
     Attributes
     ----------
@@ -61,12 +56,12 @@ class abstract_joint(object):
     
     body_i : body
         The 1st body isntance.
-    body_i : body
+    body_j : body
         The 2nd body isntance.
     
     
     pos_level_equations : sympy.BlockMatrix
-        A block matrix that stores the set of vector equations thatrepresents 
+        A block matrix that stores the set of vector equations that represents 
         the position constraints equations. The shape of the blocks is (nve, 1),
         where the scalar shape is (nc, 1).
         
@@ -107,10 +102,10 @@ class abstract_joint(object):
         
     arguments_symbols : list (of sympy.MatrixSymbol)
         A list containing the symbolic mathematical objects -location points 
-        and orientation axes- that should be nuemrically defined by the user in
+        and orientation axes- that should be numerically defined by the user in
         a numerical simulation session.
-        The number of arguments are given by the sum of ```def_axis``` and 
-        ```def_locs```.
+        The number of arguments are given by the sum of `def_axis` and 
+        `def_locs`.
         
     runtime_symbols : list (of sympy.MatrixSymbol)
         A list containing the symbolic mathematical objects that changes during
@@ -145,13 +140,23 @@ class abstract_joint(object):
     
     """
     
+    # default number of defintion axes
     def_axis = 1
+
+    # default number of defintion locations
     def_locs = 1
     
     def __init__(self, name, body_i=None, body_j=None):
+        
+        # Setting the joint object names [_name, _id_name, prefix]
         name_setter(self, name)
+
+        # construct joint axes and locations vectors and markers
         self._create_joint_arguments()
-                
+        
+        # constructing the algabraic constraints equations between the given 
+        # bodies. The construct method is provided by the `joint_constructor` 
+        # meta-class
         if body_i and body_j:
             self.body_i = body_i
             self.body_j = body_j
@@ -159,14 +164,25 @@ class abstract_joint(object):
 
     @property
     def name(self):
+        """
+        Joint/Actuator full name
+        """
         return self._name
+    
     @property
     def id_name(self):
+        """
+        Joint/Actuator name without the perfixed initials
+        """
         splited_name = self.name.split('.')
-        return ''.join(splited_name[-1])
+        _id_name = ''.join(splited_name[-1])
+        return _id_name
     
     @property
     def body_i(self):
+        """
+        Joint/Actuator 1st body
+        """
         return self._body_i
     @body_i.setter
     def body_i(self, body_i):
@@ -174,6 +190,9 @@ class abstract_joint(object):
             
     @property
     def body_j(self):
+        """
+        Joint/Actuator 2nd body
+        """
         return self._body_j
     @body_j.setter
     def body_j(self, body_j):
@@ -253,8 +272,8 @@ class abstract_joint(object):
         A list containing the symbolic mathematical objects -location points 
         and orientation axes- that should be nuemrically defined by the user in
         a numerical simulation session.
-        The number of arguments are given by the sum of ```def_axis``` and 
-        ```def_locs```.
+        The number of arguments are given by the sum of `def_axis` and 
+        `def_locs`.
         """
         return self._arguments
     
@@ -352,10 +371,10 @@ class abstract_joint(object):
         
         Notes
         -----
-        The method constructs a vector instance with the name ```axis_i_name``` 
-        where ```i``` is the ID number and ```name``` is the joint/actuator name. 
+        The method constructs a vector instance with the name `axis_i_name` 
+        where `i` is the ID number and `name` is the joint/actuator name. 
         The method then sets two memebrs to the instance that represents the 
-        ```axis_i``` and its corresponding marker ```marker_i```.
+        `axis_i` and its corresponding marker `marker_i`.
         
         """
         format_ = (self.prefix, i, self.id_name)
@@ -380,10 +399,10 @@ class abstract_joint(object):
         
         Notes
         -----
-        The method constructs a vector instance with the name ```pt_i_name``` 
-        where ```i``` is the ID number and ```name``` is the joint/actuator name.
+        The method constructs a vector instance with the name `pt_i_name` 
+        where `i` is the ID number and `name` is the joint/actuator name.
         The method then sets a memebr variable to the instance that represents 
-        the ```loc_i```.
+        the `loc_i`.
         
         """
         format_ = (self.prefix, i, self.id_name)
@@ -400,7 +419,6 @@ class abstract_joint(object):
         self._jacobian_i = []
         self._jacobian_j = []
 
-
     def _construct(self):
         """
         A method that calls the other methods resposible for constructing the
@@ -410,7 +428,6 @@ class abstract_joint(object):
         self._create_reactions_args()
         self._create_reactions_equalities()
             
-    
     def _create_local_equalities(self):
         """
         A private method to create the joint/actuator local symbolic equalities
@@ -418,13 +435,14 @@ class abstract_joint(object):
         
         Notes
         -----
-        When a joint/actuator gets created by the user, it checks the number of
-        arguments used to fully define it, e.g; defintion axes and locations.
-        It then creates local version of these arguments that are local to the
-        bodies connected. These local arguments do not change relative to the
-        given body reference point and orientation.
+        When a joint/actuator gets created by the user, the class checks the 
+        number of arguments used to fully define the instance, 
+        e.g; defintion axes and locations.
+        It then creates local version of these arguments that are defined in 
+        the bodies local reference frame. 
+        These local arguments do not change relative to the given body 
+        reference point and orientation.
         TODO....
-        
         """
         
         # Empty list to store symbolic equalities
@@ -448,6 +466,7 @@ class abstract_joint(object):
             # local reference frame resulting in matrix transformation 
             # expression
             mi_bar    = marker.express(self.body_i)
+            
             # Creating a symbolic equality that equates the symbolic dcm of the
             # marker to the matrix transformation expression created.
             mi_bar_eq = sm.Eq(self.mi_bar.A, mi_bar)
@@ -456,6 +475,7 @@ class abstract_joint(object):
             # local reference frame resulting in matrix transformation 
             # expression
             mj_bar    = marker.express(self.body_j)
+            
             # Creating a symbolic equality that equates the symbolic dcm of the
             # marker to the matrix transformation expression created.
             mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
@@ -476,10 +496,12 @@ class abstract_joint(object):
             
             # Orienting 1st marker along 1st axis
             marker1.orient_along(axis1)
+            
             # Expressing the created marker/triad in terms of the 1st body 
             # local reference frame resulting in matrix transformation 
             # expression
             mi_bar    = marker1.express(self.body_i)
+            
             # Creating a symbolic equality that equates the symbolic dcm of the
             # marker to the matrix transformation expression created.
             mi_bar_eq = sm.Eq(self.mi_bar.A, mi_bar)
@@ -487,10 +509,12 @@ class abstract_joint(object):
             # Orienting the 2nd marker along the 2nd axis, where the 2nd marker
             # x-axis is parallel to the 1st marker's y-axis.
             marker2.orient_along(axis2, marker1.A[:, 1])
+            
             # Expressing the created marker/triad in terms of the 2nd body 
             # local reference frame resulting in matrix transformation 
             # expression
             mj_bar    = marker2.express(self.body_j)
+            
             # Creating a symbolic equality that equates the symbolic dcm of the
             # marker to the matrix transformation expression created.
             mj_bar_eq = sm.Eq(self.mj_bar.A, mj_bar)
@@ -518,6 +542,7 @@ class abstract_joint(object):
             # Relative position vector of joint location relative to the 1st 
             # body reference point, in the body-local reference frame
             ui_bar = loc.express(self.body_i) - self.Ri.express(self.body_i)
+            
             # Creating a symbolic equality that equates the symbolic vector of
             # the local position to the matrix transformation expression created.
             ui_bar_eq = sm.Eq(self.ui_bar, ui_bar)
@@ -525,6 +550,7 @@ class abstract_joint(object):
             # Relative position vector of joint location relative to the 2nd 
             # body reference point, in the body-local reference frame
             uj_bar = loc.express(self.body_j) - self.Rj.express(self.body_j)
+            
             # Creating a symbolic equality that equates the symbolic vector of
             # the local position to the matrix transformation expression created.
             uj_bar_eq = sm.Eq(self.uj_bar, uj_bar)
@@ -539,6 +565,7 @@ class abstract_joint(object):
             # Relative position vector of 1st joint location relative to the 1st 
             # body reference point, in the body-local reference frame
             ui_bar = loc1.express(self.body_i) - self.Ri.express(self.body_i)
+            
             # Creating a symbolic equality that equates the symbolic vector of
             # the local position to the matrix transformation expression created.
             ui_bar_eq = sm.Eq(self.ui_bar, ui_bar)
@@ -546,13 +573,13 @@ class abstract_joint(object):
             # Relative position vector of 2nd joint location relative to the 2nd 
             # body reference point, in the body-local reference frame
             uj_bar = loc2.express(self.body_j) - self.Rj.express(self.body_j)
+            
             # Creating a symbolic equality that equates the symbolic vector of
             # the local position to the matrix transformation expression created.
             uj_bar_eq = sm.Eq(self.uj_bar, uj_bar)
             
             # Storing the equalities in the locations list.
             location_equalities = [ui_bar_eq, uj_bar_eq]
-        
         
         else: 
             raise NotImplementedError
@@ -562,7 +589,7 @@ class abstract_joint(object):
     
     def _construct_actuation_functions(self):
         """
-        A method to create actuation functions in actuator classes.
+        A private method to create actuation functions in actuator classes.
         """
         pass
     
@@ -580,27 +607,29 @@ class abstract_joint(object):
         
         format_ = (self.prefix, body_i_name, self.id_name)
         
-        # Joint Reaction Load acting on body_i.
+        # Symbol of constraint reaction load acting on body_i.
         Qi_raw_name = '%sQ_%s_%s'%format_
         Qi_frm_name = r'{%sQ^{%s}_{%s}}'%format_
         self.Qi = matrix_symbol(Qi_raw_name, 7, 1, Qi_frm_name)
         
-        # Joint Reaction Force acting on body_i.
+        # Symbol of constraint reaction force acting on body_i.
         Fi_raw_name = '%sF_%s_%s'%format_
         Fi_frm_name = r'{%sF^{%s}_{%s}}'%format_
         self.Fi = matrix_symbol(Fi_raw_name, 3, 1, Fi_frm_name)
         
-        # Joint Reaction Torque acting on body_i in terms of orientation parameters.
+        # Symbol of constraint reaction acting on body_i in terms of 
+        # orientation parameters.
         Tie_raw_name = '%sTe_%s_%s'%format_
         Tie_frm_name = r'{%sTe^{%s}_{%s}}'%format_
         self.Ti_e = matrix_symbol(Tie_raw_name, 4, 1, Tie_frm_name)
         
-        # Joint Reaction Torque acting on body_i in terms of cartesian coordinates.
+        # Symbol of constraint reaction acting body_i in terms of cartesian 
+        # coordinates.
         Ti_raw_name = '%sT_%s_%s'%format_
         Ti_frm_name = r'{%sT^{%s}_{%s}}'%format_
         self.Ti = matrix_symbol(Ti_raw_name, 3, 1, Ti_frm_name)
         
-        if self.def_locs >0:
+        if self.def_locs > 0:
             self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e - Skew(self.ui)*self.Fi
         else:
             self.Ti_eq = 0.5*E(self.Pi)*self.Ti_e
@@ -644,6 +673,25 @@ class abstract_actuator(abstract_joint):
         super().__init__(*args)
         
     def _construct_actuation_functions(self):
+        """
+        A private method to create actuation functions in actuator classes.
+        This method creats the following private members:
+            - t: sympy.symbol
+                A symbol that represents the time `t` variable as a real number
+
+            - act_func: sympy.UndefinedFunction
+                An undefined function object that represents the actuation 
+                functionality.
+            
+            - _pos_function: sympy.Function
+                The actuation function as a function in `t`
+            
+            - _vel_function: sympy.diff
+                The 1st time derivative of the _pos_function
+            
+            - _acc_function: sympy.diff
+                The 1st time derivative of the _vel_function
+        """
         self.t = t = sm.symbols('t', real=True)
         self.act_func = sm.Function('%sUF_%s'%(self.prefix, self.id_name))
         self._pos_function = self.act_func(t)
@@ -666,14 +714,42 @@ class abstract_actuator(abstract_joint):
     
     @property
     def arguments_symbols(self):
+        """
+        A list containing the symbolic mathematical objects -location points,
+        orientation axes and actuation functionality- that should be 
+        nuemrically defined by the user in a numerical simulation session.
+        The number of arguments are given by the sum of `def_axis`, `def_locs` 
+        in addition to `act_func`.
+        """
         return super().arguments_symbols + [self.act_func]
 
 ###############################################################################
 ###############################################################################
 
 class joint_actuator(abstract_actuator):
+
+    """
+    **Abstract Class**
+    
+    An abstract class that acts as a base class for joint actuators imposed on
+    joints.
+
+    Parameters
+    ----------
+    name : str
+        Name of the joint instance. Should mimic a valid python variable name.
+    joint : joint instance
+        A joint instance of a sub-type of abstract_joint class.        
+    
+    Notes
+    -----
+    TODO
+    """
     
     def __init__(self, name, joint=None):
+        """
+        
+        """
         if joint is not None:
             self.joint = joint
             body_i = joint.body_i
