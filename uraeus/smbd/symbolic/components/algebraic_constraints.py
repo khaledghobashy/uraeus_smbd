@@ -323,6 +323,9 @@ class abstract_joint(object):
         equation = self.Rdi + self.Bui*self.Pdi - self.Rdj - self.Buj*self.Pdj
         return equation
 
+    def construct(self):
+        msg = 'This should be implemented by the joint_constructor metaclass.'
+        raise NotImplementedError(msg)
             
     def _create_joint_arguments(self):
         """
@@ -652,7 +655,6 @@ class abstract_joint(object):
 ###############################################################################
 
 class abstract_actuator(abstract_joint):
-        
     """
     **Abstract Class**
     
@@ -667,7 +669,6 @@ class abstract_actuator(abstract_joint):
     TODO
     
     """
-
     
     def __init__(self, *args):
         super().__init__(*args)
@@ -727,7 +728,6 @@ class abstract_actuator(abstract_joint):
 ###############################################################################
 
 class joint_actuator(abstract_actuator):
-
     """
     **Abstract Class**
     
@@ -747,14 +747,14 @@ class joint_actuator(abstract_actuator):
     """
     
     def __init__(self, name, joint=None):
-        """
-        
-        """
         if joint is not None:
             self.joint = joint
             body_i = joint.body_i
             body_j = joint.body_j
+
+            # calling the super class `abstract_actuator` __init__ method
             super().__init__(joint.name, body_i, body_j)
+            # over-riding the _name memebr to have the given actuator name
             self._name = name
             self.construct()
         else:
@@ -774,6 +774,30 @@ class joint_actuator(abstract_actuator):
 ###############################################################################
 
 class absolute_actuator(abstract_actuator):
+    """
+    **Abstract Class**
+    
+    An abstract class that acts as a base class for absolute actuators imposed 
+    on bodies to control their coordinates directly.
+
+    Parameters
+    ----------
+    name : str
+        Name of the joint instance. Should mimic a valid python variable name.
+    body_i : body instance
+        The controlled/actuated body instance.
+    body_j : body instance
+        The reference body of control.
+
+    Class Attributes
+    ----------------
+    _coordinates_map : dict, {'x':0, 'y':1, 'z':2}
+        A dictionary that maps str coordinates to indices of body coordinates.
+    
+    Notes
+    -----
+    TODO
+    """
     
     _coordinates_map = {'x':0, 'y':1, 'z':2}
     
@@ -787,25 +811,49 @@ class absolute_actuator(abstract_actuator):
 ###############################################################################
 
 class joint_constructor(type):
+    """
+    **Meta Class**
     
+    A metaclass that is used alongside with the abstract_joint derived 
+    classes to create the concrete joints and actuators classes.
+
+    """
+
     def __new__(mcls, name, bases, attrs):
         
+        # getting the joint/actuator vector equations stored as a class 
+        # attribute in the constructed class
         vector_equations = attrs['vector_equations']
+
+        # number of vector constraint equations
         nve = len(vector_equations)
-        nc  = sum([e.nc for e in vector_equations])
+        # number of scalar constraint equations
+        nc = sum([e.nc for e in vector_equations])
         
+        # defining the construct method of the concrete classes
         def construct(self):
             self._create_equations_lists()
             self._construct_actuation_functions()
+            
+            # calling the construct method of each algebraic equation to 
+            # construct the equations between the constrained bodies. This is 
+            # specific for each joint class
             for e in vector_equations:
                 e.construct(self)
+            
+            # call the `abstract_joint._construct` method to construct common 
+            # instance attributes.
             self._construct()
-                    
+        
+        # updating the concrete class methods and members
         attrs['construct'] = construct
         attrs['nve'] = nve
-        attrs['nc']  = nc
-        attrs['n']  = 0
+        attrs['nc'] = nc
+        attrs['n'] = 0
+
+        cls_ = super(joint_constructor, mcls).__new__(mcls, name, 
+                                                      tuple(bases), attrs)
         
-        return super(joint_constructor, mcls).__new__(mcls, name, tuple(bases), attrs)
+        return cls_
 
 
