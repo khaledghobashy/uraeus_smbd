@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Feb  7 08:43:54 2019
-
-@author: khaled.ghobashy
-"""
 
 # Standard library imports
 import itertools
@@ -12,14 +6,100 @@ import itertools
 import sympy as sm
 
 # Local application imports
+from .helpers import body_setter, name_setter
 from .matrices import (A, vector, G, E, Skew, zero_matrix,
                        matrix_function_constructor, Force, Triad, 
                        reference_frame, matrix_symbol)
-from .helpers import body_setter, name_setter
 
 
 class abstract_force(object):
+    r"""
+    **Abstract Class**
     
+    A class that acts as a base class for forces equations. The
+    class is used to construct spatial action-only and action-reaction force 
+    elements acting on single bodies and body pairs.
+    
+    Parameters
+    ----------
+    name : str
+        Name of the joint instance. Should mimic a valid python variable name.
+    body_i : body
+        The 1st body isntance. Should be an instance of the `body` class.
+    body_j : body
+        The 2nd body isntance. Should be an instance of the `body` class.
+        
+    Attributes
+    ----------
+    n : int
+        Class member. Number of generalized coordinates used to define the
+        force configuration. Equals zero.
+    nc : int
+        Class member. Number of scalar constraint equations.Equals zero.
+    nve : int
+        Class member. Number of vetor constraint equations.Equals zero.
+        
+    def_axis : int
+        Class member. Number of axes used to define the given force element.
+    def_locs : int
+        Class member. Number of location points used to define the given 
+        force element.
+        
+    body_i : body
+        The 1st body isntance.
+    body_j : body
+        The 2nd body isntance.
+        
+    reactions_equalities : list (of sympy.Equality)
+        A list containg the reactions' equalities acting on body_i. These are
+        sympy equalities containing lhs vactor symbols and rhs matrix 
+        expressions. These are: 
+            - Reaction Force Equality (Fi).
+            - Reaction Torque Euality (Ti) in terms of cartesian coordinates.
+    
+    reactions_symbols : list (of sympy.MatrixExpr)
+        A list contating the reaction force vector Fi and the reaction torque 
+        vector Ti acting on body_i.
+        
+    arguments_symbols : list (of sympy.MatrixSymbol)
+        A list containing the symbolic mathematical objects -location points 
+        and orientation axes- that should be numerically defined by the user in
+        a numerical simulation session.
+        The number of arguments are given by the sum of `def_axis` and 
+        `def_locs`.
+        
+    runtime_symbols : list (of sympy.MatrixSymbol)
+        A list containing the symbolic mathematical objects that changes during
+        the run-time of a nuemric simulation's "solve" method. Here this is 
+        mostly an empty list.
+    
+    constants_symbolic_expr : list (of sympy.Equality)
+        A list containing sympy equalities representing the values of internal
+        class symbolic constants that are evaluated from other symbolic 
+        expressions.
+    
+    constants_numeric_expr : list (of sympy.Equality)
+        A list containing sympy equalities representing the values of internal
+        class symbolic constants that are evaluated directly from numerical 
+        expressions.
+    
+    constants_symbols : list (of symbolic objects)
+        A list containing all the symbolic mathematical objects that represent
+        constants for the given joint/actuator instance.
+        
+    dij : sympy.MatrixExpr
+        A symbolic matrix expression representing the relative position vector
+        between the joint location point on body_i and the location point on
+        body_j. 
+        $$ R_i + A(P_i) \bar{u}_i - R_j - A(P_j) \bar{u}_j $$
+    
+    dijd : sympy.MatrixExpr
+        A symbolic matrix expression representing the relative velocity vector
+        between the joint location point on body_i and the location point on
+        body_j.
+        $$ d(R_i + A(P_i) \bar{u}_i - R_j - A(P_j) \bar{u}_j) / dt $$
+    
+    """
     n   = 0
     nc  = 0
     nve = 0
