@@ -391,8 +391,8 @@ class generic_load(abstract_force):
         self.Fi = matrix_function_constructor('UF_%s_F'%name, (3, 1))
         self.Ti = matrix_function_constructor('UF_%s_T'%name, (3, 1))
         
-        self._Fi_alias = sm.Function('UF_%s_F'%name)
-        self._Ti_alias = sm.Function('UF_%s_T'%name)
+        self._Fi_alias = sm.Function('UF_%s_F'%name, is_Vector=True)
+        self._Ti_alias = sm.Function('UF_%s_T'%name, is_Vector=True)
 
         self._construct_force_vector()
         
@@ -582,11 +582,11 @@ class generic_bushing(abstract_force):
         self.Fd = matrix_function_constructor('UF_%s_Fd'%name, (3, 1))
         self.Td = matrix_function_constructor('UF_%s_Td'%name, (3, 1))
         
-        self._Fs_alias = sm.Function('UF_%s_Fs'%name)
-        self._Ts_alias = sm.Function('UF_%s_Ts'%name)
+        self._Fs_alias = sm.Function('UF_%s_Fs'%name, is_Vector=True)
+        self._Ts_alias = sm.Function('UF_%s_Ts'%name, is_Vector=True)
 
-        self._Fd_alias = sm.Function('UF_%s_Fd'%name)
-        self._Td_alias = sm.Function('UF_%s_Td'%name)
+        self._Fd_alias = sm.Function('UF_%s_Fd'%name, is_Vector=True)
+        self._Td_alias = sm.Function('UF_%s_Td'%name, is_Vector=True)
 
         self._construct_force_vector()
         self._construct_reactions()
