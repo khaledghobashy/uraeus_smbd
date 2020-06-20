@@ -694,11 +694,12 @@ class abstract_actuator(abstract_joint):
                 The 1st time derivative of the _vel_function
         """
         #self.t = t = sm.symbols('t', real=True)
+        t = sm.symbols('t', real=True)
 
         # Note: creating the time variable 't' as a matrix symbol to deal with 
         # a bug in the sympy.cse functionality. This should be taken into 
         # consideration for statically typed code-generation environments
-        self.t  = sm.MatrixSymbol('t', 1, 1)
+        self.t = sm.MatrixSymbol('t', 1, 1)
         self.act_func = sm.Function('%sUF_%s'%(self.prefix, self.id_name), real=True)
         self._pos_function = self.act_func(t)
         self._vel_function = sm.diff(self._pos_function, t)
