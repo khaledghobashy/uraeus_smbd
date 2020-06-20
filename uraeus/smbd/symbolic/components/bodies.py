@@ -153,7 +153,7 @@ class body(reference_frame):
         self.normalized_jacobian = [zero_matrix(1, 3), 2*self.P.T]
                         
         self.m = sm.symbols('m_%s'%self.id_name)
-        self.M = self.m*sm.Identity(3)
+        self.M = matrix_symbol('%sM_%s'%format_, 3, 3, r'{%s{M}_{%s}}'%format_)
         self.Jbar = matrix_symbol('%sJbar_%s'%format_, 3, 3, r'{%s\bar{J}_{%s}}'%format_)
         self.J = 4 * G(self.P).T * self.Jbar * G(self.P)
         
@@ -181,7 +181,8 @@ class body(reference_frame):
         return [self.R, self.P, self.Rd, self.Pd, self.Rdd, self.Pdd]
     @property
     def constants_symbolic_expr(self):
-        return []
+        massmatrix = sm.Eq(self.M, self.m*sm.Identity(3))
+        return [massmatrix]
     @property
     def constants_numeric_expr(self):
         return []
@@ -221,7 +222,7 @@ class ground(body):
     
     @property
     def arguments_symbols(self):
-        return []#[self.R, self.P, self.Rd, self.Pd, self.Rdd, self.Pdd]
+        return []
     
     @property
     def constants_numeric_expr(self):
