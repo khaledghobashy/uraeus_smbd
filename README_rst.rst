@@ -21,26 +21,14 @@ Features
 
 Installation
 ------------
-Using the tool on `Colab <https://colab.research.google.com>`_
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Google Colaboratory is a free Jupyter notebook environment that requires no setup and runs entirely in the cloud [2]. 
-So, if you do not have an up and running python environment, you still can check out the tool and create multi-body systems seamlessly. 
-
-The *examples* section below, has several ready-to-use Colab notebooks that walks you through a typical modeling process flow.
-
-
-Using the tool on your machine
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The tool needs a valid python 3.6+ environment. If new to scientific computing in python, 
+The package needs a valid python 3.6+ environment. If new to scientific computing in python, 
 `Anaconda <https://www.anaconda.com/download/>`_ is a recommended free python distribution from Continuum 
 Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for scientific computing, 
 which provides a nice coherent platform with most of the tools needed.
 
 Git
 '''
-As the tool is still under continuous development, cloning this repository is a more versatile way to test and
+As the package is still under continuous development, cloning this repository is a more versatile way to test and
 play with it, until a more stable first release is released. 
 This can be done via the following **git** command using the terminal (Linux and Mac) or powershell (Windows).
 
@@ -49,8 +37,38 @@ This can be done via the following **git** command using the terminal (Linux and
     git clone https://github.com/khaledghobashy/uraeus_smbd.git
 
 This will download the repository locally on your machine. To install the package locally and use it as other
-python packages, using the same terminal/powershell run the following command
+python packages, using the same terminal/powershell run the following command:
 
 .. code:: bash
 
     pip install -e uraeus_smbd
+
+
+Roadmap
+-------
+*To be discussed ...*
+
+Implementation Details
+----------------------
+The **Implementation Details** will be provided in a separate documentation and 
+linked here
+
+
+Theoretical Basis
+-----------------
+The **Theoretical Basis** will be provided in a separate documentation and linked here
+
+
+Support
+-------
+As the tool is developed and maintained by one developer for now, if you have any inquiries, 
+do not hesitate to contact me at khaled.ghobashy@live.com or kh.ghobashy@gmail.com
+
+
+References
+----------
+
+
+License
+-------
+**uraeus.smbd** is distributed under the 3-clause BSD license. See the `LICENSE <LICENSE>`_ file for details.
