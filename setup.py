@@ -14,7 +14,7 @@ setuptools.setup(
     description = short_description,
     long_description = long_description,
     long_description_content_type = "text/markdown",
-    url = "https://github.com/khaledghobashy/uraeus-smbd",
+    url = "https://github.com/khaledghobashy/uraeus_smbd",
     packages = ['uraeus'] + setuptools.find_packages(exclude=("tests",)),
     classifiers = [
         "Programming Language :: Python :: 3",
