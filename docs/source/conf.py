@@ -23,7 +23,7 @@ author = 'Khaled Ghobashy'
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.1.dev3'
-
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
