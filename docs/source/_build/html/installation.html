@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Background and Approach &mdash; uraeus.smbd 0.0.1.dev3 documentation</title>
+  <title>Installation &mdash; uraeus.smbd 0.0.1.dev3 documentation</title>
   
 
   
@@ -35,9 +35,7 @@
 
     
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="License" href="license.html" />
-    <link rel="prev" title="uraeus.smbd" href="index.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -82,12 +80,8 @@
               
             
             
-              <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Background and Approach</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#the-problem">The Problem</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#the-approach">The Approach</a></li>
-</ul>
-</li>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="background.html">Background and Approach</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
 
@@ -135,13 +129,13 @@
     
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Background and Approach</li>
+      <li>Installation</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/background.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -154,34 +148,32 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="background-and-approach">
-<h1>Background and Approach<a class="headerlink" href="#background-and-approach" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="the-problem">
-<h2>The Problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">¶</a></h2>
-<p><strong>What is the problem to be solved?</strong> <br>
-One of the primary interests in multi-body dynamics is to analyze the behavior of a given multi-body
-system under the effect of some inputs. In analogy with control systems; a multi-body system can be
-thought as a system subjected to some inputs producing some outputs.
-These three parts of the problem are dependent on the analyst end goal of the analysis and simulation.</p>
-<p><strong>How is the system physics abstracted mathematically?</strong> <br>
-An unconstrained body in space is normally defined using 6 generalized coordinates defining its location
-and orientation in space. For example, a system of 10 bodies requires 60 generalized coordinates to be
-fully defined, which in turn requires 60 independent equations to be solved for these unknown generalized
-coordinates.</p>
-<p>The way we achieve a solution for the system is dependent on the type of study we are performing.
-Mainly we have four types of analysis that are of interest for a given multi-body system. These are:</p>
-<ul class="simple">
-<li><p><strong>Kinematic Analysis</strong> <br> “How does the whole system move if we moved this particular body ?”</p></li>
-<li><p><strong>Inverse Dynamic Analysis</strong> <br> “What are the forces needed to achieve this motion we just did ?”</p></li>
-<li><p><strong>Equilibrium Analysis</strong> <br> “How does the system look if we did nothing ?”</p></li>
-<li><p><strong>Dynamic Analysis</strong> <br> “Now we gave it a force, how does it behave ?”</p></li>
-</ul>
-<p>Each analysis type -or question- can be modeled by a set of algebraic and/or differential equations
-that can be solved for the system generalized states (positions, velocities and accelerations).</p>
-<p>A more detailed discussion of each analysis type will be provided in another documentation.</p>
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>The package needs a valid python 3.6+ environment. If new to scientific computing in python,
+<a class="reference external" href="https://www.anaconda.com/download/">Anaconda</a> is a recommended free python distribution from
+Continuum Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for
+scientific computing, which provides a nice coherent platform with most of the tools needed.</p>
+<div class="section" id="pip">
+<h2>Pip<a class="headerlink" href="#pip" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install uraeus.smbd
+</pre></div>
 </div>
-<div class="section" id="the-approach">
-<h2>The Approach<a class="headerlink" href="#the-approach" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="git">
+<h2>Git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<p>As the package is still under continuous development, cloning this repository is a more versatile way
+to test and play with it, until a more stable first release is released.
+This can be done via the following <strong>git</strong> command using the terminal (Linux and Mac) or powershell
+(Windows).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/khaledghobashy/uraeus_smbd.git
+</pre></div>
+</div>
+<p>This will download the repository locally on your machine. To install the package locally and use it
+as other python packages, using the same terminal/powershell run the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -e uraeus_smbd
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -190,15 +182,6 @@ that can be solved for the system generalized states (positions, velocities and 
            
           </div>
           <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="license.html" class="btn btn-neutral float-right" title="License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="index.html" class="btn btn-neutral float-left" title="uraeus.smbd" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
   
 
   <hr/>

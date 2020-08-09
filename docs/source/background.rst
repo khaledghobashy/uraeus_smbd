@@ -8,15 +8,13 @@ Background and Approach
 The Problem
 -----------
 
-**What is the problem to be solved?**
-
+**What is the problem to be solved?** |br|
 One of the primary interests in multi-body dynamics is to analyze the behavior of a given multi-body 
 system under the effect of some inputs. In analogy with control systems; a multi-body system can be 
 thought as a system subjected to some inputs producing some outputs. 
 These three parts of the problem are dependent on the analyst end goal of the analysis and simulation.
 
-**How is the system physics abstracted mathematically?**
-
+**How is the system physics abstracted mathematically?** |br|
 An unconstrained body in space is normally defined using 6 generalized coordinates defining its location
 and orientation in space. For example, a system of 10 bodies requires 60 generalized coordinates to be 
 fully defined, which in turn requires 60 independent equations to be solved for these unknown generalized 

@@ -1,20 +1,16 @@
-.. uraeus.smbd documentation master file, created by
-   sphinx-quickstart on Thu Aug  6 08:44:30 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 .. |br| raw:: html
 
     <br>
 
 uraeus.smbd
 ===========
-.. note:: *Documentation is still under construction ...*
 
 ------------------------------------------------------------------------------------------------------
 
 **Symbolic Multi-Body Dynamics in Python** | 
-A python package for the creation and analysis of symbolic constrained multi-body systems.
+A python package for the symbolic creation and analysis of constrained multi-body systems.
+
+.. note:: *The documentation is still under construction ...*
 
 ------------------------------------------------------------------------------------------------------
 
@@ -56,46 +52,29 @@ Fields of application include any domain that deals with the study of interconne
 
 ------------------------------------------------------------------------------------------------------
 
-Installation
-------------
-The package needs a valid python 3.6+ environment. If new to scientific computing in python, 
-`Anaconda <https://www.anaconda.com/download/>`_ is a recommended free python distribution from 
-Continuum Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for 
-scientific computing, which provides a nice coherent platform with most of the tools needed.
+Features
+--------
+Currently, **uraeus.smbd** provides:
 
-Pip
-^^^
-.. code:: bash
+- Creation of symbolic **template-based** and **standalone** multi-body systems using minimal API via 
+  python scripting.
+- Convenient and easy creation of complex multi-body assemblies.
+- Convenient visualization of the system topology as a network graph.
+- Viewing the system's symbolic equations in a natural mathematical format using Latex printing.
+- Optimization of the system symbolic equations by performing common sub-expressions elimination.
+- Creation of symbolic configuration files to facilitate the process of numerical simulation data entry.
 
-    pip install uraeus.smbd
-
-
-Git
-^^^
-As the package is still under continuous development, cloning this repository is a more versatile way 
-to test and play with it, until a more stable first release is released. 
-This can be done via the following **git** command using the terminal (Linux and Mac) or powershell 
-(Windows).
-
-.. code:: bash
-
-    git clone https://github.com/khaledghobashy/uraeus_smbd.git
-
-This will download the repository locally on your machine. To install the package locally and use it 
-as other python packages, using the same terminal/powershell run the following command:
-
-.. code:: bash
-
-    pip install -e uraeus_smbd
 
 ------------------------------------------------------------------------------------------------------
+
 
 Guide
 -----
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
+   installation
    background
    license
 
