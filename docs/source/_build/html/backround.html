@@ -1,6 +1,5 @@
 
 
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
@@ -8,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Index &mdash; uraeus.smbd 0.0.1.dev3 documentation</title>
+  <title>Background and Approach &mdash; uraeus.smbd 0.0.1.dev3 documentation</title>
   
 
   
@@ -35,7 +34,7 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-    <link rel="index" title="Index" href="#" />
+    <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
 </head>
 
@@ -82,8 +81,7 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="background.html">Background and Approach</a></li>
-<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
 </ul>
 
             
@@ -130,12 +128,14 @@
     
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Index</li>
+      <li>Background and Approach</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
+            <a href="_sources/backround.rst.txt" rel="nofollow"> View page source</a>
+          
         
       </li>
     
@@ -147,11 +147,35 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-
-<h1 id="index">Index</h1>
-
-<div class="genindex-jumpbox">
- 
+  <div class="section" id="background-and-approach">
+<h1>Background and Approach<a class="headerlink" href="#background-and-approach" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-problem">
+<h2>The Problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">¶</a></h2>
+<p><strong>What is the problem to be solved?</strong></p>
+<p>One of the primary interests in multi-body dynamics is to analyze the behavior of a given multi-body
+system under the effect of some inputs. In analogy with control systems; a multi-body system can be
+thought as a system subjected to some inputs producing some outputs.
+These three parts of the problem are dependent on the analyst end goal of the analysis and simulation.</p>
+<p><strong>How is the system physics abstracted mathematically?</strong></p>
+<p>An unconstrained body in space is normally defined using 6 generalized coordinates defining its location
+and orientation in space. For example, a system of 10 bodies requires 60 generalized coordinates to be
+fully defined, which in turn requires 60 independent equations to be solved for these unknown generalized
+coordinates.</p>
+<p>The way we achieve a solution for the system is dependent on the type of study we are performing.
+Mainly we have four types of analysis that are of interest for a given multi-body system. These are:</p>
+<ul class="simple">
+<li><p><strong>Kinematic Analysis</strong> <br> “How does the whole system move if we moved this particular body ?”</p></li>
+<li><p><strong>Inverse Dynamic Analysis</strong> <br> “What are the forces needed to achieve this motion we just did ?”</p></li>
+<li><p><strong>Equilibrium Analysis</strong> <br> “How does the system look if we did nothing ?”</p></li>
+<li><p><strong>Dynamic Analysis</strong> <br> “Now we gave it a force, how does it behave ?”</p></li>
+</ul>
+<p>Each analysis type -or question- can be modeled by a set of algebraic and/or differential equations
+that can be solved for the system generalized states (positions, velocities and accelerations).</p>
+<p>A more detailed discussion of each analysis type will be provided in another documentation.</p>
+</div>
+<div class="section" id="the-approach">
+<h2>The Approach<a class="headerlink" href="#the-approach" title="Permalink to this headline">¶</a></h2>
+</div>
 </div>
 
 

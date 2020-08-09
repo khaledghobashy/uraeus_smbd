@@ -35,7 +35,8 @@
 
     
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Background and Approach" href="background.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -80,15 +81,11 @@
               
             
             
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">uraeus.smbd</a><ul>
-<li><a class="reference internal" href="#multi-body-systems">Multi-Body Systems</a></li>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="background.html">Background and Approach</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-</ul>
-</div>
+
             
           
         </div>
@@ -154,32 +151,109 @@
             
   <div class="section" id="uraeus-smbd">
 <h1>uraeus.smbd<a class="headerlink" href="#uraeus-smbd" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
 <p><em>Documentation is still under construction …</em></p>
-<hr class="docutils" />
-<p><strong>Symbolic Multi-Body Dynamics in Python</strong> | A python package for the creation and analysis of symbolic constrained multi-body systems</p>
-<hr class="docutils" />
-<div class="toctree-wrapper compound">
 </div>
+<hr class="docutils" />
+<p><strong>Symbolic Multi-Body Dynamics in Python</strong> |
+A python package for the creation and analysis of symbolic constrained multi-body systems.</p>
+<hr class="docutils" />
 <div class="section" id="multi-body-systems">
 <h2>Multi-Body Systems<a class="headerlink" href="#multi-body-systems" title="Permalink to this headline">¶</a></h2>
 <p>In modern literature, multi-body systems refer to modern mechanical systems that are often very complex
 and consist of many components interconnected by joints and force elements such as springs, dampers, and
 actuators. Examples of multi-body systems are machines, mechanisms, robotics, vehicles, space structures,
 and bio-mechanical systems. The dynamics of such systems are often governed by complex relationships
-resulting from the relative motion and joint forces between the components of the system. [1]</p>
+resulting from the relative motion and joint forces between the components of the system. <a class="footnote-reference brackets" href="#id3" id="id1">1</a></p>
 <p>Therefore, a multi-body system is hereby defined as <em>a finite number of material bodies connected in an
 arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies</em>.
 Practitioners of multi-body dynamics study the generation and solution of the equations governing the
-motion of such systems [2].</p>
+motion of such systems <a class="footnote-reference brackets" href="#id4" id="id2">2</a>.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="audience-and-fields-of-application">
+<h2>Audience and Fields of Application<a class="headerlink" href="#audience-and-fields-of-application" title="Permalink to this headline">¶</a></h2>
+<p>Initially, the main targeted audience was the Formula Student community. The motive was to encourage a
+deeper understanding of the modeling processes and the underlying theories used in other commercial
+software packages, which is a way of giving back to the community, and supporting the concept of
+“<strong>knowledge share</strong>” adopted there by exposing it to the open-source community as well.</p>
+<p>Currently, the tool aims to serve a wider domain of users with different usage goals and different
+backgrounds, such as students, academic researchers and industry professionals.</p>
+<p>Fields of application include any domain that deals with the study of interconnected bodies, such as:</p>
+<ul class="simple">
+<li><p>Ground Vehicles’ Systems.</p></li>
+<li><p>Construction Equipment.</p></li>
+<li><p>Industrial Mechanisms.</p></li>
+<li><p>Robotics.</p></li>
+<li><p>Biomechanics.</p></li>
+<li><p>etc.</p></li>
+</ul>
+</div>
+<hr class="docutils" />
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>The package needs a valid python 3.6+ environment. If new to scientific computing in python,
+<a class="reference external" href="https://www.anaconda.com/download/">Anaconda</a> is a recommended free python distribution from
+Continuum Analytics that includes SymPy, SciPy, NumPy, Matplotlib, and many more useful packages for
+scientific computing, which provides a nice coherent platform with most of the tools needed.</p>
+<div class="section" id="pip">
+<h3>Pip<a class="headerlink" href="#pip" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install uraeus.smbd
+</pre></div>
 </div>
 </div>
+<div class="section" id="git">
+<h3>Git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h3>
+<p>As the package is still under continuous development, cloning this repository is a more versatile way
+to test and play with it, until a more stable first release is released.
+This can be done via the following <strong>git</strong> command using the terminal (Linux and Mac) or powershell
+(Windows).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/khaledghobashy/uraeus_smbd.git
+</pre></div>
+</div>
+<p>This will download the repository locally on your machine. To install the package locally and use it
+as other python packages, using the same terminal/powershell run the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -e uraeus_smbd
+</pre></div>
+</div>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="guide">
+<h2>Guide<a class="headerlink" href="#guide" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="background.html">Background and Approach</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="background.html#the-problem">The Problem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="background.html#the-approach">The Approach</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id3"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>Shabana, A.A., Computational Dynamics, Wiley, New York, 2010.</p>
+</dd>
+<dt class="label" id="id4"><span class="brackets"><a class="fn-backref" href="#id2">2</a></span></dt>
+<dd><p>McPhee, J.J. Nonlinear Dyn (1996) 9: 73. <a class="reference external" href="https://doi.org/10.1007/BF01833294">https://doi.org/10.1007/BF01833294</a></p>
+</dd>
+</dl>
+</div>
+<hr class="docutils" />
 <div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
+</div>
 </div>
 
 
@@ -187,6 +261,13 @@ motion of such systems [2].</p>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="background.html" class="btn btn-neutral float-right" title="Background and Approach" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
   
 
   <hr/>
