@@ -19,6 +19,13 @@ Features
 - Optimization of the system symbolic equations by performing common sub-expressions elimination.
 - Creation of symbolic configuration files to facilitate the process of numerical simulation data entry.
 
+Documentation
+-------------
+The documentation is hosted at readthedocs and can be found `here <https://uraeus-smbd.readthedocs.io/en/latest/>`_. 
+
+.. note:: The documentation is still under construction!
+
+
 Installation
 ------------
 The package needs a valid python 3.6+ environment. If new to scientific computing in python, 
