@@ -26,10 +26,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -154,7 +154,8 @@
 <h1>uraeus.smbd<a class="headerlink" href="#uraeus-smbd" title="Permalink to this headline">¶</a></h1>
 <hr class="docutils" />
 <p><strong>Symbolic Multi-Body Dynamics in Python</strong> |
-A python package for the symbolic creation and analysis of constrained multi-body systems.</p>
+A python package for the symbolic creation and analysis of constrained
+multi-body systems.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><em>The documentation is still under construction …</em></p>
@@ -162,26 +163,33 @@ A python package for the symbolic creation and analysis of constrained multi-bod
 <hr class="docutils" />
 <div class="section" id="multi-body-systems">
 <h2>Multi-Body Systems<a class="headerlink" href="#multi-body-systems" title="Permalink to this headline">¶</a></h2>
-<p>In modern literature, multi-body systems refer to modern mechanical systems that are often very complex
-and consist of many components interconnected by joints and force elements such as springs, dampers, and
-actuators. Examples of multi-body systems are machines, mechanisms, robotics, vehicles, space structures,
-and bio-mechanical systems. The dynamics of such systems are often governed by complex relationships
-resulting from the relative motion and joint forces between the components of the system. <a class="footnote-reference brackets" href="#id3" id="id1">1</a></p>
-<p>Therefore, a multi-body system is hereby defined as <em>a finite number of material bodies connected in an
-arbitrary fashion by mechanical joints that limit the relative motion between pairs of bodies</em>.
-Practitioners of multi-body dynamics study the generation and solution of the equations governing the
-motion of such systems <a class="footnote-reference brackets" href="#id4" id="id2">2</a>.</p>
+<p>In modern literature, multi-body systems refer to modern mechanical systems
+that are often very complex and consist of many components interconnected by
+joints and force elements such as springs, dampers, and actuators. Examples of
+multi-body systems are machines, mechanisms, robotics, vehicles, space
+structures, and bio-mechanical systems. The dynamics of such systems are often
+governed by complex relationships resulting from the relative motion and joint
+forces between the components of the system. <a class="footnote-reference brackets" href="#id3" id="id1">1</a></p>
+<p>Therefore, a multi-body system is hereby defined as <em>a finite number of
+material bodies connected in an arbitrary fashion by mechanical joints that
+limit the relative motion between pairs of bodies</em>.
+Practitioners of multi-body dynamics study the generation and solution of the
+equations governing the motion of such systems <a class="footnote-reference brackets" href="#id4" id="id2">2</a>.</p>
 </div>
 <hr class="docutils" />
 <div class="section" id="audience-and-fields-of-application">
 <h2>Audience and Fields of Application<a class="headerlink" href="#audience-and-fields-of-application" title="Permalink to this headline">¶</a></h2>
-<p>Initially, the main targeted audience was the Formula Student community. The motive was to encourage a
-deeper understanding of the modeling processes and the underlying theories used in other commercial
-software packages, which is a way of giving back to the community, and supporting the concept of
-“<strong>knowledge share</strong>” adopted there by exposing it to the open-source community as well.</p>
-<p>Currently, the tool aims to serve a wider domain of users with different usage goals and different
-backgrounds, such as students, academic researchers and industry professionals.</p>
-<p>Fields of application include any domain that deals with the study of interconnected bodies, such as:</p>
+<p>Initially, the main targeted audience was the Formula Student community. The
+motive was to encourage a deeper understanding of the modeling processes and
+the underlying theories used in other commercial software packages, which is a
+way of giving back to the community, and supporting the concept of
+“<strong>knowledge share</strong>” adopted there by exposing it to the open-source community
+as well.</p>
+<p>Currently, the tool aims to serve a wider domain of users with different usage
+goals and different backgrounds, such as students, academic researchers and
+industry professionals.</p>
+<p>Fields of application include any domain that deals with the study of
+interconnected bodies, such as:</p>
 <ul class="simple">
 <li><p>Ground Vehicles’ Systems.</p></li>
 <li><p>Construction Equipment.</p></li>
@@ -196,13 +204,16 @@ backgrounds, such as students, academic researchers and industry professionals.<
 <h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
 <p>Currently, <strong>uraeus.smbd</strong> provides:</p>
 <ul class="simple">
-<li><p>Creation of symbolic <strong>template-based</strong> and <strong>standalone</strong> multi-body systems using minimal API via
-python scripting.</p></li>
+<li><p>Creation of symbolic <strong>template-based</strong> and <strong>standalone</strong> multi-body systems
+using minimal API via python scripting.</p></li>
 <li><p>Convenient and easy creation of complex multi-body assemblies.</p></li>
 <li><p>Convenient visualization of the system topology as a network graph.</p></li>
-<li><p>Viewing the system’s symbolic equations in a natural mathematical format using Latex printing.</p></li>
-<li><p>Optimization of the system symbolic equations by performing common sub-expressions elimination.</p></li>
-<li><p>Creation of symbolic configuration files to facilitate the process of numerical simulation data entry.</p></li>
+<li><p>Viewing the system’s symbolic equations in a natural mathematical format
+using Latex printing.</p></li>
+<li><p>Optimization of the system symbolic equations by performing common
+sub-expressions elimination.</p></li>
+<li><p>Creation of symbolic configuration files to facilitate the process of
+numerical simulation data entry.</p></li>
 </ul>
 </div>
 <hr class="docutils" />
@@ -224,7 +235,8 @@ python scripting.</p></li>
 <dd><p>Shabana, A.A., Computational Dynamics, Wiley, New York, 2010.</p>
 </dd>
 <dt class="label" id="id4"><span class="brackets"><a class="fn-backref" href="#id2">2</a></span></dt>
-<dd><p>McPhee, J.J. Nonlinear Dyn (1996) 9: 73. <a class="reference external" href="https://doi.org/10.1007/BF01833294">https://doi.org/10.1007/BF01833294</a></p>
+<dd><p>McPhee, J.J. Nonlinear Dyn (1996) 9: 73.
+<a class="reference external" href="https://doi.org/10.1007/BF01833294">https://doi.org/10.1007/BF01833294</a></p>
 </dd>
 </dl>
 </div>

@@ -26,10 +26,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="License" href="license.html" />
-    <link rel="prev" title="uraeus.smbd" href="index.html" /> 
+    <link rel="prev" title="Installation" href="installation.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,6 +83,7 @@
             
             
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Background and Approach</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#the-problem">The Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#the-approach">The Approach</a></li>
@@ -159,26 +160,33 @@
 <div class="section" id="the-problem">
 <h2>The Problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">¶</a></h2>
 <p><strong>What is the problem to be solved?</strong> <br>
-One of the primary interests in multi-body dynamics is to analyze the behavior of a given multi-body
-system under the effect of some inputs. In analogy with control systems; a multi-body system can be
-thought as a system subjected to some inputs producing some outputs.
-These three parts of the problem are dependent on the analyst end goal of the analysis and simulation.</p>
+One of the primary interests in multi-body dynamics is to analyze the behavior
+of a given multi-body system under the effect of some inputs. In analogy with
+control systems; a multi-body system can be thought as a system subjected to
+some inputs producing some outputs.
+These three parts of the problem are dependent on the analyst end goal of the
+analysis and simulation.</p>
 <p><strong>How is the system physics abstracted mathematically?</strong> <br>
-An unconstrained body in space is normally defined using 6 generalized coordinates defining its location
-and orientation in space. For example, a system of 10 bodies requires 60 generalized coordinates to be
-fully defined, which in turn requires 60 independent equations to be solved for these unknown generalized
-coordinates.</p>
-<p>The way we achieve a solution for the system is dependent on the type of study we are performing.
-Mainly we have four types of analysis that are of interest for a given multi-body system. These are:</p>
+An unconstrained body in space is normally defined using 6 generalized
+coordinates defining its location and orientation in space.
+For example, a system of 10 bodies requires 60 generalized coordinates to be
+fully defined, which in turn requires 60 independent equations to be solved for
+these unknown generalized coordinates.</p>
+<p>The way we achieve a solution for the system is dependent on the type of study
+we are performing.
+Mainly we have four types of analysis that are of interest for a given
+multi-body system. These are:</p>
 <ul class="simple">
 <li><p><strong>Kinematic Analysis</strong> <br> “How does the whole system move if we moved this particular body ?”</p></li>
 <li><p><strong>Inverse Dynamic Analysis</strong> <br> “What are the forces needed to achieve this motion we just did ?”</p></li>
 <li><p><strong>Equilibrium Analysis</strong> <br> “How does the system look if we did nothing ?”</p></li>
 <li><p><strong>Dynamic Analysis</strong> <br> “Now we gave it a force, how does it behave ?”</p></li>
 </ul>
-<p>Each analysis type -or question- can be modeled by a set of algebraic and/or differential equations
-that can be solved for the system generalized states (positions, velocities and accelerations).</p>
-<p>A more detailed discussion of each analysis type will be provided in another documentation.</p>
+<p>Each analysis type -or question- can be modeled by a set of algebraic and/or
+differential equations that can be solved for the system generalized states
+(positions, velocities and accelerations).</p>
+<p>A more detailed discussion of each analysis type will be provided in another
+documentation.</p>
 </div>
 <div class="section" id="the-approach">
 <h2>The Approach<a class="headerlink" href="#the-approach" title="Permalink to this headline">¶</a></h2>
@@ -196,7 +204,7 @@ that can be solved for the system generalized states (positions, velocities and 
         <a href="license.html" class="btn btn-neutral float-right" title="License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral float-left" title="uraeus.smbd" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
