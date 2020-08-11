@@ -87,6 +87,7 @@ Guide
 
    installation
    background
+   reference/index.rst
    license
 
 -------------------------------------------------------------------------------
