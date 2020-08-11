@@ -12,9 +12,11 @@
 #
 import os
 import sys
-sys.path.append(os.path.abspath('../../uraeus'))
+sys.path.append(os.path.abspath('../../'))
 
-print(os.path.abspath('../../uraeus'))
+os.system("python setup.py")
+
+print(os.path.abspath('../../'))
 
 import uraeus.smbd
 
