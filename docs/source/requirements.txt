@@ -1,4 +1,4 @@
--e git://github.com/khaledghobashy/uraeus_smbd.git
+git+https://github.com/khaledghobashy/uraeus_smbd.git@master
 
 sphinx_rtd_theme==0.5.0
 sphinx-gallery==0.7.0
