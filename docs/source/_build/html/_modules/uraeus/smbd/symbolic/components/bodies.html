@@ -1,0 +1,441 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>uraeus.smbd.symbolic.components.bodies &mdash; uraeus.smbd 0.0.1.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../../index.html" class="icon icon-home" alt="Documentation Home"> uraeus.smbd
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../background.html">Background and Approach</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../license.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">uraeus.smbd</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>uraeus.smbd.symbolic.components.bodies</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for uraeus.smbd.symbolic.components.bodies</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Tue Jan  1 10:57:47 2019</span>
+
+<span class="sd">@author: khale</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Standard library imports</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="c1"># 3rd parties library imports</span>
+<span class="kn">import</span> <span class="nn">sympy</span> <span class="k">as</span> <span class="nn">sm</span>
+
+<span class="c1"># Local application imports</span>
+<span class="kn">from</span> <span class="nn">.matrices</span> <span class="kn">import</span> <span class="p">(</span><span class="n">reference_frame</span><span class="p">,</span> <span class="n">vector</span><span class="p">,</span> <span class="n">quatrenion</span><span class="p">,</span> <span class="n">zero_matrix</span><span class="p">,</span> 
+                       <span class="n">A</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">matrix_symbol</span><span class="p">)</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;body&#39;</span><span class="p">,</span><span class="s1">&#39;ground&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="body"><a class="viewcode-back" href="../../../../../reference/components/bodies/body.html#uraeus.smbd.symbolic.components.bodies.body">[docs]</a><span class="k">class</span> <span class="nc">body</span><span class="p">(</span><span class="n">reference_frame</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;A class that represents an un-constrained rigid body object in 3D in a </span>
+<span class="sd">    symbolic form, where all the body parameters and equations are generated </span>
+<span class="sd">    automatically in a symbolic format.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name of the body instance. Should mimic a valid python variable name.</span>
+
+
+<span class="sd">    .. note::</span>
+<span class="sd">        An un-constraied body in space is typically defined using 6 generalized </span>
+<span class="sd">        coordinates representing its&#39; location and orientation. In cartesian </span>
+<span class="sd">        coordinate system, body location is simply defined by the :math:`(x,y,z)` </span>
+<span class="sd">        coordinates of a reference point on the body -normally the center-of-mass -</span>
+<span class="sd">        , where the body orientation can be defined in various ways, such as the </span>
+<span class="sd">        directional cosines matrix, euler-angles and euler-parameters.</span>
+
+<span class="sd">        The package uses euler-parameters -which is a 4D unit quaternion- to </span>
+<span class="sd">        represents a given body orientation in space. This makes the generalized </span>
+<span class="sd">        coordinates used to fully define a body in space to be 7, instead of 6, </span>
+<span class="sd">        it also adds an algebraic equation to the constraints that ensures the </span>
+<span class="sd">        unity/normalization of the body quaternion.</span>
+<span class="sd">    </span>
+<span class="sd">    **Attributes**</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    n : int</span>
+<span class="sd">        Number of generalized coordinates used to define the body </span>
+<span class="sd">        configuration. Equals 7.</span>
+<span class="sd">    nc : int</span>
+<span class="sd">        Number of scalar constraint equations (euler-parameters normalization).</span>
+<span class="sd">    nve : int</span>
+<span class="sd">        Number of vetor constraint equations (euler-parameters normalization).</span>
+<span class="sd">    </span>
+<span class="sd">    A :  A</span>
+<span class="sd">        The directional cosines matrix that represents the symbolic orientation</span>
+<span class="sd">        of the body relative to the global_frame. This matrix is function of</span>
+<span class="sd">        the body orientation parameters e.g. euler-parameters</span>
+<span class="sd">    R : vector</span>
+<span class="sd">        A symbolic matrix that represents the location of the body&#39;s reference </span>
+<span class="sd">        point relative to the global origin.</span>
+<span class="sd">    Rd : vector</span>
+<span class="sd">        A symbolic matrix that represents the translational velocity of the</span>
+<span class="sd">        body&#39;s reference point relative to the global origin.</span>
+<span class="sd">    P : quatrenion</span>
+<span class="sd">        A symbolic matrix that represents the orientation of the body&#39;s </span>
+<span class="sd">        reference frame relative to the global frame in terms of </span>
+<span class="sd">        euler-parameters.</span>
+<span class="sd">    Pd : quatrenion</span>
+<span class="sd">        A symbolic matrix that represents the rotaional velocity of the body&#39;s </span>
+<span class="sd">        reference frame relative to the global frame in terms of</span>
+<span class="sd">        euler_parameters time-derivatives.</span>
+<span class="sd">    </span>
+<span class="sd">    q : sympy.BlockMatrix</span>
+<span class="sd">        Blockmatrix containing the position-level coordinates of the body</span>
+<span class="sd">    qd : sympy.BlockMatrix</span>
+<span class="sd">        Blockmatrix containing the velocity-level coordinates of the body</span>
+<span class="sd">        </span>
+<span class="sd">    normalized_pos_equation : sympy.MatrixExpr</span>
+<span class="sd">        The normalization equation of the euler-parameters quatrenion at the</span>
+<span class="sd">        position level.</span>
+<span class="sd">    </span>
+<span class="sd">    normalized_vel_equation : sympy.MatrixExpr</span>
+<span class="sd">        The normalization equation of the euler-parameters quatrenion at the</span>
+<span class="sd">        velocity level.</span>
+<span class="sd">    </span>
+<span class="sd">    normalized_acc_equation : sympy.MatrixExpr</span>
+<span class="sd">        The normalization equation of the euler-parameters quatrenion at the</span>
+<span class="sd">        acceleration level.</span>
+<span class="sd">    </span>
+<span class="sd">    normalized_jacobian : list (of sympy.MatrixExpr)</span>
+<span class="sd">        The jacobian of the normalization equation of the euler-parameters </span>
+<span class="sd">        quatrenion relative to the vector of euler-parameters.</span>
+<span class="sd">        </span>
+<span class="sd">    arguments_symbols : list (of symbolic objects)</span>
+<span class="sd">        A list containing the symbolic mathematical objects that should be </span>
+<span class="sd">        nuemrically defined by the user in a numerical simulation session.</span>
+<span class="sd">    </span>
+<span class="sd">    runtime_symbols : list (of symbolic objects)</span>
+<span class="sd">        A list containing the symbolic mathematical objects that changes during</span>
+<span class="sd">        the run-time of a nuemric simulation&#39;s &quot;solve&quot; method.</span>
+<span class="sd">         </span>
+<span class="sd">    constants_symbolic_expr : list (of sympy.Equality)</span>
+<span class="sd">        A list containing sympy equalities representing the values of internal</span>
+<span class="sd">        class symbolic constants that are evaluated from other symbolic </span>
+<span class="sd">        expressions.</span>
+<span class="sd">    </span>
+<span class="sd">    constants_numeric_expr : list (of sympy.Equality)</span>
+<span class="sd">        A list containing sympy equalities representing the values of internal</span>
+<span class="sd">        class symbolic constants that are evaluated directly from numerical </span>
+<span class="sd">        expressions.</span>
+<span class="sd">    </span>
+<span class="sd">    constants_symbols : list (of symbolic objects)</span>
+<span class="sd">        A list containing all the symbolic mathematical objects that represent </span>
+<span class="sd">        constants for the given body instance.</span>
+<span class="sd">        </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">n</span>   <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">nc</span>  <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nve</span> <span class="o">=</span> <span class="mi">1</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        
+        <span class="n">splited_name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id_name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">splited_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span>  <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">splited_name</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span>  <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="o">+</span><span class="s1">&#39;.&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="o">!=</span><span class="s1">&#39;&#39;</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+        
+        <span class="n">format_</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_name</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">R</span>  <span class="o">=</span> <span class="n">vector</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">R_</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">,</span> <span class="n">format_as</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;{</span><span class="si">%s</span><span class="s1">R_{</span><span class="si">%s</span><span class="s1">}}&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span>  <span class="o">=</span> <span class="n">quatrenion</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">P_</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">,</span> <span class="n">format_as</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;{</span><span class="si">%s</span><span class="s1">P_{</span><span class="si">%s</span><span class="s1">}}&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">Rd</span> <span class="o">=</span> <span class="n">vector</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Rd_</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">,</span> <span class="n">format_as</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;{</span><span class="si">%s</span><span class="s1">\dot</span><span class="si">{R}</span><span class="s1">_{</span><span class="si">%s</span><span class="s1">}}&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Pd</span> <span class="o">=</span> <span class="n">quatrenion</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Pd_</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">,</span> <span class="n">format_as</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;{</span><span class="si">%s</span><span class="s1">\dot</span><span class="si">{P}</span><span class="s1">_{</span><span class="si">%s</span><span class="s1">}}&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">Rdd</span> <span class="o">=</span> <span class="n">vector</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Rdd_</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">,</span> <span class="n">format_as</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;{</span><span class="si">%s</span><span class="s1">\ddot</span><span class="si">{R}</span><span class="s1">_{</span><span class="si">%s</span><span class="s1">}}&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Pdd</span> <span class="o">=</span> <span class="n">quatrenion</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Pdd_</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">,</span> <span class="n">format_as</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;{</span><span class="si">%s</span><span class="s1">\ddot</span><span class="si">{P}</span><span class="s1">_{</span><span class="si">%s</span><span class="s1">}}&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">A</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">G</span> <span class="o">=</span> <span class="n">G</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">E</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span>
+                
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_pos_equation</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">T</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">sm</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_vel_equation</span> <span class="o">=</span> <span class="n">zero_matrix</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_acc_equation</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Pd</span><span class="o">.</span><span class="n">T</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">Pd</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_jacobian</span> <span class="o">=</span> <span class="p">[</span><span class="n">zero_matrix</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">T</span><span class="p">]</span>
+                        
+        <span class="bp">self</span><span class="o">.</span><span class="n">m</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">symbols</span><span class="p">(</span><span class="s1">&#39;m_</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">id_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M</span> <span class="o">=</span> <span class="n">matrix_symbol</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">M_</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;{</span><span class="si">%s{M}</span><span class="s1">_{</span><span class="si">%s</span><span class="s1">}}&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Jbar</span> <span class="o">=</span> <span class="n">matrix_symbol</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Jbar_</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;{</span><span class="si">%s</span><span class="s1">\bar</span><span class="si">{J}</span><span class="s1">_{</span><span class="si">%s</span><span class="s1">}}&#39;</span><span class="o">%</span><span class="n">format_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">J</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">G</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Jbar</span> <span class="o">*</span> <span class="n">G</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span>
+        
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">q</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sm</span><span class="o">.</span><span class="n">BlockMatrix</span><span class="p">([[</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">]])</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">qd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sm</span><span class="o">.</span><span class="n">BlockMatrix</span><span class="p">([[</span><span class="bp">self</span><span class="o">.</span><span class="n">Rd</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">Pd</span><span class="p">]])</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">qdd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sm</span><span class="o">.</span><span class="n">BlockMatrix</span><span class="p">([[</span><span class="bp">self</span><span class="o">.</span><span class="n">Rdd</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">Pdd</span><span class="p">]])</span>
+        
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">arguments_symbols</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Pd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rdd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Pdd</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Jbar</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">runtime_symbols</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Pd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rdd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Pdd</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">constants_symbolic_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">massmatrix</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">Eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="o">*</span><span class="n">sm</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">massmatrix</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">constants_numeric_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">constants_symbols</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">constants_expr</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constants_symbolic_expr</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">constants_numeric_expr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">expr</span><span class="o">.</span><span class="n">lhs</span> <span class="k">for</span> <span class="n">expr</span> <span class="ow">in</span> <span class="n">constants_expr</span><span class="p">]</span></div>
+        
+
+
+<span class="k">class</span> <span class="nc">ground</span><span class="p">(</span><span class="n">body</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A representation of the gorund as a special case of the body class. This </span>
+<span class="sd">    adds the needed constraint equations that makes the ground fixed in the</span>
+<span class="sd">    global reference frame.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">n</span>   <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">nc</span>  <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">nve</span> <span class="o">=</span> <span class="mi">2</span>
+    
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;ground&#39;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;ground&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P_ground</span> <span class="o">=</span> <span class="n">quatrenion</span><span class="p">(</span><span class="s1">&#39;Pg_</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">format_as</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;{Pg_{</span><span class="si">%s</span><span class="s1">}}&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_pos_equation</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">BlockMatrix</span><span class="p">([[</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">P_ground</span><span class="p">]])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_vel_equation</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">BlockMatrix</span><span class="p">([[</span><span class="n">zero_matrix</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)],[</span><span class="n">zero_matrix</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">)]])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_acc_equation</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">BlockMatrix</span><span class="p">([[</span><span class="n">zero_matrix</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)],[</span><span class="n">zero_matrix</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">)]])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_jacobian</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">BlockMatrix</span><span class="p">([[</span><span class="n">sm</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">zero_matrix</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)],</span>
+                                                   <span class="p">[</span><span class="n">zero_matrix</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">sm</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="mi">4</span><span class="p">)]])</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">arguments_symbols</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">constants_numeric_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">Eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">Matrix</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">expr1</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">Eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">Matrix</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">expr2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">Eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_ground</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">Matrix</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">mass</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">Eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">iner</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">Eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Jbar</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">position</span><span class="p">,</span> <span class="n">expr1</span><span class="p">,</span> <span class="n">expr2</span><span class="p">,</span> <span class="n">mass</span><span class="p">,</span> <span class="n">iner</span><span class="p">]</span>
+
+
+<span class="c1">###############################################################################</span>
+<span class="c1">###############################################################################</span>
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Khaled Ghobashy
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

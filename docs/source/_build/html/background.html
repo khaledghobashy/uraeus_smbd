@@ -26,10 +26,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -159,6 +160,12 @@
 <h1>Background and Approach<a class="headerlink" href="#background-and-approach" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="the-problem">
 <h2>The Problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">¶</a></h2>
+<p><strong>What is Multi-Body Dynamics?</strong> <br>
+As mentioned earlier, a multi-body system is hereby defined as <em>a finite number
+of material bodies connected in an arbitrary fashion by mechanical joints that
+limit the relative motion between pairs of bodies</em>, where practitioners of
+multi-body dynamics study the generation and solution of the equations
+governing the motion of such systems</p>
 <p><strong>What is the problem to be solved?</strong> <br>
 One of the primary interests in multi-body dynamics is to analyze the behavior
 of a given multi-body system under the effect of some inputs. In analogy with
@@ -177,16 +184,20 @@ we are performing.
 Mainly we have four types of analysis that are of interest for a given
 multi-body system. These are:</p>
 <ul class="simple">
-<li><p><strong>Kinematic Analysis</strong> <br> “How does the whole system move if we moved this particular body ?”</p></li>
-<li><p><strong>Inverse Dynamic Analysis</strong> <br> “What are the forces needed to achieve this motion we just did ?”</p></li>
-<li><p><strong>Equilibrium Analysis</strong> <br> “How does the system look if we did nothing ?”</p></li>
-<li><p><strong>Dynamic Analysis</strong> <br> “Now we gave it a force, how does it behave ?”</p></li>
+<li><p><strong>Kinematic Analysis</strong> <br>
+“How does the whole system move if we moved this particular body ?”</p></li>
+<li><p><strong>Inverse Dynamic Analysis</strong> <br>
+“What are the forces needed to achieve this motion we just did ?”</p></li>
+<li><p><strong>Equilibrium Analysis</strong> <br>
+“How does the system look if we did nothing ?”</p></li>
+<li><p><strong>Dynamic Analysis</strong> <br>
+“Now we gave it a force, how does it behave ?”</p></li>
 </ul>
 <p>Each analysis type -or question- can be modeled by a set of algebraic and/or
 differential equations that can be solved for the system generalized states
 (positions, velocities and accelerations).</p>
 <p>A more detailed discussion of each analysis type will be provided in another
-documentation.</p>
+part of the documentation.</p>
 </div>
 <div class="section" id="the-approach">
 <h2>The Approach<a class="headerlink" href="#the-approach" title="Permalink to this headline">¶</a></h2>

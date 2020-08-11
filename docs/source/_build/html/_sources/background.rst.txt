@@ -8,6 +8,13 @@ Background and Approach
 The Problem
 -----------
 
+**What is Multi-Body Dynamics?** |br|
+As mentioned earlier, a multi-body system is hereby defined as *a finite number
+of material bodies connected in an arbitrary fashion by mechanical joints that 
+limit the relative motion between pairs of bodies*, where practitioners of 
+multi-body dynamics study the generation and solution of the equations 
+governing the motion of such systems
+
 **What is the problem to be solved?** |br|
 One of the primary interests in multi-body dynamics is to analyze the behavior 
 of a given multi-body system under the effect of some inputs. In analogy with
@@ -28,20 +35,24 @@ we are performing.
 Mainly we have four types of analysis that are of interest for a given 
 multi-body system. These are:
 
-- **Kinematic Analysis** |br| "How does the whole system move if we moved this particular body ?"
+- **Kinematic Analysis** |br| 
+  "How does the whole system move if we moved this particular body ?"
 
-- **Inverse Dynamic Analysis** |br| "What are the forces needed to achieve this motion we just did ?"
+- **Inverse Dynamic Analysis** |br| 
+  "What are the forces needed to achieve this motion we just did ?"
 
-- **Equilibrium Analysis** |br| "How does the system look if we did nothing ?"
+- **Equilibrium Analysis** |br| 
+  "How does the system look if we did nothing ?"
 
-- **Dynamic Analysis** |br| "Now we gave it a force, how does it behave ?"
+- **Dynamic Analysis** |br| 
+  "Now we gave it a force, how does it behave ?"
 
 Each analysis type -or question- can be modeled by a set of algebraic and/or 
 differential equations that can be solved for the system generalized states 
 (positions, velocities and accelerations).
 
 A more detailed discussion of each analysis type will be provided in another 
-documentation.
+part of the documentation.
 
 The Approach
 ------------

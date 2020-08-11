@@ -1,0 +1,469 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Rigid Body &mdash; uraeus.smbd 0.0.1.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> uraeus.smbd
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../background.html">Background and Approach</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">uraeus.smbd</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Rigid Body</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/reference/components/bodies/body.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="rigid-body">
+<h1>Rigid Body<a class="headerlink" href="#rigid-body" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="uraeus.smbd.symbolic.components.bodies.body">
+<em class="property">class </em><code class="sig-prename descclassname">uraeus.smbd.symbolic.components.bodies.</code><code class="sig-name descname">body</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/uraeus/smbd/symbolic/components/bodies.html#body"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class that represents an un-constrained rigid body object in 3D in a
+symbolic form, where all the body parameters and equations are generated
+automatically in a symbolic format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of the body instance. Should mimic a valid python variable name.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>An un-constraied body in space is typically defined using 6 generalized
+coordinates representing its’ location and orientation. In cartesian
+coordinate system, body location is simply defined by the <span class="math notranslate nohighlight">\((x,y,z)\)</span>
+coordinates of a reference point on the body -normally the center-of-mass -
+, where the body orientation can be defined in various ways, such as the
+directional cosines matrix, euler-angles and euler-parameters.</p>
+<p>The package uses euler-parameters -which is a 4D unit quaternion- to
+represents a given body orientation in space. This makes the generalized
+coordinates used to fully define a body in space to be 7, instead of 6,
+it also adds an algebraic equation to the constraints that ensures the
+unity/normalization of the body quaternion.</p>
+</div>
+<p><strong>Attributes</strong></p>
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.n">
+<code class="sig-name descname">n</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of generalized coordinates used to define the body
+configuration. Equals 7.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.nc">
+<code class="sig-name descname">nc</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.nc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of scalar constraint equations (euler-parameters normalization).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.nve">
+<code class="sig-name descname">nve</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.nve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of vetor constraint equations (euler-parameters normalization).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.A">
+<code class="sig-name descname">A</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.A" title="Permalink to this definition">¶</a></dt>
+<dd><p>The directional cosines matrix that represents the symbolic orientation
+of the body relative to the global_frame. This matrix is function of
+the body orientation parameters e.g. euler-parameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>A</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.R">
+<code class="sig-name descname">R</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.R" title="Permalink to this definition">¶</a></dt>
+<dd><p>A symbolic matrix that represents the location of the body’s reference
+point relative to the global origin.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>vector</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.Rd">
+<code class="sig-name descname">Rd</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.Rd" title="Permalink to this definition">¶</a></dt>
+<dd><p>A symbolic matrix that represents the translational velocity of the
+body’s reference point relative to the global origin.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>vector</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.P">
+<code class="sig-name descname">P</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.P" title="Permalink to this definition">¶</a></dt>
+<dd><p>A symbolic matrix that represents the orientation of the body’s
+reference frame relative to the global frame in terms of
+euler-parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>quatrenion</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.Pd">
+<code class="sig-name descname">Pd</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.Pd" title="Permalink to this definition">¶</a></dt>
+<dd><p>A symbolic matrix that represents the rotaional velocity of the body’s
+reference frame relative to the global frame in terms of
+euler_parameters time-derivatives.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>quatrenion</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.q">
+<code class="sig-name descname">q</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.q" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blockmatrix containing the position-level coordinates of the body</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sympy.BlockMatrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.qd">
+<code class="sig-name descname">qd</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.qd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blockmatrix containing the velocity-level coordinates of the body</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sympy.BlockMatrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.normalized_pos_equation">
+<code class="sig-name descname">normalized_pos_equation</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.normalized_pos_equation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The normalization equation of the euler-parameters quatrenion at the
+position level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sympy.MatrixExpr</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.normalized_vel_equation">
+<code class="sig-name descname">normalized_vel_equation</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.normalized_vel_equation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The normalization equation of the euler-parameters quatrenion at the
+velocity level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sympy.MatrixExpr</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.normalized_acc_equation">
+<code class="sig-name descname">normalized_acc_equation</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.normalized_acc_equation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The normalization equation of the euler-parameters quatrenion at the
+acceleration level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sympy.MatrixExpr</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.normalized_jacobian">
+<code class="sig-name descname">normalized_jacobian</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.normalized_jacobian" title="Permalink to this definition">¶</a></dt>
+<dd><p>The jacobian of the normalization equation of the euler-parameters
+quatrenion relative to the vector of euler-parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list (of sympy.MatrixExpr)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.arguments_symbols">
+<code class="sig-name descname">arguments_symbols</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.arguments_symbols" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list containing the symbolic mathematical objects that should be
+nuemrically defined by the user in a numerical simulation session.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list (of symbolic objects)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.runtime_symbols">
+<code class="sig-name descname">runtime_symbols</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.runtime_symbols" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list containing the symbolic mathematical objects that changes during
+the run-time of a nuemric simulation’s “solve” method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list (of symbolic objects)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.constants_symbolic_expr">
+<code class="sig-name descname">constants_symbolic_expr</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.constants_symbolic_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list containing sympy equalities representing the values of internal
+class symbolic constants that are evaluated from other symbolic
+expressions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list (of sympy.Equality)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.constants_numeric_expr">
+<code class="sig-name descname">constants_numeric_expr</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.constants_numeric_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list containing sympy equalities representing the values of internal
+class symbolic constants that are evaluated directly from numerical
+expressions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list (of sympy.Equality)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uraeus.smbd.symbolic.components.bodies.body.constants_symbols">
+<code class="sig-name descname">constants_symbols</code><a class="headerlink" href="#uraeus.smbd.symbolic.components.bodies.body.constants_symbols" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list containing all the symbolic mathematical objects that represent
+constants for the given body instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list (of symbolic objects)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+</tbody>
+</table>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Khaled Ghobashy
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
