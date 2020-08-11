@@ -19,9 +19,7 @@ from .matrices import (reference_frame, vector, quatrenion, zero_matrix,
 __all__ = ['body','ground']
 
 class body(reference_frame):
-    r"""
-    
-    A class that represents an un-constrained rigid body object in 3D in a 
+    r"""A class that represents an un-constrained rigid body object in 3D in a 
     symbolic form, where all the body parameters and equations are generated 
     automatically in a symbolic format.
     
@@ -29,9 +27,27 @@ class body(reference_frame):
     ----------
     name : str
         Name of the body instance. Should mimic a valid python variable name.
+
+
+    .. note::
+        An un-constraied body in space is typically defined using 6 generalized 
+        coordinates representing its' location and orientation. In cartesian 
+        coordinate system, body location is simply defined by the :math:`(x,y,z)` 
+        coordinates of a reference point on the body -normally the center-of-mass -
+        , where the body orientation can be defined in various ways, such as the 
+        directional cosines matrix, euler-angles and euler-parameters.
+
+        The package uses euler-parameters -which is a 4D unit quaternion- to 
+        represents a given body orientation in space. This makes the generalized 
+        coordinates used to fully define a body in space to be 7, instead of 6, 
+        it also adds an algebraic equation to the constraints that ensures the 
+        unity/normalization of the body quaternion.
+    
+    **Attributes**
     
     Attributes
     ----------
+
     n : int
         Number of generalized coordinates used to define the body 
         configuration. Equals 7.
@@ -101,21 +117,6 @@ class body(reference_frame):
     constants_symbols : list (of symbolic objects)
         A list containing all the symbolic mathematical objects that represent 
         constants for the given body instance.
-      
-    Notes
-    -----
-    An un-constraied body in space is typically defined using 6 generalized 
-    coordinates representing its' location and orientation. In cartesian 
-    coordinate system, body location is simply defined by the $$(x,y,z)$$ 
-    coordinates of a reference point on the body -normally the center-of-mass -
-    , where the body orientation can be defined in various ways, such as the 
-    directional cosines matrix, euler-angles and euler-parameters.
-    
-    The package uses euler-parameters -which is a 4D unit quaternion- to 
-    represents a given body orientation in space. This makes the generalized 
-    coordinates used to fully define a body in space to be 7, instead of 6, 
-    it also adds an algebraic equation to the constraints that ensures the 
-    unity/normalization of the body quaternion.
         
     """
     
