@@ -1,6 +1,6 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 short_description = 'A python package for symbolic creation and analysis of constrained multi-body systems.'
