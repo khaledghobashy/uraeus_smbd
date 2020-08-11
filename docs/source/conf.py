@@ -56,6 +56,8 @@ exclude_patterns = []
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 
+doctest_global_setup = "import uraeus.smbd"
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
