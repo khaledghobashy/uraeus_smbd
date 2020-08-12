@@ -87,6 +87,8 @@ Guide
 
    installation
    background
+   tutorials/index.rst
+   implementation/index.rst
    reference/index.rst
    license
 

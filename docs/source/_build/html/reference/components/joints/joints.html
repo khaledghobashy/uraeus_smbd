@@ -1,0 +1,393 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Mechanical Joints &mdash; uraeus.smbd 0.0.1.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Force Elements" href="../forces/index.html" />
+    <link rel="prev" title="Joints" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> uraeus.smbd
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../background.html">Background and Approach</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Symbolic Components</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../bodies/index.html">Bodies</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Joints</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Mechanical Joints</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../forces/index.html">Force Elements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">uraeus.smbd</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Reference</a> &raquo;</li>
+        
+          <li><a href="../index.html">Symbolic Components</a> &raquo;</li>
+        
+          <li><a href="index.html">Joints</a> &raquo;</li>
+        
+      <li>Mechanical Joints</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/reference/components/joints/joints.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="mechanical-joints">
+<h1>Mechanical Joints<a class="headerlink" href="#mechanical-joints" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="spherical-joint">
+<h2>Spherical Joint<a class="headerlink" href="#spherical-joint" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uraeus.smbd.symbolic.components.joints.spherical">
+<em class="property">class </em><code class="sig-prename descclassname">uraeus.smbd.symbolic.components.joints.</code><code class="sig-name descname">spherical</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">body_i=None</em>, <em class="sig-param">body_j=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/uraeus/smbd/symbolic/components/joints.html#spherical"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uraeus.smbd.symbolic.components.joints.spherical" title="Permalink to this definition">¶</a></dt>
+<dd><p>The spherical joint prevents the relative translational movement between
+the two connected bodies at a given common location, where the two bodies
+are free to rotate relative to each-other in all directions.</p>
+<p>The joint definition requires one defintion point and one defintion axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the joint instance. Should mimic a valid python variable name.</p></li>
+<li><p><strong>body_i</strong> (<em>body</em>) – The 1st body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+<li><p><strong>body_j</strong> (<em>body</em>) – The 2nd body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
+<div class="section" id="revolute-joint">
+<h2>Revolute Joint<a class="headerlink" href="#revolute-joint" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uraeus.smbd.symbolic.components.joints.revolute">
+<em class="property">class </em><code class="sig-prename descclassname">uraeus.smbd.symbolic.components.joints.</code><code class="sig-name descname">revolute</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">body_i=None</em>, <em class="sig-param">body_j=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/uraeus/smbd/symbolic/components/joints.html#revolute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uraeus.smbd.symbolic.components.joints.revolute" title="Permalink to this definition">¶</a></dt>
+<dd><p>The revolute joint allows only one rotation freedome between the connected
+bodies around a common axis, thus it fully prevents the relative
+translation between the bodies at the joint definition location, as well as
+any rotation other-than around the joint definition axis.</p>
+<p>The joint definition requires one defintion point and one defintion axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the joint instance. Should mimic a valid python variable name.</p></li>
+<li><p><strong>body_i</strong> (<em>body</em>) – The 1st body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+<li><p><strong>body_j</strong> (<em>body</em>) – The 2nd body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
+<div class="section" id="cylinderical-joint">
+<h2>Cylinderical Joint<a class="headerlink" href="#cylinderical-joint" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uraeus.smbd.symbolic.components.joints.cylinderical">
+<em class="property">class </em><code class="sig-prename descclassname">uraeus.smbd.symbolic.components.joints.</code><code class="sig-name descname">cylinderical</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">body_i=None</em>, <em class="sig-param">body_j=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/uraeus/smbd/symbolic/components/joints.html#cylinderical"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uraeus.smbd.symbolic.components.joints.cylinderical" title="Permalink to this definition">¶</a></dt>
+<dd><p>The cylinderical joint allows only one relative rotation freedome and one
+relative translation freedome between the connected bodies along a common
+axis, thus it prevents any relative translation and rotation along any
+other direction, other-than around the joint definition axis.</p>
+<p>The joint definition requires one defintion point and one defintion axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the joint instance. Should mimic a valid python variable name.</p></li>
+<li><p><strong>body_i</strong> (<em>body</em>) – The 1st body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+<li><p><strong>body_j</strong> (<em>body</em>) – The 2nd body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
+<div class="section" id="fixed-joint">
+<h2>Fixed Joint<a class="headerlink" href="#fixed-joint" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uraeus.smbd.symbolic.components.joints.fixed">
+<em class="property">class </em><code class="sig-prename descclassname">uraeus.smbd.symbolic.components.joints.</code><code class="sig-name descname">fixed</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">body_i=None</em>, <em class="sig-param">body_j=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/uraeus/smbd/symbolic/components/joints.html#fixed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uraeus.smbd.symbolic.components.joints.fixed" title="Permalink to this definition">¶</a></dt>
+<dd><p>A joint that constraints two bodies to be fixed relative to each-other, by
+imposing six algebraic constraints equations to deminish the relative six
+degrees-of-freedom between the constrained bodies.</p>
+<p>The joint definition requires one defintion point and one defintion axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the joint instance. Should mimic a valid python variable name.</p></li>
+<li><p><strong>body_i</strong> (<em>body</em>) – The 1st body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+<li><p><strong>body_j</strong> (<em>body</em>) – The 2nd body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
+<div class="section" id="fixed-orientation-joint">
+<h2>Fixed Orientation Joint<a class="headerlink" href="#fixed-orientation-joint" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uraeus.smbd.symbolic.components.joints.fixed_orientation">
+<em class="property">class </em><code class="sig-prename descclassname">uraeus.smbd.symbolic.components.joints.</code><code class="sig-name descname">fixed_orientation</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">body_i=None</em>, <em class="sig-param">body_j=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/uraeus/smbd/symbolic/components/joints.html#fixed_orientation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uraeus.smbd.symbolic.components.joints.fixed_orientation" title="Permalink to this definition">¶</a></dt>
+<dd><p>A joint that constraints two bodies to have fixed relative orientation
+w.r.t each-other, by imposing three algebraic constraints equations to
+deminish the relative three relative orientation degrees-of-freedom between
+the constrained bodies.</p>
+<p>The joint definition requires only one defintion axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the joint instance. Should mimic a valid python variable name.</p></li>
+<li><p><strong>body_i</strong> (<em>body</em>) – The 1st body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+<li><p><strong>body_j</strong> (<em>body</em>) – The 2nd body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
+<div class="section" id="translational-joint">
+<h2>Translational Joint<a class="headerlink" href="#translational-joint" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uraeus.smbd.symbolic.components.joints.translational">
+<em class="property">class </em><code class="sig-prename descclassname">uraeus.smbd.symbolic.components.joints.</code><code class="sig-name descname">translational</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">body_i=None</em>, <em class="sig-param">body_j=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/uraeus/smbd/symbolic/components/joints.html#translational"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uraeus.smbd.symbolic.components.joints.translational" title="Permalink to this definition">¶</a></dt>
+<dd><p>The translational joint allows only one relative translation freedome
+between the connected bodies along a common axis, thus it prevents all
+relative rotations between the connected bodies, and any relative
+translation along any other direction, other-than around the joint
+definition axis.</p>
+<p>The joint definition requires one defintion point and one defintion axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the joint instance. Should mimic a valid python variable name.</p></li>
+<li><p><strong>body_i</strong> (<em>body</em>) – The 1st body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+<li><p><strong>body_j</strong> (<em>body</em>) – The 2nd body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
+<div class="section" id="universal-joint">
+<h2>Universal Joint<a class="headerlink" href="#universal-joint" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uraeus.smbd.symbolic.components.joints.universal">
+<em class="property">class </em><code class="sig-prename descclassname">uraeus.smbd.symbolic.components.joints.</code><code class="sig-name descname">universal</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">body_i=None</em>, <em class="sig-param">body_j=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/uraeus/smbd/symbolic/components/joints.html#universal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uraeus.smbd.symbolic.components.joints.universal" title="Permalink to this definition">¶</a></dt>
+<dd><p>The universal joint prevents the relative translational movements between
+the connected bodies just like the spherical joint, but it also prevents
+the relative rotation/spin too, so, the connected body pair is only allowed
+to rotate around two common axes.</p>
+<p>The joint definition requires one defintion point and two defintion axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the joint instance. Should mimic a valid python variable name.</p></li>
+<li><p><strong>body_i</strong> (<em>body</em>) – The 1st body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+<li><p><strong>body_j</strong> (<em>body</em>) – The 2nd body isntance. Should be an instance of the <cite>body</cite> class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<hr class="docutils" />
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../forces/index.html" class="btn btn-neutral float-right" title="Force Elements" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Joints" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Khaled Ghobashy
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

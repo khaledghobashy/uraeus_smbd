@@ -1,0 +1,470 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>uraeus.smbd.symbolic.components.joints &mdash; uraeus.smbd 0.0.1.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../../index.html" class="icon icon-home" alt="Documentation Home"> uraeus.smbd
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../background.html">Background and Approach</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../implementation/index.html">Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../reference/index.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../license.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">uraeus.smbd</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>uraeus.smbd.symbolic.components.joints</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for uraeus.smbd.symbolic.components.joints</h1><div class="highlight"><pre>
+<span></span>
+<span class="c1"># 3rd parties library imports</span>
+<span class="kn">import</span> <span class="nn">sympy</span> <span class="k">as</span> <span class="nn">sm</span>
+
+<span class="c1"># Local application imports</span>
+<span class="kn">from</span> <span class="nn">.algebraic_constraints</span> <span class="kn">import</span> <span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">abstract_actuator</span><span class="p">,</span>
+                                    <span class="n">absolute_actuator</span><span class="p">,</span> <span class="n">joint_actuator</span><span class="p">,</span> 
+                                    <span class="n">joint_constructor</span><span class="p">)</span>
+                                    
+<span class="kn">from</span> <span class="nn">.constraints_equations</span> <span class="kn">import</span> <span class="p">(</span><span class="n">spehrical_constraint</span><span class="p">,</span> 
+                                    <span class="n">dot_product_1</span><span class="p">,</span> <span class="n">dot_product_2</span><span class="p">,</span>
+                                    <span class="n">angle_constraint</span><span class="p">,</span> <span class="n">coordinate_constraint</span><span class="p">)</span>
+
+
+<span class="c1">###############################################################################</span>
+
+<div class="viewcode-block" id="fixed"><a class="viewcode-back" href="../../../../../reference/components/joints/joints.html#uraeus.smbd.symbolic.components.joints.fixed">[docs]</a><span class="k">class</span> <span class="nc">fixed</span><span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">    A joint that constraints two bodies to be fixed relative to each-other, by</span>
+<span class="sd">    imposing six algebraic constraints equations to deminish the relative six</span>
+<span class="sd">    degrees-of-freedom between the constrained bodies.</span>
+<span class="sd">    </span>
+<span class="sd">    The joint definition requires one defintion point and one defintion axis.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name of the joint instance. Should mimic a valid python variable name.</span>
+<span class="sd">    body_i : body</span>
+<span class="sd">        The 1st body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    body_j : body</span>
+<span class="sd">        The 2nd body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">spehrical_constraint</span><span class="p">(),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">)]</span></div>
+
+<span class="c1">###############################################################################</span>
+
+<div class="viewcode-block" id="fixed_orientation"><a class="viewcode-back" href="../../../../../reference/components/joints/joints.html#uraeus.smbd.symbolic.components.joints.fixed_orientation">[docs]</a><span class="k">class</span> <span class="nc">fixed_orientation</span><span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">    A joint that constraints two bodies to have fixed relative orientation </span>
+<span class="sd">    w.r.t each-other, by imposing three algebraic constraints equations to </span>
+<span class="sd">    deminish the relative three relative orientation degrees-of-freedom between</span>
+<span class="sd">    the constrained bodies.</span>
+<span class="sd">    </span>
+<span class="sd">    The joint definition requires only one defintion axis.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name of the joint instance. Should mimic a valid python variable name.</span>
+<span class="sd">    body_i : body</span>
+<span class="sd">        The 1st body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    body_j : body</span>
+<span class="sd">        The 2nd body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">)]</span></div>
+
+<span class="c1">###############################################################################</span>
+
+<div class="viewcode-block" id="spherical"><a class="viewcode-back" href="../../../../../reference/components/joints/joints.html#uraeus.smbd.symbolic.components.joints.spherical">[docs]</a><span class="k">class</span> <span class="nc">spherical</span><span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">    The spherical joint prevents the relative translational movement between </span>
+<span class="sd">    the two connected bodies at a given common location, where the two bodies </span>
+<span class="sd">    are free to rotate relative to each-other in all directions.</span>
+<span class="sd">    </span>
+<span class="sd">    The joint definition requires one defintion point and one defintion axis.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name of the joint instance. Should mimic a valid python variable name.</span>
+<span class="sd">    body_i : body</span>
+<span class="sd">        The 1st body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    body_j : body</span>
+<span class="sd">        The 2nd body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">spehrical_constraint</span><span class="p">()]</span></div>
+
+<span class="c1">###############################################################################</span>
+
+<div class="viewcode-block" id="revolute"><a class="viewcode-back" href="../../../../../reference/components/joints/joints.html#uraeus.smbd.symbolic.components.joints.revolute">[docs]</a><span class="k">class</span> <span class="nc">revolute</span><span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">    The revolute joint allows only one rotation freedome between the connected </span>
+<span class="sd">    bodies around a common axis, thus it fully prevents the relative </span>
+<span class="sd">    translation between the bodies at the joint definition location, as well as</span>
+<span class="sd">    any rotation other-than around the joint definition axis.</span>
+<span class="sd">    </span>
+<span class="sd">    The joint definition requires one defintion point and one defintion axis.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name of the joint instance. Should mimic a valid python variable name.</span>
+<span class="sd">    body_i : body</span>
+<span class="sd">        The 1st body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    body_j : body</span>
+<span class="sd">        The 2nd body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">spehrical_constraint</span><span class="p">(),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">)]</span></div>
+
+<span class="c1">###############################################################################</span>
+
+<div class="viewcode-block" id="cylinderical"><a class="viewcode-back" href="../../../../../reference/components/joints/joints.html#uraeus.smbd.symbolic.components.joints.cylinderical">[docs]</a><span class="k">class</span> <span class="nc">cylinderical</span><span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">    The cylinderical joint allows only one relative rotation freedome and one</span>
+<span class="sd">    relative translation freedome between the connected bodies along a common </span>
+<span class="sd">    axis, thus it prevents any relative translation and rotation along any </span>
+<span class="sd">    other direction, other-than around the joint definition axis.</span>
+<span class="sd">    </span>
+<span class="sd">    The joint definition requires one defintion point and one defintion axis.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name of the joint instance. Should mimic a valid python variable name.</span>
+<span class="sd">    body_i : body</span>
+<span class="sd">        The 1st body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    body_j : body</span>
+<span class="sd">        The 2nd body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">)]</span></div>
+    
+<span class="c1">###############################################################################</span>
+
+<div class="viewcode-block" id="translational"><a class="viewcode-back" href="../../../../../reference/components/joints/joints.html#uraeus.smbd.symbolic.components.joints.translational">[docs]</a><span class="k">class</span> <span class="nc">translational</span><span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">    The translational joint allows only one relative translation freedome </span>
+<span class="sd">    between the connected bodies along a common axis, thus it prevents all </span>
+<span class="sd">    relative rotations between the connected bodies, and any relative </span>
+<span class="sd">    translation along any other direction, other-than around the joint </span>
+<span class="sd">    definition axis.</span>
+<span class="sd">    </span>
+<span class="sd">    The joint definition requires one defintion point and one defintion axis.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name of the joint instance. Should mimic a valid python variable name.</span>
+<span class="sd">    body_i : body</span>
+<span class="sd">        The 1st body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    body_j : body</span>
+<span class="sd">        The 2nd body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">)]</span></div>
+
+<span class="c1">###############################################################################</span>
+
+<div class="viewcode-block" id="universal"><a class="viewcode-back" href="../../../../../reference/components/joints/joints.html#uraeus.smbd.symbolic.components.joints.universal">[docs]</a><span class="k">class</span> <span class="nc">universal</span><span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">    The universal joint prevents the relative translational movements between </span>
+<span class="sd">    the connected bodies just like the spherical joint, but it also prevents </span>
+<span class="sd">    the relative rotation/spin too, so, the connected body pair is only allowed</span>
+<span class="sd">    to rotate around two common axes.</span>
+<span class="sd">    </span>
+<span class="sd">    The joint definition requires one defintion point and two defintion axis.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name of the joint instance. Should mimic a valid python variable name.</span>
+<span class="sd">    body_i : body</span>
+<span class="sd">        The 1st body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    body_j : body</span>
+<span class="sd">        The 2nd body isntance. Should be an instance of the `body` class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">spehrical_constraint</span><span class="p">(),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">)]</span></div>
+    
+<span class="c1">###############################################################################</span>
+
+<span class="k">class</span> <span class="nc">tripod</span><span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">)]</span>
+
+<span class="c1">###############################################################################</span>
+
+<span class="k">class</span> <span class="nc">rotational_actuator</span><span class="p">(</span><span class="n">joint_actuator</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">angle_constraint</span><span class="p">()]</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pos_level_equations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sm</span><span class="o">.</span><span class="n">BlockMatrix</span><span class="p">([</span><span class="n">sm</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_pos_level_equations</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+
+
+<span class="c1">###############################################################################</span>
+
+<span class="k">class</span> <span class="nc">translational_actuator</span><span class="p">(</span><span class="n">joint_actuator</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;k&#39;</span><span class="p">)]</span>
+    
+<span class="c1">###############################################################################</span>
+
+<span class="k">class</span> <span class="nc">absolute_locator</span><span class="p">(</span><span class="n">absolute_actuator</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">coordinate_constraint</span><span class="p">()]</span>
+
+<span class="c1">###############################################################################</span>
+
+<span class="k">class</span> <span class="nc">absolute_rotator</span><span class="p">(</span><span class="n">abstract_actuator</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">angle_constraint</span><span class="p">()]</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pos_level_equations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sm</span><span class="o">.</span><span class="n">BlockMatrix</span><span class="p">([</span><span class="n">sm</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_pos_level_equations</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+
+<span class="c1">###############################################################################</span>
+
+<span class="k">class</span> <span class="nc">inline</span><span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">)]</span>
+
+<span class="c1">###############################################################################</span>
+
+<span class="k">class</span> <span class="nc">dummy_cylinderical</span><span class="p">(</span><span class="n">abstract_joint</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">joint_constructor</span><span class="p">):</span>
+    <span class="n">def_axis</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">def_locs</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">vector_equations</span> <span class="o">=</span> <span class="p">[</span><span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_1</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">),</span>
+                        <span class="n">dot_product_2</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">)]</span>
+    
+<span class="c1">###############################################################################</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Khaled Ghobashy
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
