@@ -37,7 +37,7 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="License" href="license.html" />
+    <link rel="next" title="Tutorials" href="tutorials/index.html" />
     <link rel="prev" title="Installation" href="installation.html" /> 
 </head>
 
@@ -87,9 +87,15 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Background and Approach</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#the-problem">The Problem</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#the-approach">The Approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-approach">The Approach</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#symbolic-topology">Symbolic Topology</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/index.html">Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
 
@@ -196,11 +202,40 @@ multi-body system. These are:</p>
 <p>Each analysis type -or question- can be modeled by a set of algebraic and/or
 differential equations that can be solved for the system generalized states
 (positions, velocities and accelerations).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
 <p>A more detailed discussion of each analysis type will be provided in another
-part of the documentation.</p>
+part of the documentation and linked here.</p>
 </div>
+</div>
+<hr class="docutils" />
 <div class="section" id="the-approach">
 <h2>The Approach<a class="headerlink" href="#the-approach" title="Permalink to this headline">¶</a></h2>
+<p>The philosophy of the <strong>uraeus</strong> framework is to isolate the model creation
+process form the actual numerical and computational representation of the
+system that will be used in the numerical simulation process.
+This is done through the concepts of <strong>symbolic computing</strong> and
+<strong>code-generation</strong>.
+The uraeus.smbd package is responsible for the symbolic creation of multi-body
+systems.</p>
+<div class="section" id="symbolic-topology">
+<h3>Symbolic Topology<a class="headerlink" href="#symbolic-topology" title="Permalink to this headline">¶</a></h3>
+<p>The System Topology is a description of the connectivity relationships between
+the bodies in a given multi-body system. These relationships represent the
+system constraints that limit the relative motion between the system bodies
+and produce the desired kinematic behavior.</p>
+<p>The package abstracts the topology of a given system as a multi-directed graph,
+where each <strong>node</strong> represents a <strong>body</strong> and each <strong>edge</strong> represents a
+<strong>connection</strong> between the end nodes, where this
+connection may represents a <strong>joint</strong>, an <strong>actuator</strong> or a <strong>force element</strong>.
+<br>
+No numerical inputs is needed at that step, the focus is only on the validity
+of the topological design of the system, <strong>not</strong> how it is configured in space.</p>
+<p>This problem statement and approach leads to the following important landmarks:</p>
+<ul class="simple">
+<li></li>
+</ul>
+</div>
 </div>
 </div>
 
@@ -212,7 +247,7 @@ part of the documentation.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="license.html" class="btn btn-neutral float-right" title="License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="tutorials/index.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

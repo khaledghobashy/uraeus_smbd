@@ -51,9 +51,39 @@ Each analysis type -or question- can be modeled by a set of algebraic and/or
 differential equations that can be solved for the system generalized states 
 (positions, velocities and accelerations).
 
-A more detailed discussion of each analysis type will be provided in another 
-part of the documentation.
+.. note:: 
+  A more detailed discussion of each analysis type will be provided in another 
+  part of the documentation and linked here.
+
+-------------------------------------------------------------------------------
 
 The Approach
 ------------
+
+The philosophy of the **uraeus** framework is to isolate the model creation 
+process form the actual numerical and computational representation of the 
+system that will be used in the numerical simulation process. 
+This is done through the concepts of **symbolic computing** and 
+**code-generation**. 
+The uraeus.smbd package is responsible for the symbolic creation of multi-body
+systems.
+
+Symbolic Topology
+^^^^^^^^^^^^^^^^^
+The System Topology is a description of the connectivity relationships between 
+the bodies in a given multi-body system. These relationships represent the 
+system constraints that limit the relative motion between the system bodies 
+and produce the desired kinematic behavior.
+
+The package abstracts the topology of a given system as a multi-directed graph, 
+where each **node** represents a **body** and each **edge** represents a 
+**connection** between the end nodes, where this 
+connection may represents a **joint**, an **actuator** or a **force element**. 
+|br|
+No numerical inputs is needed at that step, the focus is only on the validity 
+of the topological design of the system, **not** how it is configured in space.
+
+This problem statement and approach leads to the following important landmarks:
+
+- 
 
