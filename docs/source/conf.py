@@ -14,11 +14,11 @@ import os
 import sys
 sys.path.append(os.path.abspath('../../'))
 
-os.system("python setup.py")
+# os.system("python setup.py")
 
-print(os.path.abspath('../../'))
+# print(os.path.abspath('../../'))
 
-import uraeus.smbd
+# import uraeus.smbd
 
 # -- Project information -----------------------------------------------------
 
