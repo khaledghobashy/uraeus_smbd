@@ -86,7 +86,7 @@ Guide
    :maxdepth: 1
 
    installation
-   background
+   background/index.rst
    tutorials/index.rst
    implementation/index.rst
    reference/index.rst

@@ -8,14 +8,16 @@ Background and Approach
 The Problem
 -----------
 
-**What is Multi-Body Dynamics?** |br|
+What is Multi-Body Dynamics?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 As mentioned earlier, a multi-body system is hereby defined as *a finite number
 of material bodies connected in an arbitrary fashion by mechanical joints that 
 limit the relative motion between pairs of bodies*, where practitioners of 
 multi-body dynamics study the generation and solution of the equations 
-governing the motion of such systems
+governing the motion of such systems.
 
-**What is the problem to be solved?** |br|
+What is the problem to be solved?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 One of the primary interests in multi-body dynamics is to analyze the behavior 
 of a given multi-body system under the effect of some inputs. In analogy with
 control systems; a multi-body system can be thought as a system subjected to 
@@ -23,7 +25,8 @@ some inputs producing some outputs.
 These three parts of the problem are dependent on the analyst end goal of the 
 analysis and simulation.
 
-**How is the system physics abstracted mathematically?** |br|
+How is the system physics abstracted mathematically?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 An unconstrained body in space is normally defined using 6 generalized 
 coordinates defining its location and orientation in space. 
 For example, a system of 10 bodies requires 60 generalized coordinates to be 

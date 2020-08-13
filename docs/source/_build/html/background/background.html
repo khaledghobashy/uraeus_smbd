@@ -1,0 +1,314 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Background and Approach &mdash; uraeus.smbd 0.0.1.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tutorials" href="../tutorials/index.html" />
+    <link rel="prev" title="Background" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> uraeus.smbd
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Background</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Background and Approach</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-problem">The Problem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#what-is-multi-body-dynamics">What is Multi-Body Dynamics?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#what-is-the-problem-to-be-solved">What is the problem to be solved?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-is-the-system-physics-abstracted-mathematically">How is the system physics abstracted mathematically?</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-approach">The Approach</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#symbolic-topology">Symbolic Topology</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../implementation/index.html">Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">uraeus.smbd</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Background</a> &raquo;</li>
+        
+      <li>Background and Approach</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/background/background.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="background-and-approach">
+<h1>Background and Approach<a class="headerlink" href="#background-and-approach" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-problem">
+<h2>The Problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="what-is-multi-body-dynamics">
+<h3>What is Multi-Body Dynamics?<a class="headerlink" href="#what-is-multi-body-dynamics" title="Permalink to this headline">¶</a></h3>
+<p>As mentioned earlier, a multi-body system is hereby defined as <em>a finite number
+of material bodies connected in an arbitrary fashion by mechanical joints that
+limit the relative motion between pairs of bodies</em>, where practitioners of
+multi-body dynamics study the generation and solution of the equations
+governing the motion of such systems.</p>
+</div>
+<div class="section" id="what-is-the-problem-to-be-solved">
+<h3>What is the problem to be solved?<a class="headerlink" href="#what-is-the-problem-to-be-solved" title="Permalink to this headline">¶</a></h3>
+<p>One of the primary interests in multi-body dynamics is to analyze the behavior
+of a given multi-body system under the effect of some inputs. In analogy with
+control systems; a multi-body system can be thought as a system subjected to
+some inputs producing some outputs.
+These three parts of the problem are dependent on the analyst end goal of the
+analysis and simulation.</p>
+</div>
+<div class="section" id="how-is-the-system-physics-abstracted-mathematically">
+<h3>How is the system physics abstracted mathematically?<a class="headerlink" href="#how-is-the-system-physics-abstracted-mathematically" title="Permalink to this headline">¶</a></h3>
+<p>An unconstrained body in space is normally defined using 6 generalized
+coordinates defining its location and orientation in space.
+For example, a system of 10 bodies requires 60 generalized coordinates to be
+fully defined, which in turn requires 60 independent equations to be solved for
+these unknown generalized coordinates.</p>
+<p>The way we achieve a solution for the system is dependent on the type of study
+we are performing.
+Mainly we have four types of analysis that are of interest for a given
+multi-body system. These are:</p>
+<ul class="simple">
+<li><p><strong>Kinematic Analysis</strong> <br>
+“How does the whole system move if we moved this particular body ?”</p></li>
+<li><p><strong>Inverse Dynamic Analysis</strong> <br>
+“What are the forces needed to achieve this motion we just did ?”</p></li>
+<li><p><strong>Equilibrium Analysis</strong> <br>
+“How does the system look if we did nothing ?”</p></li>
+<li><p><strong>Dynamic Analysis</strong> <br>
+“Now we gave it a force, how does it behave ?”</p></li>
+</ul>
+<p>Each analysis type -or question- can be modeled by a set of algebraic and/or
+differential equations that can be solved for the system generalized states
+(positions, velocities and accelerations).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A more detailed discussion of each analysis type will be provided in another
+part of the documentation and linked here.</p>
+</div>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="the-approach">
+<h2>The Approach<a class="headerlink" href="#the-approach" title="Permalink to this headline">¶</a></h2>
+<p>The philosophy of the <strong>uraeus</strong> framework is to isolate the model creation
+process form the actual numerical and computational representation of the
+system that will be used in the numerical simulation process.
+This is done through the concepts of <strong>symbolic computing</strong> and
+<strong>code-generation</strong>.
+The uraeus.smbd package is responsible for the symbolic creation of multi-body
+systems.</p>
+<div class="section" id="symbolic-topology">
+<h3>Symbolic Topology<a class="headerlink" href="#symbolic-topology" title="Permalink to this headline">¶</a></h3>
+<p>The System Topology is a description of the connectivity relationships between
+the bodies in a given multi-body system. These relationships represent the
+system constraints that limit the relative motion between the system bodies
+and produce the desired kinematic behavior.</p>
+<p>The package abstracts the topology of a given system as a multi-directed graph,
+where each <strong>node</strong> represents a <strong>body</strong> and each <strong>edge</strong> represents a
+<strong>connection</strong> between the end nodes, where this
+connection may represents a <strong>joint</strong>, an <strong>actuator</strong> or a <strong>force element</strong>.
+<br>
+No numerical inputs is needed at that step, the focus is only on the validity
+of the topological design of the system, <strong>not</strong> how it is configured in space.</p>
+<p>This problem statement and approach leads to the following important landmarks:</p>
+<ul class="simple">
+<li></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../tutorials/index.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Background" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Khaled Ghobashy
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
