@@ -36,7 +36,9 @@
 
     
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Pendulum" href="pendulum.html" />
+    <link rel="prev" title="Tutorials" href="../index.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -81,10 +83,20 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../background/index.html">Background</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../index.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#symboilc-models">Symboilc Models</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#guide">Guide</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Standalone Topologies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../template_based_topologies/index.html">Template-Based Topologies</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../implementation/index.html">Implementation Details</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
@@ -134,6 +146,8 @@
     
       <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
+          <li><a href="../index.html">Tutorials</a> &raquo;</li>
+        
       <li>Standalone Topologies</li>
     
     
@@ -155,25 +169,6 @@
             
   <div class="section" id="standalone-topologies">
 <h1>Standalone Topologies<a class="headerlink" href="#standalone-topologies" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="standalone-model">
-<h2>Standalone Model<a class="headerlink" href="#standalone-model" title="Permalink to this headline">¶</a></h2>
-<p>The <strong>uraeus.smbd</strong> python package provides two main types of symbolic models
-to be constructed, <strong>standalone models</strong>, and <strong>template-based</strong> models.</p>
-<p>Standalone models stands for symbolic models that are fully described in
-<strong>one</strong> topology graph, where all the bodies and connections are already
-defined in the model graph, and therefore, the model is fully independent and
-does not need any other topological information.</p>
-<p>On the other hand, template-based models are not fully described in one
-topology, as they need to be assembled with other templates to form a complete
-assembled topology. For example, this is the case for creating a full vehicle
-assembly, where we model the vehicle subsystems as templates, then we assemble
-them together to form the desired vehicle assembly.</p>
-<p>The creation of template-based models’ database can be found in
-<a class="reference external" href="https://github.com/khaledghobashy/uraeus_fsae">uraeus.fsae</a>,
-which is an under-development multi-body systems database for formula-style
-vehicles implemented in the <strong>uraeus</strong> framework.</p>
-</div>
-<hr class="docutils" />
 <div class="section" id="project-structure">
 <h2>Project Structure<a class="headerlink" href="#project-structure" title="Permalink to this headline">¶</a></h2>
 <p>An important step to do before the actual modeling step, is how can we
@@ -237,6 +232,15 @@ and project.</p>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="pendulum.html" class="btn btn-neutral float-right" title="Pendulum" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

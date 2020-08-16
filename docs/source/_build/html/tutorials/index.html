@@ -87,9 +87,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../background/index.html">Background</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorials</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#guide">Guide</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="standalone_topologies/index.html">Standalone Topologies</a></li>
-<li class="toctree-l3"><a class="reference internal" href="template_based_topologies/index.html">Template-Based Topologies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#symboilc-models">Symboilc Models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#guide">Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="standalone_topologies/index.html">Standalone Topologies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="template_based_topologies/index.html">Template-Based Topologies</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -164,17 +167,41 @@
             
   <div class="section" id="tutorials">
 <h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this headline">¶</a></h1>
+<p>This section presents some tutorials illustrating the process of creating
+standalone and template-based symbolic models.</p>
 <p>The figure below shows a high-level <strong>activity diagram</strong> of a typical usage
-flow of the framework, where we have three swim-lanes representing the main
-three activity layers of the framework.</p>
+flow of the <strong>uraeus</strong> framework, where we have three swim-lanes representing
+a main layer of the three activity layers of the framework.</p>
+<p>Here we are concerned with the first <em>swim-lane</em> that represents the
+<strong>symbolic environment</strong> layer and the <strong>symbolic model creation</strong> activity.</p>
 <a class="reference internal image-reference" href="../_images/uraeus_activity_diagram-Swimlane.png"><img alt="Alternative text" src="../_images/uraeus_activity_diagram-Swimlane.png" style="width: 600px;" /></a>
+<hr class="docutils" />
+<div class="section" id="symboilc-models">
+<h2>Symboilc Models<a class="headerlink" href="#symboilc-models" title="Permalink to this headline">¶</a></h2>
+<p>The <strong>uraeus.smbd</strong> python package provides two main types of symbolic models
+to be constructed, <strong>standalone models</strong>, and <strong>template-based</strong> models.</p>
+<p><strong>Standalone models</strong> stands for symbolic models that are fully described in
+<strong>one</strong> topology graph, where all the bodies and connections are already
+defined in the model graph, and therefore, the model is fully independent and
+does not need any other topological information.</p>
+<p><strong>Template-based models</strong>, on the other hand,  are not fully described in one
+topology, as they need to be assembled with other templates to form a complete
+assembled topology. For example, this is the case for creating a full vehicle
+assembly, where we model the vehicle subsystems as templates, then we assemble
+them together to form the desired vehicle assembly.</p>
+<p>The creation of template-based models’ database can be found in
+<a class="reference external" href="https://github.com/khaledghobashy/uraeus_fsae">uraeus.fsae</a>,
+which is an under-development multi-body systems database for formula-style
+vehicles implemented in the <strong>uraeus</strong> framework.</p>
+<hr class="docutils" />
 <div class="section" id="guide">
-<h2>Guide<a class="headerlink" href="#guide" title="Permalink to this headline">¶</a></h2>
+<h3>Guide<a class="headerlink" href="#guide" title="Permalink to this headline">¶</a></h3>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="standalone_topologies/index.html">Standalone Topologies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="template_based_topologies/index.html">Template-Based Topologies</a></li>
 </ul>
+</div>
 </div>
 </div>
 </div>

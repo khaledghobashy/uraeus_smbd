@@ -36,7 +36,9 @@
 
     
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Template-Based Topologies" href="../template_based_topologies/index.html" />
+    <link rel="prev" title="Standalone Topologies" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -81,10 +83,20 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../background/index.html">Background</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../index.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#symboilc-models">Symboilc Models</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#guide">Guide</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">Standalone Topologies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../template_based_topologies/index.html">Template-Based Topologies</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../implementation/index.html">Implementation Details</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
@@ -134,6 +146,10 @@
     
       <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
+          <li><a href="../index.html">Tutorials</a> &raquo;</li>
+        
+          <li><a href="index.html">Standalone Topologies</a> &raquo;</li>
+        
       <li>Pendulum</li>
     
     
@@ -155,6 +171,77 @@
             
   <div class="section" id="pendulum">
 <h1>Pendulum<a class="headerlink" href="#pendulum" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="model-description">
+<h2>Model Description<a class="headerlink" href="#model-description" title="Permalink to this headline">¶</a></h2>
+<p>A pendulum is a weight suspended from a pivot so that it can swing freely.
+It consists of two bodies, the pendulum and the ground, attached together
+through a pin/revolute joint. More general information about the pendulum can
+be found <a class="reference external" href="https://en.wikipedia.org/wiki/Pendulum">here</a>.</p>
+</div>
+<div class="section" id="topology-layout">
+<h2>Topology Layout<a class="headerlink" href="#topology-layout" title="Permalink to this headline">¶</a></h2>
+<p>The mechanism consists of 1 Body + 1 Ground. Therefore, total system
+coordinates -including the ground- is
+<span class="math notranslate nohighlight">\(n=n_b\times7 = 2\times7 = 14\)</span>, where <span class="math notranslate nohighlight">\(n_b\)</span> is the total number of
+bodies in the system. <a class="footnote-reference brackets" href="#id2" id="id1">1</a></p>
+<p>The list of bodies is given below:</p>
+<ul class="simple">
+<li><p>Pendulum body <span class="math notranslate nohighlight">\(body\)</span>.</p></li>
+</ul>
+<p>The system connectivity is as follows:</p>
+<ul class="simple">
+<li><p>Pendulum <span class="math notranslate nohighlight">\(body\)</span> is connected to the <strong>ground</strong> by a revolute joint,
+resulting in constraint equations <span class="math notranslate nohighlight">\(n_{c,rev} = 5\)</span>.</p></li>
+</ul>
+<table class="colwidths-given docutils align-default" id="id3">
+<caption><span class="caption-text">Connectivity Table</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 33%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Joint Name</p></th>
+<th class="head"><p>Body i</p></th>
+<th class="head"><p>Body j</p></th>
+<th class="head"><p>Joint Type</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(n_c\)</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>a</p></td>
+<td><p><span class="math notranslate nohighlight">\(ground\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(body\)</span></p></td>
+<td><p>Revolute</p></td>
+<td><p><span class="math notranslate nohighlight">\(5\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p>The degrees of freedom of the system can be calculated as:</p>
+<div class="math notranslate nohighlight">
+\[n-( n_{c,rev}+n_{c,P}+n_{c,g}) = 14 - (5 + (1 \times 1) + 7) = 14 - 13 = 1\]</div>
+<p>Where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(n_{c,P}\)</span> represents the constraints due to euler-parameters
+normalization equations.</p></li>
+<li><p><span class="math notranslate nohighlight">\(n_{c,g}\)</span> represents the constraints due to the ground constraints.</p></li>
+<li><p><span class="math notranslate nohighlight">\(n_{c,rev}\)</span> represents the constraints due to the revolute joint.</p></li>
+</ul>
+<hr class="docutils" />
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>The tool uses <a class="reference external" href="https://en.wikibooks.org/wiki/Multibody_Mechanics/Euler_Parameters">euler-parameters</a>
+-which is a 4D unit quaternion- to represents bodies orientation in
+space. This makes the generalized coordinates used to fully define a
+body in space to be <strong>7,</strong> instead of <strong>6</strong>, it also adds an algebraic
+equation to the constraints that ensures the unity/normalization of the
+body quaternion. This is an important remark as the calculations of the
+degrees-of-freedom depends on it.</p>
+</dd>
+</dl>
+</div>
 </div>
 
 
@@ -162,6 +249,15 @@
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../template_based_topologies/index.html" class="btn btn-neutral float-right" title="Template-Based Topologies" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Standalone Topologies" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

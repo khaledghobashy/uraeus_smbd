@@ -6,29 +6,6 @@
 Standalone Topologies
 =====================
 
-Standalone Model
-^^^^^^^^^^^^^^^^
-The **uraeus.smbd** python package provides two main types of symbolic models 
-to be constructed, **standalone models**, and **template-based** models.
-
-Standalone models stands for symbolic models that are fully described in 
-**one** topology graph, where all the bodies and connections are already 
-defined in the model graph, and therefore, the model is fully independent and 
-does not need any other topological information.
-
-On the other hand, template-based models are not fully described in one 
-topology, as they need to be assembled with other templates to form a complete 
-assembled topology. For example, this is the case for creating a full vehicle 
-assembly, where we model the vehicle subsystems as templates, then we assemble 
-them together to form the desired vehicle assembly.
-
-The creation of template-based models' database can be found in 
-`uraeus.fsae <https://github.com/khaledghobashy/uraeus_fsae>`_, 
-which is an under-development multi-body systems database for formula-style 
-vehicles implemented in the **uraeus** framework.
-
--------------------------------------------------------------------------------
-
 Project Structure
 ^^^^^^^^^^^^^^^^^
 An important step to do before the actual modeling step, is how can we 
