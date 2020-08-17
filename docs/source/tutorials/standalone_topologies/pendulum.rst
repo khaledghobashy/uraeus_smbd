@@ -5,6 +5,8 @@
 Pendulum
 ========
 
+-------------------------------------------------------------------------------
+
 Model Description
 ^^^^^^^^^^^^^^^^^
 A pendulum is a weight suspended from a pivot so that it can swing freely. 
@@ -22,13 +24,13 @@ coordinates -including the ground- is
 bodies in the system. [1]_
 
 List of Bodies
-^^^^^^^^^^^^^^
+''''''''''''''
 The list of bodies is given below:
 
 - Pendulum body :math:`body`.
 
 Connectivity
-^^^^^^^^^^^^
+''''''''''''
 The system connectivity is as follows:
 
 - Pendulum :math:`body` is connected to the **ground** by a revolute joint, 
@@ -36,7 +38,7 @@ The system connectivity is as follows:
 
 
 .. list-table:: Connectivity Table
-   :widths: 25 25 50 25 25
+   :widths: 25 25 25 25 25
    :header-rows: 1
 
    * - Joint Name
@@ -52,7 +54,7 @@ The system connectivity is as follows:
      - :math:`5`
 
 Degrees of Freedom
-^^^^^^^^^^^^^^^^^^
+''''''''''''''''''
 The degrees of freedom of the system can be calculated as:
 
 .. math::

@@ -171,6 +171,7 @@
             
   <div class="section" id="pendulum">
 <h1>Pendulum<a class="headerlink" href="#pendulum" title="Permalink to this headline">¶</a></h1>
+<hr class="docutils" />
 <div class="section" id="model-description">
 <h2>Model Description<a class="headerlink" href="#model-description" title="Permalink to this headline">¶</a></h2>
 <p>A pendulum is a weight suspended from a pivot so that it can swing freely.
@@ -178,16 +179,22 @@ It consists of two bodies, the pendulum and the ground, attached together
 through a pin/revolute joint. More general information about the pendulum can
 be found <a class="reference external" href="https://en.wikipedia.org/wiki/Pendulum">here</a>.</p>
 </div>
+<hr class="docutils" />
 <div class="section" id="topology-layout">
 <h2>Topology Layout<a class="headerlink" href="#topology-layout" title="Permalink to this headline">¶</a></h2>
 <p>The mechanism consists of 1 Body + 1 Ground. Therefore, total system
 coordinates -including the ground- is
 <span class="math notranslate nohighlight">\(n=n_b\times7 = 2\times7 = 14\)</span>, where <span class="math notranslate nohighlight">\(n_b\)</span> is the total number of
 bodies in the system. <a class="footnote-reference brackets" href="#id2" id="id1">1</a></p>
+<div class="section" id="list-of-bodies">
+<h3>List of Bodies<a class="headerlink" href="#list-of-bodies" title="Permalink to this headline">¶</a></h3>
 <p>The list of bodies is given below:</p>
 <ul class="simple">
 <li><p>Pendulum body <span class="math notranslate nohighlight">\(body\)</span>.</p></li>
 </ul>
+</div>
+<div class="section" id="connectivity">
+<h3>Connectivity<a class="headerlink" href="#connectivity" title="Permalink to this headline">¶</a></h3>
 <p>The system connectivity is as follows:</p>
 <ul class="simple">
 <li><p>Pendulum <span class="math notranslate nohighlight">\(body\)</span> is connected to the <strong>ground</strong> by a revolute joint,
@@ -196,11 +203,11 @@ resulting in constraint equations <span class="math notranslate nohighlight">\(n
 <table class="colwidths-given docutils align-default" id="id3">
 <caption><span class="caption-text">Connectivity Table</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
 <colgroup>
-<col style="width: 17%" />
-<col style="width: 17%" />
-<col style="width: 33%" />
-<col style="width: 17%" />
-<col style="width: 17%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Joint Name</p></th>
@@ -219,6 +226,9 @@ resulting in constraint equations <span class="math notranslate nohighlight">\(n
 </tr>
 </tbody>
 </table>
+</div>
+<div class="section" id="degrees-of-freedom">
+<h3>Degrees of Freedom<a class="headerlink" href="#degrees-of-freedom" title="Permalink to this headline">¶</a></h3>
 <p>The degrees of freedom of the system can be calculated as:</p>
 <div class="math notranslate nohighlight">
 \[n-( n_{c,rev}+n_{c,P}+n_{c,g}) = 14 - (5 + (1 \times 1) + 7) = 14 - 13 = 1\]</div>
@@ -230,15 +240,18 @@ normalization equations.</p></li>
 <li><p><span class="math notranslate nohighlight">\(n_{c,rev}\)</span> represents the constraints due to the revolute joint.</p></li>
 </ul>
 </div>
+</div>
+<hr class="docutils" />
 <div class="section" id="symbolic-topology">
 <h2>Symbolic Topology<a class="headerlink" href="#symbolic-topology" title="Permalink to this headline">¶</a></h2>
 <p>In this section, we create the symbolic topology that captures the topological
 layout that we discussed earlier. <br>
 Defining the topology is very simple. We start by importing the
 <code class="docutils literal notranslate"><span class="pre">standalone_topology</span></code> class and create a new instance that represents our
-symbolic model. Then we start adding the components we discussed earlier,
-starting by the bodies, then the joints, actuators and forces, and thats it.</p>
-<p>These components will be represented symbolically, and therefore there is no
+symbolic model, let it be <code class="docutils literal notranslate"><span class="pre">sym_model</span></code>.
+Then we start adding the components we discussed earlier, starting by the
+bodies, then the joints, actuators and forces, and thats it. <br>
+These components will be represented symbolically, and therefore there is no
 need for any numerical inputs at this step.</p>
 <p>The system is stored in a form of a network graph that stores all the data
 needed for the assemblage of the system equations later. But even before the
@@ -293,7 +306,7 @@ actuators between the bodies.</p>
 </pre></div>
 </div>
 <p>Also, we can check the system’s number of generalized coordinates  <span class="math notranslate nohighlight">\(n\)</span>
-and number of constraints  <span class="math notranslate nohighlight">\(nc\)</span> .</p>
+and number of constraints  <span class="math notranslate nohighlight">\(nc\)</span>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">sym_model</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">sym_model</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">nc</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -322,8 +335,8 @@ documentation.</p>
 <h2>Symbolic Configuration<a class="headerlink" href="#symbolic-configuration" title="Permalink to this headline">¶</a></h2>
 <p>In this step we define a symbolic configuration of our symbolic topology.
 As you may have noticed in the symbolic topology building step, we only cared
-about the <strong>topology</strong>, thats is the system bodies and their connectivity, and we
-did not care explicitly with how these components are configured in space.</p>
+about the <strong>topology</strong>, thats is the system bodies and their connectivity, and
+we did not care explicitly with how these components are configured in space.</p>
 <p>In order to create a valid numerical simulation session, we have to provide the
 system with its numerical configuration needed, for example, the joints’
 locations and orientations. The symbolic topology in its raw form will require
@@ -365,7 +378,7 @@ arguments and the original ones.</p>
 <span class="n">sym_config</span><span class="o">.</span><span class="n">add_geometry</span><span class="o">.</span><span class="n">Sphere_Geometry</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;hps_p2&#39;</span><span class="p">,</span> <span class="s1">&#39;s_radius&#39;</span><span class="p">))</span>
 <span class="n">sym_config</span><span class="o">.</span><span class="n">assign_geometry_to_body</span><span class="p">(</span><span class="s1">&#39;rbs_body&#39;</span><span class="p">,</span> <span class="s1">&#39;gms_body&#39;</span><span class="p">)</span>
 
-<span class="c1"># Exporing the configuration as a JSON file</span>
+<span class="c1"># Exporting the configuration as a JSON file</span>
 <span class="n">sym_config</span><span class="o">.</span><span class="n">export_JSON_file</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span>
 </pre></div>
 </div>
