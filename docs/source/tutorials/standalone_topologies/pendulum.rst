@@ -12,6 +12,8 @@ It consists of two bodies, the pendulum and the ground, attached together
 through a pin/revolute joint. More general information about the pendulum can 
 be found `here <https://en.wikipedia.org/wiki/Pendulum>`_.
 
+-------------------------------------------------------------------------------
+
 Topology Layout
 ^^^^^^^^^^^^^^^
 The mechanism consists of 1 Body + 1 Ground. Therefore, total system 
@@ -19,10 +21,14 @@ coordinates -including the ground- is
 :math:`n=n_b\times7 = 2\times7 = 14`, where :math:`n_b` is the total number of 
 bodies in the system. [1]_
 
+List of Bodies
+^^^^^^^^^^^^^^
 The list of bodies is given below:
 
 - Pendulum body :math:`body`.
 
+Connectivity
+^^^^^^^^^^^^
 The system connectivity is as follows:
 
 - Pendulum :math:`body` is connected to the **ground** by a revolute joint, 
@@ -45,6 +51,8 @@ The system connectivity is as follows:
      - Revolute
      - :math:`5`
 
+Degrees of Freedom
+^^^^^^^^^^^^^^^^^^
 The degrees of freedom of the system can be calculated as:
 
 .. math::
@@ -66,9 +74,9 @@ In this section, we create the symbolic topology that captures the topological
 layout that we discussed earlier. |br|
 Defining the topology is very simple. We start by importing the 
 ``standalone_topology`` class and create a new instance that represents our 
-symbolic model. Then we start adding the components we discussed earlier, 
-starting by the bodies, then the joints, actuators and forces, and thats it.
-
+symbolic model, let it be ``sym_model``. 
+Then we start adding the components we discussed earlier, starting by the 
+bodies, then the joints, actuators and forces, and thats it. |br|
 These components will be represented symbolically, and therefore there is no 
 need for any numerical inputs at this step.
 
@@ -133,7 +141,7 @@ actuators between the bodies.
     sym_model.topology.draw_constraints_topology()
 
 Also, we can check the system's number of generalized coordinates  :math:`n`  
-and number of constraints  :math:`nc` .
+and number of constraints  :math:`nc`.
 
 .. code:: python
 
@@ -213,7 +221,7 @@ arguments and the original ones.
     sym_config.add_geometry.Sphere_Geometry('body', ('hps_p2', 's_radius'))
     sym_config.assign_geometry_to_body('rbs_body', 'gms_body')
 
-    # Exporing the configuration as a JSON file
+    # Exporting the configuration as a JSON file
     sym_config.export_JSON_file(data_dir)
 
 .. note:: The details of this process will be discussed in another part of the 
