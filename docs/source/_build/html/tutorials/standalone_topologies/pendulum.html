@@ -229,10 +229,35 @@ normalization equations.</p></li>
 <li><p><span class="math notranslate nohighlight">\(n_{c,g}\)</span> represents the constraints due to the ground constraints.</p></li>
 <li><p><span class="math notranslate nohighlight">\(n_{c,rev}\)</span> represents the constraints due to the revolute joint.</p></li>
 </ul>
+</div>
+<div class="section" id="symbolic-topology">
+<h2>Symbolic Topology<a class="headerlink" href="#symbolic-topology" title="Permalink to this headline">¶</a></h2>
+<p>In this section, we create the symbolic topology that captures the topological
+layout that we discussed earlier. <br>
+Defining the topology is very simple. We start by importing the
+<code class="docutils literal notranslate"><span class="pre">standalone_topology</span></code> class and create a new instance that represents our
+symbolic model. Then we start adding the components we discussed earlier,
+starting by the bodies, then the joints, actuators and forces, and thats it.</p>
+<p>These components will be represented symbolically, and therefore there is no
+need for any numerical inputs at this step.</p>
+<p>The system is stored in a form of a network graph that stores all the data
+needed for the assemblage of the system equations later. But even before the
+assemblage process, we can gain helpful insights about our system as well be
+shown.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># standard library imports</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="c1"># getting directory of current file and specifying the directory</span>
+<span class="c1"># where data will be saved</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;symenv&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">data_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">&quot;model/symenv/data&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 <hr class="docutils" />
 <dl class="footnote brackets">
 <dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
-<dd><p>The tool uses <a class="reference external" href="https://en.wikibooks.org/wiki/Multibody_Mechanics/Euler_Parameters">euler-parameters</a>
+<dd><p><strong>uraeus.smbd</strong> uses <a class="reference external" href="https://en.wikibooks.org/wiki/Multibody_Mechanics/Euler_Parameters">euler-parameters</a>
 -which is a 4D unit quaternion- to represents bodies orientation in
 space. This makes the generalized coordinates used to fully define a
 body in space to be <strong>7,</strong> instead of <strong>6</strong>, it also adds an algebraic

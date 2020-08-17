@@ -1,3 +1,7 @@
+.. |br| raw:: html
+
+    <br>
+
 Pendulum
 ========
 
@@ -54,9 +58,38 @@ Where:
 - :math:`n_{c,g}` represents the constraints due to the ground constraints.
 - :math:`n_{c,rev}` represents the constraints due to the revolute joint.
 
+
+Symbolic Topology
+^^^^^^^^^^^^^^^^^
+In this section, we create the symbolic topology that captures the topological 
+layout that we discussed earlier. |br|
+Defining the topology is very simple. We start by importing the 
+``standalone_topology`` class and create a new instance that represents our 
+symbolic model. Then we start adding the components we discussed earlier, 
+starting by the bodies, then the joints, actuators and forces, and thats it.
+
+These components will be represented symbolically, and therefore there is no 
+need for any numerical inputs at this step.
+
+The system is stored in a form of a network graph that stores all the data 
+needed for the assemblage of the system equations later. But even before the 
+assemblage process, we can gain helpful insights about our system as well be 
+shown.
+
+.. code:: python
+
+    # standard library imports
+    import os
+
+    # getting directory of current file and specifying the directory
+    # where data will be saved
+    os.makedirs(os.path.join("model", "symenv", "data"), exist_ok=True)
+    
+    data_dir = os.path.abspath("model/symenv/data")
+
 -------------------------------------------------------------------------------
 
-.. [1] The tool uses `euler-parameters 
+.. [1] **uraeus.smbd** uses `euler-parameters 
        <https://en.wikibooks.org/wiki/Multibody_Mechanics/Euler_Parameters>`_ 
        -which is a 4D unit quaternion- to represents bodies orientation in 
        space. This makes the generalized coordinates used to fully define a 
