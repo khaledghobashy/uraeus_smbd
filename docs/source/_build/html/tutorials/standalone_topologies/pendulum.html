@@ -244,6 +244,8 @@ need for any numerical inputs at this step.</p>
 needed for the assemblage of the system equations later. But even before the
 assemblage process, we can gain helpful insights about our system as well be
 shown.</p>
+<div class="section" id="directories-construction">
+<h3>Directories Construction<a class="headerlink" href="#directories-construction" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># standard library imports</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
@@ -253,6 +255,124 @@ shown.</p>
 
 <span class="n">data_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">&quot;model/symenv/data&quot;</span><span class="p">)</span>
 </pre></div>
+</div>
+</div>
+<div class="section" id="topology-construction">
+<h3>Topology Construction<a class="headerlink" href="#topology-construction" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># uraeus imports</span>
+<span class="kn">from</span> <span class="nn">uraeus.smbd.systems</span> <span class="kn">import</span> <span class="n">standalone_topology</span><span class="p">,</span> <span class="n">configuration</span>
+
+<span class="c1"># ============================================================= #</span>
+<span class="c1">#                       Symbolic Topology</span>
+<span class="c1"># ============================================================= #</span>
+
+<span class="c1"># Creating the symbolic topology as an instance of the</span>
+<span class="c1"># standalone_topology class</span>
+<span class="n">project_name</span> <span class="o">=</span> <span class="s1">&#39;pendulum&#39;</span>
+<span class="n">sym_model</span> <span class="o">=</span> <span class="n">standalone_topology</span><span class="p">(</span><span class="n">project_name</span><span class="p">)</span>
+
+<span class="c1"># Adding Bodies</span>
+<span class="c1"># =============</span>
+<span class="n">sym_model</span><span class="o">.</span><span class="n">add_body</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">)</span>
+
+<span class="c1"># Adding Joints</span>
+<span class="c1"># =============</span>
+<span class="n">sym_model</span><span class="o">.</span><span class="n">add_joint</span><span class="o">.</span><span class="n">revolute</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;ground&#39;</span><span class="p">,</span> <span class="s1">&#39;rbs_body&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="symbolic-characteristics">
+<h3>Symbolic Characteristics<a class="headerlink" href="#symbolic-characteristics" title="Permalink to this headline">¶</a></h3>
+<p>Now, we can gain some insights about our topology using our <code class="docutils literal notranslate"><span class="pre">sym_model</span></code>
+instance. By accessing the <code class="docutils literal notranslate"><span class="pre">topology</span></code> attribute of the <code class="docutils literal notranslate"><span class="pre">sym_model</span></code>, we can
+visualize the connectivity of the model as a network graph using the
+<code class="docutils literal notranslate"><span class="pre">sym_model.topology.draw_constraints_topology()</span></code> method, where the nodes
+represent the bodies, and the edges represent the joints, forces and/or
+actuators between the bodies.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sym_model</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">draw_constraints_topology</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Also, we can check the system’s number of generalized coordinates  <span class="math notranslate nohighlight">\(n\)</span>
+and number of constraints  <span class="math notranslate nohighlight">\(nc\)</span> .</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">sym_model</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">sym_model</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">nc</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="assembling">
+<h3>Assembling<a class="headerlink" href="#assembling" title="Permalink to this headline">¶</a></h3>
+<p>This is the last step of the symbolic building process, where we ask the
+system to assemble the governing equations, which will be used then in the
+code generation for the numerical simulation, as well as further symbolic
+manipulations.</p>
+<p>Also, we can export/save a <em>pickled</em> version of the model.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Assembling and Saving model</span>
+<span class="n">sym_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span>
+<span class="n">sym_model</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The equations’ notations will be discussed in another part of the
+documentation.</p>
+</div>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="symbolic-configuration">
+<h2>Symbolic Configuration<a class="headerlink" href="#symbolic-configuration" title="Permalink to this headline">¶</a></h2>
+<p>In this step we define a symbolic configuration of our symbolic topology.
+As you may have noticed in the symbolic topology building step, we only cared
+about the <strong>topology</strong>, thats is the system bodies and their connectivity, and we
+did not care explicitly with how these components are configured in space.</p>
+<p>In order to create a valid numerical simulation session, we have to provide the
+system with its numerical configuration needed, for example, the joints’
+locations and orientations. The symbolic topology in its raw form will require
+you to manually enter all these numerical arguments, which can be cumbersome
+even for smaller systems. This can be checked by checking the configuration
+inputs of the symbolic configuration as <code class="docutils literal notranslate"><span class="pre">sym_config.config.input_nodes</span></code></p>
+<p>Here we start by stating the symbolic inputs we wish to use instead of the
+default inputs set, and then we define the relation between these newly defined
+arguments and the original ones.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ============================================================= #</span>
+<span class="c1">#                     Symbolic Configuration</span>
+<span class="c1"># ============================================================= #</span>
+
+<span class="c1"># Symbolic configuration name.</span>
+<span class="n">config_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">_cfg&quot;</span><span class="o">%</span><span class="n">project_name</span>
+
+<span class="c1"># Symbolic configuration instance.</span>
+<span class="n">sym_config</span> <span class="o">=</span> <span class="n">configuration</span><span class="p">(</span><span class="n">config_name</span><span class="p">,</span> <span class="n">sym_model</span><span class="p">)</span>
+
+<span class="c1"># Adding the desired set of UserInputs</span>
+<span class="c1"># ====================================</span>
+<span class="n">sym_config</span><span class="o">.</span><span class="n">add_point</span><span class="o">.</span><span class="n">UserInput</span><span class="p">(</span><span class="s1">&#39;p1&#39;</span><span class="p">)</span>
+<span class="n">sym_config</span><span class="o">.</span><span class="n">add_point</span><span class="o">.</span><span class="n">UserInput</span><span class="p">(</span><span class="s1">&#39;p2&#39;</span><span class="p">)</span>
+
+<span class="n">sym_config</span><span class="o">.</span><span class="n">add_vector</span><span class="o">.</span><span class="n">UserInput</span><span class="p">(</span><span class="s1">&#39;v&#39;</span><span class="p">)</span>
+
+<span class="c1"># Defining Relations between original topology inputs</span>
+<span class="c1"># and our desired UserInputs.</span>
+<span class="c1"># ===================================================</span>
+
+<span class="c1"># Revolute Joint (a) location and orientation</span>
+<span class="n">sym_config</span><span class="o">.</span><span class="n">add_relation</span><span class="o">.</span><span class="n">Equal_to</span><span class="p">(</span><span class="s1">&#39;pt1_jcs_a&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;hps_p1&#39;</span><span class="p">,))</span>
+<span class="n">sym_config</span><span class="o">.</span><span class="n">add_relation</span><span class="o">.</span><span class="n">Equal_to</span><span class="p">(</span><span class="s1">&#39;ax1_jcs_a&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;vcs_v&#39;</span><span class="p">,))</span>
+
+<span class="c1"># Creating Geometries</span>
+<span class="c1"># ===================</span>
+<span class="n">sym_config</span><span class="o">.</span><span class="n">add_scalar</span><span class="o">.</span><span class="n">UserInput</span><span class="p">(</span><span class="s1">&#39;radius&#39;</span><span class="p">)</span>
+
+<span class="n">sym_config</span><span class="o">.</span><span class="n">add_geometry</span><span class="o">.</span><span class="n">Sphere_Geometry</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;hps_p2&#39;</span><span class="p">,</span> <span class="s1">&#39;s_radius&#39;</span><span class="p">))</span>
+<span class="n">sym_config</span><span class="o">.</span><span class="n">assign_geometry_to_body</span><span class="p">(</span><span class="s1">&#39;rbs_body&#39;</span><span class="p">,</span> <span class="s1">&#39;gms_body&#39;</span><span class="p">)</span>
+
+<span class="c1"># Exporing the configuration as a JSON file</span>
+<span class="n">sym_config</span><span class="o">.</span><span class="n">export_JSON_file</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The details of this process will be discussed in another part of the
+documentation.</p>
 </div>
 <hr class="docutils" />
 <dl class="footnote brackets">
