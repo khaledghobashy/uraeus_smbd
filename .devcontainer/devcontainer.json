@@ -10,17 +10,17 @@
     // "forwardPorts": [],
     //"settings": {"python.linting.enabled":true},
     // Use 'postCreateCommand' to run commands after the container is created.
-    // "postCreateCommand": "bash postrun.sh",
+    "postCreateCommand": "bash postrun.sh",
     // Configure tool-specific properties.
     "customizations": {
         "vscode": {
             "extensions": [
-				"streetsidesoftware.code-spell-checker",
-				"ms-python.black-formatter",
-				"njpwerner.autodocstring",
-				"mhutchie.git-graph",
-				"ms-azuretools.vscode-docker"
-			],
+                "streetsidesoftware.code-spell-checker",
+                "ms-python.black-formatter",
+                "njpwerner.autodocstring",
+                "mhutchie.git-graph",
+                "ms-azuretools.vscode-docker"
+            ],
             "settings": {
                 "editor.insertSpaces": true,
                 "editor.tabSize": 4,
